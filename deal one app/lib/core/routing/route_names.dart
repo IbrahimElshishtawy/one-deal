@@ -45,8 +45,15 @@ class RouteNames {
   static const String myActivity = '/my-activity';
   static const String favorites = '/favorites';
   static const String profile = '/profile';
+  static const String search = '/search';
+  static const String listingDetail = '/listings/:id';
+  static const String login = '/login';
   static const String globalNotifications = '/notifications';
   static const String notFound = '/not-found';
+
+  static const String searchName = 'search';
+  static const String listingDetailName = 'listing_detail';
+  static const String loginName = 'login';
 
   static const String rootName = 'root';
   static const String realEstateName = 'real_estate';
