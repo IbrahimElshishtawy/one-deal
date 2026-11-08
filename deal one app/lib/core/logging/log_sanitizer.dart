@@ -13,6 +13,9 @@ class LogSanitizer {
     'cardnumber',
     'creditcard',
     'apikey',
+    'phone',
+    'mobile',
+    'phonenumber',
   };
 
   static dynamic sanitize(dynamic data) {

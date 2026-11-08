@@ -48,10 +48,7 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final dependencies = AppDependencies.of(context);
-      _repository = MarketRepositoryImpl(
-        mockDataProvider: dependencies.mockDataProvider,
-        apiClient: dependencies.apiClient,
-      );
+      _repository = MarketRepositoryImpl(apiClient: dependencies.apiClient);
       _loadData();
     });
   }

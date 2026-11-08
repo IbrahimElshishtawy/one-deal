@@ -1,6 +1,5 @@
 import 'package:intl/intl.dart';
 
-import '../../core/mock_data/mock_data_provider.dart';
 import '../../core/network/api_client.dart';
 import '../models/home_feed_models.dart';
 
@@ -12,10 +11,9 @@ abstract class MarketRepository {
 }
 
 class MarketRepositoryImpl implements MarketRepository {
-  final MockDataProvider mockDataProvider;
   final ApiClient? apiClient;
 
-  MarketRepositoryImpl({required this.mockDataProvider, this.apiClient});
+  MarketRepositoryImpl({this.apiClient});
 
   @override
   Future<List<RealEstateItem>> getRealEstateListings() async {

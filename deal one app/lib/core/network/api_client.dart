@@ -80,7 +80,9 @@ class DioApiClient implements ApiClient {
     dioInstance.interceptors.addAll([
       RequestIdInterceptor(),
       AuthInterceptor(
+        dio: dioInstance,
         tokenProvider: tokenProvider,
+        trustedOrigin: appConfig.apiBaseUrl,
         onSessionExpired: onSessionExpired,
       ),
       if (appConfig.enableLogging) NetworkLoggingInterceptor(logger: logger),

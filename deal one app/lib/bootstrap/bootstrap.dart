@@ -11,10 +11,10 @@ import '../core/config/app_config.dart';
 import '../core/config/config_validator.dart';
 import '../core/localization/locale_controller.dart';
 import '../core/logging/app_logger.dart';
-import '../core/mock_data/mock_data_provider.dart';
 import '../core/network/api_client.dart';
 import '../core/network/network_info.dart';
 import '../core/platform/platform_info.dart';
+import '../core/providers/core_providers.dart';
 import '../core/security/secure_token_provider.dart';
 import '../core/storage/preferences_service.dart';
 import '../core/storage/secure_storage_service.dart';
@@ -51,7 +51,6 @@ Future<AppDependencies> initializeDependencies(AppConfig config) async {
     logger: logger,
   );
 
-  final mockDataProvider = MockDataProvider();
   const platformInfo = PlatformInfoImpl();
 
   final localeController = LocaleController(
@@ -77,7 +76,6 @@ Future<AppDependencies> initializeDependencies(AppConfig config) async {
     secureStorageService: secureStorageService,
     tokenProvider: tokenProvider,
     apiClient: apiClient,
-    mockDataProvider: mockDataProvider,
     platformInfo: platformInfo,
     localeController: localeController,
     themeController: themeController,
@@ -92,6 +90,14 @@ Future<void> bootstrap(AppConfig config) async {
     final dependencies = await initializeDependencies(config);
     runApp(
       ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(dependencies.appConfig),
+          networkInfoProvider.overrideWithValue(dependencies.networkInfo),
+          preferencesServiceProvider
+              .overrideWithValue(dependencies.preferencesService),
+          secureStorageServiceProvider
+              .overrideWithValue(dependencies.secureStorageService),
+        ],
         child: MarketSpaceApp(dependencies: dependencies),
       ),
     );

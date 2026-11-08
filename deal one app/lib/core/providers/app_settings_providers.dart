@@ -6,12 +6,16 @@ import 'core_providers.dart';
 class LocaleNotifier extends Notifier<Locale> {
   @override
   Locale build() {
-    final prefs = ref.watch(preferencesServiceProvider);
-    final savedCode = prefs.getString(StorageKeys.languageCode);
-    if (savedCode != null && savedCode.isNotEmpty) {
-      return Locale(savedCode);
-    }
+    _loadSaved();
     return const Locale('ar');
+  }
+
+  Future<void> _loadSaved() async {
+    final prefs = ref.read(preferencesServiceProvider);
+    final savedCode = await prefs.getString(StorageKeys.languageCode);
+    if (savedCode != null && savedCode.isNotEmpty) {
+      state = Locale(savedCode);
+    }
   }
 
   Future<void> setLocale(Locale newLocale) async {
@@ -28,11 +32,18 @@ final appLocaleProvider = NotifierProvider<LocaleNotifier, Locale>(() {
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
-    final prefs = ref.watch(preferencesServiceProvider);
-    final savedMode = prefs.getString(StorageKeys.themeMode);
-    if (savedMode == 'dark') return ThemeMode.dark;
-    if (savedMode == 'light') return ThemeMode.light;
+    _loadSaved();
     return ThemeMode.system;
+  }
+
+  Future<void> _loadSaved() async {
+    final prefs = ref.read(preferencesServiceProvider);
+    final savedMode = await prefs.getString(StorageKeys.themeMode);
+    if (savedMode == 'dark') {
+      state = ThemeMode.dark;
+    } else if (savedMode == 'light') {
+      state = ThemeMode.light;
+    }
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

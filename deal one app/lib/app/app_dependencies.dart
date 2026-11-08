@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import '../core/config/app_config.dart';
 import '../core/localization/locale_controller.dart';
 import '../core/logging/app_logger.dart';
-import '../core/mock_data/mock_data_provider.dart';
 import '../core/network/api_client.dart';
 import '../core/network/network_info.dart';
 import '../core/platform/platform_info.dart';
@@ -21,7 +20,6 @@ class AppDependencies {
   final SecureStorageService secureStorageService;
   final TokenProvider tokenProvider;
   final ApiClient apiClient;
-  final MockDataProvider mockDataProvider;
   final PlatformInfo platformInfo;
   final LocaleController localeController;
   final ThemeController themeController;
@@ -35,7 +33,6 @@ class AppDependencies {
     required this.secureStorageService,
     required this.tokenProvider,
     required this.apiClient,
-    required this.mockDataProvider,
     required this.platformInfo,
     required this.localeController,
     required this.themeController,

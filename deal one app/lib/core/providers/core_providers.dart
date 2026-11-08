@@ -11,7 +11,9 @@ import '../storage/secure_storage_service.dart';
 
 /// Provides the active runtime application configuration.
 final appConfigProvider = Provider<AppConfig>((ref) {
-  throw UnimplementedError('appConfigProvider must be overridden in ProviderScope');
+  throw UnimplementedError(
+    'appConfigProvider must be overridden in ProviderScope',
+  );
 });
 
 /// Provides the structured application logger.
@@ -22,17 +24,23 @@ final appLoggerProvider = Provider<AppLogger>((ref) {
 
 /// Provides platform network connectivity status.
 final networkInfoProvider = Provider<NetworkInfo>((ref) {
-  throw UnimplementedError('networkInfoProvider must be overridden in ProviderScope');
+  throw UnimplementedError(
+    'networkInfoProvider must be overridden in ProviderScope',
+  );
 });
 
 /// Provides persistent key-value preferences.
 final preferencesServiceProvider = Provider<PreferencesService>((ref) {
-  throw UnimplementedError('preferencesServiceProvider must be overridden in ProviderScope');
+  throw UnimplementedError(
+    'preferencesServiceProvider must be overridden in ProviderScope',
+  );
 });
 
 /// Provides platform-backed hardware encrypted secure storage.
 final secureStorageServiceProvider = Provider<SecureStorageService>((ref) {
-  throw UnimplementedError('secureStorageServiceProvider must be overridden in ProviderScope');
+  throw UnimplementedError(
+    'secureStorageServiceProvider must be overridden in ProviderScope',
+  );
 });
 
 /// Provides token access and mutation interface.
@@ -64,19 +72,18 @@ class SessionNotifier extends Notifier<SessionState> {
   }
 
   Future<void> restoreSession() async {
-    state = const SessionState.authenticating();
     final tokens = ref.read(tokenProvider);
     final accessToken = await tokens.getAccessToken();
 
     if (accessToken != null && accessToken.isNotEmpty) {
-      state = const SessionState.authenticated();
+      state = const SessionState(status: SessionStatus.authenticated);
     } else {
       state = const SessionState.unauthenticated();
     }
   }
 
-  Future<void> setAuthenticated() async {
-    state = const SessionState.authenticated();
+  void setAuthenticated({String? userId}) {
+    state = SessionState(status: SessionStatus.authenticated, userId: userId);
   }
 
   Future<void> logout() async {
