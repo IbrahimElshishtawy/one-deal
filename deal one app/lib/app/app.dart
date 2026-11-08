@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/providers/app_settings_providers.dart';
 import '../core/theme/app_theme_data.dart';
 import 'app_dependencies.dart';
 import 'app_localization.dart';
 import 'app_router.dart';
 
-class MarketSpaceApp extends StatefulWidget {
+class MarketSpaceApp extends ConsumerStatefulWidget {
   final AppDependencies dependencies;
   final GoRouter? customRouter;
 
@@ -17,10 +19,10 @@ class MarketSpaceApp extends StatefulWidget {
   });
 
   @override
-  State<MarketSpaceApp> createState() => _MarketSpaceAppState();
+  ConsumerState<MarketSpaceApp> createState() => _MarketSpaceAppState();
 }
 
-class _MarketSpaceAppState extends State<MarketSpaceApp> {
+class _MarketSpaceAppState extends ConsumerState<MarketSpaceApp> {
   late final GoRouter _router;
 
   @override
@@ -31,29 +33,21 @@ class _MarketSpaceAppState extends State<MarketSpaceApp> {
 
   @override
   Widget build(BuildContext context) {
+    final currentLocale = ref.watch(appLocaleProvider);
+    final currentThemeMode = ref.watch(appThemeModeProvider);
+
     return AppDependenciesScope(
       dependencies: widget.dependencies,
-      child: ListenableBuilder(
-        listenable: Listenable.merge([
-          widget.dependencies.localeController,
-          widget.dependencies.themeController,
-        ]),
-        builder: (context, _) {
-          final currentLocale = widget.dependencies.localeController.value;
-          final currentThemeMode = widget.dependencies.themeController.value;
-
-          return MaterialApp.router(
-            title: 'Market Space',
-            debugShowCheckedModeBanner: false,
-            routerConfig: _router,
-            locale: currentLocale,
-            themeMode: currentThemeMode,
-            theme: AppThemeData.lightTheme,
-            darkTheme: AppThemeData.darkTheme,
-            localizationsDelegates: AppLocalization.localizationsDelegates,
-            supportedLocales: AppLocalization.supportedLocales,
-          );
-        },
+      child: MaterialApp.router(
+        title: 'Deal One (صفقة ون)',
+        debugShowCheckedModeBanner: false,
+        routerConfig: _router,
+        locale: currentLocale,
+        themeMode: currentThemeMode,
+        theme: AppThemeData.lightTheme,
+        darkTheme: AppThemeData.darkTheme,
+        localizationsDelegates: AppLocalization.localizationsDelegates,
+        supportedLocales: AppLocalization.supportedLocales,
       ),
     );
   }

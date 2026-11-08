@@ -1,25 +1,56 @@
-import '../../../features/building_materials/navigation/building_materials_navigation_config.dart';
-import '../../../features/cars/navigation/cars_navigation_config.dart';
-import '../../../features/fashion/navigation/fashion_navigation_config.dart';
-import '../../../features/home_appliances/navigation/home_appliances_navigation_config.dart';
-import '../../../features/home_services/navigation/home_services_navigation_config.dart';
-import '../../../features/real_estate/navigation/real_estate_navigation_config.dart';
+import 'package:flutter/material.dart';
+import 'floating_action_config.dart';
+import 'navigation_item_config.dart';
 import 'section_navigation_config.dart';
 
 class SectionNavigationRegistry {
+  static const SectionNavigationConfig defaultConfig = SectionNavigationConfig(
+    sectionId: 'deal_one',
+    sectionName: 'Deal One',
+    items: [
+      NavigationItemConfig(
+        id: 'home',
+        label: 'الرئيسية',
+        activeIcon: Icons.home,
+        inactiveIcon: Icons.home_outlined,
+        destination: '/',
+      ),
+      NavigationItemConfig(
+        id: 'categories',
+        label: 'الأقسام',
+        activeIcon: Icons.grid_view,
+        inactiveIcon: Icons.grid_view_outlined,
+        destination: '/categories',
+      ),
+      NavigationItemConfig(
+        id: 'favorites',
+        label: 'المفضلة',
+        activeIcon: Icons.favorite,
+        inactiveIcon: Icons.favorite_outline,
+        destination: '/favorites',
+      ),
+      NavigationItemConfig(
+        id: 'profile',
+        label: 'حسابي',
+        activeIcon: Icons.person,
+        inactiveIcon: Icons.person_outline,
+        destination: '/profile',
+      ),
+    ],
+    floatingAction: FloatingActionConfig(
+      id: 'add_listing',
+      label: 'أضف إعلانك',
+      icon: Icons.add,
+      onPressedRoute: '/listings/create',
+    ),
+  );
+
   static final Map<String, SectionNavigationConfig> _registry = {
-    RealEstateNavigationConfig.sectionId: RealEstateNavigationConfig.config,
-    BuildingMaterialsNavigationConfig.sectionId:
-        BuildingMaterialsNavigationConfig.config,
-    HomeServicesNavigationConfig.sectionId: HomeServicesNavigationConfig.config,
-    HomeAppliancesNavigationConfig.sectionId:
-        HomeAppliancesNavigationConfig.config,
-    CarsNavigationConfig.sectionId: CarsNavigationConfig.config,
-    FashionNavigationConfig.sectionId: FashionNavigationConfig.config,
+    'deal_one': defaultConfig,
   };
 
   static SectionNavigationConfig getConfig(String sectionId) {
-    return _registry[sectionId] ?? RealEstateNavigationConfig.config;
+    return _registry[sectionId] ?? defaultConfig;
   }
 
   static List<SectionNavigationConfig> get allConfigs =>

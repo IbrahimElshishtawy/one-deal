@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,13 +19,6 @@ import '../core/security/secure_token_provider.dart';
 import '../core/storage/preferences_service.dart';
 import '../core/storage/secure_storage_service.dart';
 import '../shared/state/sector_controller.dart';
-import '../features/real_estate/data/repositories/real_estate_repository.dart';
-import '../features/building_materials/data/repositories/building_materials_repository.dart';
-import '../features/favorites/data/repositories/unified_favorites_repository.dart';
-import '../features/cars/data/repositories/cars_repository.dart';
-import '../features/fashion/data/repositories/fashion_repository.dart';
-import '../features/home_appliances/data/repositories/home_appliances_repository.dart';
-import '../features/home_services/data/repositories/home_services_repository.dart';
 import 'bootstrap_observer.dart';
 
 Future<AppDependencies> initializeDependencies(AppConfig config) async {
@@ -88,15 +82,6 @@ Future<AppDependencies> initializeDependencies(AppConfig config) async {
     localeController: localeController,
     themeController: themeController,
     sectorController: sectorController,
-    realEstateRepository: ApiRealEstateRepository(apiClient: apiClient),
-    homeAppliancesRepository: ApiHomeAppliancesRepository(apiClient: apiClient),
-    carsRepository: ApiCarsRepository(apiClient: apiClient),
-    fashionRepository: ApiFashionRepository(apiClient: apiClient),
-    homeServicesRepository: ApiHomeServicesRepository(apiClient: apiClient),
-    buildingMaterialsRepository:
-        ApiBuildingMaterialsRepository(apiClient: apiClient),
-    unifiedFavoritesRepository:
-        ApiUnifiedFavoritesRepository(apiClient: apiClient),
   );
 }
 
@@ -105,7 +90,11 @@ Future<void> bootstrap(AppConfig config) async {
 
   try {
     final dependencies = await initializeDependencies(config);
-    runApp(MarketSpaceApp(dependencies: dependencies));
+    runApp(
+      ProviderScope(
+        child: MarketSpaceApp(dependencies: dependencies),
+      ),
+    );
   } catch (error, stackTrace) {
     final fallbackLogger = AppLoggerImpl(isLoggingEnabled: true);
     fallbackLogger.error(
