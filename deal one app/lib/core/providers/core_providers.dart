@@ -61,6 +61,9 @@ final apiClientProvider = Provider<ApiClient>((ref) {
     networkInfo: networkInfo,
     tokenProvider: token,
     logger: logger,
+    onSessionExpired: () {
+      ref.read(sessionProvider.notifier).handleSessionExpired();
+    },
   );
 });
 
@@ -84,6 +87,10 @@ class SessionNotifier extends Notifier<SessionState> {
 
   void setAuthenticated({String? userId}) {
     state = SessionState(status: SessionStatus.authenticated, userId: userId);
+  }
+
+  void handleSessionExpired() {
+    state = const SessionState.unauthenticated();
   }
 
   Future<void> logout() async {

@@ -144,13 +144,19 @@ class ErrorMapper {
         extractedMessage = errorMap['message']?.toString() ?? extractedMessage;
         extractedCode = errorMap['code']?.toString();
         if (errorMap['details'] is List) {
+          final List<String> looseIssues = [];
           for (final item in errorMap['details'] as List) {
-            if (item is Map &&
-                item.containsKey('field') &&
-                item.containsKey('issue')) {
-              extractedFieldErrors[item['field'].toString()] = item['issue']
-                  .toString();
+            if (item is Map && item.containsKey('issue')) {
+              final issue = item['issue'].toString();
+              if (item.containsKey('field')) {
+                extractedFieldErrors[item['field'].toString()] = issue;
+              } else {
+                looseIssues.add(issue);
+              }
             }
+          }
+          if (looseIssues.isNotEmpty) {
+            extractedMessage = looseIssues.first;
           }
         }
       } else if (data.containsKey('message')) {
@@ -160,6 +166,7 @@ class ErrorMapper {
 
     switch (statusCode) {
       case 400:
+      case 422:
         return ValidationFailure(
           userFriendlyMessage: extractedMessage,
           technicalCode: extractedCode ?? 'BAD_REQUEST',
@@ -179,6 +186,11 @@ class ErrorMapper {
         return NotFoundFailure(
           userFriendlyMessage: extractedMessage,
           technicalCode: extractedCode ?? 'NOT_FOUND',
+        );
+      case 409:
+        return ConflictFailure(
+          userFriendlyMessage: extractedMessage,
+          technicalCode: extractedCode ?? 'CONFLICT',
         );
       case 429:
         return RateLimitFailure(

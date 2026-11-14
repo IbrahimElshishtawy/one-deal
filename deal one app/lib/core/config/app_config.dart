@@ -40,13 +40,30 @@ class AppConfig {
   }
 
   factory AppConfig.production() {
+    const definedUrl = String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'https://one-deal-cjjt-production.up.railway.app/api/v1',
+    );
     return const AppConfig(
       environment: AppEnvironment.production,
-      apiBaseUrl: 'https://api.marketspace.eg/api/v1',
-      connectTimeout: Duration(seconds: 10),
-      receiveTimeout: Duration(seconds: 10),
+      apiBaseUrl: definedUrl,
+      connectTimeout: Duration(seconds: 15),
+      receiveTimeout: Duration(seconds: 15),
       enableLogging: false,
       enableMockMode: false,
     );
+  }
+
+  factory AppConfig.fromEnvironment() {
+    const env = String.fromEnvironment('APP_ENV', defaultValue: 'production');
+    switch (env) {
+      case 'development':
+        return AppConfig.development();
+      case 'staging':
+        return AppConfig.staging();
+      case 'production':
+      default:
+        return AppConfig.production();
+    }
   }
 }

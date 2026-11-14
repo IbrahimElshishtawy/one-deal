@@ -71,6 +71,13 @@ class RateLimitFailure extends AppFailure {
   });
 }
 
+class ConflictFailure extends AppFailure {
+  const ConflictFailure({
+    required super.userFriendlyMessage,
+    super.technicalCode = 'CONFLICT',
+  });
+}
+
 class CacheFailure extends AppFailure {
   const CacheFailure({
     required super.userFriendlyMessage,
