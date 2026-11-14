@@ -1,6 +1,9 @@
 import 'environment.dart';
 
 class AppConfig {
+  static const String defaultProductionApiBaseUrl =
+      'https://one-deal-cjjt-production.up.railway.app/api/v1';
+
   final AppEnvironment environment;
   final String apiBaseUrl;
   final Duration connectTimeout;
@@ -24,14 +27,14 @@ class AppConfig {
       connectTimeout: Duration(seconds: 15),
       receiveTimeout: Duration(seconds: 15),
       enableLogging: true,
-      enableMockMode: true,
+      enableMockMode: false,
     );
   }
 
   factory AppConfig.staging() {
     return const AppConfig(
       environment: AppEnvironment.staging,
-      apiBaseUrl: 'https://staging-api.marketspace.eg/api/v1',
+      apiBaseUrl: defaultProductionApiBaseUrl,
       connectTimeout: Duration(seconds: 15),
       receiveTimeout: Duration(seconds: 15),
       enableLogging: true,
@@ -40,13 +43,9 @@ class AppConfig {
   }
 
   factory AppConfig.production() {
-    const definedUrl = String.fromEnvironment(
-      'API_BASE_URL',
-      defaultValue: 'https://one-deal-cjjt-production.up.railway.app/api/v1',
-    );
     return const AppConfig(
       environment: AppEnvironment.production,
-      apiBaseUrl: definedUrl,
+      apiBaseUrl: defaultProductionApiBaseUrl,
       connectTimeout: Duration(seconds: 15),
       receiveTimeout: Duration(seconds: 15),
       enableLogging: false,
@@ -55,15 +54,29 @@ class AppConfig {
   }
 
   factory AppConfig.fromEnvironment() {
-    const env = String.fromEnvironment('APP_ENV', defaultValue: 'production');
-    switch (env) {
-      case 'development':
-        return AppConfig.development();
-      case 'staging':
-        return AppConfig.staging();
-      case 'production':
-      default:
-        return AppConfig.production();
+    const envName = String.fromEnvironment(
+      'APP_ENV',
+      defaultValue: 'production',
+    );
+    const customBaseUrl = String.fromEnvironment('API_BASE_URL');
+
+    final baseConfig = switch (envName) {
+      'development' => AppConfig.development(),
+      'staging' => AppConfig.staging(),
+      _ => AppConfig.production(),
+    };
+
+    if (customBaseUrl.trim().isEmpty) {
+      return baseConfig;
     }
+
+    return AppConfig(
+      environment: baseConfig.environment,
+      apiBaseUrl: customBaseUrl.trim(),
+      connectTimeout: baseConfig.connectTimeout,
+      receiveTimeout: baseConfig.receiveTimeout,
+      enableLogging: baseConfig.enableLogging,
+      enableMockMode: false,
+    );
   }
 }

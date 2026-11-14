@@ -50,6 +50,11 @@ class ErrorMapper {
           userFriendlyMessage: exception.message,
           technicalCode: exception.errorCode,
         );
+      case ConflictException():
+        return ConflictFailure(
+          userFriendlyMessage: exception.message,
+          technicalCode: exception.errorCode,
+        );
       case RateLimitException():
         return RateLimitFailure(
           userFriendlyMessage: exception.message,
@@ -144,19 +149,13 @@ class ErrorMapper {
         extractedMessage = errorMap['message']?.toString() ?? extractedMessage;
         extractedCode = errorMap['code']?.toString();
         if (errorMap['details'] is List) {
-          final List<String> looseIssues = [];
           for (final item in errorMap['details'] as List) {
-            if (item is Map && item.containsKey('issue')) {
-              final issue = item['issue'].toString();
-              if (item.containsKey('field')) {
-                extractedFieldErrors[item['field'].toString()] = issue;
-              } else {
-                looseIssues.add(issue);
-              }
+            if (item is Map &&
+                item.containsKey('field') &&
+                item.containsKey('issue')) {
+              extractedFieldErrors[item['field'].toString()] = item['issue']
+                  .toString();
             }
-          }
-          if (looseIssues.isNotEmpty) {
-            extractedMessage = looseIssues.first;
           }
         }
       } else if (data.containsKey('message')) {
@@ -169,7 +168,8 @@ class ErrorMapper {
       case 422:
         return ValidationFailure(
           userFriendlyMessage: extractedMessage,
-          technicalCode: extractedCode ?? 'BAD_REQUEST',
+          technicalCode: extractedCode ??
+              (statusCode == 422 ? 'UNPROCESSABLE_ENTITY' : 'BAD_REQUEST'),
           fieldErrors: extractedFieldErrors,
         );
       case 401:

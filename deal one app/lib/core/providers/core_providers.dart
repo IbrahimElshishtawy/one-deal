@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/app_config.dart';
 import '../logging/app_logger.dart';
@@ -8,6 +10,7 @@ import '../security/session_state.dart';
 import '../security/token_provider.dart';
 import '../storage/preferences_service.dart';
 import '../storage/secure_storage_service.dart';
+import '../storage/storage_keys.dart';
 
 /// Provides the active runtime application configuration.
 final appConfigProvider = Provider<AppConfig>((ref) {
@@ -62,7 +65,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
     tokenProvider: token,
     logger: logger,
     onSessionExpired: () {
-      ref.read(sessionProvider.notifier).handleSessionExpired();
+      unawaited(ref.read(sessionProvider.notifier).logout());
     },
   );
 });
@@ -76,10 +79,17 @@ class SessionNotifier extends Notifier<SessionState> {
 
   Future<void> restoreSession() async {
     final tokens = ref.read(tokenProvider);
+    final secureStorage = ref.read(secureStorageServiceProvider);
     final accessToken = await tokens.getAccessToken();
+    final storedUserId = await secureStorage.read(key: StorageKeys.userId);
 
     if (accessToken != null && accessToken.isNotEmpty) {
-      state = const SessionState(status: SessionStatus.authenticated);
+      state = SessionState(
+        status: SessionStatus.authenticated,
+        userId: (storedUserId != null && storedUserId.isNotEmpty)
+            ? storedUserId
+            : null,
+      );
     } else {
       state = const SessionState.unauthenticated();
     }
@@ -87,15 +97,17 @@ class SessionNotifier extends Notifier<SessionState> {
 
   void setAuthenticated({String? userId}) {
     state = SessionState(status: SessionStatus.authenticated, userId: userId);
-  }
-
-  void handleSessionExpired() {
-    state = const SessionState.unauthenticated();
+    if (userId != null && userId.isNotEmpty) {
+      final secureStorage = ref.read(secureStorageServiceProvider);
+      unawaited(secureStorage.write(key: StorageKeys.userId, value: userId));
+    }
   }
 
   Future<void> logout() async {
     final tokens = ref.read(tokenProvider);
+    final secureStorage = ref.read(secureStorageServiceProvider);
     await tokens.clearTokens();
+    await secureStorage.delete(key: StorageKeys.userId);
     state = const SessionState.unauthenticated();
   }
 }

@@ -48,3 +48,4 @@ describe('migrate-deploy script helpers', () => {
     expect(cliPath).toMatch(/node_modules[\\/]prisma[\\/]build[\\/]index\.js$/);
   });
 });
+

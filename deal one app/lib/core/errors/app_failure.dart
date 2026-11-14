@@ -53,6 +53,20 @@ class NotFoundFailure extends AppFailure {
   });
 }
 
+class ConflictFailure extends AppFailure {
+  const ConflictFailure({
+    required super.userFriendlyMessage,
+    super.technicalCode = 'CONFLICT',
+  });
+}
+
+class UnsupportedFeatureFailure extends AppFailure {
+  const UnsupportedFeatureFailure({
+    required super.userFriendlyMessage,
+    super.technicalCode = 'UNSUPPORTED_FEATURE',
+  });
+}
+
 class ValidationFailure extends AppFailure {
   final Map<String, String> fieldErrors;
 
@@ -68,13 +82,6 @@ class RateLimitFailure extends AppFailure {
     super.userFriendlyMessage =
         'Too many requests. Please wait a moment and try again.',
     super.technicalCode = 'RATE_LIMIT_ERROR',
-  });
-}
-
-class ConflictFailure extends AppFailure {
-  const ConflictFailure({
-    required super.userFriendlyMessage,
-    super.technicalCode = 'CONFLICT',
   });
 }
 

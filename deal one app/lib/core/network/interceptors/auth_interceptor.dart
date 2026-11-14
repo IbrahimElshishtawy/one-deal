@@ -127,11 +127,22 @@ class AuthInterceptor extends Interceptor {
       );
 
       if (response.statusCode == 200 && response.data is Map) {
-        final data = response.data['data'] as Map<String, dynamic>?;
-        final newAccessToken = data?['accessToken']?.toString();
-        final newRefreshToken = data?['refreshToken']?.toString();
+        final payload = response.data as Map;
+        final rawData = payload['data'];
+        final data = rawData is Map
+            ? Map<String, dynamic>.from(rawData)
+            : Map<String, dynamic>.from(payload);
+        final nestedTokens = data['tokens'];
+        final tokenSource = nestedTokens is Map
+            ? Map<String, dynamic>.from(nestedTokens)
+            : data;
+        final newAccessToken = tokenSource['accessToken']?.toString();
+        final newRefreshToken = tokenSource['refreshToken']?.toString();
 
-        if (newAccessToken != null && newRefreshToken != null) {
+        if (newAccessToken != null &&
+            newAccessToken.isNotEmpty &&
+            newRefreshToken != null &&
+            newRefreshToken.isNotEmpty) {
           await tokenProvider.saveTokens(
             accessToken: newAccessToken,
             refreshToken: newRefreshToken,

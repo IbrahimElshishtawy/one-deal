@@ -1,79 +1,72 @@
 import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/security/token_provider.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../datasources/auth_remote_datasource.dart';
 import '../dto/auth_dto.dart';
 import '../mappers/auth_mapper.dart';
 
+/// Production implementation of [AuthRepository] backed by [AuthRemoteDataSource]
+/// and hardware-backed [TokenProvider] storage.
 class AuthRepositoryImpl implements AuthRepository {
   final ApiClient apiClient;
   final TokenProvider tokenProvider;
+  final AuthRemoteDataSource _remoteDataSource;
 
   AuthRepositoryImpl({
     required this.apiClient,
     required this.tokenProvider,
-  });
+    AuthRemoteDataSource? remoteDataSource,
+  }) : _remoteDataSource =
+            remoteDataSource ?? AuthRemoteDataSourceImpl(apiClient: apiClient);
 
   @override
-  Future<void> sendOtp(String phone) async {
-    final dto = SendOtpRequestDto(phone: phone);
-    await apiClient.post(ApiEndpoints.sendOtp, data: dto.toJson());
+  Future<OtpDispatchResult> sendOtp(String phone) async {
+    final dto = await _remoteDataSource.sendOtp(SendOtpRequestDto(phone: phone));
+    return AuthMapper.toOtpDispatchEntity(dto);
   }
 
   @override
-  Future<void> resendOtp(String phone) async {
-    final dto = SendOtpRequestDto(phone: phone);
-    await apiClient.post(ApiEndpoints.resendOtp, data: dto.toJson());
+  Future<OtpDispatchResult> resendOtp(String phone) async {
+    final dto = await _remoteDataSource.resendOtp(
+      SendOtpRequestDto(phone: phone),
+    );
+    return AuthMapper.toOtpDispatchEntity(dto);
   }
 
   @override
   Future<AuthSession> verifyOtp(String phone, String code) async {
-    final dto = VerifyOtpRequestDto(phone: phone, code: code);
-    final response = await apiClient.post(
-      ApiEndpoints.verifyOtp,
-      data: dto.toJson(),
+    final authDto = await _remoteDataSource.verifyOtp(
+      VerifyOtpRequestDto(phone: phone, code: code),
     );
-
-    final responseData = response.data is Map
-        ? (response.data['data'] as Map<String, dynamic>? ?? response.data)
-        : <String, dynamic>{};
-
-    final authResponseDto = AuthResponseDto.fromJson(
-      Map<String, dynamic>.from(responseData as Map),
-    );
-
-    // Save tokens in secure storage
-    await tokenProvider.saveTokens(
-      accessToken: authResponseDto.accessToken,
-      refreshToken: authResponseDto.refreshToken,
-    );
-
-    return AuthMapper.toSessionEntity(authResponseDto);
+    await _persistTokens(authDto);
+    return AuthMapper.toSessionEntity(authDto);
   }
 
   @override
   Future<AuthSession> loginWithPassword(String phone, String password) async {
-    final dto = LoginPasswordRequestDto(phone: phone, password: password);
-    final response = await apiClient.post(
-      ApiEndpoints.login,
-      data: dto.toJson(),
+    final authDto = await _remoteDataSource.loginWithPassword(
+      LoginPasswordRequestDto(phone: phone, password: password),
     );
+    await _persistTokens(authDto);
+    return AuthMapper.toSessionEntity(authDto);
+  }
 
-    final responseData = response.data is Map
-        ? (response.data['data'] as Map<String, dynamic>? ?? response.data)
-        : <String, dynamic>{};
-
-    final authResponseDto = AuthResponseDto.fromJson(
-      Map<String, dynamic>.from(responseData as Map),
+  @override
+  Future<AuthUser> updateProfile({required String fullName}) async {
+    final dto = await _remoteDataSource.updateProfile(
+      UpdateProfileRequestDto(fullName: fullName),
     );
+    return AuthMapper.toUserEntity(dto);
+  }
 
-    await tokenProvider.saveTokens(
-      accessToken: authResponseDto.accessToken,
-      refreshToken: authResponseDto.refreshToken,
-    );
-
-    return AuthMapper.toSessionEntity(authResponseDto);
+  @override
+  Future<AuthUser?> fetchCurrentUser() async {
+    final dto = await _remoteDataSource.fetchCurrentUser();
+    if (dto == null) {
+      return null;
+    }
+    return AuthMapper.toUserEntity(dto);
   }
 
   @override
@@ -81,8 +74,9 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final currentRefresh = await tokenProvider.getRefreshToken();
       if (currentRefresh != null && currentRefresh.isNotEmpty) {
-        final dto = RefreshTokenRequestDto(refreshToken: currentRefresh);
-        await apiClient.post(ApiEndpoints.logout, data: dto.toJson());
+        await _remoteDataSource.logout(
+          RefreshTokenRequestDto(refreshToken: currentRefresh),
+        );
       }
     } finally {
       await tokenProvider.clearTokens();
@@ -93,5 +87,14 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<bool> isAuthenticated() async {
     final token = await tokenProvider.getAccessToken();
     return token != null && token.isNotEmpty;
+  }
+
+  Future<void> _persistTokens(AuthResponseDto dto) async {
+    if (dto.accessToken.isNotEmpty || dto.refreshToken.isNotEmpty) {
+      await tokenProvider.saveTokens(
+        accessToken: dto.accessToken,
+        refreshToken: dto.refreshToken,
+      );
+    }
   }
 }

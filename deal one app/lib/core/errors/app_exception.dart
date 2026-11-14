@@ -63,6 +63,15 @@ class NotFoundException extends AppException {
   });
 }
 
+class ConflictException extends AppException {
+  const ConflictException({
+    super.message = 'Resource conflict',
+    super.statusCode = 409,
+    super.errorCode = 'CONFLICT',
+    super.details,
+  });
+}
+
 class ValidationException extends AppException {
   const ValidationException({
     required super.message,

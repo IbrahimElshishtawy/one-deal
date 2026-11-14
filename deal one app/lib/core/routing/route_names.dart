@@ -47,27 +47,13 @@ class RouteNames {
   static const String profile = '/profile';
   static const String search = '/search';
   static const String listingDetail = '/listings/:id';
-  static const String onboarding = '/onboarding';
-  static const String signUp = '/sign-up';
   static const String login = '/login';
-  static const String otpVerification = '/otp-verification';
-  static const String verificationSuccess = '/verification-success';
-  static const String terms = '/terms';
-  static const String privacy = '/privacy';
-  static const String support = '/support';
   static const String globalNotifications = '/notifications';
   static const String notFound = '/not-found';
 
   static const String searchName = 'search';
   static const String listingDetailName = 'listing_detail';
-  static const String onboardingName = 'onboarding';
-  static const String signUpName = 'sign_up';
   static const String loginName = 'login';
-  static const String otpVerificationName = 'otp_verification';
-  static const String verificationSuccessName = 'verification_success';
-  static const String termsName = 'terms';
-  static const String privacyName = 'privacy';
-  static const String supportName = 'support';
 
   static const String rootName = 'root';
   static const String realEstateName = 'real_estate';
