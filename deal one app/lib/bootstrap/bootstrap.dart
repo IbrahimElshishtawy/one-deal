@@ -18,6 +18,7 @@ import '../core/providers/core_providers.dart';
 import '../core/security/secure_token_provider.dart';
 import '../core/storage/preferences_service.dart';
 import '../core/storage/secure_storage_service.dart';
+import '../core/storage/storage_keys.dart';
 import '../shared/state/sector_controller.dart';
 import 'bootstrap_observer.dart';
 
@@ -68,6 +69,10 @@ Future<AppDependencies> initializeDependencies(AppConfig config) async {
   );
   await sectorController.loadSavedSector();
 
+  final onboardingCompleted =
+      await preferencesService.getBool(StorageKeys.onboardingCompleted) ??
+          false;
+
   return AppDependencies(
     appConfig: config,
     logger: logger,
@@ -80,6 +85,7 @@ Future<AppDependencies> initializeDependencies(AppConfig config) async {
     localeController: localeController,
     themeController: themeController,
     sectorController: sectorController,
+    onboardingCompleted: onboardingCompleted,
   );
 }
 

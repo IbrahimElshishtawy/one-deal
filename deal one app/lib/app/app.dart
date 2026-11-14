@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/providers/app_settings_providers.dart';
+import '../core/providers/core_providers.dart';
+import '../core/routing/route_names.dart';
 import '../core/theme/app_theme_data.dart';
 import 'app_dependencies.dart';
 import 'app_localization.dart';
@@ -28,7 +30,14 @@ class _MarketSpaceAppState extends ConsumerState<MarketSpaceApp> {
   @override
   void initState() {
     super.initState();
-    _router = widget.customRouter ?? AppRouter.createRouter();
+    final initialRoute = widget.dependencies.onboardingCompleted
+        ? RouteNames.root
+        : RouteNames.onboarding;
+    _router = widget.customRouter ??
+        AppRouter.createRouter(initialLocation: initialRoute);
+    Future.microtask(
+      () => ref.read(sessionProvider.notifier).restoreSession(),
+    );
   }
 
   @override

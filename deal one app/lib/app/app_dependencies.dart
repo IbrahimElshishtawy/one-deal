@@ -24,6 +24,7 @@ class AppDependencies {
   final LocaleController localeController;
   final ThemeController themeController;
   final SectorController sectorController;
+  final bool onboardingCompleted;
 
   AppDependencies({
     required this.appConfig,
@@ -37,6 +38,7 @@ class AppDependencies {
     required this.localeController,
     required this.themeController,
     required this.sectorController,
+    this.onboardingCompleted = true,
   });
 
   static AppDependencies of(BuildContext context) =>
