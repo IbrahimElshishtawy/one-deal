@@ -95,13 +95,13 @@ class _AuthTextFieldState extends State<AuthTextField> {
     final activeColor = hasError
         ? AuthDesignTokens.errorRed
         : (_hasFocus
-            ? AuthDesignTokens.focusOrange
-            : AuthDesignTokens.borderOf(context));
+              ? AuthDesignTokens.focusOrange
+              : AuthDesignTokens.borderOf(context));
     final iconColor = hasError
         ? AuthDesignTokens.errorRed
         : (_hasFocus
-            ? AuthDesignTokens.focusOrange
-            : AuthDesignTokens.mutedOf(context));
+              ? AuthDesignTokens.focusOrange
+              : AuthDesignTokens.mutedOf(context));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

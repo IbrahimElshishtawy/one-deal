@@ -168,7 +168,8 @@ class ErrorMapper {
       case 422:
         return ValidationFailure(
           userFriendlyMessage: extractedMessage,
-          technicalCode: extractedCode ??
+          technicalCode:
+              extractedCode ??
               (statusCode == 422 ? 'UNPROCESSABLE_ENTITY' : 'BAD_REQUEST'),
           fieldErrors: extractedFieldErrors,
         );

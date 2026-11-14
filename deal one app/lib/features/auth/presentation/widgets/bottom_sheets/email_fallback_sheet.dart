@@ -51,8 +51,7 @@ class _EmailFallbackSheetState extends State<EmailFallbackSheet> {
 
     setState(() {
       _emailError = null;
-      _unsupportedNotice =
-          'إرسال رمز التحقق عبر البريد الإلكتروني غير متاح حالياً من الخادم. يرجى إتمام التحقق عبر رسالة SMS على رقم الموبايل المصري (+20).';
+      _unsupportedNotice = 'إرسال رمز التحقق عبر البريد الإلكتروني غير متاح حالياً من الخادم. يرجى إتمام التحقق عبر رسالة SMS على رقم الموبايل المصري (+20).';
     });
   }
 

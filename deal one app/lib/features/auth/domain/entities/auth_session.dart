@@ -171,11 +171,11 @@ class PendingAuthContext {
 
   @override
   int get hashCode => Object.hash(
-        normalizedPhone,
-        displayPhone,
-        pendingFullName,
-        flowMode,
-        cooldownSeconds,
-        otpExpirySeconds,
-      );
+    normalizedPhone,
+    displayPhone,
+    pendingFullName,
+    flowMode,
+    cooldownSeconds,
+    otpExpirySeconds,
+  );
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../config/app_config.dart';
 import '../logging/app_logger.dart';
 import '../network/api_client.dart';
@@ -81,7 +82,7 @@ class SessionNotifier extends Notifier<SessionState> {
     final tokens = ref.read(tokenProvider);
     final secureStorage = ref.read(secureStorageServiceProvider);
     final accessToken = await tokens.getAccessToken();
-    final storedUserId = await secureStorage.read(key: StorageKeys.userId);
+    final storedUserId = await secureStorage.read(StorageKeys.userId);
 
     if (accessToken != null && accessToken.isNotEmpty) {
       state = SessionState(
@@ -99,7 +100,7 @@ class SessionNotifier extends Notifier<SessionState> {
     state = SessionState(status: SessionStatus.authenticated, userId: userId);
     if (userId != null && userId.isNotEmpty) {
       final secureStorage = ref.read(secureStorageServiceProvider);
-      unawaited(secureStorage.write(key: StorageKeys.userId, value: userId));
+      unawaited(secureStorage.write(StorageKeys.userId, userId));
     }
   }
 
@@ -107,7 +108,7 @@ class SessionNotifier extends Notifier<SessionState> {
     final tokens = ref.read(tokenProvider);
     final secureStorage = ref.read(secureStorageServiceProvider);
     await tokens.clearTokens();
-    await secureStorage.delete(key: StorageKeys.userId);
+    await secureStorage.delete(StorageKeys.userId);
     state = const SessionState.unauthenticated();
   }
 }

@@ -67,13 +67,15 @@ class SignUpState {
     return SignUpState(
       fullName: fullName ?? this.fullName,
       phone: phone ?? this.phone,
-      fullNameError:
-          clearFullNameError ? null : (fullNameError ?? this.fullNameError),
+      fullNameError: clearFullNameError
+          ? null
+          : (fullNameError ?? this.fullNameError),
       phoneError: clearPhoneError ? null : (phoneError ?? this.phoneError),
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      pendingContext:
-          clearPendingContext ? null : (pendingContext ?? this.pendingContext),
+      pendingContext: clearPendingContext
+          ? null
+          : (pendingContext ?? this.pendingContext),
     );
   }
 }
@@ -109,8 +111,9 @@ class LoginState {
       phoneError: clearPhoneError ? null : (phoneError ?? this.phoneError),
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      pendingContext:
-          clearPendingContext ? null : (pendingContext ?? this.pendingContext),
+      pendingContext: clearPendingContext
+          ? null
+          : (pendingContext ?? this.pendingContext),
     );
   }
 }
@@ -171,8 +174,7 @@ class OtpVerificationState {
       status == OtpStatus.locked;
   bool get hasBannerError =>
       errorMessage != null && errorMessage!.trim().isNotEmpty;
-  bool get canSubmit =>
-      code.length == 6 && !isBusy && !isExpired && !isLocked;
+  bool get canSubmit => code.length == 6 && !isBusy && !isExpired && !isLocked;
   bool get canResend => cooldownRemainingSeconds <= 0 && !isBusy;
 
   /// Formats `cooldownRemainingSeconds` as `MM:SS` (e.g. `00:45`).
@@ -210,8 +212,9 @@ class OtpVerificationState {
       flowMode: flowMode ?? this.flowMode,
       code: code ?? this.code,
       status: status ?? this.status,
-      errorMessage:
-          clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+      errorMessage: clearErrorMessage
+          ? null
+          : (errorMessage ?? this.errorMessage),
       cooldownRemainingSeconds:
           cooldownRemainingSeconds ?? this.cooldownRemainingSeconds,
       expiryRemainingSeconds:

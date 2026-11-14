@@ -30,7 +30,8 @@ class AuthScaffoldShell extends StatelessWidget {
           builder: (context, constraints) {
             return SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: padding ??
+              padding:
+                  padding ??
                   const EdgeInsets.symmetric(
                     horizontal: AuthDesignTokens.horizontalPadding,
                     vertical: 16,

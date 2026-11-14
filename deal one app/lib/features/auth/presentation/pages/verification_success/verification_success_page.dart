@@ -14,14 +14,12 @@ import '../../widgets/common/auth_scaffold_shell.dart';
 class VerificationSuccessPage extends ConsumerWidget {
   final AuthSession? session;
 
-  const VerificationSuccessPage({
-    super.key,
-    this.session,
-  });
+  const VerificationSuccessPage({super.key, this.session});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeUser = session?.user ?? ref.watch(authControllerProvider).valueOrNull;
+    final activeUser =
+        session?.user ?? ref.watch(authControllerProvider).valueOrNull;
     final displayName = (activeUser?.fullName.trim().isNotEmpty == true)
         ? activeUser!.fullName
         : 'عميل ديل ون';
@@ -54,8 +52,9 @@ class VerificationSuccessPage extends ConsumerWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color:
-                            AuthDesignTokens.successGreen.withValues(alpha: 0.28),
+                        color: AuthDesignTokens.successGreen.withValues(
+                          alpha: 0.28,
+                        ),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -94,8 +93,10 @@ class VerificationSuccessPage extends ConsumerWidget {
             const SizedBox(height: 18),
             Center(
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: AuthDesignTokens.surfaceOf(context),
                   borderRadius: BorderRadius.circular(14),

@@ -22,10 +22,7 @@ import '../../widgets/otp/otp_pin_boxes.dart';
 class OtpVerificationPage extends ConsumerWidget {
   final PendingAuthContext? authContext;
 
-  const OtpVerificationPage({
-    super.key,
-    required this.authContext,
-  });
+  const OtpVerificationPage({super.key, required this.authContext});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,8 +66,9 @@ class OtpVerificationPage extends ConsumerWidget {
     }
 
     final state = ref.watch(otpVerificationControllerProvider(pending));
-    final controller =
-        ref.read(otpVerificationControllerProvider(pending).notifier);
+    final controller = ref.read(
+      otpVerificationControllerProvider(pending).notifier,
+    );
 
     Future<void> verifyAndProceed() async {
       final session = await controller.verifyCode();
@@ -83,9 +81,7 @@ class OtpVerificationPage extends ConsumerWidget {
       if (!context.mounted) return;
       if (resent) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم إرسال رمز تحقق جديد بنجاح'),
-          ),
+          const SnackBar(content: Text('تم إرسال رمز تحقق جديد بنجاح')),
         );
       }
     }
@@ -170,8 +166,8 @@ class OtpVerificationPage extends ConsumerWidget {
                 state.isExpired
                     ? Icons.timer_off_outlined
                     : (state.hasFieldError
-                        ? Icons.gpp_bad_outlined
-                        : Icons.mark_chat_read_outlined),
+                          ? Icons.gpp_bad_outlined
+                          : Icons.mark_chat_read_outlined),
                 size: 34,
                 color: state.hasFieldError
                     ? AuthDesignTokens.errorRed
@@ -260,13 +256,14 @@ class OtpVerificationPage extends ConsumerWidget {
               icon: state.isExpired
                   ? Icons.schedule_rounded
                   : Icons.error_outline_rounded,
-              actionLabel: (state.isExpired || state.isLocked) && state.canResend
+              actionLabel:
+                  (state.isExpired || state.isLocked) && state.canResend
                   ? 'إرسال رمز جديد الآن'
                   : null,
               onActionPressed:
                   (state.isExpired || state.isLocked) && state.canResend
-                      ? handleResend
-                      : null,
+                  ? handleResend
+                  : null,
             ),
           ],
           if (state.status == OtpStatus.invalid &&

@@ -21,7 +21,8 @@ class AuthPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = backgroundColor ?? AuthDesignTokens.primaryActionOf(context);
+    final bgColor =
+        backgroundColor ?? AuthDesignTokens.primaryActionOf(context);
     final effectiveOnPressed = isLoading ? null : onPressed;
 
     return SizedBox(
@@ -37,10 +38,7 @@ class AuthPrimaryButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
           ),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
         child: isLoading
             ? const SizedBox(
@@ -59,12 +57,7 @@ class AuthPrimaryButton extends StatelessWidget {
                     Icon(leadingIcon, size: 20),
                     const SizedBox(width: 8),
                   ],
-                  Flexible(
-                    child: Text(
-                      label,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                  Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
                 ],
               ),
       ),

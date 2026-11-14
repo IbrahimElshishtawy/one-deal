@@ -88,27 +88,32 @@ class AuthController extends AsyncNotifier<AuthUser?> {
   }
 }
 
-final authControllerProvider =
-    AsyncNotifierProvider<AuthController, AuthUser?>(() {
-  return AuthController();
-});
+final authControllerProvider = AsyncNotifierProvider<AuthController, AuthUser?>(
+  () {
+    return AuthController();
+  },
+);
 
 final onboardingControllerProvider =
     AutoDisposeNotifierProvider<OnboardingController, OnboardingState>(() {
-  return OnboardingController();
-});
+      return OnboardingController();
+    });
 
 final signUpControllerProvider =
     AutoDisposeNotifierProvider<SignUpController, SignUpState>(() {
-  return SignUpController();
-});
+      return SignUpController();
+    });
 
 final loginControllerProvider =
     AutoDisposeNotifierProvider<LoginController, LoginState>(() {
-  return LoginController();
-});
+      return LoginController();
+    });
 
-final otpVerificationControllerProvider = AutoDisposeNotifierProviderFamily<
-    OtpVerificationController, OtpVerificationState, PendingAuthContext>(() {
-  return OtpVerificationController();
-});
+final otpVerificationControllerProvider =
+    AutoDisposeNotifierProviderFamily<
+      OtpVerificationController,
+      OtpVerificationState,
+      PendingAuthContext
+    >(() {
+      return OtpVerificationController();
+    });

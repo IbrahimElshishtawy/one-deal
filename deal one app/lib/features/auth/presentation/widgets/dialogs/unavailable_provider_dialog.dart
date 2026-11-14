@@ -8,10 +8,7 @@ import '../../theme/auth_design_tokens.dart';
 class UnavailableProviderDialog extends StatelessWidget {
   final SocialAuthProviderType provider;
 
-  const UnavailableProviderDialog({
-    super.key,
-    required this.provider,
-  });
+  const UnavailableProviderDialog({super.key, required this.provider});
 
   static Future<void> show(
     BuildContext context, {

@@ -30,8 +30,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _handleSubmit() async {
     FocusScope.of(context).unfocus();
-    final pending =
-        await ref.read(loginControllerProvider.notifier).submit();
+    final pending = await ref.read(loginControllerProvider.notifier).submit();
     if (!mounted || pending == null) return;
     ref.read(loginControllerProvider.notifier).consumePendingContext();
     context.push(RouteNames.otpVerification, extra: pending);

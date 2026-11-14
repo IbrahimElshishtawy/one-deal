@@ -27,10 +27,7 @@ class LoginController extends AutoDisposeNotifier<LoginState> {
 
     final phoneError = EgyptianPhoneValidator.validate(state.phone);
     if (phoneError != null) {
-      state = state.copyWith(
-        phoneError: phoneError,
-        clearSubmitError: true,
-      );
+      state = state.copyWith(phoneError: phoneError, clearSubmitError: true);
       return null;
     }
 
@@ -58,10 +55,7 @@ class LoginController extends AutoDisposeNotifier<LoginState> {
         cooldownSeconds: dispatchResult.cooldownSeconds,
         otpExpirySeconds: dispatchResult.otpExpirySeconds,
       );
-      state = state.copyWith(
-        isSubmitting: false,
-        pendingContext: pending,
-      );
+      state = state.copyWith(isSubmitting: false, pendingContext: pending);
       return pending;
     } catch (error) {
       final feedback = AuthErrorMapper.map(error);

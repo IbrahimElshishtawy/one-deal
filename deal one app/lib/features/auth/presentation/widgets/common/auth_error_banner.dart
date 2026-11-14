@@ -25,19 +25,12 @@ class AuthErrorBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AuthDesignTokens.errorTintOf(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AuthDesignTokens.errorBorder,
-          width: 1.1,
-        ),
+        border: Border.all(color: AuthDesignTokens.errorBorder, width: 1.1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: AuthDesignTokens.errorRed,
-          ),
+          Icon(icon, size: 20, color: AuthDesignTokens.errorRed),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

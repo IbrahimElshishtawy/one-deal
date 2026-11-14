@@ -82,10 +82,7 @@ class OtpCountdownTimer extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Divider(
-            height: 1,
-            color: AuthDesignTokens.dividerOf(context),
-          ),
+          Divider(height: 1, color: AuthDesignTokens.dividerOf(context)),
           const SizedBox(height: 10),
           if (cooldownRemainingSeconds > 0 && !isResending)
             Row(

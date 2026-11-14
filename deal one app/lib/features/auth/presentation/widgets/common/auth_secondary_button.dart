@@ -36,10 +36,7 @@ class AuthSecondaryButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
           ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -49,12 +46,7 @@ class AuthSecondaryButton extends StatelessWidget {
               Icon(leadingIcon, size: 20),
               const SizedBox(width: 8),
             ],
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+            Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
           ],
         ),
       ),

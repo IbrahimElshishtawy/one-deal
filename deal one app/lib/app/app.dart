@@ -33,11 +33,10 @@ class _MarketSpaceAppState extends ConsumerState<MarketSpaceApp> {
     final initialRoute = widget.dependencies.onboardingCompleted
         ? RouteNames.root
         : RouteNames.onboarding;
-    _router = widget.customRouter ??
+    _router =
+        widget.customRouter ??
         AppRouter.createRouter(initialLocation: initialRoute);
-    Future.microtask(
-      () => ref.read(sessionProvider.notifier).restoreSession(),
-    );
+    Future.microtask(() => ref.read(sessionProvider.notifier).restoreSession());
   }
 
   @override

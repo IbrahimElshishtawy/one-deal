@@ -13,7 +13,8 @@ import '../state/auth_states.dart';
 /// Controls the OTP countdown timers, 6-digit verification submission,
 /// invalid/expired error handling, and cooldown-protected resend flow.
 class OtpVerificationController
-    extends AutoDisposeFamilyNotifier<OtpVerificationState, PendingAuthContext> {
+    extends
+        AutoDisposeFamilyNotifier<OtpVerificationState, PendingAuthContext> {
   Timer? _countdownTimer;
 
   @override
@@ -50,10 +51,12 @@ class OtpVerificationController
       return;
     }
 
-    final nextCooldown =
-        state.cooldownRemainingSeconds > 0 ? state.cooldownRemainingSeconds - 1 : 0;
-    final nextExpiry =
-        state.expiryRemainingSeconds > 0 ? state.expiryRemainingSeconds - 1 : 0;
+    final nextCooldown = state.cooldownRemainingSeconds > 0
+        ? state.cooldownRemainingSeconds - 1
+        : 0;
+    final nextExpiry = state.expiryRemainingSeconds > 0
+        ? state.expiryRemainingSeconds - 1
+        : 0;
 
     if (nextExpiry == 0 && state.status != OtpStatus.expired) {
       state = state.copyWith(
@@ -87,7 +90,8 @@ class OtpVerificationController
         ? normalized.substring(0, OtpCodeValidator.requiredLength)
         : normalized;
 
-    final shouldClearInvalid = state.status == OtpStatus.invalid ||
+    final shouldClearInvalid =
+        state.status == OtpStatus.invalid ||
         state.status == OtpStatus.networkError ||
         state.status == OtpStatus.serverError ||
         state.status == OtpStatus.rateLimited;
@@ -139,8 +143,12 @@ class OtpVerificationController
       );
 
       _cancelTimer();
-      ref.read(sessionProvider.notifier).setAuthenticated(userId: session.user.id);
-      ref.read(authControllerProvider.notifier).setAuthenticatedUser(session.user);
+      ref
+          .read(sessionProvider.notifier)
+          .setAuthenticated(userId: session.user.id);
+      ref
+          .read(authControllerProvider.notifier)
+          .setAuthenticatedUser(session.user);
 
       state = state.copyWith(
         status: OtpStatus.verified,

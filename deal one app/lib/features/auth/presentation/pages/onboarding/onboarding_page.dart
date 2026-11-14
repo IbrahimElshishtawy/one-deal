@@ -94,8 +94,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       ),
                       TextButton(
                         key: const Key('onboarding_skip_button'),
-                        onPressed:
-                            state.isSubmitting ? null : _handleSkipToAuth,
+                        onPressed: state.isSubmitting
+                            ? null
+                            : _handleSkipToAuth,
                         child: Text(
                           'تخطي',
                           style: TextStyle(

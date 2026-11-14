@@ -57,35 +57,39 @@ class FakeApiClient implements ApiClient {
   }
 
   @override
-  Future<Response<T>> get<T>(String path,
-      {Map<String, dynamic>? queryParameters,
-      Options? options,
-      CancelToken? cancelToken}) =>
-      throw UnimplementedError();
+  Future<Response<T>> get<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) => throw UnimplementedError();
 
   @override
-  Future<Response<T>> put<T>(String path,
-      {dynamic data,
-      Map<String, dynamic>? queryParameters,
-      Options? options,
-      CancelToken? cancelToken}) =>
-      throw UnimplementedError();
+  Future<Response<T>> put<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) => throw UnimplementedError();
 
   @override
-  Future<Response<T>> patch<T>(String path,
-      {dynamic data,
-      Map<String, dynamic>? queryParameters,
-      Options? options,
-      CancelToken? cancelToken}) =>
-      throw UnimplementedError();
+  Future<Response<T>> patch<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) => throw UnimplementedError();
 
   @override
-  Future<Response<T>> delete<T>(String path,
-      {dynamic data,
-      Map<String, dynamic>? queryParameters,
-      Options? options,
-      CancelToken? cancelToken}) =>
-      throw UnimplementedError();
+  Future<Response<T>> delete<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) => throw UnimplementedError();
 }
 
 void main() {
@@ -109,29 +113,32 @@ void main() {
       expect(apiClient.lastPostData, equals({'phone': '+201012345678'}));
     });
 
-    test('verifyOtp parses session, saves tokens, and returns AuthSession', () async {
-      apiClient.nextPostResponseData = {
-        'success': true,
-        'data': {
-          'accessToken': 'jwt_access_123',
-          'refreshToken': 'jwt_refresh_456',
-          'user': {
-            'id': 'user_uuid_1',
-            'phone': '+201012345678',
-            'fullName': 'أحمد محمد',
-            'isPhoneVerified': true,
+    test(
+      'verifyOtp parses session, saves tokens, and returns AuthSession',
+      () async {
+        apiClient.nextPostResponseData = {
+          'success': true,
+          'data': {
+            'accessToken': 'jwt_access_123',
+            'refreshToken': 'jwt_refresh_456',
+            'user': {
+              'id': 'user_uuid_1',
+              'phone': '+201012345678',
+              'fullName': 'أحمد محمد',
+              'isPhoneVerified': true,
+            },
           },
-        },
-      };
+        };
 
-      final session = await repository.verifyOtp('+201012345678', '123456');
+        final session = await repository.verifyOtp('+201012345678', '123456');
 
-      expect(session.accessToken, equals('jwt_access_123'));
-      expect(session.refreshToken, equals('jwt_refresh_456'));
-      expect(session.user.fullName, equals('أحمد محمد'));
-      expect(tokenProvider.accessToken, equals('jwt_access_123'));
-      expect(tokenProvider.refreshToken, equals('jwt_refresh_456'));
-    });
+        expect(session.accessToken, equals('jwt_access_123'));
+        expect(session.refreshToken, equals('jwt_refresh_456'));
+        expect(session.user.fullName, equals('أحمد محمد'));
+        expect(tokenProvider.accessToken, equals('jwt_access_123'));
+        expect(tokenProvider.refreshToken, equals('jwt_refresh_456'));
+      },
+    );
 
     test('logout clears tokens', () async {
       tokenProvider.accessToken = 'token';

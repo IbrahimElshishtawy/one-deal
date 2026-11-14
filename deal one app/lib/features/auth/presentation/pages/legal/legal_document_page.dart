@@ -8,10 +8,7 @@ import '../../theme/auth_design_tokens.dart';
 class LegalDocumentPage extends StatelessWidget {
   final LegalDocumentType documentType;
 
-  const LegalDocumentPage({
-    super.key,
-    required this.documentType,
-  });
+  const LegalDocumentPage({super.key, required this.documentType});
 
   String get _title => documentType == LegalDocumentType.termsOfService
       ? 'شروط الاستخدام'
@@ -19,40 +16,34 @@ class LegalDocumentPage extends StatelessWidget {
 
   List<_LegalSection> get _sections =>
       documentType == LegalDocumentType.termsOfService
-          ? const [
-              _LegalSection(
-                heading: '1. استخدام منصة ديل ون',
-                body:
-                    'تلتزم عند استخدام منصة ديل ون بنشر إعلانات حقيقية ومطابقة للقوانين المعمول بها في جمهورية مصر العربية، وعدم انتحال شخصية أو تقديم معلومات مضللة.',
-              ),
-              _LegalSection(
-                heading: '2. الحساب والتحقق برقم الهاتف',
-                body:
-                    'يتم توثيق الحسابات برقم موبايل مصري فعّال عبر رمز تحقق لمرة واحدة (OTP). أنت مسؤول عن سرية جلسة الدخول وعدم مشاركة رموز التحقق مع أي طرف.',
-              ),
-              _LegalSection(
-                heading: '3. التعاملات بين المستخدمين',
-                body:
-                    'ديل ون منصة وساطة وعرض إعلانات بين البائعين والمشترين. يرجى المعاينة الدقيقة والتأكد من مستندات الملكية قبل إتمام أي معاملة مالية.',
-              ),
-            ]
-          : const [
-              _LegalSection(
-                heading: '1. البيانات التي نجمعها',
-                body:
-                    'نجمع فقط الاسم الكامل ورقم الهاتف المصري وبيانات الإعلانات التي تضيفها لتفعيل حسابك وتمكين التواصل الموثوق داخل التطبيق.',
-              ),
-              _LegalSection(
-                heading: '2. أمان الرموز والجلسات',
-                body:
-                    'تُحفظ رموز الجلسة (JWT Access & Refresh Tokens) داخل التخزين المشفر على جهازك ولا تتم مشاركتها مع أي جهات خارجية لأغراض تسويقية.',
-              ),
-              _LegalSection(
-                heading: '3. حقوقك في الحساب',
-                body:
-                    'يمكنك تعديل اسمك، تسجيل الخروج من جميع الجلسات، أو طلب حذف حسابك في أي وقت عبر إعدادات الحساب أو بالتواصل مع الدعم الفني.',
-              ),
-            ];
+      ? const [
+          _LegalSection(
+            heading: '1. استخدام منصة ديل ون',
+            body: 'تلتزم عند استخدام منصة ديل ون بنشر إعلانات حقيقية ومطابقة للقوانين المعمول بها في جمهورية مصر العربية، وعدم انتحال شخصية أو تقديم معلومات مضللة.',
+          ),
+          _LegalSection(
+            heading: '2. الحساب والتحقق برقم الهاتف',
+            body: 'يتم توثيق الحسابات برقم موبايل مصري فعّال عبر رمز تحقق لمرة واحدة (OTP). أنت مسؤول عن سرية جلسة الدخول وعدم مشاركة رموز التحقق مع أي طرف.',
+          ),
+          _LegalSection(
+            heading: '3. التعاملات بين المستخدمين',
+            body: 'ديل ون منصة وساطة وعرض إعلانات بين البائعين والمشترين. يرجى المعاينة الدقيقة والتأكد من مستندات الملكية قبل إتمام أي معاملة مالية.',
+          ),
+        ]
+      : const [
+          _LegalSection(
+            heading: '1. البيانات التي نجمعها',
+            body: 'نجمع فقط الاسم الكامل ورقم الهاتف المصري وبيانات الإعلانات التي تضيفها لتفعيل حسابك وتمكين التواصل الموثوق داخل التطبيق.',
+          ),
+          _LegalSection(
+            heading: '2. أمان الرموز والجلسات',
+            body: 'تُحفظ رموز الجلسة (JWT Access & Refresh Tokens) داخل التخزين المشفر على جهازك ولا تتم مشاركتها مع أي جهات خارجية لأغراض تسويقية.',
+          ),
+          _LegalSection(
+            heading: '3. حقوقك في الحساب',
+            body: 'يمكنك تعديل اسمك، تسجيل الخروج من جميع الجلسات، أو طلب حذف حسابك في أي وقت عبر إعدادات الحساب أو بالتواصل مع الدعم الفني.',
+          ),
+        ];
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +86,9 @@ class LegalDocumentPage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AuthDesignTokens.surfaceOf(context),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AuthDesignTokens.borderOf(context)),
+                    border: Border.all(
+                      color: AuthDesignTokens.borderOf(context),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

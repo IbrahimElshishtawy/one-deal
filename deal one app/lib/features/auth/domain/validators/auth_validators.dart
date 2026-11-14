@@ -30,8 +30,9 @@ class FullNameValidator {
 }
 
 class EgyptianPhoneValidator {
-  static final RegExp _e164EgyptianRegex =
-      RegExp(r'^\+20(10|11|12|15)[0-9]{8}$');
+  static final RegExp _e164EgyptianRegex = RegExp(
+    r'^\+20(10|11|12|15)[0-9]{8}$',
+  );
 
   /// Normalizes Egyptian phone inputs (Arabic or Western digits, `01...`,
   /// `10...` entered after `+20`, `201...`, `00201...`, `+201...`) to `+201...`.

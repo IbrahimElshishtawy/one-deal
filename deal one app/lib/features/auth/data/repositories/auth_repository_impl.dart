@@ -18,11 +18,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.tokenProvider,
     AuthRemoteDataSource? remoteDataSource,
   }) : _remoteDataSource =
-            remoteDataSource ?? AuthRemoteDataSourceImpl(apiClient: apiClient);
+           remoteDataSource ?? AuthRemoteDataSourceImpl(apiClient: apiClient);
 
   @override
   Future<OtpDispatchResult> sendOtp(String phone) async {
-    final dto = await _remoteDataSource.sendOtp(SendOtpRequestDto(phone: phone));
+    final dto = await _remoteDataSource.sendOtp(
+      SendOtpRequestDto(phone: phone),
+    );
     return AuthMapper.toOtpDispatchEntity(dto);
   }
 

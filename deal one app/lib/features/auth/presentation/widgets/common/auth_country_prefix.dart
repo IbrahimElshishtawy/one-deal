@@ -13,9 +13,7 @@ class AuthCountryPrefixBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: AuthDesignTokens.surfaceOf(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AuthDesignTokens.borderOf(context),
-        ),
+        border: Border.all(color: AuthDesignTokens.borderOf(context)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

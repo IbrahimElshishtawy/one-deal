@@ -30,9 +30,9 @@ class RefreshTokenRequestDto {
   const RefreshTokenRequestDto({required this.refreshToken});
 
   Map<String, dynamic> toJson() => {
-        'refreshToken': refreshToken,
-        'refresh_token': refreshToken,
-      };
+    'refreshToken': refreshToken,
+    'refresh_token': refreshToken,
+  };
 }
 
 class UpdateProfileRequestDto {
@@ -58,7 +58,8 @@ class OtpDispatchResponseDto {
 
   factory OtpDispatchResponseDto.fromJson(Map<String, dynamic> json) {
     final rawCooldown = json['cooldownSeconds'] ?? json['cooldown_seconds'];
-    final rawExpiry = json['otpExpirySeconds'] ??
+    final rawExpiry =
+        json['otpExpirySeconds'] ??
         json['otp_expiry_seconds'] ??
         json['expiresIn'] ??
         json['expires_in'];
@@ -102,10 +103,12 @@ class AuthUserDto {
       fullName:
           json['fullName']?.toString() ?? json['full_name']?.toString() ?? '',
       email: json['email']?.toString(),
-      avatarUrl: json['avatarUrl']?.toString() ?? json['avatar_url']?.toString(),
+      avatarUrl:
+          json['avatarUrl']?.toString() ?? json['avatar_url']?.toString(),
       isPhoneVerified:
           json['isPhoneVerified'] == true || json['is_phone_verified'] == true,
-      preferredLanguage: json['preferredLanguage']?.toString() ??
+      preferredLanguage:
+          json['preferredLanguage']?.toString() ??
           json['preferred_language']?.toString(),
       role: json['role']?.toString(),
     );
@@ -130,13 +133,16 @@ class ActiveAccountSummaryDto {
   factory ActiveAccountSummaryDto.fromJson(Map<String, dynamic> json) {
     return ActiveAccountSummaryDto(
       id: json['id']?.toString() ?? '',
-      accountType: json['accountType']?.toString() ??
+      accountType:
+          json['accountType']?.toString() ??
           json['account_type']?.toString() ??
           'individual',
-      displayName: json['displayName']?.toString() ??
+      displayName:
+          json['displayName']?.toString() ??
           json['display_name']?.toString() ??
           '',
-      verificationStatus: json['verificationStatus']?.toString() ??
+      verificationStatus:
+          json['verificationStatus']?.toString() ??
           json['verification_status']?.toString() ??
           'approved',
       role: json['role']?.toString() ?? 'owner',
@@ -173,13 +179,17 @@ class AuthResponseDto {
     );
 
     final rawExpiresIn =
-        tokenSource['expiresIn'] ?? tokenSource['expires_in'] ?? json['expiresIn'];
+        tokenSource['expiresIn'] ??
+        tokenSource['expires_in'] ??
+        json['expiresIn'];
 
     return AuthResponseDto(
-      accessToken: tokenSource['accessToken']?.toString() ??
+      accessToken:
+          tokenSource['accessToken']?.toString() ??
           tokenSource['access_token']?.toString() ??
           '',
-      refreshToken: tokenSource['refreshToken']?.toString() ??
+      refreshToken:
+          tokenSource['refreshToken']?.toString() ??
           tokenSource['refresh_token']?.toString() ??
           '',
       user: AuthUserDto.fromJson(userMap),
@@ -189,7 +199,8 @@ class AuthResponseDto {
       expiresIn: rawExpiresIn is int
           ? rawExpiresIn
           : int.tryParse(rawExpiresIn?.toString() ?? ''),
-      sessionId: tokenSource['sessionId']?.toString() ??
+      sessionId:
+          tokenSource['sessionId']?.toString() ??
           tokenSource['session_id']?.toString(),
     );
   }

@@ -55,8 +55,8 @@ class AppDependenciesScope extends InheritedWidget {
   });
 
   static AppDependencies of(BuildContext context) {
-    final scope =
-        context.dependOnInheritedWidgetOfExactType<AppDependenciesScope>();
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<AppDependenciesScope>();
     assert(scope != null, 'No AppDependenciesScope found in context');
     return scope!.dependencies;
   }

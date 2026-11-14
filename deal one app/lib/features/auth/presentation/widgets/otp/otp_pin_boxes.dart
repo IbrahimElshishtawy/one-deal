@@ -121,17 +121,19 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
                 builder: (context, constraints) {
                   const spacing = 8.0;
                   final totalSpacing = spacing * (widget.length - 1);
-                  final boxWidth = ((constraints.maxWidth - totalSpacing) /
-                          widget.length)
-                      .clamp(42.0, 56.0);
+                  final boxWidth =
+                      ((constraints.maxWidth - totalSpacing) / widget.length)
+                          .clamp(42.0, 56.0);
                   final boxHeight = (boxWidth * 1.16).clamp(52.0, 62.0);
 
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(widget.length, (index) {
-                      final digit =
-                          index < widget.code.length ? widget.code[index] : '';
-                      final isActiveCell = _hasFocus &&
+                      final digit = index < widget.code.length
+                          ? widget.code[index]
+                          : '';
+                      final isActiveCell =
+                          _hasFocus &&
                           ((index == widget.code.length) ||
                               (widget.code.length == widget.length &&
                                   index == widget.length - 1));
@@ -139,17 +141,20 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
                       final borderColor = widget.hasError
                           ? AuthDesignTokens.errorRed
                           : (isActiveCell
-                              ? AuthDesignTokens.focusOrange
-                              : (digit.isNotEmpty
-                                  ? AuthDesignTokens.navyPrimary
-                                  : AuthDesignTokens.borderOf(context)));
+                                ? AuthDesignTokens.focusOrange
+                                : (digit.isNotEmpty
+                                      ? AuthDesignTokens.navyPrimary
+                                      : AuthDesignTokens.borderOf(context)));
 
                       final fillColor = widget.hasError
                           ? AuthDesignTokens.errorTintOf(context)
                           : (isActiveCell
-                              ? AuthDesignTokens.focusOrangeTint
-                                  .withValues(alpha: AuthDesignTokens.isDark(context) ? 0.16 : 0.7)
-                              : AuthDesignTokens.inputFillOf(context));
+                                ? AuthDesignTokens.focusOrangeTint.withValues(
+                                    alpha: AuthDesignTokens.isDark(context)
+                                        ? 0.16
+                                        : 0.7,
+                                  )
+                                : AuthDesignTokens.inputFillOf(context));
 
                       return Padding(
                         padding: EdgeInsets.only(
@@ -167,8 +172,9 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
                             ),
                             border: Border.all(
                               color: borderColor,
-                              width:
-                                  (widget.hasError || isActiveCell) ? 1.8 : 1.2,
+                              width: (widget.hasError || isActiveCell)
+                                  ? 1.8
+                                  : 1.2,
                             ),
                           ),
                           child: Text(

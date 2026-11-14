@@ -17,10 +17,7 @@ class AuthErrorFeedback {
   final AuthErrorKind kind;
   final String message;
 
-  const AuthErrorFeedback({
-    required this.kind,
-    required this.message,
-  });
+  const AuthErrorFeedback({required this.kind, required this.message});
 }
 
 /// Converts raw exceptions or [AppFailure]s into Arabic user-facing feedback
@@ -49,8 +46,7 @@ class AuthErrorMapper {
         rawMessage.contains('attempts exceeded')) {
       return const AuthErrorFeedback(
         kind: AuthErrorKind.maxAttemptsExceeded,
-        message:
-            'تم تجاوز الحد الأقصى للمحاولات (5 محاولات). يرجى طلب رمز تحقق جديد.',
+        message: 'تم تجاوز الحد الأقصى للمحاولات (5 محاولات). يرجى طلب رمز تحقق جديد.',
       );
     }
 
@@ -76,8 +72,7 @@ class AuthErrorMapper {
         rawMessage.contains('too many')) {
       return const AuthErrorFeedback(
         kind: AuthErrorKind.rateLimited,
-        message:
-            'تم إرسال عدة طلبات مؤخراً. يرجى الانتظار انتهاء العداد قبل طلب رمز جديد.',
+        message: 'تم إرسال عدة طلبات مؤخراً. يرجى الانتظار انتهاء العداد قبل طلب رمز جديد.',
       );
     }
 

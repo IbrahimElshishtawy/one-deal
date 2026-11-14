@@ -27,9 +27,7 @@ class AuthLogoHeader extends StatelessWidget {
           decoration: BoxDecoration(
             color: AuthDesignTokens.surfaceOf(context),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AuthDesignTokens.borderOf(context),
-            ),
+            border: Border.all(color: AuthDesignTokens.borderOf(context)),
             boxShadow: [
               BoxShadow(
                 color: AuthDesignTokens.navyPrimary.withValues(alpha: 0.06),

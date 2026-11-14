@@ -32,8 +32,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
 
   Future<void> _handleSubmit() async {
     FocusScope.of(context).unfocus();
-    final pending =
-        await ref.read(signUpControllerProvider.notifier).submit();
+    final pending = await ref.read(signUpControllerProvider.notifier).submit();
     if (!mounted || pending == null) return;
     ref.read(signUpControllerProvider.notifier).consumePendingContext();
     context.push(RouteNames.otpVerification, extra: pending);

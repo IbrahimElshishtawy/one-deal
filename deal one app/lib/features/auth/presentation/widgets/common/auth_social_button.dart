@@ -7,10 +7,7 @@ import '../../theme/auth_design_tokens.dart';
 class AuthSocialSection extends StatelessWidget {
   final ValueChanged<SocialAuthProviderType> onProviderSelected;
 
-  const AuthSocialSection({
-    super.key,
-    required this.onProviderSelected,
-  });
+  const AuthSocialSection({super.key, required this.onProviderSelected});
 
   @override
   Widget build(BuildContext context) {

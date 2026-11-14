@@ -71,7 +71,7 @@ Future<AppDependencies> initializeDependencies(AppConfig config) async {
 
   final onboardingCompleted =
       await preferencesService.getBool(StorageKeys.onboardingCompleted) ??
-          false;
+      false;
 
   return AppDependencies(
     appConfig: config,
@@ -99,10 +99,12 @@ Future<void> bootstrap(AppConfig config) async {
         overrides: [
           appConfigProvider.overrideWithValue(dependencies.appConfig),
           networkInfoProvider.overrideWithValue(dependencies.networkInfo),
-          preferencesServiceProvider
-              .overrideWithValue(dependencies.preferencesService),
-          secureStorageServiceProvider
-              .overrideWithValue(dependencies.secureStorageService),
+          preferencesServiceProvider.overrideWithValue(
+            dependencies.preferencesService,
+          ),
+          secureStorageServiceProvider.overrideWithValue(
+            dependencies.secureStorageService,
+          ),
         ],
         child: MarketSpaceApp(dependencies: dependencies),
       ),

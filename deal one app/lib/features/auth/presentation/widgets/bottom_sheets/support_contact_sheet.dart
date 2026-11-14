@@ -22,13 +22,16 @@ class SupportContactSheet extends StatelessWidget {
     );
   }
 
-  Future<void> _copyValue(BuildContext context, String value, String label) async {
+  Future<void> _copyValue(
+    BuildContext context,
+    String value,
+    String label,
+  ) async {
     await Clipboard.setData(ClipboardData(text: value));
     if (!context.mounted) return;
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('تم نسخ $label')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('تم نسخ $label')));
   }
 
   @override
@@ -74,14 +77,16 @@ class SupportContactSheet extends StatelessWidget {
             icon: Icons.email_outlined,
             title: 'البريد الإلكتروني للدعم',
             value: supportEmail,
-            onCopy: () => _copyValue(context, supportEmail, 'البريد الإلكتروني'),
+            onCopy: () =>
+                _copyValue(context, supportEmail, 'البريد الإلكتروني'),
           ),
           const SizedBox(height: 10),
           _SupportTile(
             icon: Icons.support_agent_rounded,
             title: 'خدمة العملاء',
             value: supportHotline,
-            onCopy: () => _copyValue(context, supportHotline, 'رقم خدمة العملاء'),
+            onCopy: () =>
+                _copyValue(context, supportHotline, 'رقم خدمة العملاء'),
           ),
         ],
       ),

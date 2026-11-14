@@ -104,9 +104,7 @@ class AppRouter {
       ],
       errorBuilder: (context, state) => Scaffold(
         appBar: AppBar(title: const Text('الصفحة غير موجودة')),
-        body: Center(
-          child: Text('404 - المسار غير موجود: ${state.uri}'),
-        ),
+        body: Center(child: Text('404 - المسار غير موجود: ${state.uri}')),
       ),
     );
   }

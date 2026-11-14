@@ -7,10 +7,7 @@ import 'onboarding_slide_data.dart';
 class OnboardingIllustration extends StatelessWidget {
   final OnboardingSlideData slide;
 
-  const OnboardingIllustration({
-    super.key,
-    required this.slide,
-  });
+  const OnboardingIllustration({super.key, required this.slide});
 
   @override
   Widget build(BuildContext context) {

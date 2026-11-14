@@ -26,12 +26,16 @@ class RouteNames {
   static const String homeServicesCatalog = '/home-services/catalog';
   static const String homeServicesBookings = '/home-services/bookings';
   static const String homeServicesFavorites = '/home-services/favorites';
-  static const String homeServicesNotifications = '/home-services/notifications';
+  static const String homeServicesNotifications =
+      '/home-services/notifications';
   static const String homeServiceDetail = '/home-services/service-detail';
-  static const String homeServiceProviderDetail = '/home-services/provider-detail';
+  static const String homeServiceProviderDetail =
+      '/home-services/provider-detail';
   static const String homeServicesBookingWizard = '/home-services/book';
-  static const String homeServicesBookingDetail = '/home-services/booking-detail';
-  static const String homeServicesTechnicianTracking = '/home-services/tracking';
+  static const String homeServicesBookingDetail =
+      '/home-services/booking-detail';
+  static const String homeServicesTechnicianTracking =
+      '/home-services/tracking';
 
   static const String cars = '/cars';
   static const String carsDetail = '/cars/detail';
@@ -95,12 +99,17 @@ class RouteNames {
   static const String homeServicesCatalogName = 'home_services_catalog';
   static const String homeServicesBookingsName = 'home_services_bookings';
   static const String homeServicesFavoritesName = 'home_services_favorites';
-  static const String homeServicesNotificationsName = 'home_services_notifications';
+  static const String homeServicesNotificationsName =
+      'home_services_notifications';
   static const String homeServiceDetailName = 'home_service_detail';
-  static const String homeServiceProviderDetailName = 'home_service_provider_detail';
-  static const String homeServicesBookingWizardName = 'home_services_booking_wizard';
-  static const String homeServicesBookingDetailName = 'home_services_booking_detail';
-  static const String homeServicesTechnicianTrackingName = 'home_services_technician_tracking';
+  static const String homeServiceProviderDetailName =
+      'home_service_provider_detail';
+  static const String homeServicesBookingWizardName =
+      'home_services_booking_wizard';
+  static const String homeServicesBookingDetailName =
+      'home_services_booking_detail';
+  static const String homeServicesTechnicianTrackingName =
+      'home_services_technician_tracking';
   static const String carsName = 'cars';
   static const String carsDetailName = 'cars_detail';
   static const String carsBrowseName = 'cars_browse';
@@ -115,4 +124,3 @@ class RouteNames {
   static const String globalNotificationsName = 'global_notifications';
   static const String notFoundName = 'not_found';
 }
-
