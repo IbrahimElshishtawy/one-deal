@@ -48,7 +48,6 @@ class VerificationSuccessPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
           Column(
             children: [
               Text(
@@ -60,7 +59,7 @@ class VerificationSuccessPage extends ConsumerWidget {
                   height: 1.1,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AuthDesignTokens.spaceXs),
               Text(
                 'DEAL ONE',
                 style: TextStyle(
@@ -72,19 +71,19 @@ class VerificationSuccessPage extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 36),
+          const SizedBox(height: AuthDesignTokens.space3xl),
           Center(
             child: SizedBox(
-              width: 240,
-              height: 240,
+              width: 224,
+              height: 224,
               child: CustomPaint(
                 painter: _ConcentricDashedRingsPainter(
                   ringColor: AuthDesignTokens.borderOf(context),
                 ),
                 child: Center(
                   child: Container(
-                    width: 152,
-                    height: 152,
+                    width: 144,
+                    height: 144,
                     decoration: BoxDecoration(
                       color: AuthDesignTokens.surfaceOf(context),
                       shape: BoxShape.circle,
@@ -102,7 +101,7 @@ class VerificationSuccessPage extends ConsumerWidget {
                       alignment: Alignment.center,
                       children: [
                         Positioned(
-                          top: 14,
+                          top: 12,
                           child: Container(
                             width: 7,
                             height: 7,
@@ -113,7 +112,7 @@ class VerificationSuccessPage extends ConsumerWidget {
                           ),
                         ),
                         Positioned(
-                          bottom: 14,
+                          bottom: 12,
                           child: Container(
                             width: 7,
                             height: 7,
@@ -124,8 +123,8 @@ class VerificationSuccessPage extends ConsumerWidget {
                           ),
                         ),
                         Container(
-                          width: 82,
-                          height: 82,
+                          width: 80,
+                          height: 80,
                           decoration: BoxDecoration(
                             color: AuthDesignTokens.primaryActionOf(context),
                             shape: BoxShape.circle,
@@ -143,7 +142,7 @@ class VerificationSuccessPage extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AuthDesignTokens.spaceXl),
           Text(
             'تم التحقق بنجاح!',
             textAlign: TextAlign.center,
@@ -153,7 +152,7 @@ class VerificationSuccessPage extends ConsumerWidget {
               color: AuthDesignTokens.headingOf(context),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AuthDesignTokens.spaceSm),
           Text(
             hasCustomName
                 ? 'أهلاً بك، ${activeUser.fullName}\nأصبح حسابك جاهزاً الآن للاستخدام والبحث عن عقارك ومشاريعك.'
@@ -165,7 +164,7 @@ class VerificationSuccessPage extends ConsumerWidget {
               height: 1.65,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: AuthDesignTokens.space2xl),
           AuthPrimaryButton(
             key: const Key('verification_success_continue_button'),
             label: 'المتابعة لتسجيل الدخول',

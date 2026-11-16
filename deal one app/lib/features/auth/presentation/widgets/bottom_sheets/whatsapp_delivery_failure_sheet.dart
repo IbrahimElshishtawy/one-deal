@@ -56,10 +56,10 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        24,
-        12,
-        24,
-        24 + MediaQuery.of(context).viewInsets.bottom,
+        AuthDesignTokens.spaceXl,
+        AuthDesignTokens.spaceMd,
+        AuthDesignTokens.spaceXl,
+        AuthDesignTokens.spaceXl + MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -72,7 +72,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: AuthDesignTokens.spaceLg),
           SizedBox(
             width: 72,
             height: 72,
@@ -116,7 +116,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AuthDesignTokens.spaceBase),
           Text(
             'تعذر الإرسال عبر واتساب',
             textAlign: TextAlign.center,
@@ -126,7 +126,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
               color: AuthDesignTokens.headingOf(context),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AuthDesignTokens.spaceSm),
           Text(
             subtitle?.trim().isNotEmpty == true ? subtitle! : 'عذراً، هذا الرقم غير مسجل على تطبيق واتساب. يرجى استخدام طريقة أخرى',
             textAlign: TextAlign.center,
@@ -136,9 +136,12 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AuthDesignTokens.spaceBase),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AuthDesignTokens.spaceBase,
+              vertical: AuthDesignTokens.spaceSm,
+            ),
             decoration: BoxDecoration(
               color: AuthDesignTokens.softPillOf(context),
               borderRadius: BorderRadius.circular(24),
@@ -151,7 +154,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
                   size: 16,
                   color: AuthDesignTokens.mutedOf(context),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AuthDesignTokens.spaceSm),
                 Flexible(
                   child: Directionality(
                     textDirection: TextDirection.ltr,
@@ -166,7 +169,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AuthDesignTokens.spaceSm),
                 Container(
                   width: 8,
                   height: 8,
@@ -178,7 +181,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: AuthDesignTokens.spaceXl),
           SizedBox(
             width: double.infinity,
             height: AuthDesignTokens.buttonHeight,
@@ -201,19 +204,23 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   GmailMarkIcon(size: 20),
-                  SizedBox(width: 10),
-                  Text(
-                    'إرسال رسالة عبر البريد الإلكتروني',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
+                  SizedBox(width: AuthDesignTokens.spaceMd - 2),
+                  Flexible(
+                    child: Text(
+                      'إرسال رسالة عبر البريد الإلكتروني',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AuthDesignTokens.spaceMd),
           AuthSecondaryButton(
             key: const Key('sheet_send_sms_button'),
             label: 'إعادة الإرسال عبر رسالة SMS',
@@ -223,7 +230,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
               onSendViaSms();
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AuthDesignTokens.spaceMd),
           TextButton.icon(
             key: const Key('sheet_edit_phone_button'),
             onPressed: () {
@@ -244,6 +251,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: AuthDesignTokens.spaceXs),
           TextButton.icon(
             onPressed: () {
               Navigator.of(context).pop();

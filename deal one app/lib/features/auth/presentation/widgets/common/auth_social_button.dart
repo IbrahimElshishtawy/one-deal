@@ -42,7 +42,7 @@ class AuthSocialSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AuthDesignTokens.spaceBase),
         Row(
           children: [
             Expanded(
@@ -54,7 +54,7 @@ class AuthSocialSection extends StatelessWidget {
                     onProviderSelected(SocialAuthProviderType.google),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AuthDesignTokens.spaceMd),
             Expanded(
               child: _SocialProviderButton(
                 key: const Key('social_apple_button'),
@@ -92,7 +92,7 @@ class _SocialProviderButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 48,
+      height: AuthDesignTokens.socialButtonHeight,
       decoration: BoxDecoration(
         color: AuthDesignTokens.surfaceOf(context),
         borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),

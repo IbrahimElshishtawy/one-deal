@@ -76,29 +76,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final controller = ref.read(loginControllerProvider.notifier);
 
     return AuthScaffoldShell(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: context.canPop()
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                onPressed: () => context.pop(),
-              )
-            : null,
-        actions: [
-          TextButton(
-            onPressed: () => context.go(RouteNames.root),
-            child: Text(
-              'تصفح كزائر',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AuthDesignTokens.mutedOf(context),
-              ),
-            ),
-          ),
-        ],
-      ),
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -131,23 +108,44 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AuthDesignTokens.spaceMd),
           AuthLegalFooter(
             onTermsTap: () => context.push(RouteNames.terms),
             onPrivacyTap: () => context.push(RouteNames.privacy),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AuthDesignTokens.spaceSm),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
+          AuthTopBar(
+            onBack: context.canPop() ? () => context.pop() : null,
+            trailing: TextButton(
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AuthDesignTokens.spaceSm,
+                ),
+                minimumSize: const Size(0, 36),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () => context.go(RouteNames.root),
+              child: Text(
+                'تصفح كزائر',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AuthDesignTokens.mutedOf(context),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AuthDesignTokens.spaceMd),
           const AuthLogoHeader(
             title: 'أهلاً بك مجدداً',
             subtitle: 'أدخل رقم الواتساب للمتابعة واستكشاف\nالعقارات والمشاريع',
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: AuthDesignTokens.headerToFormGap),
           LoginFormCard(
             phoneController: _phoneController,
             phoneError: state.phoneError,
@@ -156,7 +154,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             onPhoneChanged: controller.updatePhone,
             onSubmit: _handleSubmit,
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: AuthDesignTokens.sectionGap),
           AuthSocialSection(
             onProviderSelected: (provider) {
               UnavailableProviderDialog.show(context, provider: provider);

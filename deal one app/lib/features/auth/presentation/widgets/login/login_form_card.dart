@@ -35,7 +35,7 @@ class LoginFormCard extends StatelessWidget {
       children: [
         if (submitError != null && submitError!.isNotEmpty) ...[
           AuthErrorBanner(message: submitError!),
-          const SizedBox(height: 14),
+          const SizedBox(height: AuthDesignTokens.spaceBase),
         ],
         AuthTextField(
           key: const Key('login_phone_field'),
@@ -62,7 +62,7 @@ class LoginFormCard extends StatelessWidget {
           onChanged: onPhoneChanged,
           onSubmitted: (_) => onSubmit(),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AuthDesignTokens.spaceLg),
         AuthPrimaryButton(
           key: const Key('login_submit_button'),
           label: 'تسجيل الدخول',

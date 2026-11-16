@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Visual tokens extracted from the 7 Deal One authentication design PNGs,
-/// with clean dark-mode support.
+/// Visual & spacing tokens extracted from the 7 Deal One authentication
+/// design PNGs on a standardized 4/8pt layout rhythm, with dark-mode support.
 class AuthDesignTokens {
   AuthDesignTokens._();
 
@@ -54,10 +54,27 @@ class AuthDesignTokens {
   static const Color darkTextSecondary = Color(0xFFCBD5E1);
   static const Color darkTextMuted = Color(0xFF94A3B8);
 
+  // Standardized 4/8pt Spacing Scale
+  static const double spaceXs = 4;
+  static const double spaceSm = 8;
+  static const double spaceMd = 12;
+  static const double spaceBase = 16;
+  static const double spaceLg = 20;
+  static const double spaceXl = 24;
+  static const double space2xl = 32;
+  static const double space3xl = 40;
+
   // Dimensions & Radii
   static const double maxContentWidth = 440;
-  static const double horizontalPadding = 24;
+  static const double horizontalPadding = spaceXl;
+  static const double verticalPadding = spaceBase;
+  static const double topBarHeight = 44;
+  static const double logoSize = 92;
+  static const double inputHeight = 52;
   static const double buttonHeight = 52;
+  static const double socialButtonHeight = 48;
+  static const double headerToFormGap = spaceXl;
+  static const double sectionGap = spaceLg;
   static const double inputRadius = 12;
   static const double buttonRadius = 12;
   static const double cardRadius = 16;

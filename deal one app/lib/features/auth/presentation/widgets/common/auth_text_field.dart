@@ -125,6 +125,9 @@ class _AuthTextFieldState extends State<AuthTextField> {
         ],
         AnimatedContainer(
           duration: const Duration(milliseconds: 160),
+          constraints: const BoxConstraints(
+            minHeight: AuthDesignTokens.inputHeight,
+          ),
           decoration: BoxDecoration(
             color: fillColor,
             borderRadius: BorderRadius.circular(AuthDesignTokens.inputRadius),
@@ -134,19 +137,21 @@ class _AuthTextFieldState extends State<AuthTextField> {
             ),
             boxShadow: AuthDesignTokens.cardShadowOf(context),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AuthDesignTokens.spaceBase - 2,
+          ),
           child: Row(
             children: [
               if (widget.leadingWidget != null) ...[
                 widget.leadingWidget!,
-                const SizedBox(width: 10),
+                const SizedBox(width: AuthDesignTokens.spaceMd - 2),
               ] else if (widget.leadingIcon != null) ...[
                 Icon(widget.leadingIcon, size: 20, color: iconColor),
-                const SizedBox(width: 10),
+                const SizedBox(width: AuthDesignTokens.spaceMd - 2),
               ],
               if (widget.prefixBadge != null) ...[
                 widget.prefixBadge!,
-                const SizedBox(width: 8),
+                const SizedBox(width: AuthDesignTokens.spaceSm),
               ],
               Expanded(
                 child: TextField(

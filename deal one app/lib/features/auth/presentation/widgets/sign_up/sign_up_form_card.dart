@@ -53,7 +53,7 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
       children: [
         if (widget.submitError != null && widget.submitError!.isNotEmpty) ...[
           AuthErrorBanner(message: widget.submitError!),
-          const SizedBox(height: 14),
+          const SizedBox(height: AuthDesignTokens.spaceBase),
         ],
         AuthTextField(
           key: const Key('signup_fullname_field'),
@@ -68,7 +68,7 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
           onChanged: widget.onFullNameChanged,
           onSubmitted: (_) => _phoneFocusNode.requestFocus(),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AuthDesignTokens.spaceMd),
         AuthTextField(
           key: const Key('signup_phone_field'),
           hintText: '01XXXXXXXXX',
@@ -95,7 +95,7 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
           onChanged: widget.onPhoneChanged,
           onSubmitted: (_) => widget.onSubmit(),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AuthDesignTokens.spaceSm),
         Text(
           'سيتم إرسال رمز التحقق عبر الواتساب',
           style: TextStyle(
@@ -103,7 +103,7 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
             color: AuthDesignTokens.mutedOf(context),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AuthDesignTokens.spaceLg),
         AuthPrimaryButton(
           key: const Key('signup_submit_button'),
           label: 'إرسال رمز التحقق',

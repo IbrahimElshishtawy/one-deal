@@ -13,7 +13,7 @@ class AuthLogoHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
-    this.logoSize = 96,
+    this.logoSize = AuthDesignTokens.logoSize,
   });
 
   @override

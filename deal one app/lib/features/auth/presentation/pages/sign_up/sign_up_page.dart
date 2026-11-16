@@ -78,23 +78,6 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
     final controller = ref.read(signUpControllerProvider.notifier);
 
     return AuthScaffoldShell(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          TextButton(
-            onPressed: () => context.go(RouteNames.root),
-            child: Text(
-              'تصفح كزائر',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AuthDesignTokens.mutedOf(context),
-              ),
-            ),
-          ),
-        ],
-      ),
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -127,23 +110,44 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AuthDesignTokens.spaceMd),
           AuthLegalFooter(
             onTermsTap: () => context.push(RouteNames.terms),
             onPrivacyTap: () => context.push(RouteNames.privacy),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AuthDesignTokens.spaceSm),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
+          AuthTopBar(
+            onBack: context.canPop() ? () => context.pop() : null,
+            trailing: TextButton(
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AuthDesignTokens.spaceSm,
+                ),
+                minimumSize: const Size(0, 36),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () => context.go(RouteNames.root),
+              child: Text(
+                'تصفح كزائر',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AuthDesignTokens.mutedOf(context),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AuthDesignTokens.spaceMd),
           const AuthLogoHeader(
             title: 'أنشئ حسابك في Deal One',
             subtitle: 'ابحث عن عقارك، سيارتك، وصفقاتك في\nمكان واحد.',
           ),
-          const SizedBox(height: 26),
+          const SizedBox(height: AuthDesignTokens.headerToFormGap),
           SignUpFormCard(
             fullNameController: _fullNameController,
             phoneController: _phoneController,
@@ -155,7 +159,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
             onPhoneChanged: controller.updatePhone,
             onSubmit: _handleSubmit,
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: AuthDesignTokens.sectionGap),
           AuthSocialSection(
             onProviderSelected: (provider) {
               UnavailableProviderDialog.show(context, provider: provider);

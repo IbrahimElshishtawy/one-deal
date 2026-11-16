@@ -194,20 +194,27 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
     final upperContent = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 12),
+        AuthTopBar(
+          key: const Key('otp_back_button'),
+          onBack: navigateBackToPhoneEntry,
+        ),
+        const SizedBox(height: AuthDesignTokens.spaceMd),
         AuthLogoHeader(
           title: 'أدخل رمز التحقق',
           subtitle:
               'أدخل الرمز المكون من 6 أرقام المرسل إلى\n[${state.displayPhone}]',
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AuthDesignTokens.spaceSm),
         Center(
           child: InkWell(
             key: const Key('otp_edit_phone_chip'),
             borderRadius: BorderRadius.circular(8),
             onTap: navigateBackToPhoneEntry,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AuthDesignTokens.spaceSm,
+                vertical: AuthDesignTokens.spaceXs,
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -220,7 +227,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                       decoration: TextDecoration.underline,
                     ),
                   ),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: AuthDesignTokens.spaceXs + 1),
                   Icon(
                     Icons.edit,
                     size: 15,
@@ -231,7 +238,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AuthDesignTokens.headerToFormGap),
         OtpPinBoxes(
           code: state.code,
           focusNode: _otpFocusNode,
@@ -245,7 +252,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
 
     return AuthScaffoldShell(
       footer: Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: AuthDesignTokens.spaceSm),
         child: AuthLegalFooter(
           onTermsTap: () => context.push(RouteNames.terms),
           onPrivacyTap: () => context.push(RouteNames.privacy),
@@ -262,11 +269,13 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                   imageFilter: ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
                   child: Opacity(opacity: 0.45, child: upperContent),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: _ExpiredOtpAlertCard(
-                    key: const Key('otp_expired_card'),
+                const Padding(
+                  padding: EdgeInsets.only(
+                    top:
+                        AuthDesignTokens.topBarHeight +
+                        AuthDesignTokens.spaceSm,
                   ),
+                  child: _ExpiredOtpAlertCard(key: Key('otp_expired_card')),
                 ),
               ],
             )
@@ -275,7 +284,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
 
           // Invalid / Error / Locked state banner + remaining attempts pill (`لو المستخدم دخل الرمز غلط.png`)
           if (!state.isExpired && state.hasBannerError) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AuthDesignTokens.spaceBase),
             AuthErrorBanner(
               key: const Key('otp_error_banner'),
               message: state.errorMessage!,
@@ -286,12 +295,12 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
               (state.isInvalid || state.isLocked) &&
               state.failedAttempts > 0 &&
               state.failedAttempts < state.maxAttempts) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AuthDesignTokens.spaceMd),
             Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
+                  horizontal: AuthDesignTokens.spaceBase,
+                  vertical: AuthDesignTokens.spaceSm - 2,
                 ),
                 decoration: BoxDecoration(
                   color: AuthDesignTokens.softPillOf(context),
@@ -305,7 +314,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                       size: 14,
                       color: AuthDesignTokens.mutedOf(context),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AuthDesignTokens.spaceSm - 2),
                     Flexible(
                       child: Text(
                         _formatRemainingAttemptsText(state.remainingAttempts),
@@ -323,7 +332,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
             ),
           ],
 
-          const SizedBox(height: 22),
+          const SizedBox(height: AuthDesignTokens.spaceXl),
 
           // Primary CTA: "تأكيد الرمز" in normal state, "إعادة المحاولة" on error/expired
           if (showRetryButton)
@@ -348,7 +357,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
               onPressed: state.canSubmit ? verifyAndProceed : null,
             ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: AuthDesignTokens.spaceBase),
 
           // Resend countdown row (default `otp.png`) or support row (`لو المستخدم دخل الرمز غلط.png` / expired)
           if (isErrorMode) ...[
