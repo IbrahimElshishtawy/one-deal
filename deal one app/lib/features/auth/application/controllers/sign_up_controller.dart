@@ -19,6 +19,8 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
       fullName: value,
       clearFullNameError: true,
       clearSubmitError: true,
+      clearErrorKind: true,
+      clearDeliveryFailure: true,
     );
   }
 
@@ -27,10 +29,12 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
       phone: value,
       clearPhoneError: true,
       clearSubmitError: true,
+      clearErrorKind: true,
+      clearDeliveryFailure: true,
     );
   }
 
-  Future<PendingAuthContext?> submit() async {
+  Future<PendingAuthContext?> submit({String? redirectTo}) async {
     if (state.isSubmitting) return null;
 
     final nameError = FullNameValidator.validate(state.fullName);
@@ -43,6 +47,8 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
         phoneError: phoneError,
         clearPhoneError: phoneError == null,
         clearSubmitError: true,
+        clearErrorKind: true,
+        clearDeliveryFailure: true,
       );
       return null;
     }
@@ -61,6 +67,8 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
       clearFullNameError: true,
       clearPhoneError: true,
       clearSubmitError: true,
+      clearErrorKind: true,
+      clearDeliveryFailure: true,
     );
 
     try {
@@ -73,6 +81,7 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
         flowMode: AuthFlowMode.signUp,
         cooldownSeconds: dispatchResult.cooldownSeconds,
         otpExpirySeconds: dispatchResult.otpExpirySeconds,
+        redirectTo: redirectTo,
       );
       state = state.copyWith(isSubmitting: false, pendingContext: pending);
       return pending;
@@ -81,8 +90,18 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
       state = state.copyWith(
         isSubmitting: false,
         submitError: feedback.message,
+        errorKind: feedback.kind,
+        deliveryFailurePhone: feedback.isDeliveryFailure
+            ? EgyptianPhoneValidator.formatForDisplay(normalizedPhone)
+            : null,
       );
       return null;
+    }
+  }
+
+  void clearDeliveryFailure() {
+    if (state.hasDeliveryFailure) {
+      state = state.copyWith(clearDeliveryFailure: true, clearErrorKind: true);
     }
   }
 

@@ -4,28 +4,37 @@ import '../../theme/auth_design_tokens.dart';
 
 /// Compact Egyptian `+20` country prefix pill shown inside phone inputs.
 class AuthCountryPrefixBadge extends StatelessWidget {
-  const AuthCountryPrefixBadge({super.key});
+  final bool compact;
+
+  const AuthCountryPrefixBadge({super.key, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 4 : 6,
+      ),
       decoration: BoxDecoration(
-        color: AuthDesignTokens.surfaceOf(context),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AuthDesignTokens.borderOf(context)),
+        color: compact
+            ? AuthDesignTokens.softPillOf(context)
+            : AuthDesignTokens.surfaceOf(context),
+        borderRadius: BorderRadius.circular(compact ? 8 : 10),
+        border: compact
+            ? null
+            : Border.all(color: AuthDesignTokens.borderOf(context)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const _EgyptFlagStripes(),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Directionality(
             textDirection: TextDirection.ltr,
             child: Text(
               '+20',
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: compact ? 12 : 13.5,
                 fontWeight: FontWeight.w700,
                 color: AuthDesignTokens.headingOf(context),
               ),
@@ -43,10 +52,10 @@ class _EgyptFlagStripes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(3),
+      borderRadius: BorderRadius.circular(2.5),
       child: const SizedBox(
-        width: 18,
-        height: 12,
+        width: 16,
+        height: 11,
         child: Column(
           children: [
             Expanded(child: ColoredBox(color: Color(0xFFCE1126))),

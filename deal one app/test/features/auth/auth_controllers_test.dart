@@ -219,6 +219,21 @@ void main() {
         notifier.updatePhone('01112345678');
         expect(await notifier.submit(), isNull);
         expect(container.read(loginControllerProvider).submitError, isNotNull);
+
+        repo.nextSendError = const ServerException(
+          message: 'WhatsApp not registered',
+          errorCode: 'WHATSAPP_UNAVAILABLE',
+        );
+        notifier.updatePhone('01012345678');
+        expect(await notifier.submit(), isNull);
+        final deliveryState = container.read(loginControllerProvider);
+        expect(deliveryState.hasDeliveryFailure, isTrue);
+        expect(deliveryState.deliveryFailurePhone, '+20 101 234 5678');
+        notifier.clearDeliveryFailure();
+        expect(
+          container.read(loginControllerProvider).hasDeliveryFailure,
+          isFalse,
+        );
       },
     );
   });
@@ -252,10 +267,7 @@ void main() {
         container.read(sessionProvider).status,
         SessionStatus.authenticated,
       );
-      expect(
-        await secureStorage.read(StorageKeys.userId),
-        equals('user_1'),
-      );
+      expect(await secureStorage.read(StorageKeys.userId), equals('user_1'));
     });
 
     test('handles invalid OTP, max attempts locked state, timer expiration, and resend reset', () async {

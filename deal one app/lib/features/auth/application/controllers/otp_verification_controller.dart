@@ -28,6 +28,7 @@ class OtpVerificationController
       displayPhone: arg.displayPhone,
       pendingFullName: arg.pendingFullName,
       flowMode: arg.flowMode,
+      redirectTo: arg.redirectTo,
       cooldownRemainingSeconds: arg.cooldownSeconds,
       expiryRemainingSeconds: arg.otpExpirySeconds,
     );
@@ -63,7 +64,7 @@ class OtpVerificationController
         cooldownRemainingSeconds: nextCooldown,
         expiryRemainingSeconds: 0,
         status: OtpStatus.expired,
-        errorMessage: 'انتهت صلاحية الرمز، يرجى طلب رمز جديد',
+        errorMessage: 'انتهت صلاحية رمز التحقق، يرجى طلب رمز جديد',
       );
       return;
     }
@@ -90,16 +91,27 @@ class OtpVerificationController
         ? normalized.substring(0, OtpCodeValidator.requiredLength)
         : normalized;
 
-    final shouldClearInvalid =
+    final shouldClearError =
         state.status == OtpStatus.invalid ||
         state.status == OtpStatus.networkError ||
         state.status == OtpStatus.serverError ||
-        state.status == OtpStatus.rateLimited;
+        state.status == OtpStatus.rateLimited ||
+        state.status == OtpStatus.deliveryFailed;
 
     state = state.copyWith(
       code: clipped,
-      status: shouldClearInvalid ? OtpStatus.initial : state.status,
-      clearErrorMessage: shouldClearInvalid,
+      status: shouldClearError ? OtpStatus.initial : state.status,
+      clearErrorMessage: shouldClearError,
+    );
+  }
+
+  /// Clears invalid OTP input and resets status to allow a clean retry.
+  void retryAfterError() {
+    if (state.isBusy || state.isExpired || state.isLocked) return;
+    state = state.copyWith(
+      code: '',
+      status: OtpStatus.initial,
+      clearErrorMessage: true,
     );
   }
 
@@ -109,7 +121,7 @@ class OtpVerificationController
     if (state.isExpired) {
       state = state.copyWith(
         status: OtpStatus.expired,
-        errorMessage: 'انتهت صلاحية الرمز، يرجى طلب رمز جديد',
+        errorMessage: 'انتهت صلاحية رمز التحقق، يرجى طلب رمز جديد',
       );
       return null;
     }
@@ -214,6 +226,8 @@ class OtpVerificationController
   OtpStatus _mapErrorKindToOtpStatus(AuthErrorKind kind) {
     switch (kind) {
       case AuthErrorKind.invalidOtp:
+      case AuthErrorKind.validation:
+      case AuthErrorKind.invalidPhoneNumber:
         return OtpStatus.invalid;
       case AuthErrorKind.expiredOtp:
         return OtpStatus.expired;
@@ -221,12 +235,18 @@ class OtpVerificationController
         return OtpStatus.locked;
       case AuthErrorKind.rateLimited:
         return OtpStatus.rateLimited;
+      case AuthErrorKind.whatsappUnavailable:
+      case AuthErrorKind.otpDeliveryFailed:
+        return OtpStatus.deliveryFailed;
       case AuthErrorKind.network:
       case AuthErrorKind.timeout:
         return OtpStatus.networkError;
-      case AuthErrorKind.validation:
-        return OtpStatus.invalid;
+      case AuthErrorKind.accountNotFound:
+      case AuthErrorKind.existingAccount:
+      case AuthErrorKind.unauthorizedSession:
+      case AuthErrorKind.invalidRefreshToken:
       case AuthErrorKind.server:
+      case AuthErrorKind.unexpectedResponse:
         return OtpStatus.serverError;
     }
   }

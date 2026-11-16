@@ -25,7 +25,11 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.account_circle_outlined, size: 80, color: Colors.blueAccent),
+                const Icon(
+                  Icons.account_circle_outlined,
+                  size: 80,
+                  color: Colors.blueAccent,
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'سجّل الدخول للوصول إلى إعلاناتك والتواصل',
@@ -42,7 +46,10 @@ class ProfileScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     icon: const Icon(Icons.login),
-                    label: const Text('تسجيل الدخول برقم الهاتف', style: TextStyle(fontSize: 16)),
+                    label: const Text(
+                      'تسجيل الدخول برقم الهاتف',
+                      style: TextStyle(fontSize: 16),
+                    ),
                     onPressed: () => context.push(RouteNames.login),
                   ),
                 ),
@@ -60,7 +67,9 @@ class ProfileScreen extends ConsumerWidget {
         children: [
           // User header card
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -68,7 +77,11 @@ class ProfileScreen extends ConsumerWidget {
                   CircleAvatar(
                     radius: 30,
                     backgroundColor: Colors.blue.shade100,
-                    child: const Icon(Icons.person, size: 36, color: Colors.blueAccent),
+                    child: const Icon(
+                      Icons.person,
+                      size: 36,
+                      color: Colors.blueAccent,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -77,7 +90,10 @@ class ProfileScreen extends ConsumerWidget {
                       children: [
                         const Text(
                           'المستخدم المسجل',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -95,7 +111,9 @@ class ProfileScreen extends ConsumerWidget {
 
           // Daily Quota Card (Cairo Timezone)
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -107,7 +125,10 @@ class ProfileScreen extends ConsumerWidget {
                       SizedBox(width: 8),
                       Text(
                         'حصة التواصل اليومية (توقيت القاهرة)',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -117,7 +138,9 @@ class ProfileScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         LinearProgressIndicator(
-                          value: quota.limit > 0 ? (quota.used / quota.limit) : 0,
+                          value: quota.limit > 0
+                              ? (quota.used / quota.limit)
+                              : 0,
                           backgroundColor: Colors.grey.shade200,
                           valueColor: AlwaysStoppedAnimation(
                             quota.isLimitReached ? Colors.red : Colors.green,
@@ -126,7 +149,10 @@ class ProfileScreen extends ConsumerWidget {
                         const SizedBox(height: 8),
                         Text(
                           'المتبقي اليوم: ${quota.remaining} من أصل ${quota.limit} كشوفات أرقام',
-                          style: const TextStyle(fontSize: 13, color: Colors.black87),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black87,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         const Text(
@@ -136,7 +162,8 @@ class ProfileScreen extends ConsumerWidget {
                       ],
                     ),
                     loading: () => const LinearProgressIndicator(),
-                    error: (_, _) => const Text('تعذر تحميل معلومات الحصة اليومية'),
+                    error: (_, _) =>
+                        const Text('تعذر تحميل معلومات الحصة اليومية'),
                   ),
                 ],
               ),
@@ -146,7 +173,9 @@ class ProfileScreen extends ConsumerWidget {
 
           // Accounts / Organizations
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -160,7 +189,10 @@ class ProfileScreen extends ConsumerWidget {
                   accountsAsync.when(
                     data: (accounts) {
                       if (accounts.isEmpty) {
-                        return const Text('لا توجد حسابات معارض إضافية', style: TextStyle(color: Colors.grey));
+                        return const Text(
+                          'لا توجد حسابات معارض إضافية',
+                          style: TextStyle(color: Colors.grey),
+                        );
                       }
                       return Column(
                         children: accounts.map((acc) {
@@ -168,12 +200,16 @@ class ProfileScreen extends ConsumerWidget {
                             contentPadding: EdgeInsets.zero,
                             leading: const Icon(Icons.store),
                             title: Text(acc.displayName),
-                            subtitle: Text('الصفة: ${acc.role} • ${acc.isVerified ? "موثق" : "قيد المراجعة"}'),
+                            subtitle: Text(
+                              'الصفة: ${acc.role} • ${acc.isVerified ? "موثق" : "قيد المراجعة"}',
+                            ),
                           );
                         }).toList(),
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator.adaptive()),
+                    loading: () => const Center(
+                      child: CircularProgressIndicator.adaptive(),
+                    ),
                     error: (_, _) => const Text('تعذر تحميل الحسابات'),
                   ),
                 ],
@@ -192,8 +228,7 @@ class ProfileScreen extends ConsumerWidget {
             icon: const Icon(Icons.logout),
             label: const Text('تسجيل الخروج', style: TextStyle(fontSize: 16)),
             onPressed: () async {
-              await ref.read(authRepositoryProvider).logout();
-              ref.read(sessionProvider.notifier).logout();
+              await ref.read(authControllerProvider.notifier).logout();
             },
           ),
         ],

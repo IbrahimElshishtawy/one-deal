@@ -52,11 +52,18 @@ Widget _buildRoutedApp({
       ),
       GoRoute(
         path: RouteNames.verificationSuccess,
-        builder: (_, state) => VerificationSuccessPage(
-          session: state.extra is AuthSession
-              ? state.extra as AuthSession
-              : null,
-        ),
+        builder: (_, state) {
+          final extra = state.extra;
+          if (extra is VerificationSuccessArgs) {
+            return VerificationSuccessPage(
+              session: extra.session,
+              redirectTo: extra.redirectTo,
+            );
+          }
+          return VerificationSuccessPage(
+            session: extra is AuthSession ? extra : null,
+          );
+        },
       ),
       GoRoute(
         path: RouteNames.terms,
@@ -125,13 +132,13 @@ void main() {
       await tester.tap(find.text('ابدأ الآن'));
       await tester.pumpAndSettle();
 
-      expect(find.text('إنشاء حساب جديد'), findsOneWidget);
+      expect(find.text('أنشئ حسابك في Deal One'), findsOneWidget);
       expect(await prefs.getBool(StorageKeys.onboardingCompleted), isTrue);
     },
   );
 
   testWidgets(
-    'Sign Up validates inputs, navigates to Login, and opens Google provider dialog',
+    'Sign Up validates inputs, opens Email/Apple notice dialog, and navigates to Login',
     (tester) async {
       await tester.pumpWidget(
         _buildRoutedApp(
@@ -149,10 +156,13 @@ void main() {
       expect(find.text('من فضلك أدخل الاسم الكامل'), findsOneWidget);
       expect(find.text('من فضلك أدخل رقم الهاتف'), findsOneWidget);
 
-      await tester.ensureVisible(find.text('Google'));
-      await tester.tap(find.text('Google'));
+      await tester.ensureVisible(find.byKey(const Key('social_email_button')));
+      await tester.tap(find.byKey(const Key('social_email_button')));
       await tester.pumpAndSettle();
-      expect(find.text('التسجيل عبر Google غير مفعل حالياً'), findsOneWidget);
+      expect(
+        find.text('التسجيل عبر البريد الإلكتروني غير مفعل حالياً'),
+        findsOneWidget,
+      );
       await tester.tap(find.text('فهمت، المتابعة برقم الهاتف'));
       await tester.pumpAndSettle();
 
@@ -161,12 +171,49 @@ void main() {
       );
       await tester.tap(find.byKey(const Key('signup_to_login_button')));
       await tester.pumpAndSettle();
-      expect(find.text('مرحباً بعودتك'), findsOneWidget);
+      expect(find.text('أهلاً بك مجدداً'), findsOneWidget);
     },
   );
 
   testWidgets(
-    'Login dispatches OTP, shows LTR 6-digit OTP boxes, invalid/expired states, WhatsApp failure sheet, and success screen',
+    'Login triggers WhatsApp delivery failure sheet automatically on backend delivery failure',
+    (tester) async {
+      repo.nextSendError = const ServerException(
+        message: 'WhatsApp number not registered',
+        errorCode: 'WHATSAPP_UNAVAILABLE',
+      );
+
+      await tester.pumpWidget(
+        _buildRoutedApp(
+          prefs: prefs,
+          secureStorage: secureStorage,
+          tokens: tokens,
+          repo: repo,
+          initialLocation: RouteNames.login,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('login_phone_field')),
+          matching: find.byType(TextField),
+        ),
+        '01012345678',
+      );
+      await tester.tap(find.byKey(const Key('login_submit_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('تعذر الإرسال عبر واتساب'), findsOneWidget);
+      expect(find.text('+20 101 234 5678'), findsOneWidget);
+      expect(find.byKey(const Key('sheet_try_email_button')), findsOneWidget);
+      expect(find.byKey(const Key('sheet_send_sms_button')), findsOneWidget);
+      expect(find.byKey(const Key('sheet_edit_phone_button')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Login dispatches OTP, shows LTR 6-digit OTP boxes, invalid state with retry, WhatsApp failure sheet, and success screen',
     (tester) async {
       await tester.pumpWidget(
         _buildRoutedApp(
@@ -190,7 +237,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('أدخل رمز التحقق'), findsOneWidget);
-      expect(find.text('+20 101 234 5678'), findsOneWidget);
+      expect(find.textContaining('+20 101 234 5678'), findsOneWidget);
 
       // Verify 6-digit pin boxes exist and run inside LTR Directionality
       final pinBoxesFinder = find.byType(OtpPinBoxes);
@@ -226,7 +273,9 @@ void main() {
         ),
         'test@dealone.eg',
       );
-      await tester.ensureVisible(find.byKey(const Key('email_fallback_submit')));
+      await tester.ensureVisible(
+        find.byKey(const Key('email_fallback_submit')),
+      );
       await tester.tap(find.byKey(const Key('email_fallback_submit')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('email_fallback_notice')), findsOneWidget);
@@ -235,8 +284,8 @@ void main() {
       await tester.tapAt(const Offset(10, 10));
       await tester.pumpAndSettle();
 
-      // Invalid OTP state
-      repo.nextVerifyError = const UnauthorizedException(
+      // Invalid OTP state with remaining attempts pill & retry button
+      repo.nextVerifyError = const ValidationException(
         message: 'Incorrect OTP code.',
       );
       await tester.enterText(
@@ -246,9 +295,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('otp_error_banner')), findsOneWidget);
       expect(
-        find.text('الرمز غير صحيح، يرجى المحاولة مرة أخرى'),
+        find.text('رمز التحقق غير صحيح، يرجى التأكد وإعادة المحاولة'),
         findsOneWidget,
       );
+      expect(find.textContaining('متبقي لك 4 محاولات'), findsOneWidget);
+      expect(find.byKey(const Key('otp_retry_button')), findsOneWidget);
+
+      // Tap retry clears invalid code
+      await tester.tap(find.byKey(const Key('otp_retry_button')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('otp_error_banner')), findsNothing);
 
       // Valid OTP transitions to Verification Success then Home
       repo.nextVerifyError = null;
@@ -264,7 +320,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('تم التحقق من حسابك بنجاح!'), findsOneWidget);
+      expect(find.text('تم التحقق بنجاح!'), findsOneWidget);
       expect(find.textContaining('محمود عادل'), findsOneWidget);
 
       await tester.tap(
@@ -276,7 +332,7 @@ void main() {
   );
 
   testWidgets(
-    'OTP expired state displays expiration banner and unlocks resend CTA',
+    'OTP expired state displays expiration alert card and unlocks resend CTA',
     (tester) async {
       const contextData = PendingAuthContext(
         normalizedPhone: '+201012345678',
@@ -306,8 +362,9 @@ void main() {
           .advanceSecondsForTest(180);
       await tester.pumpAndSettle();
 
+      expect(find.byKey(const Key('otp_expired_card')), findsOneWidget);
       expect(
-        find.text('انتهت صلاحية الرمز، يرجى طلب رمز جديد'),
+        find.text('انتهت صلاحية رمز التحقق، يرجى طلب رمز جديد'),
         findsOneWidget,
       );
       expect(find.byKey(const Key('otp_resend_button')), findsOneWidget);

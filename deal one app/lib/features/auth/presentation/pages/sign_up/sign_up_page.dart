@@ -5,15 +5,21 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/routing/route_names.dart';
 import '../../providers/auth_providers.dart';
 import '../../theme/auth_design_tokens.dart';
+import '../../widgets/bottom_sheets/email_fallback_sheet.dart';
+import '../../widgets/bottom_sheets/support_contact_sheet.dart';
+import '../../widgets/bottom_sheets/whatsapp_delivery_failure_sheet.dart';
+import '../../widgets/common/auth_legal_footer.dart';
 import '../../widgets/common/auth_logo_header.dart';
 import '../../widgets/common/auth_scaffold_shell.dart';
 import '../../widgets/common/auth_social_button.dart';
 import '../../widgets/dialogs/unavailable_provider_dialog.dart';
 import '../../widgets/sign_up/sign_up_form_card.dart';
 
-/// Deal One Sign Up page (Design Screen 4).
+/// Deal One Sign Up page matching `ui/انشاء حساب.png`.
 class SignUpPage extends ConsumerStatefulWidget {
-  const SignUpPage({super.key});
+  final String? redirectTo;
+
+  const SignUpPage({super.key, this.redirectTo});
 
   @override
   ConsumerState<SignUpPage> createState() => _SignUpPageState();
@@ -32,10 +38,38 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
 
   Future<void> _handleSubmit() async {
     FocusScope.of(context).unfocus();
-    final pending = await ref.read(signUpControllerProvider.notifier).submit();
-    if (!mounted || pending == null) return;
-    ref.read(signUpControllerProvider.notifier).consumePendingContext();
-    context.push(RouteNames.otpVerification, extra: pending);
+    final notifier = ref.read(signUpControllerProvider.notifier);
+    final pending = await notifier.submit(redirectTo: widget.redirectTo);
+    if (!mounted) return;
+    if (pending != null) {
+      notifier.consumePendingContext();
+      context.push(RouteNames.otpVerification, extra: pending);
+      return;
+    }
+
+    final state = ref.read(signUpControllerProvider);
+    if (state.hasDeliveryFailure) {
+      _showDeliveryFailureSheet(
+        displayPhone: state.deliveryFailurePhone!,
+        failureReason: state.submitError,
+      );
+      notifier.clearDeliveryFailure();
+    }
+  }
+
+  void _showDeliveryFailureSheet({
+    required String displayPhone,
+    String? failureReason,
+  }) {
+    WhatsAppDeliveryFailureSheet.show(
+      context,
+      displayPhone: displayPhone,
+      subtitle: failureReason,
+      onEditPhone: () {},
+      onSendViaSms: _handleSubmit,
+      onTryEmail: () => EmailFallbackSheet.show(context),
+      onContactSupport: () => SupportContactSheet.show(context),
+    );
   }
 
   @override
@@ -53,7 +87,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
             child: Text(
               'تصفح كزائر',
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AuthDesignTokens.mutedOf(context),
               ),
@@ -61,15 +95,55 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
           ),
         ],
       ),
+      footer: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'لديك حساب بالفعل؟ ',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: AuthDesignTokens.mutedOf(context),
+                ),
+              ),
+              GestureDetector(
+                key: const Key('signup_to_login_button'),
+                onTap: () => context.go(
+                  widget.redirectTo != null
+                      ? '${RouteNames.login}?redirect=${Uri.encodeComponent(widget.redirectTo!)}'
+                      : RouteNames.login,
+                ),
+                child: Text(
+                  'تسجيل الدخول',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: AuthDesignTokens.headingOf(context),
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          AuthLegalFooter(
+            onTermsTap: () => context.push(RouteNames.terms),
+            onPrivacyTap: () => context.push(RouteNames.privacy),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: 8),
           const AuthLogoHeader(
-            title: 'إنشاء حساب جديد',
-            subtitle:
-                'أنشئ حسابك خلال ثوانٍ واستمتع بأفضل العروض في مصر عبر ديل ون',
+            title: 'أنشئ حسابك في Deal One',
+            subtitle: 'ابحث عن عقارك، سيارتك، وصفقاتك في\nمكان واحد.',
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 26),
           SignUpFormCard(
             fullNameController: _fullNameController,
             phoneController: _phoneController,
@@ -80,39 +154,12 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
             onFullNameChanged: controller.updateFullName,
             onPhoneChanged: controller.updatePhone,
             onSubmit: _handleSubmit,
-            onTermsTap: () => context.push(RouteNames.terms),
-            onPrivacyTap: () => context.push(RouteNames.privacy),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
           AuthSocialSection(
             onProviderSelected: (provider) {
               UnavailableProviderDialog.show(context, provider: provider);
             },
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'لديك حساب بالفعل؟',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AuthDesignTokens.bodyOf(context),
-                ),
-              ),
-              TextButton(
-                key: const Key('signup_to_login_button'),
-                onPressed: () => context.go(RouteNames.login),
-                child: const Text(
-                  'تسجيل الدخول',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AuthDesignTokens.actionBlue,
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
       ),

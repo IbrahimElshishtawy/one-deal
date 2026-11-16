@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import '../../theme/auth_design_tokens.dart';
 
 /// Responsive centered RTL/LTR shell shared across all authentication pages.
+/// Supports optional [footer] pinned cleanly to the bottom on tall viewports
+/// while scrolling smoothly when the soft keyboard opens.
 class AuthScaffoldShell extends StatelessWidget {
   final Widget child;
+  final Widget? footer;
   final PreferredSizeWidget? appBar;
   final Widget? bottomBar;
   final EdgeInsetsGeometry? padding;
@@ -13,6 +16,7 @@ class AuthScaffoldShell extends StatelessWidget {
   const AuthScaffoldShell({
     super.key,
     required this.child,
+    this.footer,
     this.appBar,
     this.bottomBar,
     this.padding,
@@ -28,6 +32,37 @@ class AuthScaffoldShell extends StatelessWidget {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final minHeight = (constraints.maxHeight - 32).clamp(
+              0.0,
+              double.infinity,
+            );
+
+            Widget bodyContent;
+            if (centerVertically) {
+              bodyContent = Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  child,
+                  if (footer != null) ...[const SizedBox(height: 24), footer!],
+                ],
+              );
+            } else if (footer != null) {
+              bodyContent = Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  child,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: footer!,
+                  ),
+                ],
+              );
+            } else {
+              bodyContent = child;
+            }
+
             return SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding:
@@ -40,17 +75,11 @@ class AuthScaffoldShell extends StatelessWidget {
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: AuthDesignTokens.maxContentWidth,
-                    minHeight: centerVertically
-                        ? (constraints.maxHeight - 32).clamp(0, double.infinity)
+                    minHeight: (centerVertically || footer != null)
+                        ? minHeight
                         : 0,
                   ),
-                  child: centerVertically
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [child],
-                        )
-                      : child,
+                  child: bodyContent,
                 ),
               ),
             );

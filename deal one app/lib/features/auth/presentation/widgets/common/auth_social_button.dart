@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/entities/auth_session.dart';
 import '../../theme/auth_design_tokens.dart';
+import 'auth_brand_icons.dart';
 
-/// Social authentication divider and Google / Apple provider action buttons.
+/// Social authentication divider and Email / Apple provider action buttons
+/// matching `login.png` and `انشاء حساب.png`.
 class AuthSocialSection extends StatelessWidget {
   final ValueChanged<SocialAuthProviderType> onProviderSelected;
 
@@ -26,7 +28,7 @@ class AuthSocialSection extends StatelessWidget {
               child: Text(
                 'أو المتابعة عبر',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w500,
                   color: AuthDesignTokens.mutedOf(context),
                 ),
@@ -45,8 +47,9 @@ class AuthSocialSection extends StatelessWidget {
           children: [
             Expanded(
               child: _SocialProviderButton(
-                label: 'Google',
-                icon: const _GoogleGMark(),
+                key: const Key('social_email_button'),
+                label: 'البريد الإلكتروني',
+                icon: const GmailMarkIcon(size: 20),
                 onPressed: () =>
                     onProviderSelected(SocialAuthProviderType.google),
               ),
@@ -54,11 +57,14 @@ class AuthSocialSection extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _SocialProviderButton(
-                label: 'Apple',
+                key: const Key('social_apple_button'),
+                label: 'حساب آبل',
                 icon: Icon(
                   Icons.apple,
                   size: 22,
-                  color: AuthDesignTokens.headingOf(context),
+                  color: AuthDesignTokens.isDark(context)
+                      ? Colors.white
+                      : Colors.black,
                 ),
                 onPressed: () =>
                     onProviderSelected(SocialAuthProviderType.apple),
@@ -77,6 +83,7 @@ class _SocialProviderButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   const _SocialProviderButton({
+    super.key,
     required this.label,
     required this.icon,
     required this.onPressed,
@@ -84,58 +91,42 @@ class _SocialProviderButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 50,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: AuthDesignTokens.inputFillOf(context),
-          foregroundColor: AuthDesignTokens.headingOf(context),
-          side: BorderSide(color: AuthDesignTokens.borderOf(context)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GoogleGMark extends StatelessWidget {
-  const _GoogleGMark();
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
-      width: 22,
-      height: 22,
-      alignment: Alignment.center,
+      height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: AuthDesignTokens.surfaceOf(context),
+        borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
+        border: Border.all(color: AuthDesignTokens.borderOf(context)),
+        boxShadow: AuthDesignTokens.cardShadowOf(context),
       ),
-      child: const Text(
-        'G',
-        style: TextStyle(
-          fontSize: 13.5,
-          fontWeight: FontWeight.w800,
-          color: Color(0xFF4285F4),
-          height: 1.0,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                icon,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: AuthDesignTokens.headingOf(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

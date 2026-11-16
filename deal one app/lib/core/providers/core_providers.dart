@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/app_config.dart';
+import '../errors/app_failure.dart';
+import '../errors/error_mapper.dart';
 import '../logging/app_logger.dart';
 import '../network/api_client.dart';
+import '../network/api_endpoints.dart';
 import '../network/network_info.dart';
 import '../security/secure_token_provider.dart';
 import '../security/session_state.dart';
@@ -71,6 +74,27 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   );
 });
 
+/// Optional backend session validator invoked during [SessionNotifier.restoreSession].
+/// Returns the verified user ID if valid, or throws on unauthorized/network error.
+final sessionValidatorProvider = Provider<Future<String?> Function()?>((ref) {
+  return null;
+});
+
+/// Live session validator backed by `GET /users/me` and single-flight refresh.
+Future<String?> validateSessionViaBackend(ApiClient apiClient) async {
+  final response = await apiClient.get(ApiEndpoints.userMe);
+  final raw = response.data;
+  if (raw is Map) {
+    final inner = raw['data'] is Map ? raw['data'] as Map : raw;
+    final userMap = inner['user'] is Map ? inner['user'] as Map : inner;
+    final id = userMap['id']?.toString();
+    if (id != null && id.isNotEmpty) {
+      return id;
+    }
+  }
+  return null;
+}
+
 /// Manages authentication session lifecycle.
 class SessionNotifier extends Notifier<SessionState> {
   @override
@@ -82,9 +106,49 @@ class SessionNotifier extends Notifier<SessionState> {
     final tokens = ref.read(tokenProvider);
     final secureStorage = ref.read(secureStorageServiceProvider);
     final accessToken = await tokens.getAccessToken();
+    final refreshToken = await tokens.getRefreshToken();
     final storedUserId = await secureStorage.read(StorageKeys.userId);
 
-    if (accessToken != null && accessToken.isNotEmpty) {
+    final hasAccess = accessToken != null && accessToken.isNotEmpty;
+    final hasRefresh = refreshToken != null && refreshToken.isNotEmpty;
+
+    if (!hasAccess && !hasRefresh) {
+      state = const SessionState.unauthenticated();
+      return;
+    }
+
+    final validator = ref.read(sessionValidatorProvider);
+    if (validator != null) {
+      try {
+        final verifiedUserId = await validator();
+        final resolvedId = (verifiedUserId != null && verifiedUserId.isNotEmpty)
+            ? verifiedUserId
+            : ((storedUserId != null && storedUserId.isNotEmpty)
+                  ? storedUserId
+                  : null);
+        if (resolvedId != null) {
+          await secureStorage.write(StorageKeys.userId, resolvedId);
+        }
+        state = SessionState(
+          status: SessionStatus.authenticated,
+          userId: resolvedId,
+        );
+        return;
+      } catch (error) {
+        final failure = ErrorMapper.map(error);
+        if (failure is UnauthorizedFailure || failure is ForbiddenFailure) {
+          await logout();
+          return;
+        }
+        // On transient network/timeout failure, retain provisional session only if an access token exists.
+        if (!hasAccess) {
+          state = const SessionState.unauthenticated();
+          return;
+        }
+      }
+    }
+
+    if (hasAccess) {
       state = SessionState(
         status: SessionStatus.authenticated,
         userId: (storedUserId != null && storedUserId.isNotEmpty)

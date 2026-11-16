@@ -48,12 +48,18 @@ class OtpDispatchResponseDto {
   final String message;
   final int cooldownSeconds;
   final int otpExpirySeconds;
+  final String? deliveryChannel;
+  final bool? whatsappAvailable;
+  final String? errorCode;
 
   const OtpDispatchResponseDto({
     required this.success,
     required this.message,
     required this.cooldownSeconds,
     required this.otpExpirySeconds,
+    this.deliveryChannel,
+    this.whatsappAvailable,
+    this.errorCode,
   });
 
   factory OtpDispatchResponseDto.fromJson(Map<String, dynamic> json) {
@@ -71,6 +77,16 @@ class OtpDispatchResponseDto {
           : 'تم إرسال رمز التحقق بنجاح',
       cooldownSeconds: _parsePositiveInt(rawCooldown, fallback: 60),
       otpExpirySeconds: _parsePositiveInt(rawExpiry, fallback: 180),
+      deliveryChannel:
+          json['deliveryChannel']?.toString() ??
+          json['delivery_channel']?.toString() ??
+          json['channel']?.toString(),
+      whatsappAvailable: json['whatsappAvailable'] is bool
+          ? json['whatsappAvailable'] as bool
+          : (json['whatsapp_available'] is bool
+                ? json['whatsapp_available'] as bool
+                : null),
+      errorCode: json['errorCode']?.toString() ?? json['code']?.toString(),
     );
   }
 }

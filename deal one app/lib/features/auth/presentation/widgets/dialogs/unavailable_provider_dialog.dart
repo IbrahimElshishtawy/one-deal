@@ -23,9 +23,9 @@ class UnavailableProviderDialog extends StatelessWidget {
   String get _providerLabel {
     switch (provider) {
       case SocialAuthProviderType.google:
-        return 'Google';
+        return 'البريد الإلكتروني';
       case SocialAuthProviderType.apple:
-        return 'Apple';
+        return 'حساب آبل';
     }
   }
 

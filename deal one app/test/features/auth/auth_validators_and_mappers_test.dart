@@ -163,6 +163,66 @@ void main() {
         ),
       );
       expect(dio400.kind, AuthErrorKind.validation);
+
+      final dioNestValidationDetails = AuthErrorMapper.map(
+        DioException(
+          requestOptions: RequestOptions(path: '/auth/otp/send'),
+          response: Response(
+            statusCode: 400,
+            data: {
+              'success': false,
+              'error': {
+                'code': 'VALIDATION_FAILED',
+                'message': 'Validation failed for one or more fields',
+                'details': [
+                  {
+                    'issue':
+                        'Phone number must be a valid Egyptian mobile number',
+                  },
+                ],
+              },
+            },
+            requestOptions: RequestOptions(path: '/auth/otp/send'),
+          ),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+      expect(dioNestValidationDetails.kind, AuthErrorKind.invalidPhoneNumber);
+
+      final whatsappUnavailable = AuthErrorMapper.map(
+        const ServerException(
+          message: 'WhatsApp unavailable',
+          errorCode: 'WHATSAPP_UNAVAILABLE',
+        ),
+      );
+      expect(whatsappUnavailable.kind, AuthErrorKind.whatsappUnavailable);
+      expect(whatsappUnavailable.isDeliveryFailure, isTrue);
+
+      final smsDeliveryFailed = AuthErrorMapper.map(
+        const ServerException(
+          message: 'Failed to deliver SMS verification code.',
+        ),
+      );
+      expect(smsDeliveryFailed.kind, AuthErrorKind.otpDeliveryFailed);
+      expect(smsDeliveryFailed.isDeliveryFailure, isTrue);
+
+      final refreshInvalid = AuthErrorMapper.map(
+        const UnauthorizedException(
+          message: 'Invalid or unrecognized refresh token.',
+        ),
+      );
+      expect(refreshInvalid.kind, AuthErrorKind.invalidRefreshToken);
+
+      final notFound = AuthErrorMapper.map(const NotFoundException());
+      expect(notFound.kind, AuthErrorKind.accountNotFound);
+
+      final conflict = AuthErrorMapper.map(
+        const ConflictException(message: 'Account already exists'),
+      );
+      expect(conflict.kind, AuthErrorKind.existingAccount);
+
+      final timeout = AuthErrorMapper.map(const TimeoutException());
+      expect(timeout.kind, AuthErrorKind.timeout);
     });
   });
 }

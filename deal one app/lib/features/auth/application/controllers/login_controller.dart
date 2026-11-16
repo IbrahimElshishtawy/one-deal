@@ -19,15 +19,22 @@ class LoginController extends AutoDisposeNotifier<LoginState> {
       phone: value,
       clearPhoneError: true,
       clearSubmitError: true,
+      clearErrorKind: true,
+      clearDeliveryFailure: true,
     );
   }
 
-  Future<PendingAuthContext?> submit() async {
+  Future<PendingAuthContext?> submit({String? redirectTo}) async {
     if (state.isSubmitting) return null;
 
     final phoneError = EgyptianPhoneValidator.validate(state.phone);
     if (phoneError != null) {
-      state = state.copyWith(phoneError: phoneError, clearSubmitError: true);
+      state = state.copyWith(
+        phoneError: phoneError,
+        clearSubmitError: true,
+        clearErrorKind: true,
+        clearDeliveryFailure: true,
+      );
       return null;
     }
 
@@ -43,6 +50,8 @@ class LoginController extends AutoDisposeNotifier<LoginState> {
       isSubmitting: true,
       clearPhoneError: true,
       clearSubmitError: true,
+      clearErrorKind: true,
+      clearDeliveryFailure: true,
     );
 
     try {
@@ -54,6 +63,7 @@ class LoginController extends AutoDisposeNotifier<LoginState> {
         flowMode: AuthFlowMode.login,
         cooldownSeconds: dispatchResult.cooldownSeconds,
         otpExpirySeconds: dispatchResult.otpExpirySeconds,
+        redirectTo: redirectTo,
       );
       state = state.copyWith(isSubmitting: false, pendingContext: pending);
       return pending;
@@ -62,8 +72,18 @@ class LoginController extends AutoDisposeNotifier<LoginState> {
       state = state.copyWith(
         isSubmitting: false,
         submitError: feedback.message,
+        errorKind: feedback.kind,
+        deliveryFailurePhone: feedback.isDeliveryFailure
+            ? EgyptianPhoneValidator.formatForDisplay(normalizedPhone)
+            : null,
       );
       return null;
+    }
+  }
+
+  void clearDeliveryFailure() {
+    if (state.hasDeliveryFailure) {
+      state = state.copyWith(clearDeliveryFailure: true, clearErrorKind: true);
     }
   }
 

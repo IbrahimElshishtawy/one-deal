@@ -3,19 +3,22 @@ import 'package:flutter/services.dart';
 
 import '../../theme/auth_design_tokens.dart';
 
-/// Auth text input featuring orange focus state, soft red error tint,
-/// and optional country prefix badge for Egyptian phone entry.
+/// Auth text input matching the floating white rounded cards in the Deal One
+/// design screens, with orange focus state and soft red error feedback.
 class AuthTextField extends StatefulWidget {
-  final String label;
+  final String? label;
   final String hintText;
   final TextEditingController? controller;
   final FocusNode? focusNode;
   final String? errorText;
+  final Widget? leadingWidget;
   final IconData? leadingIcon;
   final Widget? prefixBadge;
+  final Widget? trailingWidget;
   final TextInputType keyboardType;
   final TextInputAction textInputAction;
   final TextDirection? textDirection;
+  final TextAlign textAlign;
   final List<TextInputFormatter>? inputFormatters;
   final Iterable<String>? autofillHints;
   final ValueChanged<String>? onChanged;
@@ -24,16 +27,19 @@ class AuthTextField extends StatefulWidget {
 
   const AuthTextField({
     super.key,
-    required this.label,
+    this.label,
     required this.hintText,
     this.controller,
     this.focusNode,
     this.errorText,
+    this.leadingWidget,
     this.leadingIcon,
     this.prefixBadge,
+    this.trailingWidget,
     this.keyboardType = TextInputType.text,
     this.textInputAction = TextInputAction.next,
     this.textDirection,
+    this.textAlign = TextAlign.start,
     this.inputFormatters,
     this.autofillHints,
     this.onChanged,
@@ -106,15 +112,17 @@ class _AuthTextFieldState extends State<AuthTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          widget.label,
-          style: TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w600,
-            color: AuthDesignTokens.headingOf(context),
+        if (widget.label != null && widget.label!.isNotEmpty) ...[
+          Text(
+            widget.label!,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: AuthDesignTokens.headingOf(context),
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
+        ],
         AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           decoration: BoxDecoration(
@@ -122,15 +130,19 @@ class _AuthTextFieldState extends State<AuthTextField> {
             borderRadius: BorderRadius.circular(AuthDesignTokens.inputRadius),
             border: Border.all(
               color: activeColor,
-              width: _hasFocus || hasError ? 1.7 : 1.1,
+              width: _hasFocus || hasError ? 1.6 : 1.0,
             ),
+            boxShadow: AuthDesignTokens.cardShadowOf(context),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
           child: Row(
             children: [
-              if (widget.leadingIcon != null) ...[
+              if (widget.leadingWidget != null) ...[
+                widget.leadingWidget!,
+                const SizedBox(width: 10),
+              ] else if (widget.leadingIcon != null) ...[
                 Icon(widget.leadingIcon, size: 20, color: iconColor),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
               ],
               if (widget.prefixBadge != null) ...[
                 widget.prefixBadge!,
@@ -144,12 +156,13 @@ class _AuthTextFieldState extends State<AuthTextField> {
                   keyboardType: widget.keyboardType,
                   textInputAction: widget.textInputAction,
                   textDirection: widget.textDirection,
+                  textAlign: widget.textAlign,
                   inputFormatters: widget.inputFormatters,
                   autofillHints: widget.autofillHints,
                   onChanged: widget.onChanged,
                   onSubmitted: widget.onSubmitted,
                   style: TextStyle(
-                    fontSize: 15.5,
+                    fontSize: 15,
                     fontWeight: FontWeight.w500,
                     color: AuthDesignTokens.headingOf(context),
                   ),
@@ -165,13 +178,17 @@ class _AuthTextFieldState extends State<AuthTextField> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
                     hintText: widget.hintText,
                     hintStyle: TextStyle(
-                      fontSize: 14.5,
+                      fontSize: 14,
                       color: AuthDesignTokens.mutedOf(context)
-                          .withValues(alpha: 0.75),
+                          .withValues(alpha: 0.72),
                     ),
                   ),
                 ),
               ),
+              if (widget.trailingWidget != null) ...[
+                const SizedBox(width: 8),
+                widget.trailingWidget!,
+              ],
             ],
           ),
         ),

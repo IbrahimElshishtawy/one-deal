@@ -112,12 +112,18 @@ class OtpDispatchResult {
   final String message;
   final int cooldownSeconds;
   final int otpExpirySeconds;
+  final String? deliveryChannel;
+  final bool? whatsappAvailable;
+  final String? errorCode;
 
   const OtpDispatchResult({
     this.success = true,
     this.message = 'تم إرسال رمز التحقق بنجاح',
     this.cooldownSeconds = 60,
     this.otpExpirySeconds = 180,
+    this.deliveryChannel,
+    this.whatsappAvailable,
+    this.errorCode,
   });
 }
 
@@ -129,6 +135,7 @@ class PendingAuthContext {
   final AuthFlowMode flowMode;
   final int cooldownSeconds;
   final int otpExpirySeconds;
+  final String? redirectTo;
 
   const PendingAuthContext({
     required this.normalizedPhone,
@@ -137,6 +144,7 @@ class PendingAuthContext {
     required this.flowMode,
     this.cooldownSeconds = 60,
     this.otpExpirySeconds = 180,
+    this.redirectTo,
   });
 
   PendingAuthContext copyWith({
@@ -146,6 +154,7 @@ class PendingAuthContext {
     AuthFlowMode? flowMode,
     int? cooldownSeconds,
     int? otpExpirySeconds,
+    String? redirectTo,
   }) {
     return PendingAuthContext(
       normalizedPhone: normalizedPhone ?? this.normalizedPhone,
@@ -154,6 +163,7 @@ class PendingAuthContext {
       flowMode: flowMode ?? this.flowMode,
       cooldownSeconds: cooldownSeconds ?? this.cooldownSeconds,
       otpExpirySeconds: otpExpirySeconds ?? this.otpExpirySeconds,
+      redirectTo: redirectTo ?? this.redirectTo,
     );
   }
 
@@ -166,7 +176,8 @@ class PendingAuthContext {
         other.pendingFullName == pendingFullName &&
         other.flowMode == flowMode &&
         other.cooldownSeconds == cooldownSeconds &&
-        other.otpExpirySeconds == otpExpirySeconds;
+        other.otpExpirySeconds == otpExpirySeconds &&
+        other.redirectTo == redirectTo;
   }
 
   @override
@@ -177,5 +188,6 @@ class PendingAuthContext {
     flowMode,
     cooldownSeconds,
     otpExpirySeconds,
+    redirectTo,
   );
 }

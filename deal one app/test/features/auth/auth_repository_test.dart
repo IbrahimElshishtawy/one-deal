@@ -140,6 +140,43 @@ void main() {
       },
     );
 
+    test(
+      'sendOtp throws OTP_DELIVERY_FAILED when backend returns success=false',
+      () async {
+        apiClient.nextPostResponseData = {
+          'success': true,
+          'data': {
+            'success': false,
+            'message': 'WhatsApp unavailable',
+            'whatsappAvailable': false,
+          },
+        };
+
+        expect(
+          () => repository.sendOtp('+201012345678'),
+          throwsA(isA<Exception>()),
+        );
+      },
+    );
+
+    test(
+      'verifyOtp throws UNEXPECTED_RESPONSE when tokens are missing',
+      () async {
+        apiClient.nextPostResponseData = {
+          'success': true,
+          'data': {
+            'user': {'id': 'user_1', 'phone': '+201012345678'},
+            'tokens': {'accessToken': '', 'refreshToken': ''},
+          },
+        };
+
+        expect(
+          () => repository.verifyOtp('+201012345678', '123456'),
+          throwsA(isA<Exception>()),
+        );
+      },
+    );
+
     test('logout clears tokens', () async {
       tokenProvider.accessToken = 'token';
       tokenProvider.refreshToken = 'refresh';

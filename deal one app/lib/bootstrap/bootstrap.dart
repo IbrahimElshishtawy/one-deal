@@ -105,6 +105,10 @@ Future<void> bootstrap(AppConfig config) async {
           secureStorageServiceProvider.overrideWithValue(
             dependencies.secureStorageService,
           ),
+          sessionValidatorProvider.overrideWith((ref) {
+            final apiClient = ref.watch(apiClientProvider);
+            return () => validateSessionViaBackend(apiClient);
+          }),
         ],
         child: MarketSpaceApp(dependencies: dependencies),
       ),

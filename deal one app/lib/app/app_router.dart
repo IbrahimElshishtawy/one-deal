@@ -19,10 +19,16 @@ import '../features/search/presentation/screens/search_screen.dart';
 class AppRouter {
   static GoRouter createRouter({
     RouteGuard? routeGuard,
+    Listenable? refreshListenable,
     String initialLocation = RouteNames.root,
   }) {
     return GoRouter(
       initialLocation: initialLocation,
+      refreshListenable: refreshListenable,
+      redirect: routeGuard == null
+          ? null
+          : (context, state) =>
+                routeGuard.evaluateRedirect(context, state.uri.toString()),
       routes: [
         GoRoute(
           path: RouteNames.root,
@@ -60,12 +66,14 @@ class AppRouter {
         GoRoute(
           path: RouteNames.signUp,
           name: RouteNames.signUpName,
-          builder: (context, state) => const SignUpPage(),
+          builder: (context, state) =>
+              SignUpPage(redirectTo: state.uri.queryParameters['redirect']),
         ),
         GoRoute(
           path: RouteNames.login,
           name: RouteNames.loginName,
-          builder: (context, state) => const LoginPage(),
+          builder: (context, state) =>
+              LoginPage(redirectTo: state.uri.queryParameters['redirect']),
         ),
         GoRoute(
           path: RouteNames.otpVerification,
@@ -82,6 +90,12 @@ class AppRouter {
           name: RouteNames.verificationSuccessName,
           builder: (context, state) {
             final extra = state.extra;
+            if (extra is VerificationSuccessArgs) {
+              return VerificationSuccessPage(
+                session: extra.session,
+                redirectTo: extra.redirectTo,
+              );
+            }
             return VerificationSuccessPage(
               session: extra is AuthSession ? extra : null,
             );

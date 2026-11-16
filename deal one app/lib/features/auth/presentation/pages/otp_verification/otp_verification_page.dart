@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,22 +13,50 @@ import '../../widgets/bottom_sheets/email_fallback_sheet.dart';
 import '../../widgets/bottom_sheets/support_contact_sheet.dart';
 import '../../widgets/bottom_sheets/whatsapp_delivery_failure_sheet.dart';
 import '../../widgets/common/auth_error_banner.dart';
+import '../../widgets/common/auth_legal_footer.dart';
+import '../../widgets/common/auth_logo_header.dart';
 import '../../widgets/common/auth_primary_button.dart';
 import '../../widgets/common/auth_scaffold_shell.dart';
-import '../../widgets/otp/otp_countdown_timer.dart';
-import '../../widgets/otp/otp_delivery_help_row.dart';
 import '../../widgets/otp/otp_pin_boxes.dart';
+import '../verification_success/verification_success_page.dart';
 
-/// Deal One OTP Verification page covering Default, Invalid Code, Expired Code,
-/// and WhatsApp Delivery Failure Sheet (Design Screens 5–8).
-class OtpVerificationPage extends ConsumerWidget {
+/// Deal One OTP Verification page matching:
+/// - `ui/otp.png` (default state)
+/// - `ui/لو المستخدم دخل الرمز غلط.png` (invalid OTP state)
+/// - `ui/لو الكود صلاحيات خلصت .png` (expired OTP state)
+/// - `ui/هنا لو المستخدم الرقم مش موجود عليها واتس.png` (delivery failure sheet)
+class OtpVerificationPage extends ConsumerStatefulWidget {
   final PendingAuthContext? authContext;
 
   const OtpVerificationPage({super.key, required this.authContext});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final pending = authContext;
+  ConsumerState<OtpVerificationPage> createState() =>
+      _OtpVerificationPageState();
+}
+
+class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
+  final FocusNode _otpFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _otpFocusNode.dispose();
+    super.dispose();
+  }
+
+  String _formatRemainingAttemptsText(int remaining) {
+    if (remaining == 1) {
+      return 'متبقي لك محاولة واحدة (1) فقط قبل القفل المؤقت';
+    }
+    if (remaining == 2) {
+      return 'متبقي لك محاولتان (2) فقط قبل القفل المؤقت';
+    }
+    return 'متبقي لك $remaining محاولات فقط قبل القفل المؤقت';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pending = widget.authContext;
     if (pending == null) {
       return AuthScaffoldShell(
         centerVertically: true,
@@ -35,7 +65,7 @@ class OtpVerificationPage extends ConsumerWidget {
             const Icon(
               Icons.sms_outlined,
               size: 56,
-              color: AuthDesignTokens.actionBlue,
+              color: AuthDesignTokens.navyPrimary,
             ),
             const SizedBox(height: 16),
             Text(
@@ -70,40 +100,27 @@ class OtpVerificationPage extends ConsumerWidget {
       otpVerificationControllerProvider(pending).notifier,
     );
 
-    Future<void> verifyAndProceed() async {
-      final session = await controller.verifyCode();
-      if (!context.mounted || session == null) return;
-      context.go(RouteNames.verificationSuccess, extra: session);
-    }
-
-    Future<void> handleResend() async {
-      final resent = await controller.resendCode();
-      if (!context.mounted) return;
-      if (resent) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم إرسال رمز تحقق جديد بنجاح')),
+    void navigateBackToPhoneEntry() {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go(
+          pending.flowMode == AuthFlowMode.signUp
+              ? RouteNames.signUp
+              : RouteNames.login,
         );
       }
     }
 
-    void openDeliveryFailureSheet() {
+    void openDeliveryFailureSheet({String? customReason}) {
       WhatsAppDeliveryFailureSheet.show(
         context,
         displayPhone: state.displayPhone,
-        onEditPhone: () {
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go(
-              pending.flowMode == AuthFlowMode.signUp
-                  ? RouteNames.signUp
-                  : RouteNames.login,
-            );
-          }
-        },
+        subtitle: customReason,
+        onEditPhone: navigateBackToPhoneEntry,
         onSendViaSms: () {
           if (state.canResend) {
-            handleResend();
+            controller.resendCode();
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -119,188 +136,389 @@ class OtpVerificationPage extends ConsumerWidget {
       );
     }
 
-    return AuthScaffoldShell(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          key: const Key('otp_back_button'),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go(
-                pending.flowMode == AuthFlowMode.signUp
-                    ? RouteNames.signUp
-                    : RouteNames.login,
-              );
-            }
-          },
+    Future<void> verifyAndProceed() async {
+      final session = await controller.verifyCode();
+      if (!context.mounted || session == null) return;
+      context.go(
+        RouteNames.verificationSuccess,
+        extra: VerificationSuccessArgs(
+          session: session,
+          redirectTo: pending.redirectTo,
         ),
-        title: Text(
-          'التحقق من رقم الهاتف',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: AuthDesignTokens.headingOf(context),
-          ),
+      );
+    }
+
+    Future<void> handleResend() async {
+      final resent = await controller.resendCode();
+      if (!context.mounted) return;
+      if (resent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم إرسال رمز تحقق جديد بنجاح')),
+        );
+        _otpFocusNode.requestFocus();
+        return;
+      }
+      final updated = ref.read(otpVerificationControllerProvider(pending));
+      if (updated.isDeliveryFailed) {
+        openDeliveryFailureSheet(customReason: updated.errorMessage);
+      }
+    }
+
+    void handleRetryAction() {
+      if (state.isExpired || state.isLocked) {
+        if (state.canResend) {
+          handleResend();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'يرجى انتظار ${state.formattedCooldown} قبل طلب رمز جديد',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      controller.retryAfterError();
+      _otpFocusNode.requestFocus();
+    }
+
+    final isErrorMode = state.isInvalid || state.isLocked || state.isExpired;
+    final showRetryButton =
+        state.isInvalid ||
+        state.isLocked ||
+        state.isExpired ||
+        state.status == OtpStatus.networkError ||
+        state.status == OtpStatus.serverError;
+
+    final upperContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 12),
+        AuthLogoHeader(
+          title: 'أدخل رمز التحقق',
+          subtitle:
+              'أدخل الرمز المكون من 6 أرقام المرسل إلى\n[${state.displayPhone}]',
         ),
-        centerTitle: true,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 8),
-          Center(
-            child: Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: state.hasFieldError
-                    ? AuthDesignTokens.errorTintOf(context)
-                    : AuthDesignTokens.actionBlueTint,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                state.isExpired
-                    ? Icons.timer_off_outlined
-                    : (state.hasFieldError
-                          ? Icons.gpp_bad_outlined
-                          : Icons.mark_chat_read_outlined),
-                size: 34,
-                color: state.hasFieldError
-                    ? AuthDesignTokens.errorRed
-                    : AuthDesignTokens.actionBlue,
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'أدخل رمز التحقق',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 23,
-              fontWeight: FontWeight.w800,
-              color: AuthDesignTokens.headingOf(context),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'تم إرسال رمز مكون من 6 أرقام إلى الرقم التالي:',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: AuthDesignTokens.bodyOf(context),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AuthDesignTokens.surfaceOf(context),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AuthDesignTokens.borderOf(context)),
-              ),
+        const SizedBox(height: 6),
+        Center(
+          child: InkWell(
+            key: const Key('otp_edit_phone_chip'),
+            borderRadius: BorderRadius.circular(8),
+            onTap: navigateBackToPhoneEntry,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Text(
-                      state.displayPhone,
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        color: AuthDesignTokens.headingOf(context),
-                      ),
+                  Text(
+                    'تغيير الرقم',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: AuthDesignTokens.headingOf(context),
+                      decoration: TextDecoration.underline,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    key: const Key('otp_edit_phone_chip'),
-                    onTap: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go(RouteNames.login);
-                      }
-                    },
-                    child: const Text(
-                      'تعديل',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AuthDesignTokens.actionBlue,
-                      ),
-                    ),
+                  const SizedBox(width: 5),
+                  Icon(
+                    Icons.edit,
+                    size: 15,
+                    color: AuthDesignTokens.headingOf(context),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 24),
-          OtpPinBoxes(
-            code: state.code,
-            hasError: state.hasFieldError,
-            enabled: !state.isBusy && !state.isExpired && !state.isLocked,
-            onChanged: controller.updateCode,
-            onCompleted: verifyAndProceed,
-          ),
-          if (state.hasBannerError) ...[
+        ),
+        const SizedBox(height: 24),
+        OtpPinBoxes(
+          code: state.code,
+          focusNode: _otpFocusNode,
+          hasError: state.hasFieldError,
+          enabled: !state.isBusy && !state.isExpired && !state.isLocked,
+          onChanged: controller.updateCode,
+          onCompleted: verifyAndProceed,
+        ),
+      ],
+    );
+
+    return AuthScaffoldShell(
+      footer: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: AuthLegalFooter(
+          onTermsTap: () => context.push(RouteNames.terms),
+          onPrivacyTap: () => context.push(RouteNames.privacy),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Upper section blurs & dims when OTP has expired (`لو الكود صلاحيات خلصت .png`)
+          if (state.isExpired)
+            Stack(
+              children: [
+                ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
+                  child: Opacity(opacity: 0.45, child: upperContent),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: _ExpiredOtpAlertCard(
+                    key: const Key('otp_expired_card'),
+                  ),
+                ),
+              ],
+            )
+          else
+            upperContent,
+
+          // Invalid / Error / Locked state banner + remaining attempts pill (`لو المستخدم دخل الرمز غلط.png`)
+          if (!state.isExpired && state.hasBannerError) ...[
             const SizedBox(height: 16),
             AuthErrorBanner(
               key: const Key('otp_error_banner'),
               message: state.errorMessage!,
-              icon: state.isExpired
-                  ? Icons.schedule_rounded
-                  : Icons.error_outline_rounded,
-              actionLabel:
-                  (state.isExpired || state.isLocked) && state.canResend
-                  ? 'إرسال رمز جديد الآن'
-                  : null,
-              onActionPressed:
-                  (state.isExpired || state.isLocked) && state.canResend
-                  ? handleResend
-                  : null,
+              icon: Icons.error_rounded,
             ),
           ],
-          if (state.status == OtpStatus.invalid &&
+          if (!state.isExpired &&
+              (state.isInvalid || state.isLocked) &&
               state.failedAttempts > 0 &&
               state.failedAttempts < state.maxAttempts) ...[
-            const SizedBox(height: 8),
-            Text(
-              'المحاولات المتبقية: ${state.maxAttempts - state.failedAttempts}',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: AuthDesignTokens.mutedOf(context),
+            const SizedBox(height: 10),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AuthDesignTokens.softPillOf(context),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.lock_outline_rounded,
+                      size: 14,
+                      color: AuthDesignTokens.mutedOf(context),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        _formatRemainingAttemptsText(state.remainingAttempts),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AuthDesignTokens.bodyOf(context),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
-          const SizedBox(height: 20),
-          OtpCountdownTimer(
-            formattedCooldown: state.formattedCooldown,
-            formattedExpiry: state.formattedExpiry,
-            cooldownRemainingSeconds: state.cooldownRemainingSeconds,
-            isExpired: state.isExpired,
-            isResending: state.isResending,
-            canResend: state.canResend,
-            onResendPressed: handleResend,
-          ),
+
           const SizedBox(height: 22),
-          AuthPrimaryButton(
-            key: const Key('otp_verify_button'),
-            label: 'تأكيد الرمز',
-            isLoading: state.isVerifying,
-            onPressed: state.canSubmit ? verifyAndProceed : null,
+
+          // Primary CTA: "تأكيد الرمز" in normal state, "إعادة المحاولة" on error/expired
+          if (showRetryButton)
+            AuthPrimaryButton(
+              key: state.isExpired
+                  ? const Key('otp_resend_button')
+                  : const Key('otp_retry_button'),
+              label: state.isResending
+                  ? 'جاري إرسال رمز جديد...'
+                  : (state.isExpired && state.cooldownRemainingSeconds > 0
+                        ? 'إعادة المحاولة (${state.formattedCooldown})'
+                        : 'إعادة المحاولة'),
+              leadingIcon: Icons.refresh_rounded,
+              isLoading: state.isResending,
+              onPressed: state.isBusy ? null : handleRetryAction,
+            )
+          else
+            AuthPrimaryButton(
+              key: const Key('otp_verify_button'),
+              label: 'تأكيد الرمز',
+              isLoading: state.isVerifying,
+              onPressed: state.canSubmit ? verifyAndProceed : null,
+            ),
+
+          const SizedBox(height: 14),
+
+          // Resend countdown row (default `otp.png`) or support row (`لو المستخدم دخل الرمز غلط.png` / expired)
+          if (isErrorMode) ...[
+            Center(
+              child: TextButton.icon(
+                key: const Key('otp_support_button'),
+                onPressed: () => SupportContactSheet.show(context),
+                icon: Icon(
+                  Icons.headset_mic_outlined,
+                  size: 16,
+                  color: AuthDesignTokens.mutedOf(context),
+                ),
+                label: Text(
+                  'تواجه مشكلة في تسجيل الدخول؟ تواصل مع الدعم',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: AuthDesignTokens.mutedOf(context),
+                  ),
+                ),
+              ),
+            ),
+            if (state.isInvalid)
+              Center(
+                child: TextButton(
+                  key: const Key('otp_resend_button'),
+                  onPressed: state.canResend ? handleResend : null,
+                  child: Text(
+                    state.cooldownRemainingSeconds > 0
+                        ? 'إرسال رمز جديد خلال ${state.formattedCooldown}'
+                        : 'طلب رمز تحقق جديد',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: state.canResend
+                          ? AuthDesignTokens.actionBlue
+                          : AuthDesignTokens.mutedOf(context),
+                    ),
+                  ),
+                ),
+              ),
+          ] else ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'ألم تستلم الرمز؟ ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AuthDesignTokens.mutedOf(context),
+                  ),
+                ),
+                if (state.cooldownRemainingSeconds > 0 && !state.isResending)
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      '${state.formattedCooldown} إرسال مجدداً',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AuthDesignTokens.headingOf(context),
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    key: const Key('otp_resend_button'),
+                    onTap: state.canResend ? handleResend : null,
+                    child: Text(
+                      state.isResending ? 'جاري الإرسال...' : 'إرسال مجدداً',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AuthDesignTokens.actionBlue,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'صلاحية الرمز المتبقية: ${state.formattedExpiry}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11.5,
+                color: AuthDesignTokens.mutedOf(context),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Center(
+              child: TextButton(
+                key: const Key('otp_delivery_help_button'),
+                onPressed: () => openDeliveryFailureSheet(),
+                child: const Text(
+                  'لم يصلك الرمز عبر واتساب؟',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: AuthDesignTokens.actionBlue,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ExpiredOtpAlertCard extends StatelessWidget {
+  const _ExpiredOtpAlertCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AuthDesignTokens.expiredCardOf(context),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A0F172A),
+            blurRadius: 16,
+            offset: Offset(0, 6),
           ),
-          const SizedBox(height: 16),
-          OtpDeliveryHelpRow(
-            onDeliveryTroubleTap: openDeliveryFailureSheet,
-            onSupportTap: () => SupportContactSheet.show(context),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.timer_off_outlined,
+              size: 24,
+              color: AuthDesignTokens.errorDeepRed,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'انتهت صلاحية رمز التحقق، يرجى طلب رمز جديد',
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    color: AuthDesignTokens.errorDeepRed,
+                    height: 1.4,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'انقضت مهلة الأمان المحددة لحماية حسابك ومعاملاتك العقارية. يمكنك إنشاء رمز جديد فوري ومتابعة توثيق العملية.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: AuthDesignTokens.errorDeepRed,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

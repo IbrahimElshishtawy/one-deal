@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/providers/app_settings_providers.dart';
 import '../core/providers/core_providers.dart';
+import '../core/routing/route_guards.dart';
 import '../core/routing/route_names.dart';
 import '../core/theme/app_theme_data.dart';
 import 'app_dependencies.dart';
@@ -24,8 +25,14 @@ class MarketSpaceApp extends ConsumerStatefulWidget {
   ConsumerState<MarketSpaceApp> createState() => _MarketSpaceAppState();
 }
 
+class _SessionRefreshNotifier extends ChangeNotifier {
+  void notify() => notifyListeners();
+}
+
 class _MarketSpaceAppState extends ConsumerState<MarketSpaceApp> {
   late final GoRouter _router;
+  final _SessionRefreshNotifier _refreshNotifier = _SessionRefreshNotifier();
+  ProviderSubscription<dynamic>? _sessionSubscription;
 
   @override
   void initState() {
@@ -33,10 +40,28 @@ class _MarketSpaceAppState extends ConsumerState<MarketSpaceApp> {
     final initialRoute = widget.dependencies.onboardingCompleted
         ? RouteNames.root
         : RouteNames.onboarding;
+    final routeGuard = SessionRouteGuard(
+      tokenProvider: ref.read(tokenProvider),
+      isAuthenticatedProvider: () => ref.read(sessionProvider).isAuthenticated,
+    );
+    _sessionSubscription = ref.listenManual(sessionProvider, (_, _) {
+      _refreshNotifier.notify();
+    });
     _router =
         widget.customRouter ??
-        AppRouter.createRouter(initialLocation: initialRoute);
+        AppRouter.createRouter(
+          routeGuard: routeGuard,
+          refreshListenable: _refreshNotifier,
+          initialLocation: initialRoute,
+        );
     Future.microtask(() => ref.read(sessionProvider.notifier).restoreSession());
+  }
+
+  @override
+  void dispose() {
+    _sessionSubscription?.close();
+    _refreshNotifier.dispose();
+    super.dispose();
   }
 
   @override

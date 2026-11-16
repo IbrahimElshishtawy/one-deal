@@ -1,15 +1,14 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../theme/auth_design_tokens.dart';
+import '../common/auth_brand_icons.dart';
 import '../common/auth_country_prefix.dart';
 import '../common/auth_error_banner.dart';
 import '../common/auth_primary_button.dart';
 import '../common/auth_text_field.dart';
 
-/// Modular Sign Up form card containing full name, Egyptian mobile number,
-/// legal agreement notice, and verification code submission button.
+/// Modular Sign Up form card matching `ui/انشاء حساب.png`.
 class SignUpFormCard extends StatefulWidget {
   final TextEditingController fullNameController;
   final TextEditingController phoneController;
@@ -20,8 +19,6 @@ class SignUpFormCard extends StatefulWidget {
   final ValueChanged<String> onFullNameChanged;
   final ValueChanged<String> onPhoneChanged;
   final VoidCallback onSubmit;
-  final VoidCallback onTermsTap;
-  final VoidCallback onPrivacyTap;
 
   const SignUpFormCard({
     super.key,
@@ -34,8 +31,6 @@ class SignUpFormCard extends StatefulWidget {
     required this.onFullNameChanged,
     required this.onPhoneChanged,
     required this.onSubmit,
-    required this.onTermsTap,
-    required this.onPrivacyTap,
   });
 
   @override
@@ -43,28 +38,10 @@ class SignUpFormCard extends StatefulWidget {
 }
 
 class _SignUpFormCardState extends State<SignUpFormCard> {
-  late final TapGestureRecognizer _termsRecognizer;
-  late final TapGestureRecognizer _privacyRecognizer;
   final FocusNode _phoneFocusNode = FocusNode();
 
   @override
-  void initState() {
-    super.initState();
-    _termsRecognizer = TapGestureRecognizer()..onTap = widget.onTermsTap;
-    _privacyRecognizer = TapGestureRecognizer()..onTap = widget.onPrivacyTap;
-  }
-
-  @override
-  void didUpdateWidget(covariant SignUpFormCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _termsRecognizer.onTap = widget.onTermsTap;
-    _privacyRecognizer.onTap = widget.onPrivacyTap;
-  }
-
-  @override
   void dispose() {
-    _termsRecognizer.dispose();
-    _privacyRecognizer.dispose();
     _phoneFocusNode.dispose();
     super.dispose();
   }
@@ -76,15 +53,14 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
       children: [
         if (widget.submitError != null && widget.submitError!.isNotEmpty) ...[
           AuthErrorBanner(message: widget.submitError!),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
         ],
         AuthTextField(
           key: const Key('signup_fullname_field'),
-          label: 'الاسم الكامل',
-          hintText: 'مثال: أحمد محمد علي',
+          hintText: 'اكتب اسمك هنا',
           controller: widget.fullNameController,
           errorText: widget.fullNameError,
-          leadingIcon: Icons.person_outline_rounded,
+          leadingIcon: Icons.person_rounded,
           keyboardType: TextInputType.name,
           textInputAction: TextInputAction.next,
           autofillHints: const [AutofillHints.name],
@@ -92,19 +68,24 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
           onChanged: widget.onFullNameChanged,
           onSubmitted: (_) => _phoneFocusNode.requestFocus(),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         AuthTextField(
           key: const Key('signup_phone_field'),
-          label: 'رقم الهاتف',
-          hintText: '010 1234 5678',
+          hintText: '01XXXXXXXXX',
           controller: widget.phoneController,
           focusNode: _phoneFocusNode,
           errorText: widget.phoneError,
-          leadingIcon: Icons.phone_android_rounded,
-          prefixBadge: const AuthCountryPrefixBadge(),
+          leadingWidget: WhatsAppGlyphIcon(
+            size: 20,
+            color: widget.phoneError != null
+                ? AuthDesignTokens.errorRed
+                : AuthDesignTokens.mutedOf(context),
+          ),
+          trailingWidget: const AuthCountryPrefixBadge(compact: true),
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.done,
           textDirection: TextDirection.ltr,
+          textAlign: TextAlign.right,
           autofillHints: const [AutofillHints.telephoneNumber],
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩+\s\-]')),
@@ -114,35 +95,12 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
           onChanged: widget.onPhoneChanged,
           onSubmitted: (_) => widget.onSubmit(),
         ),
-        const SizedBox(height: 16),
-        RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.6,
-              color: AuthDesignTokens.mutedOf(context),
-            ),
-            children: [
-              const TextSpan(text: 'بإنشائك للحساب فإنك توافق على '),
-              TextSpan(
-                text: 'شروط الاستخدام',
-                recognizer: _termsRecognizer,
-                style: const TextStyle(
-                  color: AuthDesignTokens.actionBlue,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const TextSpan(text: ' و '),
-              TextSpan(
-                text: 'سياسة الخصوصية',
-                recognizer: _privacyRecognizer,
-                style: const TextStyle(
-                  color: AuthDesignTokens.actionBlue,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+        const SizedBox(height: 8),
+        Text(
+          'سيتم إرسال رمز التحقق عبر الواتساب',
+          style: TextStyle(
+            fontSize: 12,
+            color: AuthDesignTokens.mutedOf(context),
           ),
         ),
         const SizedBox(height: 20),

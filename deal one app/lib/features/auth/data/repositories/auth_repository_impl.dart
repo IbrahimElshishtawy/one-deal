@@ -1,3 +1,4 @@
+import '../../../../core/errors/app_exception.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/security/token_provider.dart';
 import '../../domain/entities/auth_session.dart';
@@ -25,6 +26,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final dto = await _remoteDataSource.sendOtp(
       SendOtpRequestDto(phone: phone),
     );
+    _assertDispatchSucceeded(dto);
     return AuthMapper.toOtpDispatchEntity(dto);
   }
 
@@ -33,7 +35,17 @@ class AuthRepositoryImpl implements AuthRepository {
     final dto = await _remoteDataSource.resendOtp(
       SendOtpRequestDto(phone: phone),
     );
+    _assertDispatchSucceeded(dto);
     return AuthMapper.toOtpDispatchEntity(dto);
+  }
+
+  void _assertDispatchSucceeded(OtpDispatchResponseDto dto) {
+    if (!dto.success || dto.whatsappAvailable == false) {
+      final code = dto.whatsappAvailable == false
+          ? 'WHATSAPP_UNAVAILABLE'
+          : (dto.errorCode ?? 'OTP_DELIVERY_FAILED');
+      throw ServerException(message: dto.message, errorCode: code);
+    }
   }
 
   @override
@@ -41,6 +53,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final authDto = await _remoteDataSource.verifyOtp(
       VerifyOtpRequestDto(phone: phone, code: code),
     );
+    _assertValidAuthResponse(authDto);
     await _persistTokens(authDto);
     return AuthMapper.toSessionEntity(authDto);
   }
@@ -50,8 +63,20 @@ class AuthRepositoryImpl implements AuthRepository {
     final authDto = await _remoteDataSource.loginWithPassword(
       LoginPasswordRequestDto(phone: phone, password: password),
     );
+    _assertValidAuthResponse(authDto);
     await _persistTokens(authDto);
     return AuthMapper.toSessionEntity(authDto);
+  }
+
+  void _assertValidAuthResponse(AuthResponseDto dto) {
+    if (dto.accessToken.isEmpty ||
+        dto.refreshToken.isEmpty ||
+        dto.user.id.isEmpty) {
+      throw const UnknownException(
+        message: 'Unexpected authentication response from server.',
+        errorCode: 'UNEXPECTED_RESPONSE',
+      );
+    }
   }
 
   @override

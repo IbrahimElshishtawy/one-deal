@@ -34,6 +34,9 @@ class AuthInterceptor extends Interceptor {
     final isTrusted = _isTrustedOrigin(uri);
 
     if (isTrusted && !options.headers.containsKey(ApiHeaders.authorization)) {
+      if (_isRefreshing && _refreshCompleter != null) {
+        await _refreshCompleter!.future;
+      }
       final accessToken = await tokenProvider.getAccessToken();
       if (accessToken != null && accessToken.isNotEmpty) {
         options.headers[ApiHeaders.authorization] =
@@ -53,11 +56,16 @@ class AuthInterceptor extends Interceptor {
 
     // Check if failure is 401 Unauthorized
     if (response?.statusCode == 401) {
-      // Avoid recursive refresh if the failed request was the refresh endpoint itself
+      // Avoid recursive refresh on public auth or logout endpoints
       if (request.path.contains(ApiEndpoints.refreshToken) ||
           request.path.contains(ApiEndpoints.login) ||
-          request.path.contains(ApiEndpoints.verifyOtp)) {
-        await _handleSessionExpired();
+          request.path.contains(ApiEndpoints.verifyOtp) ||
+          request.path.contains(ApiEndpoints.sendOtp) ||
+          request.path.contains(ApiEndpoints.resendOtp) ||
+          request.path.contains(ApiEndpoints.logout)) {
+        if (request.path.contains(ApiEndpoints.refreshToken)) {
+          await _handleSessionExpired();
+        }
         return handler.next(err);
       }
 
@@ -70,22 +78,25 @@ class AuthInterceptor extends Interceptor {
 
       // Perform single-flight refresh with queued concurrent requests
       try {
-        final newAccessToken = await _performTokenRefresh();
-        if (newAccessToken != null && newAccessToken.isNotEmpty) {
+        final refreshResult = await _performTokenRefresh();
+        if (refreshResult.accessToken != null &&
+            refreshResult.accessToken!.isNotEmpty) {
           // Clone and retry original request with new token
           final retryOptions = request.copyWith(
             headers: {
               ...request.headers,
               ApiHeaders.authorization:
-                  '${ApiHeaders.bearerPrefix}$newAccessToken',
+                  '${ApiHeaders.bearerPrefix}${refreshResult.accessToken}',
             },
             extra: {...request.extra, 'is_retry': true},
           );
 
           final retryResponse = await dio.fetch(retryOptions);
           return handler.resolve(retryResponse);
-        } else {
+        } else if (refreshResult.shouldInvalidateSession) {
           await _handleSessionExpired();
+          return handler.next(err);
+        } else {
           return handler.next(err);
         }
       } catch (refreshError) {
@@ -97,10 +108,14 @@ class AuthInterceptor extends Interceptor {
     handler.next(err);
   }
 
-  Future<String?> _performTokenRefresh() async {
-    if (_isRefreshing) {
+  Future<_RefreshResult> _performTokenRefresh() async {
+    if (_isRefreshing && _refreshCompleter != null) {
       // Another request is already refreshing, await its completion
-      return _refreshCompleter?.future;
+      final token = await _refreshCompleter!.future;
+      return _RefreshResult(
+        accessToken: token,
+        shouldInvalidateSession: token == null,
+      );
     }
 
     _isRefreshing = true;
@@ -110,17 +125,18 @@ class AuthInterceptor extends Interceptor {
       final currentRefreshToken = await tokenProvider.getRefreshToken();
       if (currentRefreshToken == null || currentRefreshToken.isEmpty) {
         _refreshCompleter?.complete(null);
-        return null;
+        return const _RefreshResult(shouldInvalidateSession: true);
       }
 
-      // Execute unauthenticated raw refresh call
+      // Execute unauthenticated raw refresh call using the same adapter
       final refreshDio = Dio(
         BaseOptions(
           baseUrl: dio.options.baseUrl,
           connectTimeout: const Duration(seconds: 15),
           receiveTimeout: const Duration(seconds: 15),
+          headers: ApiHeaders.defaultHeaders(),
         ),
-      );
+      )..httpClientAdapter = dio.httpClientAdapter;
 
       final response = await refreshDio.post(
         ApiEndpoints.refreshToken,
@@ -149,15 +165,20 @@ class AuthInterceptor extends Interceptor {
             refreshToken: newRefreshToken,
           );
           _refreshCompleter?.complete(newAccessToken);
-          return newAccessToken;
+          return _RefreshResult(accessToken: newAccessToken);
         }
       }
 
       _refreshCompleter?.complete(null);
-      return null;
+      return const _RefreshResult(shouldInvalidateSession: true);
+    } on DioException catch (dioErr) {
+      final status = dioErr.response?.statusCode;
+      final isAuthRejection = status == 400 || status == 401 || status == 403;
+      _refreshCompleter?.complete(null);
+      return _RefreshResult(shouldInvalidateSession: isAuthRejection);
     } catch (_) {
       _refreshCompleter?.complete(null);
-      return null;
+      return const _RefreshResult(shouldInvalidateSession: true);
     } finally {
       _isRefreshing = false;
       _refreshCompleter = null;
@@ -178,4 +199,14 @@ class AuthInterceptor extends Interceptor {
       return false;
     }
   }
+}
+
+class _RefreshResult {
+  final String? accessToken;
+  final bool shouldInvalidateSession;
+
+  const _RefreshResult({
+    this.accessToken,
+    this.shouldInvalidateSession = false,
+  });
 }

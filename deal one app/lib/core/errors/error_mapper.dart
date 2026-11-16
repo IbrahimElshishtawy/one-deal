@@ -148,15 +148,25 @@ class ErrorMapper {
         final errorMap = data['error'] as Map<String, dynamic>;
         extractedMessage = errorMap['message']?.toString() ?? extractedMessage;
         extractedCode = errorMap['code']?.toString();
+        final List<String> issueMessages = [];
         if (errorMap['details'] is List) {
           for (final item in errorMap['details'] as List) {
-            if (item is Map &&
-                item.containsKey('field') &&
-                item.containsKey('issue')) {
-              extractedFieldErrors[item['field'].toString()] = item['issue']
-                  .toString();
+            if (item is Map) {
+              if (item.containsKey('field') && item.containsKey('issue')) {
+                extractedFieldErrors[item['field'].toString()] = item['issue']
+                    .toString();
+              } else if (item.containsKey('issue')) {
+                issueMessages.add(item['issue'].toString());
+              }
+            } else if (item is String && item.trim().isNotEmpty) {
+              issueMessages.add(item.trim());
             }
           }
+        }
+        if (issueMessages.isNotEmpty &&
+            (extractedMessage == 'Validation failed for one or more fields' ||
+                extractedMessage == 'Server error occurred.')) {
+          extractedMessage = issueMessages.join(' | ');
         }
       } else if (data.containsKey('message')) {
         extractedMessage = data['message'].toString();

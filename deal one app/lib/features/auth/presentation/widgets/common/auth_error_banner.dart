@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/auth_design_tokens.dart';
 
-/// Soft red/pink banner displayed for OTP invalid, expired, or API errors.
+/// Soft pink/red banner matching `لو المستخدم دخل الرمز غلط.png`.
 class AuthErrorBanner extends StatelessWidget {
   final String message;
   final IconData icon;
@@ -12,7 +12,7 @@ class AuthErrorBanner extends StatelessWidget {
   const AuthErrorBanner({
     super.key,
     required this.message,
-    this.icon = Icons.error_outline_rounded,
+    this.icon = Icons.error_rounded,
     this.onActionPressed,
     this.actionLabel,
   });
@@ -21,17 +21,16 @@ class AuthErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
         color: AuthDesignTokens.errorTintOf(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AuthDesignTokens.errorBorder, width: 1.1),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 20, color: AuthDesignTokens.errorRed),
-          const SizedBox(width: 10),
+          Icon(icon, size: 19, color: AuthDesignTokens.errorDeepRed),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,9 +38,9 @@ class AuthErrorBanner extends StatelessWidget {
                 Text(
                   message,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: AuthDesignTokens.errorRed,
+                    color: AuthDesignTokens.errorDeepRed,
                     height: 1.4,
                   ),
                 ),
@@ -52,9 +51,9 @@ class AuthErrorBanner extends StatelessWidget {
                     child: Text(
                       actionLabel!,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: AuthDesignTokens.actionBlue,
+                        color: AuthDesignTokens.navyPrimary,
                         decoration: TextDecoration.underline,
                       ),
                     ),

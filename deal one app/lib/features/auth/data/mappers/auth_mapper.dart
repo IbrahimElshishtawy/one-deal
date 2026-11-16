@@ -48,6 +48,9 @@ class AuthMapper {
       message: dto.message,
       cooldownSeconds: dto.cooldownSeconds,
       otpExpirySeconds: dto.otpExpirySeconds,
+      deliveryChannel: dto.deliveryChannel,
+      whatsappAvailable: dto.whatsappAvailable,
+      errorCode: dto.errorCode,
     );
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/errors/app_failure.dart';
+import '../../../../core/errors/error_mapper.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../application/controllers/login_controller.dart';
 import '../../application/controllers/onboarding_controller.dart';
@@ -29,7 +31,11 @@ class AuthController extends AsyncNotifier<AuthUser?> {
     final restoreUser = RestoreAuthUserUseCase(repo);
     try {
       return await restoreUser();
-    } catch (_) {
+    } catch (error) {
+      final failure = ErrorMapper.map(error);
+      if (failure is UnauthorizedFailure || failure is ForbiddenFailure) {
+        await ref.read(sessionProvider.notifier).logout();
+      }
       return null;
     }
   }
@@ -82,9 +88,12 @@ class AuthController extends AsyncNotifier<AuthUser?> {
   Future<void> logout() async {
     state = const AsyncValue.loading();
     final useCase = LogoutUseCase(ref.read(authRepositoryProvider));
-    await useCase();
-    await ref.read(sessionProvider.notifier).logout();
-    state = const AsyncValue.data(null);
+    try {
+      await useCase();
+    } finally {
+      await ref.read(sessionProvider.notifier).logout();
+      state = const AsyncValue.data(null);
+    }
   }
 }
 

@@ -1,3 +1,4 @@
+import '../../data/mappers/auth_error_mapper.dart';
 import '../../domain/entities/auth_session.dart';
 
 /// State for the 3-page onboarding carousel.
@@ -38,6 +39,8 @@ class SignUpState {
   final String? fullNameError;
   final String? phoneError;
   final String? submitError;
+  final AuthErrorKind? errorKind;
+  final String? deliveryFailurePhone;
   final bool isSubmitting;
   final PendingAuthContext? pendingContext;
 
@@ -47,9 +50,14 @@ class SignUpState {
     this.fullNameError,
     this.phoneError,
     this.submitError,
+    this.errorKind,
+    this.deliveryFailurePhone,
     this.isSubmitting = false,
     this.pendingContext,
   });
+
+  bool get hasDeliveryFailure =>
+      deliveryFailurePhone != null && deliveryFailurePhone!.isNotEmpty;
 
   SignUpState copyWith({
     String? fullName,
@@ -60,6 +68,10 @@ class SignUpState {
     bool clearPhoneError = false,
     String? submitError,
     bool clearSubmitError = false,
+    AuthErrorKind? errorKind,
+    bool clearErrorKind = false,
+    String? deliveryFailurePhone,
+    bool clearDeliveryFailure = false,
     bool? isSubmitting,
     PendingAuthContext? pendingContext,
     bool clearPendingContext = false,
@@ -72,6 +84,10 @@ class SignUpState {
           : (fullNameError ?? this.fullNameError),
       phoneError: clearPhoneError ? null : (phoneError ?? this.phoneError),
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
+      errorKind: clearErrorKind ? null : (errorKind ?? this.errorKind),
+      deliveryFailurePhone: clearDeliveryFailure
+          ? null
+          : (deliveryFailurePhone ?? this.deliveryFailurePhone),
       isSubmitting: isSubmitting ?? this.isSubmitting,
       pendingContext: clearPendingContext
           ? null
@@ -85,6 +101,8 @@ class LoginState {
   final String phone;
   final String? phoneError;
   final String? submitError;
+  final AuthErrorKind? errorKind;
+  final String? deliveryFailurePhone;
   final bool isSubmitting;
   final PendingAuthContext? pendingContext;
 
@@ -92,9 +110,14 @@ class LoginState {
     this.phone = '',
     this.phoneError,
     this.submitError,
+    this.errorKind,
+    this.deliveryFailurePhone,
     this.isSubmitting = false,
     this.pendingContext,
   });
+
+  bool get hasDeliveryFailure =>
+      deliveryFailurePhone != null && deliveryFailurePhone!.isNotEmpty;
 
   LoginState copyWith({
     String? phone,
@@ -102,6 +125,10 @@ class LoginState {
     bool clearPhoneError = false,
     String? submitError,
     bool clearSubmitError = false,
+    AuthErrorKind? errorKind,
+    bool clearErrorKind = false,
+    String? deliveryFailurePhone,
+    bool clearDeliveryFailure = false,
     bool? isSubmitting,
     PendingAuthContext? pendingContext,
     bool clearPendingContext = false,
@@ -110,6 +137,10 @@ class LoginState {
       phone: phone ?? this.phone,
       phoneError: clearPhoneError ? null : (phoneError ?? this.phoneError),
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
+      errorKind: clearErrorKind ? null : (errorKind ?? this.errorKind),
+      deliveryFailurePhone: clearDeliveryFailure
+          ? null
+          : (deliveryFailurePhone ?? this.deliveryFailurePhone),
       isSubmitting: isSubmitting ?? this.isSubmitting,
       pendingContext: clearPendingContext
           ? null
@@ -127,6 +158,7 @@ enum OtpStatus {
   expired,
   locked,
   rateLimited,
+  deliveryFailed,
   networkError,
   serverError,
   verified,
@@ -138,6 +170,7 @@ class OtpVerificationState {
   final String displayPhone;
   final String? pendingFullName;
   final AuthFlowMode flowMode;
+  final String? redirectTo;
   final String code;
   final OtpStatus status;
   final String? errorMessage;
@@ -152,6 +185,7 @@ class OtpVerificationState {
     required this.displayPhone,
     this.pendingFullName,
     required this.flowMode,
+    this.redirectTo,
     this.code = '',
     this.status = OtpStatus.initial,
     this.errorMessage,
@@ -168,17 +202,21 @@ class OtpVerificationState {
   bool get isExpired =>
       status == OtpStatus.expired || expiryRemainingSeconds <= 0;
   bool get isLocked => status == OtpStatus.locked;
+  bool get isInvalid => status == OtpStatus.invalid;
+  bool get isDeliveryFailed => status == OtpStatus.deliveryFailed;
   bool get hasFieldError =>
       status == OtpStatus.invalid ||
       status == OtpStatus.expired ||
       status == OtpStatus.locked;
   bool get hasBannerError =>
       errorMessage != null && errorMessage!.trim().isNotEmpty;
+  int get remainingAttempts =>
+      (maxAttempts - failedAttempts).clamp(0, maxAttempts);
   bool get canSubmit => code.length == 6 && !isBusy && !isExpired && !isLocked;
   bool get canResend => cooldownRemainingSeconds <= 0 && !isBusy;
 
-  /// Formats `cooldownRemainingSeconds` as `MM:SS` (e.g. `00:45`).
-  String get formattedCooldown => _formatSeconds(cooldownRemainingSeconds);
+  /// Formats `cooldownRemainingSeconds` as `M:SS` (e.g. `0:59`).
+  String get formattedCooldown => _formatShortSeconds(cooldownRemainingSeconds);
 
   /// Formats `expiryRemainingSeconds` as `MM:SS` (e.g. `02:59`).
   String get formattedExpiry => _formatSeconds(expiryRemainingSeconds);
@@ -190,11 +228,19 @@ class OtpVerificationState {
     return '$minutes:$seconds';
   }
 
+  static String _formatShortSeconds(int totalSeconds) {
+    final safe = totalSeconds < 0 ? 0 : totalSeconds;
+    final minutes = (safe ~/ 60).toString();
+    final seconds = (safe % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   OtpVerificationState copyWith({
     String? normalizedPhone,
     String? displayPhone,
     String? pendingFullName,
     AuthFlowMode? flowMode,
+    String? redirectTo,
     String? code,
     OtpStatus? status,
     String? errorMessage,
@@ -210,6 +256,7 @@ class OtpVerificationState {
       displayPhone: displayPhone ?? this.displayPhone,
       pendingFullName: pendingFullName ?? this.pendingFullName,
       flowMode: flowMode ?? this.flowMode,
+      redirectTo: redirectTo ?? this.redirectTo,
       code: code ?? this.code,
       status: status ?? this.status,
       errorMessage: clearErrorMessage
