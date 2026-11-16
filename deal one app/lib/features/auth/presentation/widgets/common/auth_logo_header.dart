@@ -21,32 +21,38 @@ class AuthLogoHeader extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          height: logoSize,
-          child: Image.asset(
-            AuthDesignTokens.logoAssetPath,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.handshake_outlined,
-                    size: logoSize * 0.55,
-                    color: AuthDesignTokens.primaryActionOf(context),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'ديل ون',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AuthDesignTokens.headingOf(context),
-                    ),
-                  ),
-                ],
-              );
-            },
+        Hero(
+          tag: 'deal_one_auth_logo',
+          child: Material(
+            type: MaterialType.transparency,
+            child: SizedBox(
+              height: logoSize,
+              child: Image.asset(
+                AuthDesignTokens.logoAssetPath,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.handshake_outlined,
+                        size: logoSize * 0.55,
+                        color: AuthDesignTokens.primaryActionOf(context),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'ديل ون',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AuthDesignTokens.headingOf(context),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 14),

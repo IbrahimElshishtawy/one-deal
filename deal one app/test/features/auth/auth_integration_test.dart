@@ -301,6 +301,16 @@ void main() {
           });
         };
 
+        httpAdapter.handlers['GET /users/me'] = (_, _) => _jsonResponse(200, {
+          'success': true,
+          'data': {
+            'id': 'usr_new_1',
+            'phone': '+201099887766',
+            'fullName': 'كريم سامي',
+            'isPhoneVerified': true,
+          },
+        });
+
         httpAdapter.handlers['POST /auth/logout'] = (_, body) {
           expectSync(body?['refreshToken'], 'opaque_refresh_new');
           return _jsonResponse(200, {
@@ -335,7 +345,21 @@ void main() {
             ),
             GoRoute(
               path: RouteNames.favorites,
-              builder: (_, _) => const Scaffold(body: Text('FAVORITES_PAGE')),
+              builder: (_, _) => Scaffold(
+                body: Column(
+                  children: [
+                    const Text('FAVORITES_PAGE'),
+                    Consumer(
+                      builder: (_, ref, _) => ElevatedButton(
+                        key: const Key('test_logout_button'),
+                        onPressed: () =>
+                            ref.read(authControllerProvider.notifier).logout(),
+                        child: const Text('LOGOUT'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             ...AppRouter.createRouter().configuration.routes
                 .whereType<GoRoute>()
@@ -419,7 +443,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('FAVORITES_PAGE'), findsOneWidget);
 
-        await container.read(authControllerProvider.notifier).logout();
+        await tester.tap(find.byKey(const Key('test_logout_button')));
         await tester.pumpAndSettle();
 
         expect(await tokens.getAccessToken(), isNull);

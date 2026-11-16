@@ -42,8 +42,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       final targetPage = ref.read(onboardingControllerProvider).currentPage;
       await _pageController.animateToPage(
         targetPage,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 460),
+        curve: const Cubic(0.22, 1.0, 0.36, 1.0),
       );
     }
   }

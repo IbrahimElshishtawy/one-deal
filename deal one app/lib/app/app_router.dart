@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/routing/app_page_transitions.dart';
 import '../core/routing/route_guards.dart';
 import '../core/routing/route_names.dart';
 import '../features/accounts/presentation/screens/profile_screen.dart';
@@ -33,87 +34,151 @@ class AppRouter {
         GoRoute(
           path: RouteNames.root,
           name: RouteNames.rootName,
-          builder: (context, state) => const HomeFeedScreen(),
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.reveal,
+                child: const HomeFeedScreen(),
+              ),
         ),
         GoRoute(
           path: RouteNames.search,
           name: RouteNames.searchName,
-          builder: (context, state) => const SearchScreen(),
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: const SearchScreen(),
+              ),
         ),
         GoRoute(
           path: RouteNames.listingDetail,
           name: RouteNames.listingDetailName,
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final id = state.pathParameters['id'] ?? '';
-            return ListingDetailScreen(listingId: id);
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              child: ListingDetailScreen(listingId: id),
+            );
           },
         ),
         GoRoute(
           path: RouteNames.favorites,
           name: RouteNames.favoritesName,
-          builder: (context, state) => const FavoritesScreen(),
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: const FavoritesScreen(),
+              ),
         ),
         GoRoute(
           path: RouteNames.profile,
           name: RouteNames.profileName,
-          builder: (context, state) => const ProfileScreen(),
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: const ProfileScreen(),
+              ),
         ),
         GoRoute(
           path: RouteNames.onboarding,
           name: RouteNames.onboardingName,
-          builder: (context, state) => const OnboardingPage(),
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.reveal,
+                child: const OnboardingPage(),
+              ),
         ),
         GoRoute(
           path: RouteNames.signUp,
           name: RouteNames.signUpName,
-          builder: (context, state) =>
-              SignUpPage(redirectTo: state.uri.queryParameters['redirect']),
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: SignUpPage(
+                  redirectTo: state.uri.queryParameters['redirect'],
+                ),
+              ),
         ),
         GoRoute(
           path: RouteNames.login,
           name: RouteNames.loginName,
-          builder: (context, state) =>
-              LoginPage(redirectTo: state.uri.queryParameters['redirect']),
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: LoginPage(
+                  redirectTo: state.uri.queryParameters['redirect'],
+                ),
+              ),
         ),
         GoRoute(
           path: RouteNames.otpVerification,
           name: RouteNames.otpVerificationName,
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final extra = state.extra;
-            return OtpVerificationPage(
-              authContext: extra is PendingAuthContext ? extra : null,
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              child: OtpVerificationPage(
+                authContext: extra is PendingAuthContext ? extra : null,
+              ),
             );
           },
         ),
         GoRoute(
           path: RouteNames.verificationSuccess,
           name: RouteNames.verificationSuccessName,
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final extra = state.extra;
-            if (extra is VerificationSuccessArgs) {
-              return VerificationSuccessPage(
-                session: extra.session,
-                redirectTo: extra.redirectTo,
-              );
-            }
-            return VerificationSuccessPage(
-              session: extra is AuthSession ? extra : null,
+            final page = extra is VerificationSuccessArgs
+                ? VerificationSuccessPage(
+                    session: extra.session,
+                    redirectTo: extra.redirectTo,
+                  )
+                : VerificationSuccessPage(
+                    session: extra is AuthSession ? extra : null,
+                  );
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.reveal,
+              child: page,
             );
           },
         ),
         GoRoute(
           path: RouteNames.terms,
           name: RouteNames.termsName,
-          builder: (context, state) => const LegalDocumentPage(
-            documentType: LegalDocumentType.termsOfService,
-          ),
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.verticalLift,
+                child: const LegalDocumentPage(
+                  documentType: LegalDocumentType.termsOfService,
+                ),
+              ),
         ),
         GoRoute(
           path: RouteNames.privacy,
           name: RouteNames.privacyName,
-          builder: (context, state) => const LegalDocumentPage(
-            documentType: LegalDocumentType.privacyPolicy,
-          ),
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.verticalLift,
+                child: const LegalDocumentPage(
+                  documentType: LegalDocumentType.privacyPolicy,
+                ),
+              ),
         ),
       ],
       errorBuilder: (context, state) => Scaffold(
