@@ -10,7 +10,9 @@ describe('migrate-deploy script helpers', () => {
       'P1001: Can not reach database at postgresql://postgres:SuperSecret123@db.internal:5432/railway';
     const sanitized = migrateDeploy.sanitizeMessage(raw);
     expect(sanitized).not.toContain('SuperSecret123');
-    expect(sanitized).toContain('postgresql://***:***@db.internal:5432/railway');
+    expect(sanitized).toContain(
+      'postgresql://***:***@db.internal:5432/railway',
+    );
   });
 
   it('rejects missing or invalid DATABASE_URL values', () => {
@@ -34,13 +36,19 @@ describe('migrate-deploy script helpers', () => {
     expect(parsed.searchParams.get('schema')).toBe('public');
   });
 
-  it('discovers all 6 existing Prisma migrations in backend/prisma/migrations', () => {
+  it('discovers all existing Prisma migrations in backend/prisma/migrations', () => {
     const migrations = migrateDeploy.listLocalMigrations(
       path.join(backendRoot, 'prisma', 'migrations'),
     );
-    expect(migrations).toHaveLength(6);
+    expect(migrations).toHaveLength(8);
     expect(migrations[0]).toBe('20261102232252_init_database_foundation');
     expect(migrations[5]).toBe('20261104230259_add_demo_marker_and_indexes');
+    expect(migrations[6]).toBe(
+      '20261117000001_add_payments_and_listing_promotion_search',
+    );
+    expect(migrations[7]).toBe(
+      '20261117000002_add_trgm_jsonb_indexes_and_pg_stat_statements',
+    );
   });
 
   it('resolves the local Prisma CLI binary without npx', () => {
@@ -48,4 +56,3 @@ describe('migrate-deploy script helpers', () => {
     expect(cliPath).toMatch(/node_modules[\\/]prisma[\\/]build[\\/]index\.js$/);
   });
 });
-

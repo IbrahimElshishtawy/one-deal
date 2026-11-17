@@ -7,14 +7,22 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PublicationStatus } from '../../core/enums/domain.enums';
+import * as crypto from 'crypto';
+import {
+  ModerationStatus,
+  PublicationStatus,
+} from '../../core/enums/domain.enums';
 import { PrismaService } from '../../core/database/prisma.service';
 import { RedisService } from '../../core/redis/redis.service';
 import { SecurityAuditService } from '../../core/security/security-audit.service';
+import { normalizeArabicText } from '../search/arabic-normalizer';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { FilterListingsDto } from './dto/filter-listings.dto';
-import { assertValidPublicationTransition } from './listings-state-machine';
+import {
+  assertValidModerationTransition,
+  assertValidPublicationTransition,
+} from './listings-state-machine';
 
 @Injectable()
 export class ListingsService {
@@ -114,6 +122,16 @@ export class ListingsService {
         throw new BadRequestException('No geographic area found for this city');
       }
 
+      const autoApprove =
+        this.configService.get<boolean>('AUTO_APPROVE_LISTINGS', false) ===
+        true;
+      const moderationStatus = autoApprove
+        ? ModerationStatus.APPROVED
+        : ModerationStatus.PENDING;
+      const publicationStatus = autoApprove
+        ? PublicationStatus.PUBLISHED
+        : PublicationStatus.UNPUBLISHED;
+
       const listing = await tx.listing.create({
         data: {
           accountId: account.id,
@@ -121,17 +139,38 @@ export class ListingsService {
           areaId: area.id,
           title: dto.title,
           description: dto.description,
+          searchNormalizedText: normalizeArabicText(
+            `${dto.title} ${dto.description}`,
+          ),
           price: dto.price,
           currency: 'EGP',
           listingKind: 'sale',
           contactChannel: 'in_app',
-          moderationStatus: 'approved',
-          publicationStatus: 'published',
+          moderationStatus,
+          publicationStatus,
           availabilityStatus: 'available',
           attributes: (dynamicAttrs as any) ?? {},
           expiresAt,
         },
       });
+
+      if ((tx as any).outboxEvent?.create) {
+        await (tx as any).outboxEvent.create({
+          data: {
+            aggregateType: 'Listing',
+            aggregateId: listing.id,
+            eventType: autoApprove
+              ? 'LISTING_PUBLISHED'
+              : 'LISTING_SUBMITTED_FOR_MODERATION',
+            payload: {
+              listingId: listing.id,
+              accountId: account.id,
+              moderationStatus,
+              publicationStatus,
+            },
+          },
+        });
+      }
 
       // Insert image media records
       const mediaRecords = dto.mediaKeys.map((key, index) => ({
@@ -159,6 +198,8 @@ export class ListingsService {
         data: mediaRecords,
       });
 
+      await this.invalidateFeedCache();
+
       return tx.listing.findUnique({
         where: { id: listing.id },
         include: {
@@ -182,6 +223,18 @@ export class ListingsService {
    * Retrieves public listings feed with cursor-based pagination, dynamic attribute filtering, and spatial radius search.
    */
   async getListingsFeed(filters: FilterListingsDto) {
+    const feedVersion =
+      (await this.redis?.get?.<number>('listings:feed:ver')) ?? 1;
+    const filterHash = crypto
+      .createHash('sha1')
+      .update(JSON.stringify(filters))
+      .digest('hex');
+    const cacheKey = `listings:feed:v${feedVersion}:${filterHash}`;
+    const cachedFeed = await this.redis?.get?.<any>(cacheKey);
+    if (cachedFeed) {
+      return cachedFeed;
+    }
+
     const {
       categoryId,
       categorySlug,
@@ -480,7 +533,7 @@ export class ListingsService {
       createdAt: item.createdAt,
     }));
 
-    return {
+    const feedResponse = {
       data: mappedData,
       meta: {
         nextCursor,
@@ -491,6 +544,9 @@ export class ListingsService {
       items: mappedData,
       nextCursor,
     };
+
+    await this.redis?.set?.(cacheKey, feedResponse, 30);
+    return feedResponse;
   }
 
   /**
@@ -576,6 +632,7 @@ export class ListingsService {
       where: { id },
       data: { publicationStatus: targetStatus },
     });
+    await this.invalidateFeedCache();
 
     // Record immutable security audit log
     await this.securityAudit.logEvent({
@@ -603,12 +660,18 @@ export class ListingsService {
     userAgent?: string,
     userId?: string,
   ) {
-    // 1. IP Rate Limiting (Anti-Scraping): max 30 reveals per hour per IP
-    if (ipAddress) {
-      const rateLimitKey = `contact:ratelimit:ip:${ipAddress}`;
+    // 1. Rate Limiting (Anti-Scraping): prefer userId when authenticated (CGNAT-safe), fallback to IP
+    const rateLimitScope = userId
+      ? `user:${userId}`
+      : ipAddress
+        ? `ip:${ipAddress}`
+        : null;
+    const rateLimitMax = userId ? 30 : 60;
+    if (rateLimitScope) {
+      const rateLimitKey = `contact:ratelimit:${rateLimitScope}`;
       const { allowed } = await this.redis.checkRateLimit(
         rateLimitKey,
-        30,
+        rateLimitMax,
         3600,
       );
       if (!allowed) {
@@ -619,10 +682,10 @@ export class ListingsService {
           ipAddress,
           userAgent,
           actorId: userId,
-          metadata: { ipAddress },
+          metadata: { ipAddress, scope: userId ? 'user' : 'ip' },
         });
         throw new HttpException(
-          'Too many contact requests from your network. Please wait before retrying.',
+          'Too many contact requests. Please wait before retrying.',
           HttpStatus.TOO_MANY_REQUESTS,
         );
       }
@@ -781,6 +844,11 @@ export class ListingsService {
     const updateData: any = {};
     if (dto.title !== undefined) updateData.title = dto.title;
     if (dto.description !== undefined) updateData.description = dto.description;
+    if (dto.title !== undefined || dto.description !== undefined) {
+      updateData.searchNormalizedText = normalizeArabicText(
+        `${dto.title ?? listing.title} ${dto.description ?? listing.description}`,
+      );
+    }
     if (dto.price !== undefined) updateData.price = dto.price;
     if (dto.condition !== undefined) updateData.condition = dto.condition;
     if (dto.attributes !== undefined) {
@@ -837,6 +905,7 @@ export class ListingsService {
         metadata: { updatedFields: Object.keys(updateData) },
       });
 
+      await this.invalidateFeedCache();
       return updated;
     });
   }
@@ -876,6 +945,7 @@ export class ListingsService {
       actorType: userRole === 'SUPER_ADMIN' ? 'staff' : 'user',
     });
 
+    await this.invalidateFeedCache();
     return { success: true, message: 'Listing successfully deleted' };
   }
 
@@ -916,6 +986,7 @@ export class ListingsService {
       metadata: { availabilityStatus },
     });
 
+    await this.invalidateFeedCache();
     return updated;
   }
 
@@ -938,11 +1009,31 @@ export class ListingsService {
       );
     }
 
-    const updated = await this.prisma.listing.update({
-      where: { id },
-      data: {
-        moderationStatus: 'pending',
-      },
+    assertValidModerationTransition(
+      listing.moderationStatus as ModerationStatus,
+      ModerationStatus.PENDING,
+    );
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const saved = await tx.listing.update({
+        where: { id },
+        data: {
+          moderationStatus: ModerationStatus.PENDING,
+        },
+      });
+
+      if ((tx as any).outboxEvent?.create) {
+        await (tx as any).outboxEvent.create({
+          data: {
+            aggregateType: 'Listing',
+            aggregateId: id,
+            eventType: 'LISTING_SUBMITTED_FOR_MODERATION',
+            payload: { listingId: id, userId },
+          },
+        });
+      }
+
+      return saved;
     });
 
     await this.securityAudit.logEvent({
@@ -952,6 +1043,11 @@ export class ListingsService {
       actorId: userId,
     });
 
+    await this.invalidateFeedCache();
     return updated;
+  }
+
+  private async invalidateFeedCache(): Promise<void> {
+    await this.redis?.incr?.('listings:feed:ver').catch(() => undefined);
   }
 }

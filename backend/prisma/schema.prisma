@@ -85,6 +85,7 @@ model User {
   buyerConversations Conversation[]  @relation("BuyerConversations")
   messagesSent       Message[]       @relation("MessageSender")
   notifications      Notification[]
+  payments           Payment[]
 
   @@index([isDemo])
   @@map("users")
@@ -331,15 +332,17 @@ model Listing {
   physicalLocation    Unsupported("geometry(Point, 4326)")   @default(dbgenerated("ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)")) @map("physical_location")
   displayLocation     Unsupported("geometry(Point, 4326)")   @default(dbgenerated("ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)")) @map("display_location")
   attributes          Json                                    @default("{}")
-  viewsCount          Int                                     @default(0) @map("views_count")
-  contactRevealsCount Int                                     @default(0) @map("contact_reveals_count")
-  isDemo              Boolean                                 @default(false) @map("is_demo")
-  approvedAt          DateTime?                               @map("approved_at") @db.Timestamptz
-  refreshedAt         DateTime                                @default(now()) @map("refreshed_at") @db.Timestamptz
-  expiresAt           DateTime                                @map("expires_at") @db.Timestamptz
-  createdAt           DateTime                                @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt           DateTime                                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-  deletedAt           DateTime?                               @map("deleted_at") @db.Timestamptz
+  viewsCount           Int                                     @default(0) @map("views_count")
+  contactRevealsCount  Int                                     @default(0) @map("contact_reveals_count")
+  isDemo               Boolean                                 @default(false) @map("is_demo")
+  searchNormalizedText String?                                 @map("search_normalized_text") @db.Text
+  promotedUntil        DateTime?                               @map("promoted_until") @db.Timestamptz
+  approvedAt           DateTime?                               @map("approved_at") @db.Timestamptz
+  refreshedAt          DateTime                                @default(now()) @map("refreshed_at") @db.Timestamptz
+  expiresAt            DateTime                                @map("expires_at") @db.Timestamptz
+  createdAt            DateTime                                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime                                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt            DateTime?                               @map("deleted_at") @db.Timestamptz
 
   account       Account        @relation(fields: [accountId], references: [id], onDelete: Restrict)
   category      Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
@@ -350,6 +353,7 @@ model Listing {
   favorites     Favorite[]
   reports       Report[]
   conversations Conversation[]
+  payments      Payment[]
 
   @@index([moderationStatus, publicationStatus, availabilityStatus, categoryId, refreshedAt(sort: Desc)], name: "idx_listings_search")
   @@index([accountId])
@@ -589,6 +593,48 @@ model OutboxEvent {
 
   @@index([status, createdAt])
   @@map("outbox_events")
+}
+
+// -------------------------------------------------------------
+// MODULE 11: V2 PAYMENTS & PROMOTION PACKAGES
+// -------------------------------------------------------------
+
+model PromotionPackage {
+  id           String    @id @db.VarChar(50)
+  nameAr       String    @map("name_ar") @db.VarChar(150)
+  nameEn       String    @map("name_en") @db.VarChar(150)
+  type         String    @db.VarChar(30) // bump_up, featured_7_days, featured_14_days
+  priceEgp     Decimal   @map("price_egp") @db.Decimal(10, 2)
+  durationDays Int       @default(0) @map("duration_days")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  payments     Payment[]
+
+  @@index([isActive, priceEgp])
+  @@map("promotion_packages")
+}
+
+model Payment {
+  id                   String           @id @default(uuid()) @db.Uuid
+  userId               String           @map("user_id") @db.Uuid
+  listingId            String           @map("listing_id") @db.Uuid
+  packageId            String           @map("package_id") @db.VarChar(50)
+  amountEgp            Decimal          @map("amount_egp") @db.Decimal(10, 2)
+  status               String           @default("pending") @db.VarChar(20) // pending, success, failed, refunded
+  gatewayTransactionId String?          @unique @map("gateway_transaction_id") @db.VarChar(120)
+  rawResponse          Json?            @map("raw_response")
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user    User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  listing Listing          @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  package PromotionPackage @relation(fields: [packageId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([listingId, status])
+  @@index([status, createdAt])
+  @@map("payments")
 }
 
 // -------------------------------------------------------------

@@ -1,13 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../core/database/prisma.service';
 
 @Injectable()
 export class VideoService {
+  private readonly logger = new Logger(VideoService.name);
   private readonly streamApiToken: string;
   private readonly streamAccountId: string;
   private readonly webhookSecret: string;
+  private readonly nodeEnv: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -25,16 +32,67 @@ export class VideoService {
       'CLOUDFLARE_STREAM_WEBHOOK_SECRET',
       '',
     );
+    this.nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+  }
+
+  private hasRealStreamCredentials(): boolean {
+    return (
+      !!this.streamApiToken &&
+      !!this.streamAccountId &&
+      !this.streamApiToken.startsWith('placeholder') &&
+      !this.streamAccountId.startsWith('placeholder')
+    );
   }
 
   /**
    * Requests a direct-creator upload URL from Cloudflare Stream with strict 30s max duration limit.
    */
-  async requestDirectUploadToken(_userId: string) {
-    // Generates a mock or direct upload token with max 30s duration
+  async requestDirectUploadToken(userId: string) {
+    if (this.hasRealStreamCredentials()) {
+      const endpoint = `https://api.cloudflare.com/client/v4/accounts/${this.streamAccountId}/stream/direct_upload`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.streamApiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          maxDurationSeconds: 30,
+          meta: { userId },
+        }),
+      });
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        result?: { uid: string; uploadURL: string };
+        errors?: Array<{ message: string }>;
+      };
+
+      if (!response.ok || !data?.success || !data?.result?.uid) {
+        const errMsg =
+          data?.errors?.[0]?.message || 'Cloudflare Stream API error';
+        this.logger.error(`Cloudflare Stream direct_upload failed: ${errMsg}`);
+        throw new InternalServerErrorException(
+          'Failed to initialize video upload session',
+        );
+      }
+
+      return {
+        streamUid: data.result.uid,
+        uploadUrl: data.result.uploadURL,
+        maxDurationSeconds: 30,
+        instructions: 'Upload video binary directly via POST/TUS to uploadUrl',
+      };
+    }
+
+    if (this.nodeEnv === 'production') {
+      throw new InternalServerErrorException(
+        'Cloudflare Stream credentials are missing in production environment',
+      );
+    }
+
     const streamUid = crypto.randomUUID();
     const uploadUrl = `https://upload.videodelivery.net/${streamUid}`;
-
     return {
       streamUid,
       uploadUrl,
@@ -44,13 +102,30 @@ export class VideoService {
   }
 
   /**
-   * Handles asynchronous encoding webhook callbacks from Cloudflare Stream.
+   * Verifies Cloudflare Stream Webhook-Signature header (time=<ts>,sig1=<hmac_sha256>)
+   * and updates video processing status in DB.
    */
-  async handleWebhook(payload: any, _signatureHeader?: string) {
-    // In production, verifies webhook secret signature
+  async handleWebhook(payload: any, signatureHeader?: string) {
+    const hasRealWebhookSecret =
+      !!this.webhookSecret && !this.webhookSecret.startsWith('placeholder');
+
+    if (hasRealWebhookSecret || this.nodeEnv === 'production') {
+      if (!signatureHeader || !hasRealWebhookSecret) {
+        throw new UnauthorizedException(
+          'Missing Cloudflare Stream webhook signature or secret',
+        );
+      }
+      const isValid = this.verifyWebhookSignature(payload, signatureHeader);
+      if (!isValid) {
+        throw new UnauthorizedException(
+          'Invalid Cloudflare Stream webhook signature',
+        );
+      }
+    }
+
     const uid = payload?.uid || payload?.data?.uid;
     const readyToStream =
-      payload?.readyToStream || payload?.data?.readyToStream;
+      payload?.readyToStream ?? payload?.data?.readyToStream;
 
     if (uid) {
       await this.prisma.listingMedia.updateMany({
@@ -62,6 +137,35 @@ export class VideoService {
     }
 
     return { received: true };
+  }
+
+  verifyWebhookSignature(payload: unknown, signatureHeader: string): boolean {
+    const parts = signatureHeader
+      .split(',')
+      .reduce<Record<string, string>>((acc, pair) => {
+        const [k, v] = pair.split('=');
+        if (k && v) acc[k.trim()] = v.trim();
+        return acc;
+      }, {});
+
+    if (!parts.time || !parts.sig1) {
+      return false;
+    }
+
+    const serializedBody =
+      typeof payload === 'string' ? payload : JSON.stringify(payload);
+    const sourceString = `${parts.time}.${serializedBody}`;
+    const expectedHex = crypto
+      .createHmac('sha256', this.webhookSecret)
+      .update(sourceString)
+      .digest('hex');
+
+    const expectedBuf = Buffer.from(expectedHex, 'hex');
+    const actualBuf = Buffer.from(parts.sig1, 'hex');
+    return (
+      expectedBuf.length === actualBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, actualBuf)
+    );
   }
 
   /**

@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
+import { AccountMemberRole } from '../../core/enums/domain.enums';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
@@ -69,19 +70,10 @@ export class AccountsService {
    * Creates a commercial store branch for an account.
    */
   async createBranch(accountId: string, userId: string, dto: CreateBranchDto) {
-    const membership = await this.prisma.accountMember.findFirst({
-      where: {
-        accountId,
-        userId,
-        role: { in: ['owner', 'admin'] },
-      },
-    });
-
-    if (!membership) {
-      throw new ForbiddenException(
-        'You do not have permission to add branches to this account',
-      );
-    }
+    await this.assertAccountRole(accountId, userId, [
+      AccountMemberRole.OWNER,
+      AccountMemberRole.MANAGER,
+    ]);
 
     return this.prisma.branch.create({
       data: {
@@ -208,7 +200,7 @@ export class AccountsService {
   private async assertAccountRole(
     accountId: string,
     userId: string,
-    allowedRoles: string[],
+    allowedRoles: AccountMemberRole[],
   ) {
     const member = await this.prisma.accountMember.findUnique({
       where: {
@@ -219,7 +211,7 @@ export class AccountsService {
       },
     });
 
-    if (!member || !allowedRoles.includes(member.role)) {
+    if (!member || !allowedRoles.includes(member.role as AccountMemberRole)) {
       throw new ForbiddenException(
         'You do not have administrative permission for this account',
       );
@@ -268,7 +260,10 @@ export class AccountsService {
     callerUserId: string,
     dto: InviteMemberDto,
   ) {
-    await this.assertAccountRole(accountId, callerUserId, ['owner', 'manager']);
+    await this.assertAccountRole(accountId, callerUserId, [
+      AccountMemberRole.OWNER,
+      AccountMemberRole.MANAGER,
+    ]);
 
     const cleanDigits = dto.phone.replace(/[^0-9]/g, '');
     let normalizedPhone = dto.phone;
@@ -336,8 +331,8 @@ export class AccountsService {
     targetUserId: string,
   ) {
     const caller = await this.assertAccountRole(accountId, callerUserId, [
-      'owner',
-      'manager',
+      AccountMemberRole.OWNER,
+      AccountMemberRole.MANAGER,
     ]);
 
     const target = await this.prisma.accountMember.findUnique({
@@ -353,11 +348,14 @@ export class AccountsService {
       throw new NotFoundException('Team member not found');
     }
 
-    if (target.role === 'owner') {
+    if (target.role === AccountMemberRole.OWNER) {
       throw new ForbiddenException('Cannot remove an account owner');
     }
 
-    if (caller.role === 'manager' && target.role === 'manager') {
+    if (
+      caller.role === AccountMemberRole.MANAGER &&
+      target.role === AccountMemberRole.MANAGER
+    ) {
       throw new ForbiddenException('Managers cannot remove other managers');
     }
 
@@ -382,7 +380,10 @@ export class AccountsService {
     callerUserId: string,
     dto: UpdateBranchDto,
   ) {
-    await this.assertAccountRole(accountId, callerUserId, ['owner', 'manager']);
+    await this.assertAccountRole(accountId, callerUserId, [
+      AccountMemberRole.OWNER,
+      AccountMemberRole.MANAGER,
+    ]);
 
     const branch = await this.prisma.branch.findFirst({
       where: { id: branchId, accountId },
@@ -420,7 +421,10 @@ export class AccountsService {
     branchId: string,
     callerUserId: string,
   ) {
-    await this.assertAccountRole(accountId, callerUserId, ['owner', 'manager']);
+    await this.assertAccountRole(accountId, callerUserId, [
+      AccountMemberRole.OWNER,
+      AccountMemberRole.MANAGER,
+    ]);
 
     const branch = await this.prisma.branch.findFirst({
       where: { id: branchId, accountId },

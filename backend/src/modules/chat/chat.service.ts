@@ -3,12 +3,21 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Optional,
+  MessageEvent,
 } from '@nestjs/common';
+import { Observable, Subject } from 'rxjs';
 import { PrismaService } from '../../core/database/prisma.service';
+import { RedisService } from '../../core/redis/redis.service';
 
 @Injectable()
 export class ChatService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly localStreams = new Map<string, Subject<MessageEvent>>();
+
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly redis?: RedisService,
+  ) {}
 
   /**
    * Starts or returns an existing conversation bound to (listing, buyer, seller).
@@ -186,8 +195,8 @@ export class ChatService {
       );
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const message = await tx.message.create({
+    const message = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.message.create({
         data: {
           conversationId,
           senderUserId: senderId,
@@ -206,7 +215,69 @@ export class ChatService {
         },
       });
 
-      return message;
+      return created;
     });
+
+    const eventPayload = JSON.stringify({
+      type: 'chat.message',
+      conversationId,
+      message,
+    });
+    const recipients = new Set<string>([
+      conversation.buyerUserId,
+      conversation.sellerAccount.ownerUserId,
+    ]);
+    await Promise.allSettled(
+      Array.from(recipients).map((uid) =>
+        this.publishChatEvent(uid, eventPayload),
+      ),
+    );
+
+    return message;
+  }
+
+  /**
+   * Real-time Server-Sent Events (SSE) stream for incoming messages across all replicas via Redis Pub/Sub.
+   */
+  subscribeToUserStream(userId: string): Observable<MessageEvent> {
+    const channel = `chat:user:${userId}`;
+    const subscriber = this.redis?.createSubscriber?.();
+
+    if (subscriber) {
+      return new Observable<MessageEvent>((observer) => {
+        const onMessage = (incomingChannel: string, rawPayload: string) => {
+          if (incomingChannel === channel) {
+            observer.next({ data: rawPayload });
+          }
+        };
+        subscriber.on('message', onMessage);
+        subscriber.subscribe(channel).catch((err) => observer.error(err));
+
+        return () => {
+          subscriber.off('message', onMessage);
+          subscriber.unsubscribe(channel).catch(() => undefined);
+          subscriber.quit().catch(() => undefined);
+        };
+      });
+    }
+
+    let subject = this.localStreams.get(userId);
+    if (!subject) {
+      subject = new Subject<MessageEvent>();
+      this.localStreams.set(userId, subject);
+    }
+    return subject.asObservable();
+  }
+
+  private async publishChatEvent(
+    userId: string,
+    serializedPayload: string,
+  ): Promise<void> {
+    const channel = `chat:user:${userId}`;
+    if (this.redis?.isCacheClientConnected?.()) {
+      await this.redis.publish(channel, serializedPayload);
+      return;
+    }
+    this.localStreams.get(userId)?.next({ data: serializedPayload });
   }
 }

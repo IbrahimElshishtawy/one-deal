@@ -1,0 +1,45 @@
+groups:
+  - name: deal-one-slo-alerts
+    rules:
+      - alert: HighHttpErrorRate5xx
+        expr: |
+          sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(http_requests_total[5m])), 1) > 0.02
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'High 5xx error rate (>2%) on Deal One API'
+          description: 'More than 2% of requests are returning HTTP 5xx over the last 5 minutes.'
+
+      - alert: HighP95ApiLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'P95 latency > 500ms on {{ $labels.route }}'
+          description: 'Route {{ $labels.route }} exceeded 500ms p95 latency for 5 minutes.'
+
+      - alert: ApiInstanceDown
+        expr: up{job="deal-one-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Deal One API instance down'
+          description: 'Prometheus cannot scrape /metrics from {{ $labels.instance }}.'
+
+      - alert: HighProcessMemoryRss
+        expr: process_resident_memory_bytes > 1073741824
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High Node.js RSS memory (>1 GB)'
+          description: 'Process RSS memory on {{ $labels.instance }} exceeded 1 GB.'

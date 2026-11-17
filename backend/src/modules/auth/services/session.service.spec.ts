@@ -204,6 +204,44 @@ describe('SessionService', () => {
         UnauthorizedException,
       );
     });
+
+    it('should allow only ONE concurrent refresh token rotation under Promise.all race', async () => {
+      const rawToken = 'parallel_refresh_token_race';
+      const hash = service.hashRefreshToken(rawToken);
+      let revoked = false;
+
+      mockPrisma.userSession.findFirst.mockResolvedValue({
+        id: 'session-race-1',
+        familyId: 'family-race-1',
+        userId: 'user-race-1',
+        refreshTokenHash: hash,
+        isRevoked: false,
+        expiresAt: new Date(Date.now() + 100000),
+        user: { id: 'user-race-1', phone: '+201012345678', isActive: true },
+      });
+
+      mockPrisma.userSession.updateMany.mockImplementation(async () => {
+        if (!revoked) {
+          revoked = true;
+          return { count: 1 };
+        }
+        return { count: 0 };
+      });
+      mockPrisma.userSession.create.mockResolvedValue({
+        id: 'new-rotated-session',
+        userId: 'user-race-1',
+      });
+
+      const results = await Promise.allSettled(
+        Array.from({ length: 5 }, () => service.rotateRefreshToken(rawToken)),
+      );
+
+      const fulfilled = results.filter((r) => r.status === 'fulfilled');
+      const rejected = results.filter((r) => r.status === 'rejected');
+
+      expect(fulfilled).toHaveLength(1);
+      expect(rejected).toHaveLength(4);
+    });
   });
 
   describe('revokeSessionByToken', () => {

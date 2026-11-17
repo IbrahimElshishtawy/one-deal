@@ -22,6 +22,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 import { QuotasModule } from './modules/quotas/quotas.module';
 
 import { RedisModule } from './core/redis/redis.module';
+import { MetricsModule } from './core/metrics/metrics.module';
 import { WorkerModule } from './workers/worker.module';
 
 const isPaymentsEnabled = process.env.ENABLE_V2_PAYMENTS === 'true';
@@ -34,6 +35,7 @@ const isPaymentsEnabled = process.env.ENABLE_V2_PAYMENTS === 'true';
     }),
     PrismaModule,
     RedisModule,
+    MetricsModule,
     WorkerModule,
     AuthModule,
     UsersModule,

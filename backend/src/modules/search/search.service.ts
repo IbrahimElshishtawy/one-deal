@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
 import { SearchQueryDto } from './dto/search-query.dto';
-import { generateArabicSearchVariants } from './arabic-normalizer';
+import {
+  generateArabicSearchVariants,
+  normalizeArabicText,
+} from './arabic-normalizer';
 
 @Injectable()
 export class SearchService {
@@ -64,11 +67,19 @@ export class SearchService {
       where.isDemo = isDemo;
     }
 
-    // Keyword search with Egyptian dialect expansion
+    // Keyword search with normalized indexed column & capped Egyptian dialect expansion
     const searchTerm = (q || queryDto.query || '').trim();
     if (searchTerm.length > 0) {
-      const variants = generateArabicSearchVariants(searchTerm);
-      where.OR = [];
+      const normalizedQuery = normalizeArabicText(searchTerm);
+      const variants = generateArabicSearchVariants(searchTerm).slice(0, 4);
+      where.OR = [
+        {
+          searchNormalizedText: {
+            contains: normalizedQuery,
+            mode: 'insensitive',
+          },
+        },
+      ];
       for (const v of variants) {
         where.OR.push({ title: { contains: v, mode: 'insensitive' } });
         where.OR.push({ description: { contains: v, mode: 'insensitive' } });

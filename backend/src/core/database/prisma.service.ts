@@ -6,6 +6,36 @@ import {
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
+/**
+ * Builds a pooled DATABASE_URL with explicit connection_limit and pgbouncer=true
+ * (when PGBOUNCER_ENABLED=true) so horizontal API replicas do not exhaust Postgres max_connections.
+ */
+export function buildDatabaseDatasourceUrl(
+  rawUrl = process.env.DATABASE_URL,
+  connectionLimit = process.env.DATABASE_CONNECTION_LIMIT,
+  pgBouncerEnabled = process.env.PGBOUNCER_ENABLED === 'true',
+): string | undefined {
+  if (!rawUrl) return undefined;
+  try {
+    const parsed = new URL(rawUrl);
+    if (connectionLimit && !parsed.searchParams.has('connection_limit')) {
+      const limitNum = Number(connectionLimit);
+      if (Number.isFinite(limitNum) && limitNum > 0) {
+        parsed.searchParams.set(
+          'connection_limit',
+          String(Math.floor(limitNum)),
+        );
+      }
+    }
+    if (pgBouncerEnabled && !parsed.searchParams.has('pgbouncer')) {
+      parsed.searchParams.set('pgbouncer', 'true');
+    }
+    return parsed.toString();
+  } catch {
+    return rawUrl;
+  }
+}
+
 @Injectable()
 export class PrismaService
   extends PrismaClient
@@ -15,7 +45,9 @@ export class PrismaService
   private isConnected = false;
 
   constructor() {
+    const datasourceUrl = buildDatabaseDatasourceUrl();
     super({
+      ...(datasourceUrl ? { datasources: { db: { url: datasourceUrl } } } : {}),
       log:
         process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
     });

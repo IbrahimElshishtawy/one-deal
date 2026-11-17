@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   UnauthorizedException,
   BadRequestException,
+  InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -46,6 +47,10 @@ const STATIC_PACKAGES = [
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
   private readonly hmacSecret: string;
+  private readonly apiKey: string;
+  private readonly integrationIdCard: number;
+  private readonly iframeId: string;
+  private readonly nodeEnv: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -55,28 +60,45 @@ export class PaymentsService {
       'PAYMOB_HMAC_SECRET',
       'test_hmac_secret',
     );
+    this.apiKey = this.configService.get<string>('PAYMOB_API_KEY', '');
+    this.integrationIdCard = Number(
+      this.configService.get<number>('PAYMOB_INTEGRATION_ID_CARD', 0),
+    );
+    this.iframeId = this.configService.get<string>('PAYMOB_IFRAME_ID', '12345');
+    this.nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+  }
+
+  private hasRealPaymobCredentials(): boolean {
+    return (
+      !!this.apiKey &&
+      !this.apiKey.startsWith('placeholder') &&
+      this.integrationIdCard > 0
+    );
   }
 
   /**
    * Retrieves active promotion packages and their prices in EGP.
    */
   async getPromotionPackages() {
-    if ((this.prisma as any).promotionPackage?.findMany) {
-      return (this.prisma as any).promotionPackage.findMany({
+    if (this.prisma.promotionPackage?.findMany) {
+      const dbPackages = await this.prisma.promotionPackage.findMany({
         where: { isActive: true },
         orderBy: { priceEgp: 'asc' },
       });
+      if (dbPackages.length > 0) {
+        return dbPackages;
+      }
     }
     return STATIC_PACKAGES.filter((p) => p.isActive);
   }
 
   /**
-   * Initiates payment checkout with authoritative server pricing.
+   * Initiates payment checkout with authoritative server pricing and Paymob 3-step tokenization.
    */
   async initiateCheckout(userId: string, dto: CheckoutDto) {
     const listing = await this.prisma.listing.findUnique({
       where: { id: dto.listingId },
-      include: { account: true },
+      include: { account: { include: { owner: true } } },
     });
 
     if (!listing) {
@@ -91,8 +113,8 @@ export class PaymentsService {
     }
 
     let pkg: any = null;
-    if ((this.prisma as any).promotionPackage?.findUnique) {
-      pkg = await (this.prisma as any).promotionPackage.findUnique({
+    if (this.prisma.promotionPackage?.findUnique) {
+      pkg = await this.prisma.promotionPackage.findUnique({
         where: { id: dto.packageId },
       });
     }
@@ -106,9 +128,9 @@ export class PaymentsService {
       );
     }
 
-    let paymentId = crypto.randomUUID();
-    if ((this.prisma as any).payment?.create) {
-      const created = await (this.prisma as any).payment.create({
+    let paymentId: string = crypto.randomUUID();
+    if (this.prisma.payment?.create) {
+      const created = await this.prisma.payment.create({
         data: {
           userId,
           listingId: listing.id,
@@ -120,9 +142,22 @@ export class PaymentsService {
       paymentId = created.id;
     }
 
-    // Generate Paymob checkout session URL / token
-    const mockOrderToken = crypto.randomBytes(16).toString('hex');
-    const checkoutUrl = `https://accept.paymob.com/api/acceptance/iframes/12345?payment_token=${mockOrderToken}&order_id=${paymentId}`;
+    let checkoutUrl: string;
+    if (this.hasRealPaymobCredentials()) {
+      checkoutUrl = await this.createPaymobIframeUrl(
+        paymentId,
+        Math.round(Number(pkg.priceEgp) * 100),
+        listing.account?.owner?.phone || '+201000000000',
+        listing.account?.owner?.fullName || 'DealOne User',
+      );
+    } else if (this.nodeEnv === 'production') {
+      throw new InternalServerErrorException(
+        'Paymob API credentials are missing in production environment',
+      );
+    } else {
+      const mockOrderToken = crypto.randomBytes(16).toString('hex');
+      checkoutUrl = `https://accept.paymob.com/api/acceptance/iframes/${this.iframeId}?payment_token=${mockOrderToken}&order_id=${paymentId}`;
+    }
 
     return {
       paymentId,
@@ -132,14 +167,102 @@ export class PaymentsService {
     };
   }
 
+  private async createPaymobIframeUrl(
+    merchantOrderId: string,
+    amountCents: number,
+    phone: string,
+    fullName: string,
+  ): Promise<string> {
+    const authRes = await fetch('https://accept.paymob.com/api/auth/tokens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ api_key: this.apiKey }),
+    });
+    const authData = (await authRes.json()) as { token?: string };
+    if (!authRes.ok || !authData.token) {
+      throw new InternalServerErrorException('Paymob authentication failed');
+    }
+
+    const orderRes = await fetch(
+      'https://accept.paymob.com/api/ecommerce/orders',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auth_token: authData.token,
+          delivery_needed: 'false',
+          amount_cents: amountCents,
+          currency: 'EGP',
+          merchant_order_id: merchantOrderId,
+          items: [],
+        }),
+      },
+    );
+    const orderData = (await orderRes.json()) as { id?: number };
+    if (!orderRes.ok || !orderData.id) {
+      throw new InternalServerErrorException(
+        'Paymob order registration failed',
+      );
+    }
+
+    const [firstName, ...rest] = fullName.split(' ');
+    const keyRes = await fetch(
+      'https://accept.paymob.com/api/acceptance/payment_keys',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auth_token: authData.token,
+          amount_cents: amountCents,
+          expiration: 3600,
+          order_id: orderData.id,
+          currency: 'EGP',
+          integration_id: this.integrationIdCard,
+          billing_data: {
+            first_name: firstName || 'DealOne',
+            last_name: rest.join(' ') || 'User',
+            phone_number: phone,
+            email: 'noreply@marketspace.eg',
+            apartment: 'NA',
+            floor: 'NA',
+            street: 'NA',
+            building: 'NA',
+            shipping_method: 'NA',
+            postal_code: 'NA',
+            city: 'Cairo',
+            country: 'EG',
+            state: 'Cairo',
+          },
+        }),
+      },
+    );
+    const keyData = (await keyRes.json()) as { token?: string };
+    if (!keyRes.ok || !keyData.token) {
+      throw new InternalServerErrorException('Paymob payment key failed');
+    }
+
+    return `https://accept.paymob.com/api/acceptance/iframes/${this.iframeId}?payment_token=${keyData.token}`;
+  }
+
   /**
    * Verifies Paymob HMAC signature, processes callback idempotently, and applies promotion entitlements.
    */
   async handlePaymobWebhook(payload: any, incomingHmac?: string) {
     const obj = payload?.obj || payload;
+    const hasRealSecret =
+      !!this.hmacSecret &&
+      this.hmacSecret !== 'test_hmac_secret' &&
+      !this.hmacSecret.startsWith('placeholder');
 
-    // In production with PAYMOB_HMAC_SECRET configured, validates SHA512 signature
-    if (incomingHmac && this.hmacSecret !== 'test_hmac_secret') {
+    if (hasRealSecret || this.nodeEnv === 'production') {
+      if (!incomingHmac || !hasRealSecret) {
+        throw new UnauthorizedException('Missing Paymob HMAC signature');
+      }
+      const isValid = this.verifyHmac(obj, incomingHmac);
+      if (!isValid) {
+        throw new UnauthorizedException('Invalid Paymob HMAC signature');
+      }
+    } else if (incomingHmac) {
       const isValid = this.verifyHmac(obj, incomingHmac);
       if (!isValid) {
         throw new UnauthorizedException('Invalid Paymob HMAC signature');
@@ -148,10 +271,15 @@ export class PaymentsService {
 
     const transactionId = String(obj?.id || payload?.id);
     const isSuccess = Boolean(obj?.success ?? payload?.success);
-    const orderId = String(obj?.order?.id || payload?.order_id || '');
+    const orderId = String(
+      obj?.order?.merchant_order_id ||
+        obj?.order?.id ||
+        payload?.order_id ||
+        '',
+    );
 
-    if ((this.prisma as any).payment?.findFirst) {
-      const existingPayment = await (this.prisma as any).payment.findFirst({
+    if (this.prisma.payment?.findFirst) {
+      const existingPayment = await this.prisma.payment.findFirst({
         where: { gatewayTransactionId: transactionId },
       });
 
@@ -162,11 +290,11 @@ export class PaymentsService {
         return { success: true, processed: false };
       }
 
-      const payment = await (this.prisma as any).payment.findFirst({
+      const payment = await this.prisma.payment.findFirst({
         where: {
           OR: [
             { gatewayTransactionId: transactionId },
-            { id: orderId.length === 36 ? orderId : undefined },
+            ...(orderId.length === 36 ? [{ id: orderId }] : []),
           ],
         },
         include: { package: true },
@@ -178,7 +306,7 @@ export class PaymentsService {
       }
 
       if (!isSuccess) {
-        await (this.prisma as any).payment.update({
+        await this.prisma.payment.update({
           where: { id: payment.id },
           data: {
             status: PaymentStatus.FAILED,
@@ -189,13 +317,46 @@ export class PaymentsService {
         return { success: false, status: 'FAILED', processed: false };
       }
 
-      await (this.prisma as any).payment.update({
-        where: { id: payment.id },
-        data: {
-          status: PaymentStatus.SUCCESS,
-          gatewayTransactionId: transactionId,
-          rawResponse: obj as any,
-        },
+      const durationDays = payment.package?.durationDays ?? 0;
+      const now = new Date();
+      const promotedUntil =
+        durationDays > 0
+          ? new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000)
+          : undefined;
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: PaymentStatus.SUCCESS,
+            gatewayTransactionId: transactionId,
+            rawResponse: obj as any,
+          },
+        });
+
+        await tx.listing.update({
+          where: { id: payment.listingId },
+          data: {
+            refreshedAt: now,
+            ...(promotedUntil ? { promotedUntil } : {}),
+          },
+        });
+
+        if ((tx as any).outboxEvent?.create) {
+          await (tx as any).outboxEvent.create({
+            data: {
+              aggregateType: 'Payment',
+              aggregateId: payment.id,
+              eventType: 'PAYMENT_SUCCEEDED',
+              payload: {
+                paymentId: payment.id,
+                listingId: payment.listingId,
+                packageId: payment.packageId,
+                transactionId,
+              },
+            },
+          });
+        }
       });
     }
 
@@ -205,7 +366,7 @@ export class PaymentsService {
     return { success: true, processed: true };
   }
 
-  private verifyHmac(obj: any, incomingHmac: string): boolean {
+  verifyHmac(obj: any, incomingHmac: string): boolean {
     const fields = [
       obj.amount_cents,
       obj.created_at,
@@ -237,6 +398,11 @@ export class PaymentsService {
       .update(concatenated)
       .digest('hex');
 
-    return calculated === incomingHmac;
+    const expectedBuf = Buffer.from(calculated, 'hex');
+    const actualBuf = Buffer.from(incomingHmac, 'hex');
+    return (
+      expectedBuf.length === actualBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, actualBuf)
+    );
   }
 }

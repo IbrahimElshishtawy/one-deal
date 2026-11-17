@@ -3,6 +3,7 @@ import { NotificationsModule } from '../modules/notifications/notifications.modu
 import { ListingExpiryProcessor } from './listing-expiry.processor';
 import { MediaCleanupProcessor } from './media-cleanup.processor';
 import { PaymentReconciliationProcessor } from './payment-reconciliation.processor';
+import { OutboxPublisherProcessor } from './outbox-publisher.processor';
 import { NotificationProcessor } from './notification.processor';
 import { WorkerService } from './worker.service';
 
@@ -13,9 +14,10 @@ import { WorkerService } from './worker.service';
     ListingExpiryProcessor,
     MediaCleanupProcessor,
     PaymentReconciliationProcessor,
+    OutboxPublisherProcessor,
     NotificationProcessor,
     WorkerService,
   ],
-  exports: [WorkerService],
+  exports: [WorkerService, OutboxPublisherProcessor],
 })
 export class WorkerModule {}

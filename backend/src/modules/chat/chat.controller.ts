@@ -8,7 +8,10 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Sse,
+  MessageEvent,
 } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import {
   ApiTags,
   ApiOperation,
@@ -30,6 +33,16 @@ import {
 @Controller('conversations')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
+
+  @Sse('stream')
+  @ApiOperation({
+    summary: 'Real-time SSE stream for incoming chat messages (Redis Pub/Sub)',
+  })
+  streamMessages(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Observable<MessageEvent> {
+    return this.chatService.subscribeToUserStream(user.id);
+  }
 
   @Get()
   @ApiOperation({ summary: 'List user active conversations' })

@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 import Redis, { RedisOptions } from 'ioredis';
 
 /**
@@ -36,7 +37,12 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await Promise.all([this.initCacheClient(), this.initQueueClient()]);
   }
 
-  private resolveCacheTarget(): { url?: string; host: string; port: number; password?: string } {
+  private resolveCacheTarget(): {
+    url?: string;
+    host: string;
+    port: number;
+    password?: string;
+  } {
     const url =
       this.configService.get<string>('REDIS_CACHE_URL') ||
       this.configService.get<string>('REDIS_URL');
@@ -59,7 +65,12 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return { host, port, password: password || undefined };
   }
 
-  private resolveQueueTarget(): { url?: string; host: string; port: number; password?: string } {
+  private resolveQueueTarget(): {
+    url?: string;
+    host: string;
+    port: number;
+    password?: string;
+  } {
     const url =
       this.configService.get<string>('REDIS_QUEUE_URL') ||
       this.configService.get<string>('REDIS_URL');
@@ -81,7 +92,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   private async initCacheClient(): Promise<void> {
     const target = this.resolveCacheTarget();
-    const displayEndpoint = target.url ? 'Cloud Redis URL' : `${target.host}:${target.port}`;
+    const displayEndpoint = target.url
+      ? 'Cloud Redis URL'
+      : `${target.host}:${target.port}`;
 
     try {
       const options: RedisOptions = {
@@ -137,7 +150,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   private async initQueueClient(): Promise<void> {
     const target = this.resolveQueueTarget();
-    const displayEndpoint = target.url ? 'Cloud Redis URL' : `${target.host}:${target.port}`;
+    const displayEndpoint = target.url
+      ? 'Cloud Redis URL'
+      : `${target.host}:${target.port}`;
 
     try {
       const options: RedisOptions = {
@@ -392,5 +407,101 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   isQueueClientConnected(): boolean {
     return this.isQueueHealthy;
+  }
+
+  /**
+   * Acquires a distributed lock via Redis SET NX EX.
+   * Returns an ownership lock token if acquired, or null if already locked.
+   */
+  async acquireLock(key: string, ttlSeconds: number): Promise<string | null> {
+    const token = crypto.randomUUID();
+    const lockKey = `lock:${key}`;
+
+    if (this.isCacheHealthy && this.cacheClient) {
+      try {
+        const result = await this.cacheClient.set(
+          lockKey,
+          token,
+          'EX',
+          ttlSeconds,
+          'NX',
+        );
+        return result === 'OK' ? token : null;
+      } catch (err) {
+        this.logger.warn(
+          `Error acquiring Redis lock [${lockKey}]: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    if (this.configService.get('NODE_ENV') === 'production') {
+      return null;
+    }
+
+    const existing = this.inMemoryFallback.get(lockKey);
+    if (existing && (!existing.expiresAt || Date.now() < existing.expiresAt)) {
+      return null;
+    }
+
+    this.inMemoryFallback.set(lockKey, {
+      value: token,
+      expiresAt: Date.now() + ttlSeconds * 1000,
+    });
+    return token;
+  }
+
+  /**
+   * Releases a distributed lock only if the caller owns the matching token.
+   */
+  async releaseLock(key: string, token: string): Promise<void> {
+    const lockKey = `lock:${key}`;
+
+    if (this.isCacheHealthy && this.cacheClient) {
+      try {
+        const luaScript = `
+          if redis.call("get", KEYS[1]) == ARGV[1] then
+            return redis.call("del", KEYS[1])
+          else
+            return 0
+          end
+        `;
+        await this.cacheClient.eval(luaScript, 1, lockKey, token);
+        return;
+      } catch (err) {
+        this.logger.warn(
+          `Error releasing Redis lock [${lockKey}]: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    const existing = this.inMemoryFallback.get(lockKey);
+    if (existing && existing.value === token) {
+      this.inMemoryFallback.delete(lockKey);
+    }
+  }
+
+  /**
+   * Publishes a real-time event message to a Redis Pub/Sub channel.
+   */
+  async publish(channel: string, message: string): Promise<void> {
+    if (this.isCacheHealthy && this.cacheClient) {
+      try {
+        await this.cacheClient.publish(channel, message);
+      } catch (err) {
+        this.logger.warn(
+          `Error publishing to Redis channel [${channel}]: ${(err as Error).message}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Creates a dedicated subscriber ioredis client for Pub/Sub listeners (SSE / WebSocket).
+   */
+  createSubscriber(): Redis | null {
+    if (!this.isCacheHealthy || !this.cacheClient) {
+      return null;
+    }
+    return this.cacheClient.duplicate();
   }
 }

@@ -13,14 +13,26 @@ export const RATE_LIMIT_KEY = 'rate_limit';
 export interface RateLimitOptions {
   limit: number;
   ttlSeconds: number;
+  anonymousLimit?: number;
 }
 
 /**
  * Decorator to define custom rate limits per route handler.
- * Example: @RateLimit(5, 60) // 5 requests per 60 seconds
+ * Authenticated requests are keyed by userId; anonymous requests fall back to IP
+ * with a higher CGNAT-safe limit (defaults to 3x `limit` unless `anonymousLimit` is set).
+ *
+ * Example: @RateLimit(10, 60) // 10 req/min per userId, 30 req/min per IP if anonymous
  */
-export const RateLimit = (limit: number, ttlSeconds: number) =>
-  SetMetadata(RATE_LIMIT_KEY, { limit, ttlSeconds });
+export const RateLimit = (
+  limit: number,
+  ttlSeconds: number,
+  options?: { anonymousLimit?: number },
+) =>
+  SetMetadata(RATE_LIMIT_KEY, {
+    limit,
+    ttlSeconds,
+    anonymousLimit: options?.anonymousLimit,
+  });
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
@@ -36,29 +48,47 @@ export class RateLimitGuard implements CanActivate {
     );
 
     if (!rateLimit) {
-      return true; // No rate limit specified for this handler
+      return true;
     }
 
     const request = context.switchToHttp().getRequest();
-    const ip =
-      request.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
-      request.ip ||
-      request.socket?.remoteAddress ||
-      '127.0.0.1';
+    const userId = request.user?.id as string | undefined;
+    const rawRoute =
+      request.routeOptions?.url ||
+      request.raw?.url ||
+      request.url ||
+      'endpoint';
+    const route = String(rawRoute).split('?')[0];
 
-    const route = request.raw?.url || request.url || 'endpoint';
-    const key = `ratelimit:${ip}:${route}`;
+    let key: string;
+    let effectiveLimit: number;
+
+    if (userId) {
+      // Authenticated caller: isolate quota strictly per userId so CGNAT users don't block each other
+      key = `ratelimit:user:${userId}:${route}`;
+      effectiveLimit = rateLimit.limit;
+    } else {
+      // Anonymous caller: key by client IP with CGNAT-tolerant ceiling
+      const ip =
+        request.headers?.['x-forwarded-for']?.toString().split(',')[0].trim() ||
+        request.ip ||
+        request.socket?.remoteAddress ||
+        '127.0.0.1';
+      key = `ratelimit:ip:${ip}:${route}`;
+      effectiveLimit = rateLimit.anonymousLimit ?? rateLimit.limit * 3;
+    }
 
     const { allowed, remaining } = await this.redisService.checkRateLimit(
       key,
-      rateLimit.limit,
+      effectiveLimit,
       rateLimit.ttlSeconds,
     );
 
     const reply = context.switchToHttp().getResponse();
     if (reply?.header) {
-      reply.header('X-RateLimit-Limit', rateLimit.limit);
+      reply.header('X-RateLimit-Limit', effectiveLimit);
       reply.header('X-RateLimit-Remaining', remaining);
+      reply.header('X-RateLimit-Scope', userId ? 'user' : 'ip');
     }
 
     if (!allowed) {

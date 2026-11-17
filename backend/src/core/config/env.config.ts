@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+const boolFlag = (defaultValue: boolean) =>
+  z.preprocess((val) => {
+    if (val === undefined || val === null || val === '') return defaultValue;
+    if (typeof val === 'boolean') return val;
+    return String(val).toLowerCase() === 'true';
+  }, z.boolean());
+
 export const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
@@ -7,11 +14,19 @@ export const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   API_BASE_URL: z.string().url().default('http://localhost:3000/api/v1'),
   CORS_ORIGIN: z.string().default('*'),
+  ENABLE_SWAGGER: boolFlag(false),
+  ENABLE_WORKERS: boolFlag(true),
+  AUTO_APPROVE_LISTINGS: boolFlag(false),
+  AUDIT_QUEUE_ENABLED: boolFlag(false),
 
-  // Database
+  // Database & PgBouncer Pooling
   DATABASE_URL: z
     .string()
-    .default('postgresql://postgres:postgres@localhost:5432/market_space_db?schema=public'),
+    .default(
+      'postgresql://postgres:postgres@localhost:5432/market_space_db?schema=public',
+    ),
+  DATABASE_CONNECTION_LIMIT: z.coerce.number().optional().default(10),
+  PGBOUNCER_ENABLED: boolFlag(false),
 
   // Redis Infrastructure (Separated Cache & Queue Instances)
   REDIS_CACHE_HOST: z.string().optional().default('localhost'),
@@ -77,6 +92,9 @@ export const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().optional().default(''),
   FIREBASE_CLIENT_EMAIL: z.string().optional().default(''),
   FIREBASE_PRIVATE_KEY: z.string().optional().default(''),
+
+  // Observability / Error Tracking
+  SENTRY_DSN: z.string().optional().default(''),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
@@ -113,10 +131,7 @@ export function validateEnv(config: Record<string, unknown>): EnvConfig {
       .join('\n');
 
     // In unit testing, if explicit invalid values were passed, throw as expected by test suites
-    if (
-      mergedConfig.NODE_ENV === 'test' ||
-      process.env.NODE_ENV === 'test'
-    ) {
+    if (mergedConfig.NODE_ENV === 'test' || process.env.NODE_ENV === 'test') {
       throw new Error(`\n❌ Configuration validation failed:\n${issues}\n`);
     }
 

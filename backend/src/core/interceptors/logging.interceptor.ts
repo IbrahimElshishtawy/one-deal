@@ -35,6 +35,7 @@ export class LoggingInterceptor implements NestInterceptor {
 
     const startTime = Date.now();
     const { method, url } = req;
+    const userId = (req as any)?.user?.id as string | undefined;
 
     return next.handle().pipe(
       tap({
@@ -46,6 +47,7 @@ export class LoggingInterceptor implements NestInterceptor {
               level: 'info',
               time: Date.now(),
               trace_id: traceId,
+              user_id: userId ?? null,
               req: {
                 method,
                 url,
@@ -67,6 +69,7 @@ export class LoggingInterceptor implements NestInterceptor {
               level: 'error',
               time: Date.now(),
               trace_id: traceId,
+              user_id: userId ?? null,
               req: {
                 method,
                 url,

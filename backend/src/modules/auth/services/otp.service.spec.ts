@@ -225,5 +225,37 @@ describe('OtpService', () => {
         BadRequestException,
       );
     });
+
+    it('should allow only ONE winner under simultaneous Promise.all OTP verification load', async () => {
+      const code = '654321';
+      const validHash = service.hashOtp(code);
+      let consumed = false;
+
+      mockPrisma.otp.findFirst.mockResolvedValue({
+        id: 'otp-race-1',
+        phone: '+201012345678',
+        codeHash: validHash,
+        attempts: 0,
+        isConsumed: false,
+      });
+
+      mockPrisma.otp.updateMany.mockImplementation(async () => {
+        if (!consumed) {
+          consumed = true;
+          return { count: 1 };
+        }
+        return { count: 0 };
+      });
+
+      const results = await Promise.allSettled(
+        Array.from({ length: 5 }, () => service.verifyOtp('01012345678', code)),
+      );
+
+      const fulfilled = results.filter((r) => r.status === 'fulfilled');
+      const rejected = results.filter((r) => r.status === 'rejected');
+
+      expect(fulfilled).toHaveLength(1);
+      expect(rejected).toHaveLength(4);
+    });
   });
 });

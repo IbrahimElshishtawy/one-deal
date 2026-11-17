@@ -13,6 +13,7 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { TransformInterceptor } from './core/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './core/interceptors/logging.interceptor';
+import { MetricsInterceptor } from './core/metrics/metrics.interceptor';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -50,44 +51,52 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(
+    app.get(MetricsInterceptor),
     new LoggingInterceptor(),
     new TransformInterceptor(),
   );
 
-  // Global API Prefix with health endpoint exclusions
+  // Global API Prefix with health & metrics endpoint exclusions
   app.setGlobalPrefix('api/v1', {
     exclude: [
       'health/live',
       'health/ready',
       'health/liveness',
       'health/readiness',
+      'metrics',
     ],
   });
 
-  // Swagger Documentation Setup
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Deal One API (صفقة ون)')
-    .setDescription(
-      'Production Modular Monolith classifieds marketplace backend API for Egypt',
-    )
-    .setVersion('1.0.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'BearerAuth',
-    )
-    .build();
+  // Swagger Documentation Setup (disabled in production by default)
+  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+  const enableSwagger = configService.get<boolean>('ENABLE_SWAGGER', false);
+  if (nodeEnv !== 'production' || enableSwagger) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Deal One API (صفقة ون)')
+      .setDescription(
+        'Production Modular Monolith classifieds marketplace backend API for Egypt',
+      )
+      .setVersion('1.0.0')
+      .addBearerAuth(
+        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        'BearerAuth',
+      )
+      .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document);
+    logger.log(
+      `📚 OpenAPI Documentation available at http://0.0.0.0:${port}/api/docs`,
+    );
+  } else {
+    logger.log('🔒 Swagger UI disabled in production environment');
+  }
 
   // Enable Graceful Shutdown Hooks
   app.enableShutdownHooks();
 
   await app.listen(port, '0.0.0.0');
   logger.log(`🚀 Deal One Backend running on http://0.0.0.0:${port}`);
-  logger.log(
-    `📚 OpenAPI Documentation available at http://0.0.0.0:${port}/api/docs`,
-  );
 }
 
 bootstrap();
