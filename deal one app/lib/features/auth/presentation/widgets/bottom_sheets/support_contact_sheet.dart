@@ -118,7 +118,7 @@ class _SupportTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: AuthDesignTokens.actionBlue, size: 22),
+          Icon(icon, color: AuthDesignTokens.linkOf(context), size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

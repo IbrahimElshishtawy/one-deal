@@ -63,11 +63,20 @@ export const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
 
-  // SMS Gateway (Egypt)
+  // SMS & WhatsApp OTP Gateways (Egypt)
   SMS_PROVIDER: z.string().default('SMS_MISR'),
   SMS_MISR_USERNAME: z.string().optional().default(''),
   SMS_MISR_PASSWORD: z.string().optional().default(''),
   SMS_MISR_SENDER_ID: z.string().default('MarketSpace'),
+
+  // WhatsApp Cloud API (Meta)
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional().default(''),
+  WHATSAPP_ACCESS_TOKEN: z.string().optional().default(''),
+  WHATSAPP_TEMPLATE_NAME: z.string().optional().default('auth_otp'),
+  WHATSAPP_TEMPLATE_LANG: z.string().optional().default('en_US'),
+  WHATSAPP_API_VERSION: z.string().optional().default('v21.0'),
+  WHATSAPP_INCLUDE_COPY_BUTTON: boolFlag(true),
+  WHATSAPP_FALLBACK_TO_SMS: boolFlag(false),
 
   // Media (Cloudflare R2 / S3)
   R2_ACCOUNT_ID: z.string().optional().default(''),

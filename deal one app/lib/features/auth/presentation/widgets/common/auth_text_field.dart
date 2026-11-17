@@ -203,19 +203,19 @@ class _AuthTextFieldState extends State<AuthTextField> {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline_rounded,
                 size: 15,
-                color: AuthDesignTokens.errorRed,
+                color: AuthDesignTokens.errorTextOf(context),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Expanded(
                 child: Text(
                   widget.errorText!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
-                    color: AuthDesignTokens.errorRed,
+                    color: AuthDesignTokens.errorTextOf(context),
                   ),
                 ),
               ),

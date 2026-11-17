@@ -28,7 +28,11 @@ class ListingDetailScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: AppColors.errorOf(context),
+              ),
               const SizedBox(height: 12),
               Text('تعذر تحميل تفاصيل الإعلان: $err'),
               const SizedBox(height: 12),
@@ -63,7 +67,7 @@ class _DetailView extends ConsumerWidget {
           IconButton(
             icon: Icon(
               isFav ? Icons.favorite : Icons.favorite_border,
-              color: isFav ? Colors.red : null,
+              color: isFav ? AppColors.errorOf(context) : null,
             ),
             onPressed: () => favoritesNotifier.toggleFavorite(item.id),
           ),
@@ -322,7 +326,10 @@ class _DetailView extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'الحصة اليومية: $err',
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.errorOf(context),
+                      fontSize: 12,
+                    ),
                   ),
                 ),
                 TextButton(

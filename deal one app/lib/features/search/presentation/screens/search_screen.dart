@@ -50,15 +50,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
       ),
       body: currentQuery.trim().isEmpty
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.search, size: 64, color: Colors.grey),
+                  Icon(
+                    Icons.search,
+                    size: 64,
+                    color: AppColors.textMutedOf(context),
+                  ),
                   SizedBox(height: 12),
                   Text(
                     'اكتب كلمة البحث للبدء',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    style: TextStyle(
+                      color: AppColors.textMutedOf(context),
+                      fontSize: 16,
+                    ),
                   ),
                 ],
               ),
@@ -70,15 +77,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.search_off,
                           size: 64,
-                          color: Colors.grey,
+                          color: AppColors.textMutedOf(context),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Text(
                           'لا توجد نتائج لـ "${result.query}"',
-                          style: const TextStyle(fontSize: 16),
+                          style: TextStyle(fontSize: 16),
                         ),
                       ],
                     ),

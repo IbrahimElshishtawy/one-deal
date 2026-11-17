@@ -20,9 +20,9 @@ class NavigationBadge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
         constraints: const BoxConstraints(minWidth: 16.0, minHeight: 16.0),
         decoration: BoxDecoration(
-          color: AppColors.error,
+          color: AppColors.errorOf(context),
           borderRadius: BorderRadius.circular(10.0),
-          border: Border.all(color: Colors.white, width: 1.5),
+          border: Border.all(color: AppColors.surfaceOf(context), width: 1.5),
         ),
         child: Text(
           label,

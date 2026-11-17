@@ -77,7 +77,7 @@ class ContractorPromoBanner extends StatelessWidget {
                         vertical: 3.0,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: Colors.white.withValues(alpha: 0.14),
                         borderRadius: AppRadii.full,
                       ),
                       child: Text(

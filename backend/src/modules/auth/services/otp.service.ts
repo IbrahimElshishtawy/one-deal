@@ -185,9 +185,12 @@ export class OtpService {
       },
     });
 
+    const channelLabel =
+      delivery.provider === 'WHATSAPP_CLOUD' ? 'WhatsApp' : 'SMS';
+
     return {
       success: true,
-      message: 'OTP verification code dispatched successfully via SMS.',
+      message: `OTP verification code dispatched successfully via ${channelLabel}.`,
       cooldownSeconds: this.resendCooldownSeconds,
     };
   }

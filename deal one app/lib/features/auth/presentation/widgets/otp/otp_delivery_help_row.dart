@@ -20,22 +20,22 @@ class OtpDeliveryHelpRow extends StatelessWidget {
         TextButton.icon(
           key: const Key('otp_delivery_help_button'),
           onPressed: onDeliveryTroubleTap,
-          icon: const Icon(
+          icon: Icon(
             Icons.help_outline_rounded,
             size: 18,
-            color: AuthDesignTokens.actionBlue,
+            color: AuthDesignTokens.linkOf(context),
           ),
-          label: const Text(
+          label: Text(
             'لم يصلك الرمز عبر واتساب؟',
             style: TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
-              color: AuthDesignTokens.actionBlue,
+              color: AuthDesignTokens.linkOf(context),
             ),
           ),
         ),
         TextButton(
-          key: const Key('otp_support_button'),
+          key: Key('otp_support_button'),
           onPressed: onSupportTap,
           child: Text(
             'تواصل مع الدعم الفني',

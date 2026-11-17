@@ -50,7 +50,7 @@ class OtpCountdownTimer extends StatelessWidget {
                     Icons.timer_outlined,
                     size: 16,
                     color: isExpired
-                        ? AuthDesignTokens.errorRed
+                        ? AuthDesignTokens.errorTextOf(context)
                         : AuthDesignTokens.mutedOf(context),
                   ),
                   const SizedBox(width: 6),
@@ -60,7 +60,7 @@ class OtpCountdownTimer extends StatelessWidget {
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                       color: isExpired
-                          ? AuthDesignTokens.errorRed
+                          ? AuthDesignTokens.errorTextOf(context)
                           : AuthDesignTokens.mutedOf(context),
                     ),
                   ),
@@ -74,7 +74,7 @@ class OtpCountdownTimer extends StatelessWidget {
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
                     color: isExpired
-                        ? AuthDesignTokens.errorRed
+                        ? AuthDesignTokens.errorTextOf(context)
                         : AuthDesignTokens.headingOf(context),
                   ),
                 ),
@@ -99,10 +99,10 @@ class OtpCountdownTimer extends StatelessWidget {
                   textDirection: TextDirection.ltr,
                   child: Text(
                     formattedCooldown,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w800,
-                      color: AuthDesignTokens.focusOrange,
+                      color: AuthDesignTokens.headingOf(context),
                     ),
                   ),
                 ),
@@ -120,10 +120,10 @@ class OtpCountdownTimer extends StatelessWidget {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(
+                    : Icon(
                         Icons.refresh_rounded,
                         size: 18,
-                        color: AuthDesignTokens.actionBlue,
+                        color: AuthDesignTokens.linkOf(context),
                       ),
                 label: Text(
                   isResending ? 'جاري إرسال رمز جديد...' : 'إعادة إرسال الرمز',

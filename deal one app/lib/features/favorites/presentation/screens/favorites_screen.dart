@@ -20,11 +20,15 @@ class FavoritesScreen extends ConsumerWidget {
         child: favoritesState.when(
           data: (favorites) {
             if (favorites.isEmpty) {
-              return const Center(
+              return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+                    Icon(
+                      Icons.favorite_border,
+                      size: 64,
+                      color: AppColors.textMutedOf(context),
+                    ),
                     SizedBox(height: 12),
                     Text(
                       'لا توجد إعلانات مفضلة بعد',
@@ -108,7 +112,11 @@ class FavoritesScreen extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: AppColors.errorOf(context),
+                ),
                 const SizedBox(height: 12),
                 Text('تعذر تحميل المفضلة: $err'),
                 const SizedBox(height: 12),

@@ -37,13 +37,13 @@ class UnavailableProviderDialog extends StatelessWidget {
       icon: Container(
         width: 52,
         height: 52,
-        decoration: const BoxDecoration(
-          color: AuthDesignTokens.actionBlueTint,
+        decoration: BoxDecoration(
+          color: AuthDesignTokens.infoTintOf(context),
           shape: BoxShape.circle,
         ),
-        child: const Icon(
+        child: Icon(
           Icons.info_outline_rounded,
-          color: AuthDesignTokens.actionBlue,
+          color: AuthDesignTokens.linkOf(context),
           size: 28,
         ),
       ),
@@ -76,9 +76,9 @@ class UnavailableProviderDialog extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: EdgeInsets.symmetric(vertical: 12),
             ),
-            child: const Text(
+            child: Text(
               'فهمت، المتابعة برقم الهاتف',
               style: TextStyle(fontWeight: FontWeight.w700),
             ),

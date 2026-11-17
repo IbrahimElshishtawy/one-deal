@@ -94,12 +94,12 @@ class OnboardingIllustration extends StatelessWidget {
                 color: AuthDesignTokens.successTintOf(context),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
+              child: Text(
                 'حساب موثق',
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
-                  color: AuthDesignTokens.successGreen,
+                  color: AuthDesignTokens.successTextOf(context),
                 ),
               ),
             ),
@@ -168,16 +168,16 @@ class OnboardingIllustration extends StatelessWidget {
         ];
       case OnboardingIllustrationType.verifiedTrust:
         return [
-          const Positioned(
+          Positioned(
             top: 22,
             left: 14,
             child: _FloatingBadge(
               icon: Icons.lock_outline_rounded,
               label: 'تحقق فوري',
-              accent: AuthDesignTokens.navyPrimary,
+              accent: AuthDesignTokens.primaryActionOf(context),
             ),
           ),
-          const Positioned(
+          Positioned(
             bottom: 22,
             right: 18,
             child: _FloatingBadge(

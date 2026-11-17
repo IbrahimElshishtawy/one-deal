@@ -76,7 +76,7 @@ class HomeFeedScreen extends ConsumerWidget {
             feedAsync.when(
               data: (feed) {
                 if (feed.items.isEmpty) {
-                  return const SliverFillRemaining(
+                  return SliverFillRemaining(
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -84,7 +84,7 @@ class HomeFeedScreen extends ConsumerWidget {
                           Icon(
                             Icons.inventory_2_outlined,
                             size: 64,
-                            color: Colors.grey,
+                            color: AppColors.textMutedOf(context),
                           ),
                           SizedBox(height: 12),
                           Text(
@@ -122,20 +122,20 @@ class HomeFeedScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.red,
+                        color: AppColors.errorOf(context),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         'تعذر تحميل الإعلانات: $err',
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       ElevatedButton.icon(
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('إعادة المحاولة'),
+                        icon: Icon(Icons.refresh),
+                        label: Text('إعادة المحاولة'),
                         onPressed: () => ref.invalidate(listingsFeedProvider),
                       ),
                     ],

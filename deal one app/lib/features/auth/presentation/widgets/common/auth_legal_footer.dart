@@ -55,9 +55,8 @@ class _AuthLegalFooterState extends State<AuthLegalFooter> {
           : TextDecoration.none,
     );
 
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
+    return Text.rich(
+      TextSpan(
         style: baseStyle,
         children: [
           const TextSpan(text: 'بالمتابعة، فإنك توافق على '),
@@ -75,6 +74,7 @@ class _AuthLegalFooterState extends State<AuthLegalFooter> {
           const TextSpan(text: '.'),
         ],
       ),
+      textAlign: TextAlign.center,
     );
   }
 }

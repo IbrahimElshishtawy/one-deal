@@ -62,12 +62,12 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
         centerVertically: true,
         child: Column(
           children: [
-            const Icon(
+            Icon(
               Icons.sms_outlined,
               size: 56,
-              color: AuthDesignTokens.navyPrimary,
+              color: AuthDesignTokens.primaryActionOf(context),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               'لا توجد جلسة تحقق نشطة',
               style: TextStyle(
@@ -76,7 +76,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                 color: AuthDesignTokens.headingOf(context),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               'يرجى إدخال رقم هاتفك أولاً لاستلام رمز التحقق.',
               textAlign: TextAlign.center,
@@ -85,7 +85,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                 color: AuthDesignTokens.bodyOf(context),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             AuthPrimaryButton(
               label: 'العودة لتسجيل الدخول',
               onPressed: () => context.go(RouteNames.login),
@@ -393,7 +393,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                       color: state.canResend
-                          ? AuthDesignTokens.actionBlue
+                          ? AuthDesignTokens.linkOf(context)
                           : AuthDesignTokens.mutedOf(context),
                     ),
                   ),
@@ -428,10 +428,10 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                     onTap: state.canResend ? handleResend : null,
                     child: Text(
                       state.isResending ? 'جاري الإرسال...' : 'إرسال مجدداً',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: AuthDesignTokens.actionBlue,
+                        color: AuthDesignTokens.linkOf(context),
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -452,12 +452,12 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
               child: TextButton(
                 key: const Key('otp_delivery_help_button'),
                 onPressed: () => openDeliveryFailureSheet(),
-                child: const Text(
+                child: Text(
                   'لم يصلك الرمز عبر واتساب؟',
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: AuthDesignTokens.actionBlue,
+                    color: AuthDesignTokens.linkOf(context),
                   ),
                 ),
               ),

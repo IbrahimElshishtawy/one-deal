@@ -83,13 +83,18 @@ class AppBottomNavigation extends StatelessWidget {
                   child: FloatingActionButton.extended(
                     heroTag: 'fab_${config.sectionId}',
                     onPressed: () => _handleFabPressed(context),
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.primaryOf(context),
+                    foregroundColor: AppColors.onPrimaryOf(context),
                     elevation: 4.0,
-                    icon: Icon(fab.icon, color: Colors.white, size: 20.0),
+                    icon: Icon(
+                      fab.icon,
+                      color: AppColors.onPrimaryOf(context),
+                      size: 20.0,
+                    ),
                     label: Text(
                       fab.label,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: AppColors.onPrimaryOf(context),
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                       ),

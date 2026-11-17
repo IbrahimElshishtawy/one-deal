@@ -128,6 +128,15 @@ class AuthDesignTokens {
   static Color errorForegroundOf(BuildContext context) =>
       isDark(context) ? const Color(0xFFFCA5A5) : errorDeepRed;
 
+  static Color errorTextOf(BuildContext context) =>
+      isDark(context) ? const Color(0xFFFCA5A5) : errorRed;
+
+  static Color successTextOf(BuildContext context) =>
+      isDark(context) ? const Color(0xFF4ADE80) : successGreen;
+
+  static Color linkOf(BuildContext context) =>
+      isDark(context) ? const Color(0xFF60A5FA) : actionBlue;
+
   static Color infoTintOf(BuildContext context) =>
       isDark(context) ? actionBlue.withValues(alpha: 0.16) : actionBlueTint;
 

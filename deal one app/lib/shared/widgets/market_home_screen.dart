@@ -411,29 +411,20 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
   }
 
   void _callSupplier(BuildingMaterialItem item) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('الاتصال بالمورد: ${item.title}'),
-        backgroundColor: AppColors.neutral,
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('الاتصال بالمورد: ${item.title}')));
   }
 
   void _chatSupplier(BuildingMaterialItem item) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('فتح المحادثة مع: ${item.title}'),
-        backgroundColor: AppColors.neutral,
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('فتح المحادثة مع: ${item.title}')));
   }
 
   void _requestQuote(ServiceProviderItem item) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('تم إرسال طلب تسعيرة إلى ${item.name}'),
-        backgroundColor: AppColors.neutral,
-      ),
+      SnackBar(content: Text('تم إرسال طلب تسعيرة إلى ${item.name}')),
     );
   }
 
@@ -539,27 +530,27 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     Icons.home_work_outlined,
-                    color: AppColors.secondary,
+                    color: AppColors.primaryOf(ctx),
                   ),
-                  title: const Text('إعلان عقاري (بيع أو إيجار)'),
+                  title: Text('إعلان عقاري (بيع أو إيجار)'),
                   onTap: () => Navigator.pop(ctx),
                 ),
                 ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     Icons.handyman_outlined,
-                    color: AppColors.tertiary,
+                    color: AppColors.primaryOf(ctx),
                   ),
-                  title: const Text('إعلان مواد بناء وتوريد مُوَن'),
+                  title: Text('إعلان مواد بناء وتوريد مُوَن'),
                   onTap: () => Navigator.pop(ctx),
                 ),
                 ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     Icons.engineering_outlined,
-                    color: AppColors.info,
+                    color: AppColors.infoOf(ctx),
                   ),
-                  title: const Text('تسجيل مقدم خدمة ومقاولات'),
+                  title: Text('تسجيل مقدم خدمة ومقاولات'),
                   onTap: () => Navigator.pop(ctx),
                 ),
               ],

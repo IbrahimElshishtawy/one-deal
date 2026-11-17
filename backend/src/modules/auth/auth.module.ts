@@ -10,6 +10,7 @@ import { PhoneNormalizationService } from '../../core/identity/phone-normalizati
 import { SecurityAuditService } from '../../core/security/security-audit.service';
 import { SMS_GATEWAY_ADAPTER } from './adapters/sms-gateway.interface';
 import { SmsMisrAdapter } from './adapters/sms-misr.adapter';
+import { WhatsAppCloudAdapter } from './adapters/whatsapp-cloud.adapter';
 import { MockSmsAdapter } from './adapters/mock-sms.adapter';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -37,20 +38,33 @@ import { AccountTenantGuard } from './guards/account-tenant.guard';
     PhoneNormalizationService,
     SecurityAuditService,
     SmsMisrAdapter,
+    WhatsAppCloudAdapter,
     MockSmsAdapter,
     {
       provide: SMS_GATEWAY_ADAPTER,
       useFactory: (
         configService: ConfigService,
         smsMisr: SmsMisrAdapter,
+        whatsapp: WhatsAppCloudAdapter,
         mockSms: MockSmsAdapter,
       ) => {
-        const provider = configService.get<string>('SMS_PROVIDER', 'SMS_MISR');
+        const provider = configService
+          .get<string>('SMS_PROVIDER', 'SMS_MISR')
+          .toUpperCase();
         const nodeEnv = configService.get<string>('NODE_ENV', 'development');
         const isTestEnv = process.env.NODE_ENV === 'test' || nodeEnv === 'test';
 
         if (isTestEnv) {
           return mockSms;
+        }
+
+        if (provider === 'WHATSAPP' || provider === 'WHATSAPP_CLOUD') {
+          if (whatsapp.isConfigured() && !whatsapp.isPlaceholder()) {
+            return whatsapp;
+          }
+          if (nodeEnv === 'production') {
+            return whatsapp;
+          }
         }
 
         if (
@@ -61,15 +75,25 @@ import { AccountTenantGuard } from './guards/account-tenant.guard';
           return smsMisr;
         }
 
+        // If WhatsApp credentials are configured even when SMS_PROVIDER wasn't switched from default
+        if (whatsapp.isConfigured() && !whatsapp.isPlaceholder()) {
+          return whatsapp;
+        }
+
         if (nodeEnv === 'production') {
-          // In production, fallback to SmsMisr which will fail safely if unconfigured
+          // In production, fallback to configured adapter which fails safely if unconfigured
           return smsMisr;
         }
 
         // In local development with placeholder or mock config, use MockSmsAdapter
         return mockSms;
       },
-      inject: [ConfigService, SmsMisrAdapter, MockSmsAdapter],
+      inject: [
+        ConfigService,
+        SmsMisrAdapter,
+        WhatsAppCloudAdapter,
+        MockSmsAdapter,
+      ],
     },
     OtpService,
     SessionService,

@@ -19,6 +19,7 @@ class AuthErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final errorFg = AuthDesignTokens.errorForegroundOf(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
@@ -29,7 +30,7 @@ class AuthErrorBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 19, color: AuthDesignTokens.errorDeepRed),
+          Icon(icon, size: 19, color: errorFg),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -37,10 +38,10 @@ class AuthErrorBanner extends StatelessWidget {
               children: [
                 Text(
                   message,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: AuthDesignTokens.errorDeepRed,
+                    color: errorFg,
                     height: 1.4,
                   ),
                 ),
@@ -50,10 +51,10 @@ class AuthErrorBanner extends StatelessWidget {
                     onTap: onActionPressed,
                     child: Text(
                       actionLabel!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: AuthDesignTokens.navyPrimary,
+                        color: AuthDesignTokens.headingOf(context),
                         decoration: TextDecoration.underline,
                       ),
                     ),

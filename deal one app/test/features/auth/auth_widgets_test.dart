@@ -9,6 +9,7 @@ import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/storage/preferences_service.dart';
 import 'package:market_space/core/storage/secure_storage_service.dart';
 import 'package:market_space/core/storage/storage_keys.dart';
+import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/theme/app_theme_data.dart';
 import 'package:market_space/features/accounts/presentation/screens/profile_screen.dart';
 import 'package:market_space/features/auth/domain/entities/auth_session.dart';
@@ -20,7 +21,11 @@ import 'package:market_space/features/auth/presentation/pages/sign_up/sign_up_pa
 import 'package:market_space/features/auth/presentation/pages/verification_success/verification_success_page.dart';
 import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
 import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_error_banner.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_legal_footer.dart';
 import 'package:market_space/features/auth/presentation/widgets/otp/otp_pin_boxes.dart';
+import 'package:market_space/shared/widgets/market_widgets/market_header_bar.dart';
+import 'package:market_space/shared/widgets/market_widgets/market_search_bar.dart';
 
 import 'auth_controllers_test.dart';
 
@@ -465,6 +470,65 @@ void main() {
         ThemeMode.light,
       );
       expect(Theme.of(profileContext).brightness, Brightness.light);
+    },
+  );
+
+  testWidgets(
+    'All shared and auth text colors adapt dynamically across Light and Dark themes',
+    (tester) async {
+      Future<void> pumpHarness(ThemeMode mode) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: const Locale('ar'),
+            themeMode: mode,
+            theme: AppThemeData.lightTheme,
+            darkTheme: AppThemeData.darkTheme,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  const MarketHeaderBar(selectedCity: 'القاهرة'),
+                  const MarketSearchBar(),
+                  AuthErrorBanner(
+                    message: 'خطأ في الإدخال',
+                    actionLabel: 'إعادة المحاولة',
+                    onActionPressed: () {},
+                  ),
+                  AuthLegalFooter(onTermsTap: () {}, onPrivacyTap: () {}),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      await pumpHarness(ThemeMode.light);
+      expect(
+        tester.widget<Text>(find.text('بازار جو')).style?.color,
+        AppColors.textPrimary,
+      );
+      expect(
+        tester.widget<Text>(find.text('خطأ في الإدخال')).style?.color,
+        AuthDesignTokens.errorDeepRed,
+      );
+      expect(
+        tester.widget<Text>(find.text('إعادة المحاولة')).style?.color,
+        AuthDesignTokens.lightTextPrimary,
+      );
+
+      await pumpHarness(ThemeMode.dark);
+      expect(
+        tester.widget<Text>(find.text('بازار جو')).style?.color,
+        AppColors.darkTextPrimary,
+      );
+      expect(
+        tester.widget<Text>(find.text('خطأ في الإدخال')).style?.color,
+        const Color(0xFFFCA5A5),
+      );
+      expect(
+        tester.widget<Text>(find.text('إعادة المحاولة')).style?.color,
+        AuthDesignTokens.darkTextPrimary,
+      );
     },
   );
 }

@@ -166,7 +166,7 @@ class _OnboardingSlideView extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: AuthDesignTokens.actionBlueTint,
+                    color: AuthDesignTokens.infoTintOf(context),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -175,15 +175,15 @@ class _OnboardingSlideView extends StatelessWidget {
                       Icon(
                         slide.accentIcon,
                         size: 16,
-                        color: AuthDesignTokens.actionBlue,
+                        color: AuthDesignTokens.linkOf(context),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         slide.badgeText,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
-                          color: AuthDesignTokens.actionBlue,
+                          color: AuthDesignTokens.linkOf(context),
                         ),
                       ),
                     ],
