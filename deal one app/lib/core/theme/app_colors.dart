@@ -127,6 +127,29 @@ class AppColors {
   static Color infoOf(BuildContext context) =>
       isDark(context) ? darkInfo : info;
 
+  static Color primaryTintOf(BuildContext context) =>
+      isDark(context) ? darkSurfaceSecondary : primaryTint;
+
+  static Color secondaryTintOf(BuildContext context) =>
+      isDark(context) ? darkSurfaceSecondary : secondaryTint;
+
+  static Color tertiaryTintOf(BuildContext context) =>
+      isDark(context) ? darkSurfaceSecondary : tertiaryTint;
+
+  static Color infoTintOf(BuildContext context) =>
+      isDark(context) ? darkInfoTint : infoTint;
+
+  static Color errorTintOf(BuildContext context) =>
+      isDark(context) ? darkErrorTint : errorTint;
+
+  static Color neutralOf(BuildContext context) =>
+      isDark(context) ? darkSurfaceSecondary : neutral;
+
+  static Color onNeutralOf(BuildContext context) => Colors.white;
+
+  static Color badgeBgOf(BuildContext context, Color tint) =>
+      isDark(context) ? darkSurfaceSecondary : tint;
+
   // ==========================================
   // --- Legacy Compatibility Tokens ---
   // ==========================================

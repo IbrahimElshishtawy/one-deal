@@ -76,14 +76,16 @@ class MarketSectorFilterBar extends StatelessWidget {
                   vertical: isCompact ? 6.0 : 7.5,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.white,
+                  color: isSelected
+                      ? AppColors.primaryOf(context)
+                      : AppColors.surfaceOf(context),
                   borderRadius: AppRadii.full,
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.primary
-                        : AppColors.lightBorder,
+                        ? AppColors.primaryOf(context)
+                        : AppColors.borderOf(context),
                   ),
-                  boxShadow: isSelected
+                  boxShadow: isSelected && !AppColors.isDark(context)
                       ? [
                           BoxShadow(
                             color: AppColors.primary.withValues(alpha: 0.25),
@@ -100,8 +102,8 @@ class MarketSectorFilterBar extends StatelessWidget {
                       chip.icon,
                       size: isCompact ? 15.0 : 17.0,
                       color: isSelected
-                          ? Colors.white
-                          : AppColors.lightTextPrimary,
+                          ? AppColors.onPrimaryOf(context)
+                          : AppColors.textPrimaryOf(context),
                     ),
                     const SizedBox(width: 5.0),
                     Text(
@@ -112,8 +114,8 @@ class MarketSectorFilterBar extends StatelessWidget {
                             ? FontWeight.w700
                             : FontWeight.w600,
                         color: isSelected
-                            ? Colors.white
-                            : AppColors.lightTextPrimary,
+                            ? AppColors.onPrimaryOf(context)
+                            : AppColors.textPrimaryOf(context),
                       ),
                     ),
                   ],

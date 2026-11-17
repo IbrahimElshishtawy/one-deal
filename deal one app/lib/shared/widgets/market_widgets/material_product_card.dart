@@ -26,16 +26,18 @@ class MaterialProductCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceOf(context),
         borderRadius: AppRadii.lg,
-        border: Border.all(color: AppColors.lightBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6.0,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderOf(context)),
+        boxShadow: AppColors.isDark(context)
+            ? const []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 6.0,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: InkWell(
         onTap: onTap,
@@ -96,7 +98,7 @@ class MaterialProductCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: isCompact ? 13.5 : 14.5,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
+                          color: AppColors.primaryOf(context),
                         ),
                       ),
                       const SizedBox(width: 4.0),
@@ -104,7 +106,7 @@ class MaterialProductCard extends StatelessWidget {
                         '/ ${item.unit}',
                         style: TextStyle(
                           fontSize: isCompact ? 9.5 : 10.5,
-                          color: AppColors.lightTextSecondary,
+                          color: AppColors.textSecondaryOf(context),
                         ),
                       ),
                     ],
@@ -120,7 +122,7 @@ class MaterialProductCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: isCompact ? 11.5 : 12.5,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.lightTextPrimary,
+                      color: AppColors.textPrimaryOf(context),
                     ),
                   ),
 
@@ -133,7 +135,7 @@ class MaterialProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: isCompact ? 9.5 : 10.5,
-                      color: AppColors.lightTextSecondary,
+                      color: AppColors.textSecondaryOf(context),
                     ),
                   ),
 
@@ -151,16 +153,17 @@ class MaterialProductCard extends StatelessWidget {
                             width: 28.0,
                             height: 28.0,
                             decoration: BoxDecoration(
-                              color: AppColors.primaryTint,
+                              color: AppColors.primaryTintOf(context),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.primary.withValues(alpha: 0.2),
+                                color: AppColors.primaryOf(context)
+                                    .withValues(alpha: 0.2),
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.phone_rounded,
                               size: 14.0,
-                              color: AppColors.primary,
+                              color: AppColors.primaryOf(context),
                             ),
                           ),
                         )
@@ -172,16 +175,17 @@ class MaterialProductCard extends StatelessWidget {
                             width: 28.0,
                             height: 28.0,
                             decoration: BoxDecoration(
-                              color: AppColors.primaryTint,
+                              color: AppColors.primaryTintOf(context),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.primary.withValues(alpha: 0.2),
+                                color: AppColors.primaryOf(context)
+                                    .withValues(alpha: 0.2),
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.chat_bubble_outline_rounded,
                               size: 14.0,
-                              color: AppColors.primary,
+                              color: AppColors.primaryOf(context),
                             ),
                           ),
                         ),
@@ -197,7 +201,7 @@ class MaterialProductCard extends StatelessWidget {
                                 ? Icons.local_shipping_outlined
                                 : Icons.verified_outlined,
                             size: 13.0,
-                            color: AppColors.secondaryDark,
+                            color: AppColors.textSecondaryOf(context),
                           ),
                           const SizedBox(width: 3.0),
                           ConstrainedBox(
@@ -211,7 +215,7 @@ class MaterialProductCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: isCompact ? 9.5 : 10.5,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.secondaryDark,
+                                color: AppColors.textSecondaryOf(context),
                               ),
                             ),
                           ),

@@ -24,6 +24,7 @@ class ServiceProviderCard extends StatelessWidget {
     final horizontalPadding = context.horizontalScreenPadding;
 
     final (icon, iconColor, bgColor) = _resolveCategoryVisuals(
+      context,
       item.categoryKey,
     );
 
@@ -34,16 +35,18 @@ class ServiceProviderCard extends StatelessWidget {
       ),
       padding: EdgeInsets.all(isCompact ? 10.0 : 12.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceOf(context),
         borderRadius: AppRadii.lg,
-        border: Border.all(color: AppColors.lightBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 6.0,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderOf(context)),
+        boxShadow: AppColors.isDark(context)
+            ? const []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 6.0,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: InkWell(
         onTap: onTap,
@@ -61,13 +64,13 @@ class ServiceProviderCard extends StatelessWidget {
                   vertical: isCompact ? 7.0 : 8.5,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.neutral,
+                  color: AppColors.primaryOf(context),
                   borderRadius: AppRadii.md,
                 ),
                 child: Text(
                   item.actionLabel,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.onPrimaryOf(context),
                     fontSize: isCompact ? 10.5 : 12.0,
                     fontWeight: FontWeight.w700,
                   ),
@@ -94,16 +97,16 @@ class ServiceProviderCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: isCompact ? 12.0 : 13.5,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.lightTextPrimary,
+                            color: AppColors.textPrimaryOf(context),
                           ),
                         ),
                       ),
                       if (item.isVerified) ...[
                         const SizedBox(width: 3.0),
-                        const Icon(
+                        Icon(
                           Icons.verified_rounded,
                           size: 14.0,
-                          color: AppColors.secondary,
+                          color: AppColors.primaryOf(context),
                         ),
                       ],
                     ],
@@ -118,7 +121,7 @@ class ServiceProviderCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: isCompact ? 10.0 : 11.0,
-                      color: AppColors.lightTextSecondary,
+                      color: AppColors.textSecondaryOf(context),
                     ),
                   ),
 
@@ -127,10 +130,10 @@ class ServiceProviderCard extends StatelessWidget {
                   // Rating + Perk text
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.star_rounded,
                         size: 14.0,
-                        color: AppColors.tertiary,
+                        color: AppColors.warningOf(context),
                       ),
                       const SizedBox(width: 2.0),
                       Text(
@@ -138,7 +141,7 @@ class ServiceProviderCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: isCompact ? 9.5 : 10.5,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.lightTextPrimary,
+                          color: AppColors.textPrimaryOf(context),
                         ),
                       ),
                       Flexible(
@@ -149,7 +152,7 @@ class ServiceProviderCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: isCompact ? 9.0 : 10.5,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.secondaryDark,
+                            color: AppColors.textSecondaryOf(context),
                           ),
                         ),
                       ),
@@ -181,31 +184,34 @@ class ServiceProviderCard extends StatelessWidget {
     );
   }
 
-  (IconData, Color, Color) _resolveCategoryVisuals(String categoryKey) {
+  (IconData, Color, Color) _resolveCategoryVisuals(
+    BuildContext context,
+    String categoryKey,
+  ) {
     switch (categoryKey) {
       case 'finishing':
         return (
           Icons.format_paint_rounded,
-          AppColors.primary,
-          AppColors.primaryTint,
+          AppColors.primaryOf(context),
+          AppColors.primaryTintOf(context),
         );
       case 'plumbing':
         return (
           Icons.plumbing_rounded,
-          AppColors.secondary,
-          AppColors.secondaryTint,
+          AppColors.primaryOf(context),
+          AppColors.secondaryTintOf(context),
         );
       case 'moving':
         return (
           Icons.local_shipping_rounded,
-          AppColors.info,
-          AppColors.infoTint,
+          AppColors.infoOf(context),
+          AppColors.infoTintOf(context),
         );
       default:
         return (
           Icons.handyman_rounded,
-          AppColors.tertiary,
-          AppColors.tertiaryTint,
+          AppColors.primaryOf(context),
+          AppColors.tertiaryTintOf(context),
         );
     }
   }

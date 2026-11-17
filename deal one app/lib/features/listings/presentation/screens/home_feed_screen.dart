@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/features/categories/domain/entities/category_entity.dart';
 import 'package:market_space/features/categories/presentation/providers/categories_providers.dart';
 import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
@@ -20,11 +21,11 @@ class HomeFeedScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.local_offer, color: Colors.blueAccent),
-            SizedBox(width: 8),
-            Text(
+            Icon(Icons.local_offer, color: AppColors.primaryOf(context)),
+            const SizedBox(width: 8),
+            const Text(
               'صفقة ون - Deal One',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
@@ -54,9 +55,12 @@ class HomeFeedScreen extends ConsumerWidget {
                   categories: categories,
                   selectedSlug: currentFilter.categorySlug,
                   onSelect: (slug) {
-                    ref.read(currentFeedFilterProvider.notifier).state =
-                        FilterListingsDto(
-                      categorySlug: slug == currentFilter.categorySlug ? null : slug,
+                    ref
+                        .read(currentFeedFilterProvider.notifier)
+                        .state = FilterListingsDto(
+                      categorySlug: slug == currentFilter.categorySlug
+                          ? null
+                          : slug,
                     );
                   },
                 ),
@@ -77,9 +81,16 @@ class HomeFeedScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey),
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
                           SizedBox(height: 12),
-                          Text('لا توجد إعلانات مطابقة حالياً', style: TextStyle(fontSize: 16)),
+                          Text(
+                            'لا توجد إعلانات مطابقة حالياً',
+                            style: TextStyle(fontSize: 16),
+                          ),
                         ],
                       ),
                     ),
@@ -89,19 +100,17 @@ class HomeFeedScreen extends ConsumerWidget {
                 return SliverPadding(
                   padding: const EdgeInsets.all(12),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.72,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final item = feed.items[index];
-                        return _ListingCard(item: item);
-                      },
-                      childCount: feed.items.length,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.72,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                        ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final item = feed.items[index];
+                      return _ListingCard(item: item);
+                    }, childCount: feed.items.length),
                   ),
                 );
               },
@@ -113,9 +122,16 @@ class HomeFeedScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 8),
-                      Text('تعذر تحميل الإعلانات: $err', textAlign: TextAlign.center),
+                      Text(
+                        'تعذر تحميل الإعلانات: $err',
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: 12),
                       ElevatedButton.icon(
                         icon: const Icon(Icons.refresh),
@@ -196,31 +212,43 @@ class _ListingCard extends ConsumerWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  item.primaryImageUrl != null && item.primaryImageUrl!.isNotEmpty
+                  item.primaryImageUrl != null &&
+                          item.primaryImageUrl!.isNotEmpty
                       ? Image.network(
                           item.primaryImageUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: Colors.grey.shade200,
-                            child: const Icon(Icons.image_not_supported, color: Colors.grey),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: AppColors.surfaceSecondaryOf(context),
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  color: AppColors.textMutedOf(context),
+                                ),
+                              ),
                         )
                       : Container(
-                          color: Colors.grey.shade200,
-                          child: const Icon(Icons.photo_outlined, size: 40, color: Colors.grey),
+                          color: AppColors.surfaceSecondaryOf(context),
+                          child: Icon(
+                            Icons.photo_outlined,
+                            size: 40,
+                            color: AppColors.textMutedOf(context),
+                          ),
                         ),
                   Positioned(
                     top: 6,
                     left: 6,
                     child: CircleAvatar(
                       radius: 16,
-                      backgroundColor: Colors.white70,
+                      backgroundColor: AppColors.surfaceOf(context)
+                          .withValues(alpha: 0.85),
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         iconSize: 18,
                         icon: Icon(
                           isFav ? Icons.favorite : Icons.favorite_border,
-                          color: isFav ? Colors.red : Colors.black87,
+                          color: isFav
+                              ? AppColors.errorOf(context)
+                              : AppColors.iconOf(context),
                         ),
                         onPressed: () {
                           favoritesNotifier.toggleFavorite(item.id);
@@ -240,10 +268,10 @@ class _ListingCard extends ConsumerWidget {
                 children: [
                   Text(
                     '${item.price.toStringAsFixed(0)} ${item.currency}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blueAccent,
+                      color: AppColors.primaryOf(context),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -251,19 +279,29 @@ class _ListingCard extends ConsumerWidget {
                     item.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 14,
+                        color: AppColors.textMutedOf(context),
+                      ),
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
                           item.localizedLocation('ar'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textMutedOf(context),
+                          ),
                         ),
                       ),
                     ],

@@ -21,32 +21,32 @@ class MarketCategoryGrid extends StatelessWidget {
         title: 'عقارات للبيع',
         subtitles: 'شقق • فلل • أراضي',
         icon: Icons.real_estate_agent_rounded,
-        iconColor: AppColors.secondary,
-        backgroundColor: AppColors.secondaryTint,
+        iconColor: AppColors.textPrimaryOf(context),
+        backgroundColor: AppColors.secondaryTintOf(context),
         sector: MarketSector.realEstate,
       ),
       _CategoryCardData(
         title: 'عقارات للإيجار',
         subtitles: 'شهري • سنوي • مفروش',
         icon: Icons.vpn_key_rounded,
-        iconColor: AppColors.error,
-        backgroundColor: AppColors.errorTint,
+        iconColor: AppColors.errorOf(context),
+        backgroundColor: AppColors.errorTintOf(context),
         sector: MarketSector.realEstate,
       ),
       _CategoryCardData(
         title: 'مُوَن وبناء',
         subtitles: 'أسمنت • حديد • بلاط',
         icon: Icons.view_in_ar_rounded,
-        iconColor: AppColors.tertiary,
-        backgroundColor: AppColors.tertiaryTint,
+        iconColor: AppColors.textPrimaryOf(context),
+        backgroundColor: AppColors.tertiaryTintOf(context),
         sector: MarketSector.buildingMaterials,
       ),
       _CategoryCardData(
         title: 'خدمات وصيانة',
         subtitles: 'تشطيب • سباكة • نقل',
         icon: Icons.engineering_rounded,
-        iconColor: AppColors.info,
-        backgroundColor: AppColors.infoTint,
+        iconColor: AppColors.infoOf(context),
+        backgroundColor: AppColors.infoTintOf(context),
         sector: MarketSector.services,
       ),
     ];
@@ -83,16 +83,18 @@ class MarketCategoryGrid extends StatelessWidget {
           vertical: isCompact ? 10.0 : 12.0,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surfaceOf(context),
           borderRadius: AppRadii.lg,
-          border: Border.all(color: AppColors.lightBorder),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4.0,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(color: AppColors.borderOf(context)),
+          boxShadow: AppColors.isDark(context)
+              ? const []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 4.0,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -121,7 +123,7 @@ class MarketCategoryGrid extends StatelessWidget {
                 style: TextStyle(
                   fontSize: isCompact ? 11.0 : 12.0,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.lightTextPrimary,
+                  color: AppColors.textPrimaryOf(context),
                 ),
               ),
             ),

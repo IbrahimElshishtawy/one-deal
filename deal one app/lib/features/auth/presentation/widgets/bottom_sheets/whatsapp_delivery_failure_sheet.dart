@@ -68,7 +68,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: const Color(0xFFCBD5E1),
+              color: AuthDesignTokens.borderOf(context),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -86,10 +86,10 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
                     color: AuthDesignTokens.errorTintOf(context),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.speaker_notes_off_outlined,
                     size: 30,
-                    color: AuthDesignTokens.errorDeepRed,
+                    color: AuthDesignTokens.errorForegroundOf(context),
                   ),
                 ),
                 Positioned(

@@ -161,13 +161,15 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
                                     widget.code.length == widget.length &&
                                     index == widget.length - 1));
 
+                        final focusColor = AuthDesignTokens.focusBorderOf(
+                          context,
+                        );
                         final borderColor = widget.hasError
                             ? AuthDesignTokens.errorRed
                             : (isActiveCell
-                                  ? AuthDesignTokens.focusOrange
+                                  ? focusColor
                                   : (digit.isNotEmpty
-                                        ? AuthDesignTokens.navyPrimary
-                                              .withValues(alpha: 0.45)
+                                        ? focusColor.withValues(alpha: 0.45)
                                         : AuthDesignTokens.borderOf(context)));
 
                         final fillColor = AuthDesignTokens.surfaceOf(context);
@@ -210,7 +212,7 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
                                           width: 2,
                                           height: 24,
                                           decoration: BoxDecoration(
-                                            color: AuthDesignTokens.focusOrange,
+                                            color: focusColor,
                                             borderRadius: BorderRadius.circular(
                                               2,
                                             ),

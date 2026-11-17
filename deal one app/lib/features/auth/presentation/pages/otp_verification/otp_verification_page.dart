@@ -474,6 +474,7 @@ class _ExpiredOtpAlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final errorFg = AuthDesignTokens.errorForegroundOf(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -493,18 +494,14 @@ class _ExpiredOtpAlertCard extends StatelessWidget {
           Container(
             width: 44,
             height: 44,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: AuthDesignTokens.surfaceOf(context),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.timer_off_outlined,
-              size: 24,
-              color: AuthDesignTokens.errorDeepRed,
-            ),
+            child: Icon(Icons.timer_off_outlined, size: 24, color: errorFg),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -513,18 +510,14 @@ class _ExpiredOtpAlertCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w800,
-                    color: AuthDesignTokens.errorDeepRed,
+                    color: errorFg,
                     height: 1.4,
                   ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
                   'انقضت مهلة الأمان المحددة لحماية حسابك ومعاملاتك العقارية. يمكنك إنشاء رمز جديد فوري ومتابعة توثيق العملية.',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: AuthDesignTokens.errorDeepRed,
-                    height: 1.5,
-                  ),
+                  style: TextStyle(fontSize: 12.5, color: errorFg, height: 1.5),
                 ),
               ],
             ),

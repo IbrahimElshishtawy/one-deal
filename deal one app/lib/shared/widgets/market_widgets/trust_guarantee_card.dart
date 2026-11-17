@@ -21,16 +21,18 @@ class TrustGuaranteeCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(isCompact ? 12.0 : 14.0),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surfaceOf(context),
           borderRadius: AppRadii.lg,
-          border: Border.all(color: AppColors.secondary.withValues(alpha: 0.2)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.secondary.withValues(alpha: 0.04),
-              blurRadius: 8.0,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(color: AppColors.borderOf(context)),
+          boxShadow: AppColors.isDark(context)
+              ? const []
+              : [
+                  BoxShadow(
+                    color: AppColors.secondary.withValues(alpha: 0.04),
+                    blurRadius: 8.0,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           children: [
@@ -39,13 +41,13 @@ class TrustGuaranteeCard extends StatelessWidget {
               width: isCompact ? 44.0 : 48.0,
               height: isCompact ? 44.0 : 48.0,
               decoration: BoxDecoration(
-                color: AppColors.secondaryTint,
+                color: AppColors.secondaryTintOf(context),
                 borderRadius: AppRadii.md,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.verified_user_rounded,
                 size: 26.0,
-                color: AppColors.secondary,
+                color: AppColors.primaryOf(context),
               ),
             ),
 
@@ -62,7 +64,7 @@ class TrustGuaranteeCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: isCompact ? 12.5 : 13.5,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.lightTextPrimary,
+                      color: AppColors.textPrimaryOf(context),
                     ),
                   ),
                   const SizedBox(height: 3.0),
@@ -71,7 +73,7 @@ class TrustGuaranteeCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: isCompact ? 10.0 : 11.0,
                       height: 1.35,
-                      color: AppColors.lightTextSecondary,
+                      color: AppColors.textSecondaryOf(context),
                     ),
                   ),
                 ],

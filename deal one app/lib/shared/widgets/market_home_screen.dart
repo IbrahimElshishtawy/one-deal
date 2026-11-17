@@ -112,7 +112,7 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
               }
 
               return RefreshIndicator(
-                color: AppColors.primary,
+                color: AppColors.primaryOf(context),
                 onRefresh: _loadData,
                 child: CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(
@@ -176,10 +176,10 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
                       SliverToBoxAdapter(
                         child: MarketSectionHeader(
                           title: 'عقارات مميزة (بيع وإيجار)',
-                          markerColor: AppColors.secondary,
+                          markerColor: AppColors.textPrimaryOf(context),
                           badgeText: 'صكوك موثقة',
-                          badgeColor: AppColors.secondaryTint,
-                          badgeTextColor: AppColors.secondaryDark,
+                          badgeColor: AppColors.secondaryTintOf(context),
+                          badgeTextColor: AppColors.textPrimaryOf(context),
                           onActionTap: () {},
                         ),
                       ),
@@ -207,10 +207,10 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
                       SliverToBoxAdapter(
                         child: MarketSectionHeader(
                           title: 'سوق المُوَن ومواد البناء',
-                          markerColor: AppColors.tertiary,
+                          markerColor: AppColors.textPrimaryOf(context),
                           badgeText: 'أسعار الجملة',
-                          badgeColor: AppColors.tertiaryTint,
-                          badgeTextColor: AppColors.tertiaryDark,
+                          badgeColor: AppColors.tertiaryTintOf(context),
+                          badgeTextColor: AppColors.textPrimaryOf(context),
                           actionLabel: 'كل الموردين',
                           onActionTap: () {},
                         ),
@@ -251,10 +251,10 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
                       SliverToBoxAdapter(
                         child: MarketSectionHeader(
                           title: 'دليل الخدمات والتشطيب والمقاولات',
-                          markerColor: AppColors.info,
+                          markerColor: AppColors.infoOf(context),
                           badgeText: 'فنيون معتمدون',
-                          badgeColor: AppColors.infoTint,
-                          badgeTextColor: AppColors.info,
+                          badgeColor: AppColors.infoTintOf(context),
+                          badgeTextColor: AppColors.infoOf(context),
                           actionLabel: 'كل الخدمات',
                           onActionTap: () {},
                         ),
@@ -274,9 +274,9 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
                     if (activeSector == MarketSector.all ||
                         activeSector == MarketSector.investments) ...[
                       SliverToBoxAdapter(
-                        child: const MarketSectionHeader(
+                        child: MarketSectionHeader(
                           title: 'المشروعات والفرص الاستثمارية',
-                          markerColor: AppColors.primary,
+                          markerColor: AppColors.primaryOf(context),
                           badgeText: 'عوائد مضمونة',
                           actionLabel: 'كل المشروعات',
                         ),
@@ -328,16 +328,18 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
         vertical: AppSpacing.xs + 2,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceOf(context),
         borderRadius: AppRadii.lg,
-        border: Border.all(color: AppColors.lightBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 6.0,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderOf(context)),
+        boxShadow: AppColors.isDark(context)
+            ? const []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 6.0,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,7 +364,7 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
                   style: TextStyle(
                     fontSize: isCompact ? 13.0 : 14.0,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.lightTextPrimary,
+                    color: AppColors.textPrimaryOf(context),
                   ),
                 ),
                 const SizedBox(height: 4.0),
@@ -370,7 +372,7 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
                   '${item.location} • الحد الأدنى: ${item.minInvestment}',
                   style: TextStyle(
                     fontSize: isCompact ? 10.5 : 11.5,
-                    color: AppColors.lightTextSecondary,
+                    color: AppColors.textSecondaryOf(context),
                   ),
                 ),
                 const SizedBox(height: 8.0),
@@ -382,9 +384,9 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
                         child: LinearProgressIndicator(
                           value: item.progressPercent,
                           minHeight: 6.0,
-                          backgroundColor: AppColors.lightBorder,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.primary,
+                          backgroundColor: AppColors.borderOf(context),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primaryOf(context),
                           ),
                         ),
                       ),
@@ -395,7 +397,7 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
                       style: TextStyle(
                         fontSize: isCompact ? 10.0 : 11.0,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                        color: AppColors.primaryOf(context),
                       ),
                     ),
                   ],
@@ -466,7 +468,7 @@ class _MarketHomeScreenState extends State<MarketHomeScreen> {
                   (city) => ListTile(
                     title: Text(city),
                     trailing: _selectedCity == city
-                        ? const Icon(Icons.check, color: AppColors.primary)
+                        ? Icon(Icons.check, color: AppColors.primaryOf(ctx))
                         : null,
                     onTap: () {
                       setState(() {

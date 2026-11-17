@@ -32,19 +32,19 @@ class MarketSearchBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Filter button (Dark icon button)
+          // Filter button
           Container(
             width: isCompact ? 42.0 : 46.0,
             height: isCompact ? 42.0 : 46.0,
             decoration: BoxDecoration(
-              color: AppColors.neutral,
+              color: AppColors.primaryOf(context),
               borderRadius: AppRadii.md,
             ),
             child: IconButton(
               onPressed: onFilterTap,
               icon: Icon(
                 Icons.tune_rounded,
-                color: Colors.white,
+                color: AppColors.onPrimaryOf(context),
                 size: isCompact ? 20.0 : 22.0,
               ),
               tooltip: 'الفلاتر المتقدمة',
@@ -58,9 +58,9 @@ class MarketSearchBar extends StatelessWidget {
             child: Container(
               height: isCompact ? 42.0 : 46.0,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surfaceOf(context),
                 borderRadius: AppRadii.full,
-                border: Border.all(color: AppColors.lightBorder),
+                border: Border.all(color: AppColors.borderOf(context)),
               ),
               child: Row(
                 children: [
@@ -74,7 +74,7 @@ class MarketSearchBar extends StatelessWidget {
                       child: Icon(
                         Icons.mic_none_rounded,
                         size: isCompact ? 19.0 : 21.0,
-                        color: AppColors.lightTextSecondary,
+                        color: AppColors.textSecondaryOf(context),
                       ),
                     ),
                   ),
@@ -87,14 +87,15 @@ class MarketSearchBar extends StatelessWidget {
                       textDirection: TextDirection.rtl,
                       style: TextStyle(
                         fontSize: isCompact ? 12.0 : 13.5,
-                        color: AppColors.lightTextPrimary,
+                        color: AppColors.textPrimaryOf(context),
                       ),
                       decoration: InputDecoration(
                         isDense: true,
+                        filled: false,
                         hintText: hintText,
                         hintStyle: TextStyle(
                           fontSize: isCompact ? 11.5 : 12.5,
-                          color: AppColors.lightTextMuted,
+                          color: AppColors.textMutedOf(context),
                         ),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
@@ -107,7 +108,7 @@ class MarketSearchBar extends StatelessWidget {
                   Icon(
                     Icons.search_rounded,
                     size: isCompact ? 20.0 : 22.0,
-                    color: AppColors.lightTextSecondary,
+                    color: AppColors.textSecondaryOf(context),
                   ),
                   const SizedBox(width: AppSpacing.md),
                 ],

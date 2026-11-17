@@ -52,15 +52,15 @@ class MarketHeaderBar extends StatelessWidget {
         Container(
           width: isCompact ? 34.0 : 38.0,
           height: isCompact ? 34.0 : 38.0,
-          decoration: const BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.all(Radius.circular(10.0)),
+          decoration: BoxDecoration(
+            color: AppColors.primaryOf(context),
+            borderRadius: const BorderRadius.all(Radius.circular(10.0)),
           ),
-          child: const Center(
+          child: Center(
             child: Text(
               'ب',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.onPrimaryOf(context),
                 fontSize: 22.0,
                 fontWeight: FontWeight.w900,
               ),
@@ -78,7 +78,7 @@ class MarketHeaderBar extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: AppColors.lightTextPrimary,
+                  color: AppColors.textPrimaryOf(context),
                   fontSize: isCompact ? 16.0 : 18.5,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.3,
@@ -91,7 +91,7 @@ class MarketHeaderBar extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryOf(context),
                   fontSize: isCompact ? 11.0 : 12.0,
                   fontWeight: FontWeight.w500,
                   height: 1.2,
@@ -114,17 +114,17 @@ class MarketHeaderBar extends StatelessWidget {
           vertical: 5.0,
         ),
         decoration: BoxDecoration(
-          color: AppColors.surfaceSecondary,
+          color: AppColors.surfaceSecondaryOf(context),
           borderRadius: AppRadii.full,
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.borderOf(context)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.location_on_outlined,
               size: 15.0,
-              color: AppColors.primary,
+              color: AppColors.primaryOf(context),
             ),
             const SizedBox(width: 4.0),
             ConstrainedBox(
@@ -133,17 +133,17 @@ class MarketHeaderBar extends StatelessWidget {
                 selectedCity,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: AppColors.textPrimaryOf(context),
                   fontSize: isCompact ? 11.5 : 12.5,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             const SizedBox(width: 2.0),
-            const Icon(
+            Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 16.0,
-              color: AppColors.iconSecondary,
+              color: AppColors.iconSecondaryOf(context),
             ),
           ],
         ),
@@ -157,9 +157,9 @@ class MarketHeaderBar extends StatelessWidget {
       children: [
         IconButton(
           onPressed: onNotificationsTap,
-          icon: const Icon(
+          icon: Icon(
             Icons.notifications_none_rounded,
-            color: AppColors.iconPrimary,
+            color: AppColors.iconOf(context),
             size: 24.0,
           ),
           padding: EdgeInsets.zero,
@@ -173,9 +173,12 @@ class MarketHeaderBar extends StatelessWidget {
             width: 8.5,
             height: 8.5,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.primaryOf(context),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 1.5),
+              border: Border.all(
+                color: AppColors.backgroundOf(context),
+                width: 1.5,
+              ),
             ),
           ),
         ),

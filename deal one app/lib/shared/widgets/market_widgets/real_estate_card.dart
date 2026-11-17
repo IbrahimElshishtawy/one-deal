@@ -29,16 +29,18 @@ class RealEstateCard extends StatelessWidget {
       width: cardWidth,
       margin: const EdgeInsets.only(left: AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceOf(context),
         borderRadius: AppRadii.lg,
-        border: Border.all(color: AppColors.lightBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8.0,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderOf(context)),
+        boxShadow: AppColors.isDark(context)
+            ? const []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8.0,
+                  offset: const Offset(0, 3),
+                ),
+              ],
       ),
       child: InkWell(
         onTap: onTap,
@@ -66,8 +68,8 @@ class RealEstateCard extends StatelessWidget {
                           fontSize: isCompact ? 14.0 : 16.0,
                           fontWeight: FontWeight.w800,
                           color: isForSale
-                              ? AppColors.primary
-                              : AppColors.primaryDark,
+                              ? AppColors.primaryOf(context)
+                              : AppColors.textPrimaryOf(context),
                         ),
                       ),
                       const SizedBox(width: 4.0),
@@ -79,7 +81,7 @@ class RealEstateCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: isCompact ? 10.0 : 11.0,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.lightTextSecondary,
+                            color: AppColors.textSecondaryOf(context),
                           ),
                         ),
                       ),
@@ -96,24 +98,24 @@ class RealEstateCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: isCompact ? 12.5 : 13.5,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.lightTextPrimary,
+                      color: AppColors.textPrimaryOf(context),
                     ),
                   ),
 
                   const SizedBox(height: 8.0),
 
                   // Specs Row (Rooms, Baths, Area)
-                  _buildSpecsRow(isCompact),
+                  _buildSpecsRow(context, isCompact),
 
                   const SizedBox(height: 8.0),
 
                   // Location and Time
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on_outlined,
                         size: 13.0,
-                        color: AppColors.lightTextMuted,
+                        color: AppColors.textMutedOf(context),
                       ),
                       const SizedBox(width: 3.0),
                       Expanded(
@@ -123,7 +125,7 @@ class RealEstateCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: isCompact ? 10.5 : 11.5,
-                            color: AppColors.lightTextSecondary,
+                            color: AppColors.textSecondaryOf(context),
                           ),
                         ),
                       ),
@@ -133,7 +135,7 @@ class RealEstateCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: isCompact ? 10.0 : 11.0,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.secondaryDark,
+                          color: AppColors.textSecondaryOf(context),
                         ),
                       ),
                     ],
@@ -276,11 +278,11 @@ class RealEstateCard extends StatelessWidget {
     );
   }
 
-  Widget _buildSpecsRow(bool isCompact) {
+  Widget _buildSpecsRow(BuildContext context, bool isCompact) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5.0),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.surfaceSecondaryOf(context),
         borderRadius: AppRadii.sm,
       ),
       child: Row(
@@ -288,23 +290,34 @@ class RealEstateCard extends StatelessWidget {
         children: [
           Flexible(
             child: _buildSpecItem(
+              context,
               Icons.bed_rounded,
               '${item.beds} غرف',
               isCompact,
             ),
           ),
-          Container(height: 12.0, width: 1.0, color: AppColors.lightBorder),
+          Container(
+            height: 12.0,
+            width: 1.0,
+            color: AppColors.borderOf(context),
+          ),
           Flexible(
             child: _buildSpecItem(
+              context,
               Icons.bathtub_outlined,
               '${item.baths} حمام',
               isCompact,
             ),
           ),
           if (item.areaM2 != null) ...[
-            Container(height: 12.0, width: 1.0, color: AppColors.lightBorder),
+            Container(
+              height: 12.0,
+              width: 1.0,
+              color: AppColors.borderOf(context),
+            ),
             Flexible(
               child: _buildSpecItem(
+                context,
                 Icons.square_foot_rounded,
                 '${item.areaM2!.toInt()} م²',
                 isCompact,
@@ -316,7 +329,12 @@ class RealEstateCard extends StatelessWidget {
     );
   }
 
-  Widget _buildSpecItem(IconData icon, String label, bool isCompact) {
+  Widget _buildSpecItem(
+    BuildContext context,
+    IconData icon,
+    String label,
+    bool isCompact,
+  ) {
     return FittedBox(
       fit: BoxFit.scaleDown,
       child: Row(
@@ -325,7 +343,7 @@ class RealEstateCard extends StatelessWidget {
           Icon(
             icon,
             size: isCompact ? 13.0 : 15.0,
-            color: AppColors.lightTextSecondary,
+            color: AppColors.textSecondaryOf(context),
           ),
           const SizedBox(width: 4.0),
           Text(
@@ -333,7 +351,7 @@ class RealEstateCard extends StatelessWidget {
             style: TextStyle(
               fontSize: isCompact ? 10.0 : 11.5,
               fontWeight: FontWeight.w600,
-              color: AppColors.lightTextPrimary,
+              color: AppColors.textPrimaryOf(context),
             ),
           ),
         ],

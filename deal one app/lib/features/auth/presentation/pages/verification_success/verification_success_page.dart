@@ -105,8 +105,8 @@ class VerificationSuccessPage extends ConsumerWidget {
                           child: Container(
                             width: 7,
                             height: 7,
-                            decoration: const BoxDecoration(
-                              color: AuthDesignTokens.navyPrimary,
+                            decoration: BoxDecoration(
+                              color: AuthDesignTokens.primaryActionOf(context),
                               shape: BoxShape.circle,
                             ),
                           ),

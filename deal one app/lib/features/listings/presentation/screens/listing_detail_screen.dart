@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
 import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
 import 'package:market_space/features/listings/presentation/providers/listings_providers.dart';
 import 'package:market_space/features/moderation/data/dto/report_dto.dart';
 import 'package:market_space/features/moderation/data/repositories/reports_repository_impl.dart';
-import 'package:market_space/core/providers/core_providers.dart';
 
 class ListingDetailScreen extends ConsumerWidget {
   final String listingId;
@@ -32,7 +33,8 @@ class ListingDetailScreen extends ConsumerWidget {
               Text('تعذر تحميل تفاصيل الإعلان: $err'),
               const SizedBox(height: 12),
               ElevatedButton(
-                onPressed: () => ref.invalidate(listingDetailsFamily(listingId)),
+                onPressed: () =>
+                    ref.invalidate(listingDetailsFamily(listingId)),
                 child: const Text('إعادة المحاولة'),
               ),
             ],
@@ -88,8 +90,12 @@ class _DetailView extends ConsumerWidget {
                       media.publicUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
-                        color: Colors.grey.shade200,
-                        child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                        color: AppColors.surfaceSecondaryOf(context),
+                        child: Icon(
+                          Icons.broken_image,
+                          size: 50,
+                          color: AppColors.textMutedOf(context),
+                        ),
                       ),
                     );
                   },
@@ -98,8 +104,14 @@ class _DetailView extends ConsumerWidget {
             else
               Container(
                 height: 200,
-                color: Colors.grey.shade200,
-                child: const Center(child: Icon(Icons.photo, size: 60, color: Colors.grey)),
+                color: AppColors.surfaceSecondaryOf(context),
+                child: Center(
+                  child: Icon(
+                    Icons.photo,
+                    size: 60,
+                    color: AppColors.textMutedOf(context),
+                  ),
+                ),
               ),
 
             // Main Info
@@ -113,33 +125,52 @@ class _DetailView extends ConsumerWidget {
                     children: [
                       Text(
                         '${item.price.toStringAsFixed(0)} ${item.currency}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent,
+                          color: AppColors.primaryOf(context),
                         ),
                       ),
                       Chip(
-                        label: Text(item.condition == 'NEW' ? 'جديد' : 'مستعمل'),
-                        backgroundColor: Colors.blue.shade50,
+                        label: Text(
+                          item.condition == 'NEW' ? 'جديد' : 'مستعمل',
+                        ),
+                        backgroundColor: AppColors.surfaceSecondaryOf(context),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
                     item.title,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                      Icon(
+                        Icons.location_on,
+                        size: 16,
+                        color: AppColors.textMutedOf(context),
+                      ),
                       const SizedBox(width: 4),
-                      Text(item.localizedLocation('ar'), style: const TextStyle(color: Colors.grey)),
+                      Text(
+                        item.localizedLocation('ar'),
+                        style: TextStyle(color: AppColors.textMutedOf(context)),
+                      ),
                       const Spacer(),
-                      const Icon(Icons.visibility_outlined, size: 16, color: Colors.grey),
+                      Icon(
+                        Icons.visibility_outlined,
+                        size: 16,
+                        color: AppColors.textMutedOf(context),
+                      ),
                       const SizedBox(width: 4),
-                      Text('${item.viewsCount} مشاهدة', style: const TextStyle(color: Colors.grey)),
+                      Text(
+                        '${item.viewsCount} مشاهدة',
+                        style: TextStyle(color: AppColors.textMutedOf(context)),
+                      ),
                     ],
                   ),
                   const Divider(height: 32),
@@ -160,7 +191,10 @@ class _DetailView extends ConsumerWidget {
                   if (item.attributes.isNotEmpty) ...[
                     const Text(
                       'المواصفات والخصائص',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -169,7 +203,9 @@ class _DetailView extends ConsumerWidget {
                       children: item.attributes.entries.map((entry) {
                         return Chip(
                           label: Text('${entry.key}: ${entry.value}'),
-                          backgroundColor: Colors.grey.shade100,
+                          backgroundColor: AppColors.surfaceSecondaryOf(
+                            context,
+                          ),
                         );
                       }).toList(),
                     ),
@@ -185,11 +221,19 @@ class _DetailView extends ConsumerWidget {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: CircleAvatar(
-                      backgroundColor: Colors.blue.shade100,
-                      child: Text(item.sellerName.isNotEmpty ? item.sellerName[0] : 'S'),
+                      backgroundColor: AppColors.surfaceSecondaryOf(context),
+                      foregroundColor: AppColors.textPrimaryOf(context),
+                      child: Text(
+                        item.sellerName.isNotEmpty ? item.sellerName[0] : 'S',
+                      ),
                     ),
-                    title: Text(item.sellerName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(item.isVerified ? 'معلن موثق ✓' : 'حساب أفراد'),
+                    title: Text(
+                      item.sellerName,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      item.isVerified ? 'معلن موثق ✓' : 'حساب أفراد',
+                    ),
                   ),
                 ],
               ),
@@ -201,10 +245,17 @@ class _DetailView extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -3)),
-            ],
+            color: AppColors.surfaceOf(context),
+            border: Border(top: BorderSide(color: AppColors.borderOf(context))),
+            boxShadow: AppColors.isDark(context)
+                ? const []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -3),
+                    ),
+                  ],
           ),
           child: revealState.when(
             data: (contactResult) {
@@ -215,19 +266,28 @@ class _DetailView extends ConsumerWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
+                          backgroundColor: AppColors.successOf(context),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         icon: const Icon(Icons.phone),
-                        label: Text(contactResult.phone, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        label: Text(
+                          contactResult.phone,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         onPressed: () {},
                       ),
                     ),
                     if (contactResult.whatsappUrl != null) ...[
                       const SizedBox(width: 8),
                       IconButton(
-                        style: IconButton.styleFrom(backgroundColor: const Color(0xFF25D366), foregroundColor: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFF25D366),
+                          foregroundColor: Colors.white,
+                        ),
                         icon: const Icon(Icons.chat),
                         onPressed: () {},
                       ),
@@ -239,14 +299,17 @@ class _DetailView extends ConsumerWidget {
               // Contact is protected / not revealed yet
               return ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 icon: const Icon(Icons.lock_open),
-                label: const Text('إظهار رقم الهاتف والتواصل', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                label: const Text(
+                  'إظهار رقم الهاتف والتواصل',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
                 onPressed: () {
-                  ref.read(contactRevealProvider(item.id).notifier).reveal(item.id);
+                  ref
+                      .read(contactRevealProvider(item.id).notifier)
+                      .reveal(item.id);
                 },
               );
             },
@@ -263,7 +326,9 @@ class _DetailView extends ConsumerWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () => ref.read(contactRevealProvider(item.id).notifier).reveal(item.id),
+                  onPressed: () => ref
+                      .read(contactRevealProvider(item.id).notifier)
+                      .reveal(item.id),
                   child: const Text('إعادة المحاولة'),
                 ),
               ],
@@ -274,7 +339,11 @@ class _DetailView extends ConsumerWidget {
     );
   }
 
-  void _showReportDialog(BuildContext context, WidgetRef ref, String listingId) {
+  void _showReportDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String listingId,
+  ) {
     String selectedReason = 'scam';
     final notesController = TextEditingController();
 
@@ -292,12 +361,30 @@ class _DetailView extends ConsumerWidget {
                     value: selectedReason,
                     isExpanded: true,
                     items: const [
-                      DropdownMenuItem(value: 'scam', child: Text('احتيال أو إعلان مضلل')),
-                      DropdownMenuItem(value: 'inappropriate', child: Text('محتوى غير لائق')),
-                      DropdownMenuItem(value: 'false_info', child: Text('معلومات غير صحيحة')),
-                      DropdownMenuItem(value: 'duplicate', child: Text('إعلان مكرر')),
-                      DropdownMenuItem(value: 'prohibited', child: Text('سلعة محظورة')),
-                      DropdownMenuItem(value: 'other', child: Text('أسباب أخرى')),
+                      DropdownMenuItem(
+                        value: 'scam',
+                        child: Text('احتيال أو إعلان مضلل'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'inappropriate',
+                        child: Text('محتوى غير لائق'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'false_info',
+                        child: Text('معلومات غير صحيحة'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'duplicate',
+                        child: Text('إعلان مكرر'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'prohibited',
+                        child: Text('سلعة محظورة'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'other',
+                        child: Text('أسباب أخرى'),
+                      ),
                     ],
                     onChanged: (val) {
                       if (val != null) setState(() => selectedReason = val);
@@ -323,15 +410,23 @@ class _DetailView extends ConsumerWidget {
                   onPressed: () async {
                     final apiClient = ref.read(apiClientProvider);
                     final repo = ReportsRepositoryImpl(apiClient: apiClient);
-                    await repo.fileReport(CreateReportDto(
-                      listingId: listingId,
-                      reason: selectedReason,
-                      notes: notesController.text.trim().isNotEmpty ? notesController.text.trim() : null,
-                    ));
+                    await repo.fileReport(
+                      CreateReportDto(
+                        listingId: listingId,
+                        reason: selectedReason,
+                        notes: notesController.text.trim().isNotEmpty
+                            ? notesController.text.trim()
+                            : null,
+                      ),
+                    );
                     if (dialogContext.mounted) {
                       Navigator.pop(dialogContext);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('تم استلام البلاغ وسيقوم فريق المراجعة بفحصه')),
+                        const SnackBar(
+                          content: Text(
+                            'تم استلام البلاغ وسيقوم فريق المراجعة بفحصه',
+                          ),
+                        ),
                       );
                     }
                   },

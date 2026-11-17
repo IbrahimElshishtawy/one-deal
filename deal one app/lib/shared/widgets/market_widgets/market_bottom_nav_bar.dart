@@ -22,15 +22,17 @@ class MarketBottomNavBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 10.0,
-            offset: const Offset(0, -3),
-          ),
-        ],
-        border: const Border(top: BorderSide(color: AppColors.lightBorder)),
+        color: AppColors.surfaceOf(context),
+        boxShadow: AppColors.isDark(context)
+            ? const []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 10.0,
+                  offset: const Offset(0, -3),
+                ),
+              ],
+        border: Border(top: BorderSide(color: AppColors.borderOf(context))),
       ),
       child: SafeArea(
         top: false,
@@ -41,6 +43,7 @@ class MarketBottomNavBar extends StatelessWidget {
               // 1. الرئيسية (Home)
               Expanded(
                 child: _buildNavItem(
+                  context: context,
                   index: 0,
                   icon: Icons.home_rounded,
                   label: 'الرئيسية',
@@ -51,6 +54,7 @@ class MarketBottomNavBar extends StatelessWidget {
               // 2. جولات فيديو (Video Tours)
               Expanded(
                 child: _buildNavItem(
+                  context: context,
                   index: 1,
                   icon: Icons.play_circle_outline_rounded,
                   label: 'جولات فيديو',
@@ -60,11 +64,12 @@ class MarketBottomNavBar extends StatelessWidget {
               ),
 
               // 3. Center Action (+ أضف إعلانك)
-              Expanded(child: _buildCenterAddButton(isCompact)),
+              Expanded(child: _buildCenterAddButton(context, isCompact)),
 
               // 4. الرسائل (Messages with badge)
               Expanded(
                 child: _buildNavItem(
+                  context: context,
                   index: 2,
                   icon: Icons.chat_outlined,
                   label: 'الرسائل',
@@ -76,6 +81,7 @@ class MarketBottomNavBar extends StatelessWidget {
               // 5. حسابي (Profile)
               Expanded(
                 child: _buildNavItem(
+                  context: context,
                   index: 3,
                   icon: Icons.person_outline_rounded,
                   label: 'حسابي',
@@ -90,6 +96,7 @@ class MarketBottomNavBar extends StatelessWidget {
   }
 
   Widget _buildNavItem({
+    required BuildContext context,
     required int index,
     required IconData icon,
     required String label,
@@ -98,7 +105,9 @@ class MarketBottomNavBar extends StatelessWidget {
     int? badgeCount,
   }) {
     final isSelected = currentIndex == index;
-    final color = isSelected ? AppColors.primary : AppColors.iconSecondary;
+    final color = isSelected
+        ? AppColors.primaryOf(context)
+        : AppColors.iconSecondaryOf(context);
 
     return InkWell(
       onTap: () => onIndexChanged?.call(index),
@@ -120,8 +129,8 @@ class MarketBottomNavBar extends StatelessWidget {
                     child: Container(
                       width: 6.5,
                       height: 6.5,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryOf(context),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -136,15 +145,15 @@ class MarketBottomNavBar extends StatelessWidget {
                         minWidth: 15.0,
                         minHeight: 15.0,
                       ),
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryOf(context),
                         shape: BoxShape.circle,
                       ),
                       child: Text(
                         '$badgeCount',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppColors.onPrimaryOf(context),
                           fontSize: 10.0,
                           fontWeight: FontWeight.bold,
                           height: 1.0,
@@ -172,7 +181,7 @@ class MarketBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildCenterAddButton(bool isCompact) {
+  Widget _buildCenterAddButton(BuildContext context, bool isCompact) {
     return InkWell(
       onTap: onAddListingTap,
       borderRadius: AppRadii.full,
@@ -184,19 +193,21 @@ class MarketBottomNavBar extends StatelessWidget {
             width: isCompact ? 36.0 : 42.0,
             height: isCompact ? 36.0 : 42.0,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.primaryOf(context),
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.35),
-                  blurRadius: 8.0,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              boxShadow: AppColors.isDark(context)
+                  ? const []
+                  : [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.35),
+                        blurRadius: 8.0,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
             ),
             child: Icon(
               Icons.add_rounded,
-              color: Colors.white,
+              color: AppColors.onPrimaryOf(context),
               size: isCompact ? 22.0 : 26.0,
             ),
           ),
@@ -208,7 +219,7 @@ class MarketBottomNavBar extends StatelessWidget {
               style: TextStyle(
                 fontSize: isCompact ? 10.5 : 11.5,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: AppColors.textPrimaryOf(context),
               ),
             ),
           ),

@@ -63,10 +63,10 @@ class OnboardingIllustration extends StatelessWidget {
           child: Image.asset(
             AuthDesignTokens.logoAssetPath,
             fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => const Icon(
+            errorBuilder: (_, _, _) => Icon(
               Icons.storefront_rounded,
               size: 64,
-              color: AuthDesignTokens.navyPrimary,
+              color: AuthDesignTokens.primaryActionOf(context),
             ),
           ),
         );
@@ -78,7 +78,7 @@ class OnboardingIllustration extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AuthDesignTokens.actionBlueTint,
+                color: AuthDesignTokens.infoTintOf(context),
                 borderRadius: BorderRadius.circular(22),
               ),
               child: const Icon(
@@ -113,7 +113,7 @@ class OnboardingIllustration extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AuthDesignTokens.focusOrangeTint,
+                color: AuthDesignTokens.warningTintOf(context),
                 borderRadius: BorderRadius.circular(22),
               ),
               child: const Icon(
@@ -126,7 +126,7 @@ class OnboardingIllustration extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AuthDesignTokens.navyPrimary.withValues(alpha: 0.08),
+                color: AuthDesignTokens.softPillOf(context),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(

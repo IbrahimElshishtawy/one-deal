@@ -62,7 +62,7 @@ class MarketSectionHeader extends StatelessWidget {
                     style: TextStyle(
                       fontSize: isCompact ? 14.0 : 16.0,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.lightTextPrimary,
+                      color: AppColors.textPrimaryOf(context),
                     ),
                   ),
                 ),
@@ -74,7 +74,7 @@ class MarketSectionHeader extends StatelessWidget {
                       vertical: 2.5,
                     ),
                     decoration: BoxDecoration(
-                      color: badgeColor ?? markerColor.withValues(alpha: 0.12),
+                      color: badgeColor ?? markerColor.withValues(alpha: 0.14),
                       borderRadius: AppRadii.full,
                     ),
                     child: Text(
@@ -111,14 +111,14 @@ class MarketSectionHeader extends StatelessWidget {
                       style: TextStyle(
                         fontSize: isCompact ? 11.5 : 12.5,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                        color: AppColors.primaryOf(context),
                       ),
                     ),
                     const SizedBox(width: 2.0),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_rounded,
                       size: 15.0,
-                      color: AppColors.primary,
+                      color: AppColors.primaryOf(context),
                     ),
                   ],
                 ),

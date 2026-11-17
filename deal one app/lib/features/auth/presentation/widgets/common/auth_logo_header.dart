@@ -25,32 +25,47 @@ class AuthLogoHeader extends StatelessWidget {
           tag: 'deal_one_auth_logo',
           child: Material(
             type: MaterialType.transparency,
-            child: SizedBox(
-              height: logoSize,
-              child: Image.asset(
-                AuthDesignTokens.logoAssetPath,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.handshake_outlined,
-                        size: logoSize * 0.55,
-                        color: AuthDesignTokens.primaryActionOf(context),
+            child: DecoratedBox(
+              decoration: AuthDesignTokens.isDark(context)
+                  ? BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.22),
+                          Colors.white.withValues(alpha: 0.06),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.58, 1.0],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'ديل ون',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: AuthDesignTokens.headingOf(context),
+                    )
+                  : const BoxDecoration(),
+              child: SizedBox(
+                height: logoSize,
+                child: Image.asset(
+                  AuthDesignTokens.logoAssetPath,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.handshake_outlined,
+                          size: logoSize * 0.55,
+                          color: AuthDesignTokens.primaryActionOf(context),
                         ),
-                      ),
-                    ],
-                  );
-                },
+                        const SizedBox(height: 4),
+                        Text(
+                          'ديل ون',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AuthDesignTokens.headingOf(context),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),

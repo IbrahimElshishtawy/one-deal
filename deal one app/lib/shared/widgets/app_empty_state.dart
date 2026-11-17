@@ -29,10 +29,14 @@ class AppEmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(AppSpacing.xl),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
+                color: AppColors.primaryOf(context).withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 54.0, color: AppColors.primary),
+              child: Icon(
+                icon,
+                size: 54.0,
+                color: AppColors.primaryOf(context),
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
@@ -44,11 +48,8 @@ class AppEmptyState extends StatelessWidget {
               const SizedBox(height: AppSpacing.xs),
               Text(
                 message!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                    ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: AppColors.textSecondaryOf(context)),
                 textAlign: TextAlign.center,
               ),
             ],

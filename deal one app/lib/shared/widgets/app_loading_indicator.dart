@@ -37,7 +37,7 @@ class AppLoadingIndicator extends StatelessWidget {
             Text(
               message!,
               style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: AppColors.lightTextSecondary),
+                  ?.copyWith(color: AppColors.textSecondaryOf(context)),
               textAlign: TextAlign.center,
             ),
           ],

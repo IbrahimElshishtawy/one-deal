@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
 import 'app_radii.dart';
@@ -41,12 +42,18 @@ class AppThemeData {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         titleTextStyle: TextStyle(
           color: AppColors.textPrimary,
           fontSize: 18.0,
           fontWeight: FontWeight.w700,
         ),
         iconTheme: IconThemeData(color: AppColors.iconPrimary, size: 22.0),
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: AppColors.primary,
+        selectionColor: AppColors.primary.withValues(alpha: 0.16),
+        selectionHandleColor: AppColors.primary,
       ),
       cardTheme: const CardThemeData(
         color: AppColors.surface,
@@ -152,10 +159,7 @@ class AppThemeData {
         thickness: 1.0,
         space: 1.0,
       ),
-      iconTheme: const IconThemeData(
-        color: AppColors.iconPrimary,
-        size: 22.0,
-      ),
+      iconTheme: const IconThemeData(color: AppColors.iconPrimary, size: 22.0),
       dialogTheme: const DialogThemeData(
         backgroundColor: AppColors.surface,
         elevation: 4.0,
@@ -230,12 +234,18 @@ class AppThemeData {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
         titleTextStyle: TextStyle(
           color: AppColors.darkTextPrimary,
           fontSize: 18.0,
           fontWeight: FontWeight.w700,
         ),
         iconTheme: IconThemeData(color: AppColors.darkIconPrimary, size: 22.0),
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: AppColors.darkPrimary,
+        selectionColor: AppColors.darkPrimary.withValues(alpha: 0.24),
+        selectionHandleColor: AppColors.darkPrimary,
       ),
       cardTheme: const CardThemeData(
         color: AppColors.darkSurface,
@@ -296,7 +306,9 @@ class AppThemeData {
             vertical: AppSpacing.md,
           ),
           shape: const RoundedRectangleBorder(borderRadius: AppRadii.md),
-          textStyle: AppTextStyles.button.copyWith(color: AppColors.darkOnPrimary),
+          textStyle: AppTextStyles.button.copyWith(
+            color: AppColors.darkOnPrimary,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -308,7 +320,9 @@ class AppThemeData {
           ),
           shape: const RoundedRectangleBorder(borderRadius: AppRadii.md),
           side: const BorderSide(color: AppColors.darkBorder, width: 1.2),
-          textStyle: AppTextStyles.button.copyWith(color: AppColors.darkPrimary),
+          textStyle: AppTextStyles.button.copyWith(
+            color: AppColors.darkPrimary,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(

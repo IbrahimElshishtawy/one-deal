@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
 
 class FavoritesScreen extends ConsumerWidget {
@@ -11,9 +12,7 @@ class FavoritesScreen extends ConsumerWidget {
     final favoritesState = ref.watch(favoritesProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('الإعلانات المفضلة'),
-      ),
+      appBar: AppBar(title: const Text('الإعلانات المفضلة')),
       body: RefreshIndicator(
         onRefresh: () async {
           await ref.read(favoritesProvider.notifier).loadFavorites();
@@ -27,7 +26,10 @@ class FavoritesScreen extends ConsumerWidget {
                   children: [
                     Icon(Icons.favorite_border, size: 64, color: Colors.grey),
                     SizedBox(height: 12),
-                    Text('لا توجد إعلانات مفضلة بعد', style: TextStyle(fontSize: 16)),
+                    Text(
+                      'لا توجد إعلانات مفضلة بعد',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ],
                 ),
               );
@@ -44,42 +46,64 @@ class FavoritesScreen extends ConsumerWidget {
                   onTap: () => context.push('/listings/${item.id}'),
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: item.primaryImageUrl != null && item.primaryImageUrl!.isNotEmpty
+                    child:
+                        item.primaryImageUrl != null &&
+                            item.primaryImageUrl!.isNotEmpty
                         ? Image.network(
                             item.primaryImageUrl!,
                             width: 60,
                             height: 60,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              width: 60,
-                              height: 60,
-                              color: Colors.grey.shade200,
-                              child: const Icon(Icons.broken_image),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  color: AppColors.surfaceSecondaryOf(context),
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    color: AppColors.textMutedOf(context),
+                                  ),
+                                ),
                           )
                         : Container(
                             width: 60,
                             height: 60,
-                            color: Colors.grey.shade200,
-                            child: const Icon(Icons.photo),
+                            color: AppColors.surfaceSecondaryOf(context),
+                            child: Icon(
+                              Icons.photo,
+                              color: AppColors.textMutedOf(context),
+                            ),
                           ),
                   ),
-                  title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  title: Text(
+                    item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   subtitle: Text(
                     '${item.price.toStringAsFixed(0)} ${item.currency}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryOf(context),
+                    ),
                   ),
                   trailing: IconButton(
-                    icon: const Icon(Icons.favorite, color: Colors.red),
+                    icon: Icon(
+                      Icons.favorite,
+                      color: AppColors.errorOf(context),
+                    ),
                     onPressed: () {
-                      ref.read(favoritesProvider.notifier).toggleFavorite(item.id);
+                      ref
+                          .read(favoritesProvider.notifier)
+                          .toggleFavorite(item.id);
                     },
                   ),
                 );
               },
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator.adaptive()),
+          loading: () =>
+              const Center(child: CircularProgressIndicator.adaptive()),
           error: (err, _) => Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -89,7 +113,8 @@ class FavoritesScreen extends ConsumerWidget {
                 Text('تعذر تحميل المفضلة: $err'),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () => ref.read(favoritesProvider.notifier).loadFavorites(),
+                  onPressed: () =>
+                      ref.read(favoritesProvider.notifier).loadFavorites(),
                   child: const Text('إعادة المحاولة'),
                 ),
               ],

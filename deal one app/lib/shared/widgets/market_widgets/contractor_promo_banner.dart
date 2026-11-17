@@ -22,15 +22,22 @@ class ContractorPromoBanner extends StatelessWidget {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.neutral,
+          color: AppColors.isDark(context)
+              ? AppColors.darkSurface
+              : AppColors.neutral,
           borderRadius: AppRadii.lg,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.neutral.withValues(alpha: 0.15),
-              blurRadius: 10.0,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: AppColors.isDark(context)
+              ? Border.all(color: AppColors.darkBorder)
+              : null,
+          boxShadow: AppColors.isDark(context)
+              ? const []
+              : [
+                  BoxShadow(
+                    color: AppColors.neutral.withValues(alpha: 0.15),
+                    blurRadius: 10.0,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
         ),
         padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
         child: Row(

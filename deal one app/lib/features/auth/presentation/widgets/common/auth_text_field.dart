@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 
 import '../../theme/auth_design_tokens.dart';
 
-/// Auth text input matching the floating white rounded cards in the Deal One
-/// design screens, with orange focus state and soft red error feedback.
+/// Auth text input matching the floating rounded cards in the Deal One
+/// design screens, with neutral black focus state (light/dark aware) and soft
+/// red error feedback.
 class AuthTextField extends StatefulWidget {
   final String? label;
   final String hintText;
@@ -101,12 +102,12 @@ class _AuthTextFieldState extends State<AuthTextField> {
     final activeColor = hasError
         ? AuthDesignTokens.errorRed
         : (_hasFocus
-              ? AuthDesignTokens.focusOrange
+              ? AuthDesignTokens.focusBorderOf(context)
               : AuthDesignTokens.borderOf(context));
     final iconColor = hasError
         ? AuthDesignTokens.errorRed
         : (_hasFocus
-              ? AuthDesignTokens.focusOrange
+              ? AuthDesignTokens.focusBorderOf(context)
               : AuthDesignTokens.mutedOf(context));
 
     return Column(
@@ -158,6 +159,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
                   controller: widget.controller,
                   focusNode: _effectiveFocusNode,
                   enabled: widget.enabled,
+                  cursorColor: AuthDesignTokens.focusBorderOf(context),
                   keyboardType: widget.keyboardType,
                   textInputAction: widget.textInputAction,
                   textDirection: widget.textDirection,

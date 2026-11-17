@@ -145,7 +145,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
           const SizedBox(height: AuthDesignTokens.spaceMd),
           const AuthLogoHeader(
             title: 'أنشئ حسابك في Deal One',
-            subtitle: 'ابحث عن عقارك، سيارتك، وصفقاتك في\nمكان واحد.',
+            subtitle: 'ابحث عن عقارك، سيارتك، وصفقاتك في مكان واحد.',
           ),
           const SizedBox(height: AuthDesignTokens.headerToFormGap),
           SignUpFormCard(

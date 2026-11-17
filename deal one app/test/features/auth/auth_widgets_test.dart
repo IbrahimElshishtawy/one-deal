@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:market_space/core/errors/app_exception.dart';
+import 'package:market_space/core/providers/app_settings_providers.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/storage/preferences_service.dart';
 import 'package:market_space/core/storage/secure_storage_service.dart';
 import 'package:market_space/core/storage/storage_keys.dart';
+import 'package:market_space/core/theme/app_theme_data.dart';
+import 'package:market_space/features/accounts/presentation/screens/profile_screen.dart';
 import 'package:market_space/features/auth/domain/entities/auth_session.dart';
 import 'package:market_space/features/auth/presentation/pages/legal/legal_document_page.dart';
 import 'package:market_space/features/auth/presentation/pages/login/login_page.dart';
@@ -16,6 +19,7 @@ import 'package:market_space/features/auth/presentation/pages/otp_verification/o
 import 'package:market_space/features/auth/presentation/pages/sign_up/sign_up_page.dart';
 import 'package:market_space/features/auth/presentation/pages/verification_success/verification_success_page.dart';
 import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 import 'package:market_space/features/auth/presentation/widgets/otp/otp_pin_boxes.dart';
 
 import 'auth_controllers_test.dart';
@@ -368,6 +372,99 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('otp_resend_button')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SignUp subtitle renders cleanly and input focus border is black in light mode',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildRoutedApp(
+          prefs: prefs,
+          secureStorage: secureStorage,
+          tokens: tokens,
+          repo: repo,
+          initialLocation: RouteNames.signUp,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('ابحث عن عقارك، سيارتك، وصفقاتك في مكان واحد.'),
+        findsOneWidget,
+      );
+
+      final nameField = find.byKey(const Key('signup_fullname_field'));
+      await tester.tap(
+        find.descendant(of: nameField, matching: find.byType(TextField)),
+      );
+      await tester.pumpAndSettle();
+
+      final focusedContainer = tester.widget<AnimatedContainer>(
+        find.descendant(
+          of: nameField,
+          matching: find.byType(AnimatedContainer),
+        ),
+      );
+      final decoration = focusedContainer.decoration! as BoxDecoration;
+      final border = decoration.border! as Border;
+      expect(border.top.color, const Color(0xFF111111));
+    },
+  );
+
+  testWidgets(
+    'Profile theme selector switches System, Dark, and Light themes across the app',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            preferencesServiceProvider.overrideWithValue(prefs),
+            secureStorageServiceProvider.overrideWithValue(secureStorage),
+            tokenProvider.overrideWithValue(tokens),
+            authRepositoryProvider.overrideWithValue(repo),
+          ],
+          child: Consumer(
+            builder: (context, ref, _) {
+              final themeMode = ref.watch(appThemeModeProvider);
+              return MaterialApp(
+                locale: const Locale('ar'),
+                themeMode: themeMode,
+                theme: AppThemeData.lightTheme,
+                darkTheme: AppThemeData.darkTheme,
+                home: const ProfileScreen(),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final profileContext = tester.element(find.byType(ProfileScreen));
+      expect(
+        ProviderScope.containerOf(profileContext).read(appThemeModeProvider),
+        ThemeMode.system,
+      );
+
+      await tester.ensureVisible(find.text('داكن'));
+      await tester.tap(find.text('داكن'));
+      await tester.pumpAndSettle();
+      expect(
+        ProviderScope.containerOf(profileContext).read(appThemeModeProvider),
+        ThemeMode.dark,
+      );
+      expect(Theme.of(profileContext).brightness, Brightness.dark);
+      expect(
+        AuthDesignTokens.focusBorderOf(profileContext),
+        AuthDesignTokens.darkTextPrimary,
+      );
+
+      await tester.tap(find.text('فاتح'));
+      await tester.pumpAndSettle();
+      expect(
+        ProviderScope.containerOf(profileContext).read(appThemeModeProvider),
+        ThemeMode.light,
+      );
+      expect(Theme.of(profileContext).brightness, Brightness.light);
     },
   );
 }

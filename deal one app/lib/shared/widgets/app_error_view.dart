@@ -29,13 +29,13 @@ class AppErrorView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: AppColors.errorOf(context).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.error_outline_rounded,
                 size: 48.0,
-                color: AppColors.error,
+                color: AppColors.errorOf(context),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -50,7 +50,7 @@ class AppErrorView extends StatelessWidget {
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: AppColors.lightTextSecondary),
+                  ?.copyWith(color: AppColors.textSecondaryOf(context)),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[

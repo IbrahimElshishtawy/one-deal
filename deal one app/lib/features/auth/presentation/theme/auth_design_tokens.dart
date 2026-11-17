@@ -122,6 +122,18 @@ class AuthDesignTokens {
   static Color successTintOf(BuildContext context) =>
       isDark(context) ? darkSuccessTint : successTint;
 
+  static Color focusBorderOf(BuildContext context) =>
+      isDark(context) ? darkTextPrimary : const Color(0xFF111111);
+
+  static Color errorForegroundOf(BuildContext context) =>
+      isDark(context) ? const Color(0xFFFCA5A5) : errorDeepRed;
+
+  static Color infoTintOf(BuildContext context) =>
+      isDark(context) ? actionBlue.withValues(alpha: 0.16) : actionBlueTint;
+
+  static Color warningTintOf(BuildContext context) =>
+      isDark(context) ? focusOrange.withValues(alpha: 0.16) : focusOrangeTint;
+
   static List<BoxShadow> cardShadowOf(BuildContext context) {
     if (isDark(context)) {
       return const [];
