@@ -87,8 +87,9 @@ export class SessionService {
       },
     });
 
-    // 3. Mint short-lived JWT Access Token bound to session ID (sid) and unique token ID (jti)
+    // 3. Mint short-lived JWT Access Token bound to session ID (sid), unique token ID (jti), and ms timestamp
     const jti = crypto.randomUUID();
+    const iatMs = Date.now();
     const accessToken = this.jwtService.sign(
       {
         sub: userId,
@@ -96,6 +97,7 @@ export class SessionService {
         role,
         sid: session.id,
         jti,
+        iatMs,
       },
       {
         secret: accessSecret,
@@ -375,6 +377,14 @@ export class SessionService {
     userId: string,
     correlationId?: string,
   ): Promise<{ success: boolean; revokedCount: number }> {
+    const activeSessions = await this.prisma.userSession.findMany({
+      where: {
+        userId,
+        isRevoked: false,
+      },
+      select: { id: true },
+    });
+
     const result = await this.prisma.userSession.updateMany({
       where: {
         userId,
@@ -383,7 +393,12 @@ export class SessionService {
       data: { isRevoked: true },
     });
 
-    // Mark all access tokens issued at or before now as revoked in Redis
+    // Immediately denylist every revoked session ID and record millisecond-precision user cutoff
+    if (Array.isArray(activeSessions)) {
+      await Promise.all(
+        activeSessions.map((s) => this.denylistSessionId(s.id)),
+      );
+    }
     await this.denylistUserTokensBeforeNow(userId);
 
     await this.securityAudit.logEvent({
@@ -483,17 +498,17 @@ export class SessionService {
   }
 
   /**
-   * Denylists all access tokens issued for a user at or before the current timestamp.
+   * Denylists all access tokens issued for a user at or before the current timestamp (ms precision).
    */
   async denylistUserTokensBeforeNow(
     userId: string,
     ttlSeconds = this.accessTokenTtlSeconds,
   ): Promise<void> {
     if (!userId || !this.redis) return;
-    const nowEpoch = Math.floor(Date.now() / 1000);
+    const nowMs = Date.now();
     await this.redis.set(
       `auth:revoked:user_before:${userId}`,
-      nowEpoch,
+      nowMs,
       Math.max(1, ttlSeconds),
     );
   }
@@ -541,6 +556,7 @@ export class SessionService {
     sid?: string;
     jti?: string;
     iat?: number;
+    iatMs?: number;
   }): Promise<boolean> {
     if (!this.redis) return false;
 
@@ -562,11 +578,17 @@ export class SessionService {
       const revokedBefore = await this.redis.get<number>(
         `auth:revoked:user_before:${payload.sub}`,
       );
-      if (
-        typeof revokedBefore === 'number' &&
-        (payload.iat ?? 0) <= revokedBefore
-      ) {
-        return true;
+      if (typeof revokedBefore === 'number') {
+        // Support both ms timestamps (>= 1e12) and legacy second timestamps
+        const isMsCutoff = revokedBefore >= 1_000_000_000_000;
+        if (typeof payload.iatMs === 'number' && isMsCutoff) {
+          if (payload.iatMs <= revokedBefore) return true;
+        } else {
+          const cutoffSec = isMsCutoff
+            ? Math.floor(revokedBefore / 1000)
+            : revokedBefore;
+          if ((payload.iat ?? 0) < cutoffSec) return true;
+        }
       }
     }
 

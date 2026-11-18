@@ -50,7 +50,8 @@ export class VideoController {
     @Req() req: FastifyRequest,
     @Headers('webhook-signature') signature?: string,
   ) {
-    const rawBody = (req as any).rawBody as string | undefined;
+    const raw = (req as any).rawBody as Buffer | string | undefined;
+    const rawBody = Buffer.isBuffer(raw) ? raw.toString('utf8') : raw;
     return this.videoService.handleWebhook(payload, signature, rawBody);
   }
 

@@ -5,6 +5,7 @@ import { Rate } from 'k6/metrics';
 export const errorRate = new Rate('errors');
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000/api/v1';
+const HEALTH_BASE_URL = BASE_URL.replace(/\/api\/v1\/?$/, '');
 
 /**
  * Load test targeting 5,000 concurrent online users across core marketplace flows:
@@ -66,7 +67,7 @@ export default function () {
     });
     errorRate.add(!ok);
   } else {
-    const res = http.get('http://localhost:3000/health/ready');
+    const res = http.get(`${HEALTH_BASE_URL}/health/ready`);
     const ok = check(res, {
       'readiness status 200': (r) => r.status === 200,
     });

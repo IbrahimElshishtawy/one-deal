@@ -11,6 +11,7 @@ export interface JwtPayload {
   role: string;
   sid?: string;
   jti?: string;
+  iatMs?: number;
   iss?: string;
   aud?: string;
   iat?: number;
