@@ -11,6 +11,8 @@ class AuthDesignTokens {
   static const Color navyPrimary = Color(0xFF1D2B44);
   static const Color navyPrimaryDarkMode = Color(0xFF3A7AFE);
   static const Color navySurface = Color(0xFF1E3258);
+  static const Color onboardingCtaBlue = Color(0xFF4285F4);
+  static const Color onboardingScrimBottom = Color(0xFF0E1521);
   static const Color actionBlue = Color(0xFF3A7AFE);
   static const Color actionBlueTint = Color(0xFFEEF4FF);
   static const Color focusOrange = Color(0xFFE68A2E);
@@ -77,6 +79,7 @@ class AuthDesignTokens {
   static const double sectionGap = spaceLg;
   static const double inputRadius = 12;
   static const double buttonRadius = 12;
+  static const double socialPillRadius = 24;
   static const double cardRadius = 16;
   static const double otpBoxRadius = 12;
 

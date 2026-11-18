@@ -174,6 +174,7 @@ class OtpVerificationState {
   final String code;
   final OtpStatus status;
   final String? errorMessage;
+  final AuthErrorKind? errorKind;
   final int cooldownRemainingSeconds;
   final int expiryRemainingSeconds;
   final int failedAttempts;
@@ -189,6 +190,7 @@ class OtpVerificationState {
     this.code = '',
     this.status = OtpStatus.initial,
     this.errorMessage,
+    this.errorKind,
     this.cooldownRemainingSeconds = 60,
     this.expiryRemainingSeconds = 180,
     this.failedAttempts = 0,
@@ -245,6 +247,8 @@ class OtpVerificationState {
     OtpStatus? status,
     String? errorMessage,
     bool clearErrorMessage = false,
+    AuthErrorKind? errorKind,
+    bool clearErrorKind = false,
     int? cooldownRemainingSeconds,
     int? expiryRemainingSeconds,
     int? failedAttempts,
@@ -262,6 +266,7 @@ class OtpVerificationState {
       errorMessage: clearErrorMessage
           ? null
           : (errorMessage ?? this.errorMessage),
+      errorKind: clearErrorKind ? null : (errorKind ?? this.errorKind),
       cooldownRemainingSeconds:
           cooldownRemainingSeconds ?? this.cooldownRemainingSeconds,
       expiryRemainingSeconds:

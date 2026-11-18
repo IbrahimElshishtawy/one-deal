@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Market Space",
+  "appTitle": "Deal One",
   "retry": "Retry",
   "cancel": "Cancel",
   "confirm": "Confirm",
@@ -15,5 +15,247 @@
   "initializationFailed": "Application failed to initialize.",
   "pageNotFound": "Page not found.",
   "backToHome": "Back to Home",
-  "timeRemainingText": "timeRemainingText"
+  "timeRemainingText": "Time remaining",
+
+  "authBrandNameAr": "Deal One",
+  "authBrandNameEn": "DEAL ONE",
+  "authSkip": "Skip",
+  "authNext": "Next",
+  "authCreateAccount": "Create Account",
+  "authBrowseAsGuest": "Browse as guest",
+
+  "onboarding1Title": "A World of Real Estate & Cars in Your Hands",
+  "onboarding1Desc": "Discover the latest offers to buy and sell properties, cars, maintenance services, and spare parts with ease.",
+  "onboarding2Title": "Finishing & Home Services Near You",
+  "onboarding2Desc": "Connect with engineering offices and order building materials and electrical supplies from the nearest suppliers and technicians.",
+  "onboarding3Title": "Your Style & Home Decor with Direct Contact",
+  "onboarding3Desc": "Browse the latest fashion trends, decor pieces, and home appliances, and connect directly with sellers to close your deals safely and easily.",
+
+  "loginTitle": "Welcome Back",
+  "loginSubtitle": "Enter your WhatsApp number to continue and explore real estate and purchases",
+  "loginSubmitButton": "Log In",
+  "loginNoAccountPrompt": "Don't have an account? ",
+  "loginCreateAccountLink": "Create an account now",
+
+  "signUpTitle": "Create your Deal One account",
+  "signUpSubtitle": "Find your property, car, and deals all in one place.",
+  "signUpFullNameHint": "Enter your name here",
+  "signUpPhoneHint": "01XXXXXXXXX",
+  "signUpWhatsAppHelper": "A verification code will be sent via WhatsApp",
+  "signUpSubmitButton": "Send Verification Code",
+  "signUpHaveAccountPrompt": "Already have an account? ",
+  "signUpLoginLink": "Log In",
+
+  "authOrContinueWith": "Or continue with",
+  "authEmailProvider": "Email",
+  "authAppleProvider": "Apple ID",
+  "authLegalPrefix": "By continuing, you agree to the ",
+  "authTermsOfService": "Terms of Service",
+  "authLegalAnd": " and ",
+  "authPrivacyPolicy": "Privacy Policy",
+  "authLegalSuffix": ".",
+
+  "otpTitle": "Enter Verification Code",
+  "otpSubtitle": "Enter the 6-digit code sent to\n[{phone}] via WhatsApp",
+  "@otpSubtitle": {
+    "placeholders": {
+      "phone": { "type": "String" }
+    }
+  },
+  "otpChangePhone": "Change number",
+  "otpVerifyButton": "Confirm Code",
+  "otpRetryButton": "Try Again",
+  "otpRetryWithCooldown": "Try Again ({cooldown})",
+  "@otpRetryWithCooldown": {
+    "placeholders": {
+      "cooldown": { "type": "String" }
+    }
+  },
+  "otpResendingLabel": "Sending new code...",
+  "otpDidNotReceive": "Didn't receive the code? ",
+  "otpResendCountdown": "Resend {cooldown}",
+  "@otpResendCountdown": {
+    "placeholders": {
+      "cooldown": { "type": "String" }
+    }
+  },
+  "otpResendNow": "Resend",
+  "otpResendSending": "Sending...",
+  "otpCodeExpiryLabel": "Code expires in: {expiry}",
+  "@otpCodeExpiryLabel": {
+    "placeholders": {
+      "expiry": { "type": "String" }
+    }
+  },
+  "otpWhatsAppHelpLink": "Didn't receive the code on WhatsApp?",
+  "otpSupportLink": "Having trouble logging in? Contact Support",
+  "otpRequestNewIn": "Send new code in {cooldown}",
+  "@otpRequestNewIn": {
+    "placeholders": {
+      "cooldown": { "type": "String" }
+    }
+  },
+  "otpRequestNewCode": "Request new verification code",
+  "otpResentSuccess": "A new verification code has been sent",
+  "otpWaitBeforeResend": "Please wait {cooldown} before requesting a new code",
+  "@otpWaitBeforeResend": {
+    "placeholders": {
+      "cooldown": { "type": "String" }
+    }
+  },
+  "otpWaitBeforeSms": "Please wait {cooldown} before resending via SMS",
+  "@otpWaitBeforeSms": {
+    "placeholders": {
+      "cooldown": { "type": "String" }
+    }
+  },
+  "otpNoActiveSessionTitle": "No Active Verification Session",
+  "otpNoActiveSessionSubtitle": "Please enter your phone number first to receive a verification code.",
+  "otpBackToLogin": "Back to Login",
+  "otpSemanticsLabel": "Verification code input field for {length} digits",
+  "@otpSemanticsLabel": {
+    "placeholders": {
+      "length": { "type": "int" }
+    }
+  },
+  "otpRemainingAttemptOne": "You have 1 attempt left before temporary lock",
+  "otpRemainingAttemptTwo": "You have 2 attempts left before temporary lock",
+  "otpRemainingAttemptsMany": "You have {count} attempts left before temporary lock",
+  "@otpRemainingAttemptsMany": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "otpExpiredTitle": "Verification code expired, please request a new code",
+  "otpExpiredBody": "The security time limit has elapsed to protect your account and transactions. You can generate an instant new code and continue verifying.",
+
+  "whatsappSheetTitle": "Unable to Send via WhatsApp",
+  "whatsappSheetDefaultSubtitle": "Sorry, this number is not registered on WhatsApp. Please use another method",
+  "whatsappSheetEmailCta": "Send message via Email",
+  "whatsappSheetSmsCta": "Resend via SMS",
+  "whatsappSheetEditPhone": "Edit Number",
+  "whatsappSheetNeedHelp": "Need help logging in?",
+
+  "emailFallbackTitle": "Email Verification",
+  "emailFallbackSubtitle": "Enter your email address to check alternative code delivery availability.",
+  "emailFallbackLabel": "Email Address",
+  "emailFallbackHint": "name@example.com",
+  "emailFallbackSubmit": "Check Email Delivery",
+  "emailFallbackUnsupported": "Email OTP delivery is not currently available on the server. Please complete verification via SMS on your Egyptian mobile number (+20).",
+
+  "supportSheetTitle": "Technical Support - Deal One",
+  "supportSheetSubtitle": "If you repeatedly face issues receiving your verification code, contact our support team or copy the contact details below:",
+  "supportEmailTitle": "Support Email",
+  "supportHotlineTitle": "Customer Service",
+  "supportCopyTooltip": "Copy",
+  "supportCopiedSnack": "{label} copied",
+  "@supportCopiedSnack": {
+    "placeholders": {
+      "label": { "type": "String" }
+    }
+  },
+
+  "unavailableProviderTitle": "Sign in with {provider} is currently unavailable",
+  "@unavailableProviderTitle": {
+    "placeholders": {
+      "provider": { "type": "String" }
+    }
+  },
+  "unavailableProviderBody": "Deal One currently supports secure registration and verification via Egyptian mobile number and one-time password (OTP). Please enter your phone number to continue.",
+  "unavailableProviderCta": "Got it, continue with phone",
+
+  "successTitle": "Verified Successfully!",
+  "successSubtitleDefault": "Your account is now ready to use and search for your property and purchases.",
+  "successSubtitlePersonalized": "Welcome, {name}\nYour account is now ready to use and search for your property and purchases.",
+  "@successSubtitlePersonalized": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "successContinueButton": "Continue to Login",
+
+  "valFullNameEmpty": "Please enter your full name",
+  "valFullNameTooShort": "Full name must be at least 2 characters",
+  "valFullNameTooLong": "Full name is too long",
+  "valFullNameNoLetters": "Please enter a valid name containing letters",
+  "valPhoneEmpty": "Please enter your phone number",
+  "valPhoneInvalid": "Enter a valid Egyptian mobile number (e.g. 01012345678)",
+  "valEmailEmpty": "Please enter your email address",
+  "valEmailInvalid": "Invalid email address format",
+  "valOtpEmpty": "Please enter the verification code",
+  "valOtpLength": "Please enter the {length}-digit verification code",
+  "@valOtpLength": {
+    "placeholders": {
+      "length": { "type": "int" }
+    }
+  },
+  "valOtpDigitsOnly": "Verification code must contain digits only",
+
+  "errAuthNetwork": "No internet connection. Please check your network and try again.",
+  "errAuthTimeout": "Server connection timed out. Please try again.",
+  "errAuthUnexpectedResponse": "Received an unexpected response from the server. Please try again later.",
+  "errAuthWhatsappUnavailable": "Sorry, this number is not registered on WhatsApp. Please use another method.",
+  "errAuthOtpDeliveryFailed": "Unable to send the verification code right now. Please verify the number or try again later.",
+  "errAuthMaxAttempts": "Maximum verification attempts exceeded (5 attempts). Please request a new code.",
+  "errAuthOtpExpired": "Verification code expired, please request a new code",
+  "errAuthOtpInvalid": "Incorrect verification code, please check and try again",
+  "errAuthInvalidRefresh": "Your session has expired. Please log in again.",
+  "errAuthRateLimited": "Too many recent requests. Please wait for the countdown before requesting a new code.",
+  "errAuthAccountNotFound": "No account found associated with this number.",
+  "errAuthExistingAccount": "This phone number is already registered. You can log in directly.",
+  "errAuthValidation": "Please review your entered details and try again.",
+  "errAuthUnauthorized": "This account is not authorized to sign in right now. Contact support.",
+  "errAuthServer": "An unexpected server error occurred. Please try again later.",
+
+  "legalTermsTitle": "Terms of Service",
+  "legalPrivacyTitle": "Privacy Policy",
+  "legalTermsSec1Heading": "1. Using Deal One",
+  "legalTermsSec1Body": "By using Deal One, you agree to publish accurate listings compliant with Egyptian laws and never impersonate others or provide misleading information.",
+  "legalTermsSec2Heading": "2. Account & Phone Verification",
+  "legalTermsSec2Body": "Accounts are verified with an active Egyptian mobile number via one-time password (OTP). You are responsible for keeping your session and OTP codes confidential.",
+  "legalTermsSec3Heading": "3. Transactions Between Users",
+  "legalTermsSec3Body": "Deal One connects buyers and sellers. Please inspect items carefully and verify ownership documents before completing any financial transaction.",
+  "legalPrivacySec1Heading": "1. Data We Collect",
+  "legalPrivacySec1Body": "We collect only your full name, Egyptian mobile number, and listing details to activate your account and enable trusted communication.",
+  "legalPrivacySec2Heading": "2. Token & Session Security",
+  "legalPrivacySec2Body": "Session tokens (JWT Access & Refresh Tokens) are stored inside encrypted device storage and are never shared with third parties for marketing.",
+  "legalPrivacySec3Heading": "3. Your Account Rights",
+  "legalPrivacySec3Body": "You may update your name, terminate all active sessions, or request account deletion at any time through account settings or technical support.",
+
+  "profileTitleGuest": "My Account",
+  "profileTitleAuth": "My Account & Profile",
+  "profileGuestPrompt": "Log in to access your listings and connect with sellers",
+  "profileLoginButton": "Log in with Phone Number",
+  "profileRegisteredUser": "Registered User",
+  "profileIdAvailable": "ID available",
+  "profileDailyQuotaTitle": "Daily Contact Quota (Cairo Time)",
+  "profileQuotaRemaining": "Remaining today: {remaining} of {limit} phone reveals",
+  "@profileQuotaRemaining": {
+    "placeholders": {
+      "remaining": { "type": "int" },
+      "limit": { "type": "int" }
+    }
+  },
+  "profileQuotaResetNote": "Quota resets automatically at midnight Cairo time.",
+  "profileQuotaLoadError": "Unable to load daily quota details",
+  "profileAccountsTitle": "Seller & Showroom Accounts",
+  "profileNoAccounts": "No additional showroom accounts",
+  "profileAccountSubtitle": "Role: {role} • {status}",
+  "@profileAccountSubtitle": {
+    "placeholders": {
+      "role": { "type": "String" },
+      "status": { "type": "String" }
+    }
+  },
+  "profileStatusVerified": "Verified",
+  "profileStatusPending": "Under Review",
+  "profileAccountsLoadError": "Unable to load accounts",
+  "profileThemeTitle": "App Appearance",
+  "profileThemeSystem": "System",
+  "profileThemeLight": "Light",
+  "profileThemeDark": "Dark",
+  "profileLanguageTitle": "App Language",
+  "profileLanguageArabic": "العربية",
+  "profileLanguageEnglish": "English",
+  "profileLogoutButton": "Log Out"
 }

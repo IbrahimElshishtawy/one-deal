@@ -65,6 +65,7 @@ class OtpVerificationController
         expiryRemainingSeconds: 0,
         status: OtpStatus.expired,
         errorMessage: 'انتهت صلاحية رمز التحقق، يرجى طلب رمز جديد',
+        errorKind: AuthErrorKind.expiredOtp,
       );
       return;
     }
@@ -102,6 +103,7 @@ class OtpVerificationController
       code: clipped,
       status: shouldClearError ? OtpStatus.initial : state.status,
       clearErrorMessage: shouldClearError,
+      clearErrorKind: shouldClearError,
     );
   }
 
@@ -112,6 +114,7 @@ class OtpVerificationController
       code: '',
       status: OtpStatus.initial,
       clearErrorMessage: true,
+      clearErrorKind: true,
     );
   }
 
@@ -178,6 +181,7 @@ class OtpVerificationController
       state = state.copyWith(
         status: mappedStatus,
         errorMessage: feedback.message,
+        errorKind: feedback.kind,
         failedAttempts: nextAttempts,
         expiryRemainingSeconds: mappedStatus == OtpStatus.expired
             ? 0
@@ -193,6 +197,7 @@ class OtpVerificationController
     state = state.copyWith(
       status: OtpStatus.resending,
       clearErrorMessage: true,
+      clearErrorKind: true,
     );
 
     try {
@@ -203,6 +208,7 @@ class OtpVerificationController
         code: '',
         status: OtpStatus.initial,
         clearErrorMessage: true,
+        clearErrorKind: true,
         cooldownRemainingSeconds: dispatch.cooldownSeconds,
         expiryRemainingSeconds: dispatch.otpExpirySeconds,
         failedAttempts: 0,
@@ -218,6 +224,7 @@ class OtpVerificationController
       state = state.copyWith(
         status: mappedStatus,
         errorMessage: feedback.message,
+        errorKind: feedback.kind,
       );
       return false;
     }
