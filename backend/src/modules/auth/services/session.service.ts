@@ -57,22 +57,7 @@ export class SessionService {
       );
     }
 
-    // 1. Mint short-lived JWT Access Token
-    const accessToken = this.jwtService.sign(
-      {
-        sub: userId,
-        phone,
-        role,
-      },
-      {
-        secret: accessSecret,
-        expiresIn: this.accessTokenExpiry,
-        issuer: this.jwtIssuer,
-        audience: this.jwtAudience,
-      },
-    );
-
-    // 2. Mint cryptographically secure random Refresh Token (40 bytes hex)
+    // 1. Mint cryptographically secure random Refresh Token (40 bytes hex)
     const rawRefreshToken = crypto.randomBytes(40).toString('hex');
     const refreshTokenHash = this.hashRefreshToken(rawRefreshToken);
     const expiresAt = new Date(
@@ -80,7 +65,7 @@ export class SessionService {
     );
     const familyId = existingFamilyId || crypto.randomUUID();
 
-    // 3. Persist session record
+    // 2. Persist session record
     const session = await this.prisma.userSession.create({
       data: {
         userId,
@@ -93,6 +78,22 @@ export class SessionService {
         expiresAt,
       },
     });
+
+    // 3. Mint short-lived JWT Access Token bound to session ID (sid)
+    const accessToken = this.jwtService.sign(
+      {
+        sub: userId,
+        phone,
+        role,
+        sid: session.id,
+      },
+      {
+        secret: accessSecret,
+        expiresIn: this.accessTokenExpiry,
+        issuer: this.jwtIssuer,
+        audience: this.jwtAudience,
+      },
+    );
 
     await this.securityAudit.logEvent({
       action: 'SESSION_CREATED',
@@ -355,6 +356,42 @@ export class SessionService {
       targetId: userId,
       correlationId,
       metadata: { revokedCount: result.count },
+    });
+
+    return {
+      success: true,
+      revokedCount: result.count,
+    };
+  }
+
+  /**
+   * Revokes all active sessions belonging to the user except the current session (if known).
+   */
+  async revokeOtherUserSessions(
+    userId: string,
+    currentSessionId?: string,
+    correlationId?: string,
+  ): Promise<{ success: boolean; revokedCount: number }> {
+    const result = await this.prisma.userSession.updateMany({
+      where: {
+        userId,
+        isRevoked: false,
+        ...(currentSessionId ? { id: { not: currentSessionId } } : {}),
+      },
+      data: { isRevoked: true },
+    });
+
+    await this.securityAudit.logEvent({
+      action: 'OTHER_USER_SESSIONS_REVOKED',
+      actorType: 'user',
+      actorId: userId,
+      targetEntity: 'User',
+      targetId: userId,
+      correlationId,
+      metadata: {
+        excludedSessionId: currentSessionId ?? null,
+        revokedCount: result.count,
+      },
     });
 
     return {

@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,6 +24,7 @@ import { ModerationService } from './moderation.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { AdjudicateReportDto } from './dto/adjudicate-report.dto';
 import { AdjudicateListingDto } from './dto/adjudicate-listing.dto';
+import { AdjudicateVerificationDto } from './dto/adjudicate-verification.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -35,6 +37,19 @@ import {
 @Controller()
 export class ModerationController {
   constructor(private readonly moderationService: ModerationService) {}
+
+  private normalizePagination(
+    page: number | string | undefined,
+    limit: number | string | undefined,
+    defaultLimit = 20,
+  ) {
+    const parsedPage = Math.max(Number(page) || 1, 1);
+    const parsedLimit = Math.min(
+      Math.max(Number(limit) || defaultLimit, 1),
+      100,
+    );
+    return { page: parsedPage, limit: parsedLimit };
+  }
 
   @Post('reports')
   @ApiBearerAuth('BearerAuth')
@@ -61,9 +76,10 @@ export class ModerationController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
   ) {
+    const pagination = this.normalizePagination(page, limit, 20);
     return this.moderationService.getPendingListings(
-      Number(page),
-      Number(limit),
+      pagination.page,
+      pagination.limit,
     );
   }
 
@@ -101,9 +117,10 @@ export class ModerationController {
   @ApiOperation({ summary: 'Get pending moderation queue' })
   @ApiResponse({ status: 200, description: 'Moderation items returned' })
   async getQueue(@Query('page') page = 1, @Query('limit') limit = 20) {
+    const pagination = this.normalizePagination(page, limit, 20);
     return this.moderationService.getModerationQueue(
-      Number(page),
-      Number(limit),
+      pagination.page,
+      pagination.limit,
     );
   }
 
@@ -137,6 +154,49 @@ export class ModerationController {
   @ApiOperation({ summary: 'Retrieve immutable platform audit logs' })
   @ApiResponse({ status: 200, description: 'Audit logs returned' })
   async getAuditLogs(@Query('page') page = 1, @Query('limit') limit = 50) {
-    return this.moderationService.getAuditLogs(Number(page), Number(limit));
+    const pagination = this.normalizePagination(page, limit, 50);
+    return this.moderationService.getAuditLogs(
+      pagination.page,
+      pagination.limit,
+    );
+  }
+
+  @Get('admin/moderation/verifications')
+  @ApiBearerAuth('BearerAuth')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MODERATOR, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'List pending seller account verifications' })
+  @ApiResponse({ status: 200, description: 'Pending verifications returned' })
+  async getPendingVerifications(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    const pagination = this.normalizePagination(page, limit, 20);
+    return this.moderationService.getPendingVerifications(
+      pagination.page,
+      pagination.limit,
+    );
+  }
+
+  @Post('admin/moderation/verifications/:id/decision')
+  @ApiBearerAuth('BearerAuth')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MODERATOR, UserRole.SUPER_ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Approve or reject seller account verification' })
+  @ApiResponse({ status: 200, description: 'Verification decision recorded' })
+  async adjudicateVerification(
+    @Param('id', ParseUUIDPipe) verificationId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: AdjudicateVerificationDto,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.moderationService.adjudicateVerification(
+      verificationId,
+      user.id,
+      dto,
+      req.ip,
+      req.headers['user-agent'] as string | undefined,
+    );
   }
 }

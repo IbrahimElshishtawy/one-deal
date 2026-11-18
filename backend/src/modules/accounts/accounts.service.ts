@@ -10,6 +10,8 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
+import { UpsertServiceAreaDto } from './dto/upsert-service-area.dto';
+import { SubmitVerificationDto } from './dto/submit-verification.dto';
 
 @Injectable()
 export class AccountsService {
@@ -439,5 +441,166 @@ export class AccountsService {
     });
 
     return { success: true };
+  }
+
+  /**
+   * Lists configured service areas for an active account.
+   */
+  async getServiceAreas(accountId: string) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+      select: { id: true, isActive: true, deletedAt: true },
+    });
+
+    if (!account || !account.isActive || account.deletedAt) {
+      throw new NotFoundException('Account not found');
+    }
+
+    return this.prisma.serviceArea.findMany({
+      where: { accountId },
+      include: {
+        area: {
+          include: {
+            city: {
+              include: { governorate: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  /**
+   * Adds or updates a geographic service area coverage radius for an account.
+   */
+  async upsertServiceArea(
+    accountId: string,
+    userId: string,
+    dto: UpsertServiceAreaDto,
+  ) {
+    await this.assertAccountRole(accountId, userId, [
+      AccountMemberRole.OWNER,
+      AccountMemberRole.MANAGER,
+    ]);
+
+    const area = await this.prisma.area.findUnique({
+      where: { id: dto.areaId },
+      select: { id: true, isActive: true },
+    });
+    if (!area || !area.isActive) {
+      throw new NotFoundException('Geographic area not found or inactive');
+    }
+
+    return this.prisma.serviceArea.upsert({
+      where: {
+        uq_service_area: {
+          accountId,
+          areaId: dto.areaId,
+        },
+      },
+      update: {
+        radiusKm: dto.radiusKm ?? 10,
+      },
+      create: {
+        accountId,
+        areaId: dto.areaId,
+        radiusKm: dto.radiusKm ?? 10,
+      },
+      include: {
+        area: {
+          include: {
+            city: {
+              include: { governorate: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Removes a configured service area from the account.
+   */
+  async removeServiceArea(
+    accountId: string,
+    serviceAreaId: string,
+    userId: string,
+  ) {
+    await this.assertAccountRole(accountId, userId, [
+      AccountMemberRole.OWNER,
+      AccountMemberRole.MANAGER,
+    ]);
+
+    const existing = await this.prisma.serviceArea.findFirst({
+      where: { id: serviceAreaId, accountId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Service area not found');
+    }
+
+    await this.prisma.serviceArea.delete({
+      where: { id: serviceAreaId },
+    });
+
+    return { success: true };
+  }
+
+  /**
+   * Lists verification document submissions for an account (owner/manager only).
+   */
+  async getAccountVerifications(accountId: string, userId: string) {
+    await this.assertAccountRole(accountId, userId, [
+      AccountMemberRole.OWNER,
+      AccountMemberRole.MANAGER,
+    ]);
+
+    return this.prisma.accountVerification.findMany({
+      where: { accountId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Submits a verification document for account trust review.
+   */
+  async submitVerification(
+    accountId: string,
+    userId: string,
+    dto: SubmitVerificationDto,
+  ) {
+    await this.assertAccountRole(accountId, userId, [
+      AccountMemberRole.OWNER,
+      AccountMemberRole.MANAGER,
+    ]);
+
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+      select: { id: true, isActive: true, deletedAt: true },
+    });
+
+    if (!account || !account.isActive || account.deletedAt) {
+      throw new NotFoundException('Account not found');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const verification = await tx.accountVerification.create({
+        data: {
+          accountId,
+          documentType: dto.documentType,
+          documentNumber: dto.documentNumber ?? null,
+          fileUrl: dto.fileUrl,
+          status: 'pending',
+        },
+      });
+
+      await tx.account.update({
+        where: { id: accountId },
+        data: { verificationStatus: 'pending' },
+      });
+
+      return verification;
+    });
   }
 }

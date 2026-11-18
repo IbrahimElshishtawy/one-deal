@@ -22,6 +22,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({
       logger: false, // Structured logging handled by LoggingInterceptor / Pino
+      maxParamLength: 200,
     }),
   );
 

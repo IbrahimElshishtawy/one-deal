@@ -31,8 +31,11 @@ final appLocaleProvider = NotifierProvider<LocaleNotifier, Locale>(() {
 });
 
 class ThemeModeNotifier extends Notifier<ThemeMode> {
+  bool _userUpdated = false;
+
   @override
   ThemeMode build() {
+    _userUpdated = false;
     _loadSaved();
     return ThemeMode.system;
   }
@@ -40,6 +43,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   Future<void> _loadSaved() async {
     final prefs = ref.read(preferencesServiceProvider);
     final savedMode = await prefs.getString(StorageKeys.themeMode);
+    if (_userUpdated) return;
     if (savedMode == 'dark') {
       state = ThemeMode.dark;
     } else if (savedMode == 'light') {
@@ -48,6 +52,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
+    _userUpdated = true;
     state = mode;
     final prefs = ref.read(preferencesServiceProvider);
     await prefs.setString(StorageKeys.themeMode, mode.name);

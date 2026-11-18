@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../core/database/prisma.service';
@@ -44,6 +44,7 @@ describe('AuthService (Phase 03 Modular Architecture)', () => {
     rotateRefreshToken: jest.fn(),
     revokeSessionByToken: jest.fn(),
     revokeAllUserSessions: jest.fn(),
+    revokeOtherUserSessions: jest.fn(),
     getUserActiveSessions: jest.fn(),
   };
 
@@ -323,6 +324,147 @@ describe('AuthService (Phase 03 Modular Architecture)', () => {
       expect(res).toHaveLength(1);
       expect(mockSessionService.getUserActiveSessions).toHaveBeenCalledWith(
         'user-1',
+      );
+    });
+  });
+
+  describe('Password Management (set, change, forgot, reset)', () => {
+    it('setPassword should hash and store password for OTP user without passwordHash', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-otp-1',
+        passwordHash: null,
+        isActive: true,
+        deletedAt: null,
+      });
+      mockPrisma.user.update.mockResolvedValue({});
+
+      const res = await service.setPassword('user-otp-1', {
+        password: 'NewStrongPassword!2026',
+      });
+
+      expect(res.success).toBe(true);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-otp-1' },
+        data: { passwordHash: expect.stringContaining('$argon2') },
+      });
+    });
+
+    it('setPassword should reject if password is already set', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-otp-1',
+        passwordHash: 'existing-hash',
+        isActive: true,
+        deletedAt: null,
+      });
+
+      await expect(
+        service.setPassword('user-otp-1', {
+          password: 'NewStrongPassword!2026',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('changePassword should verify current password, update hash, and revoke other sessions', async () => {
+      const currentHash = await argon2.hash('OldPassword!2026');
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        passwordHash: currentHash,
+        isActive: true,
+        deletedAt: null,
+      });
+      mockPrisma.user.update.mockResolvedValue({});
+      mockSessionService.revokeOtherUserSessions.mockResolvedValue({
+        success: true,
+        revokedCount: 2,
+      });
+
+      const res = await service.changePassword(
+        'user-1',
+        {
+          currentPassword: 'OldPassword!2026',
+          newPassword: 'NewPassword!2026',
+        },
+        'current-session-id',
+      );
+
+      expect(res.success).toBe(true);
+      expect(res.revokedSessionsCount).toBe(2);
+      expect(mockSessionService.revokeOtherUserSessions).toHaveBeenCalledWith(
+        'user-1',
+        'current-session-id',
+        undefined,
+      );
+    });
+
+    it('forgotPassword should return 200 generic response for both registered and unregistered numbers', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce(null);
+      const unregisteredRes = await service.forgotPassword({
+        phone: '01012345678',
+      });
+      expect(unregisteredRes.success).toBe(true);
+      expect(mockOtpService.requestOtp).not.toHaveBeenCalled();
+
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-1',
+        isActive: true,
+        deletedAt: null,
+      });
+      mockOtpService.requestOtp.mockResolvedValueOnce({
+        success: true,
+        message: 'sent',
+        cooldownSeconds: 60,
+      });
+
+      const registeredRes = await service.forgotPassword({
+        phone: '01012345678',
+      });
+      expect(registeredRes).toEqual(unregisteredRes);
+      expect(mockOtpService.requestOtp).toHaveBeenCalledWith(
+        '+201012345678',
+        'PASSWORD_RESET',
+        undefined,
+        undefined,
+        undefined,
+      );
+    });
+
+    it('resetPassword should verify PASSWORD_RESET OTP, hash new password, and revoke all sessions', async () => {
+      mockOtpService.verifyOtp.mockResolvedValue({
+        normalizedPhone: '+201012345678',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        isActive: true,
+        deletedAt: null,
+      });
+      mockPrisma.user.update.mockResolvedValue({});
+      mockSessionService.revokeAllUserSessions.mockResolvedValue({
+        success: true,
+        revokedCount: 3,
+      });
+
+      const res = await service.resetPassword({
+        phone: '01012345678',
+        code: '123456',
+        newPassword: 'ResetStrongPassword!2026',
+      });
+
+      expect(res.success).toBe(true);
+      expect(mockOtpService.verifyOtp).toHaveBeenCalledWith(
+        '01012345678',
+        '123456',
+        'PASSWORD_RESET',
+        undefined,
+        undefined,
+        undefined,
+      );
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { passwordHash: expect.stringContaining('$argon2') },
+      });
+      expect(mockSessionService.revokeAllUserSessions).toHaveBeenCalledWith(
+        'user-1',
+        undefined,
       );
     });
   });

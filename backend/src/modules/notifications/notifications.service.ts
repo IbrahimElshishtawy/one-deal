@@ -1,7 +1,13 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../core/database/prisma.service';
+import { GetNotificationsQueryDto } from './dto/get-notifications-query.dto';
 
 @Injectable()
 export class NotificationsService {
@@ -147,6 +153,99 @@ export class NotificationsService {
 
     const sentCount = results.filter((r) => r.status === 'fulfilled').length;
     return { success: sentCount > 0, sentCount };
+  }
+
+  /**
+   * Lists paginated notifications for the authenticated user with optional unread filter.
+   */
+  async getUserNotifications(userId: string, query: GetNotificationsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    if (!this.prisma?.notification) {
+      return {
+        items: [],
+        unreadCount: 0,
+        meta: { total: 0, page, limit, totalPages: 0 },
+      };
+    }
+
+    const where = {
+      userId,
+      ...(query.unread === true
+        ? { isRead: false }
+        : query.unread === false
+          ? { isRead: true }
+          : {}),
+    };
+
+    const [total, unreadCount, items] = await Promise.all([
+      this.prisma.notification.count({ where }),
+      this.prisma.notification.count({ where: { userId, isRead: false } }),
+      this.prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return {
+      items,
+      unreadCount,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Marks a single notification owned by the current user as read.
+   */
+  async markAsRead(userId: string, notificationId: string) {
+    if (!this.prisma?.notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    const notification = await this.prisma.notification.findFirst({
+      where: { id: notificationId, userId },
+    });
+
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    if (notification.isRead) {
+      return notification;
+    }
+
+    return this.prisma.notification.update({
+      where: { id: notification.id },
+      data: { isRead: true },
+    });
+  }
+
+  /**
+   * Marks all unread notifications belonging to the current user as read.
+   */
+  async markAllAsRead(userId: string) {
+    if (!this.prisma?.notification) {
+      return { success: true, updatedCount: 0 };
+    }
+
+    const result = await this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
+
+    return {
+      success: true,
+      updatedCount: result.count,
+    };
   }
 
   /**

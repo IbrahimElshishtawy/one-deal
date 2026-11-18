@@ -16,6 +16,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { AccountTenantGuard } from './guards/account-tenant.guard';
+import { RateLimitGuard } from '../../core/guards/rate-limit.guard';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { AccountTenantGuard } from './guards/account-tenant.guard';
     JwtAuthGuard,
     RolesGuard,
     AccountTenantGuard,
+    RateLimitGuard,
   ],
   exports: [
     AuthService,

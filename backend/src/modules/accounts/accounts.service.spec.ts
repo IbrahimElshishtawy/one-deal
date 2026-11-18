@@ -1,15 +1,32 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { PrismaService } from '../../core/database/prisma.service';
 
 describe('AccountsService', () => {
   let service: AccountsService;
 
-  const mockPrisma = {
+  const mockPrisma: any = {
+    account: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
     accountMember: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+    },
+    area: {
+      findUnique: jest.fn(),
+    },
+    serviceArea: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      upsert: jest.fn(),
+      delete: jest.fn(),
+    },
+    accountVerification: {
+      findMany: jest.fn(),
+      create: jest.fn(),
     },
     branch: {
       create: jest.fn(),
@@ -18,6 +35,7 @@ describe('AccountsService', () => {
       updateMany: jest.fn(),
       delete: jest.fn(),
     },
+    $transaction: jest.fn((cb: (tx: any) => any) => cb(mockPrisma)),
   };
 
   beforeEach(async () => {
@@ -111,6 +129,75 @@ describe('AccountsService', () => {
       await expect(
         service.createBranch('acc-1', 'bad-role', branchDto),
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('Service Areas & Account Verifications', () => {
+    it('should upsert service area when caller is owner or manager and area is active', async () => {
+      mockPrisma.accountMember.findUnique.mockResolvedValue({
+        accountId: 'acc-1',
+        userId: 'owner-1',
+        role: 'owner',
+      });
+      mockPrisma.area.findUnique.mockResolvedValue({
+        id: 'area-1',
+        isActive: true,
+      });
+      mockPrisma.serviceArea.upsert.mockResolvedValue({
+        id: 'sa-1',
+        accountId: 'acc-1',
+        areaId: 'area-1',
+        radiusKm: 25,
+      });
+
+      const res = await service.upsertServiceArea('acc-1', 'owner-1', {
+        areaId: 'area-1',
+        radiusKm: 25,
+      });
+      expect(res.radiusKm).toBe(25);
+    });
+
+    it('should throw NotFoundException when removing non-existent service area on account', async () => {
+      mockPrisma.accountMember.findUnique.mockResolvedValue({
+        accountId: 'acc-1',
+        userId: 'owner-1',
+        role: 'owner',
+      });
+      mockPrisma.serviceArea.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.removeServiceArea('acc-1', 'sa-other', 'owner-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should submit verification document and set account status to pending', async () => {
+      mockPrisma.accountMember.findUnique.mockResolvedValue({
+        accountId: 'acc-1',
+        userId: 'owner-1',
+        role: 'owner',
+      });
+      mockPrisma.account.findUnique.mockResolvedValue({
+        id: 'acc-1',
+        isActive: true,
+        deletedAt: null,
+      });
+      mockPrisma.accountVerification.create.mockResolvedValue({
+        id: 'ver-1',
+        status: 'pending',
+      });
+      mockPrisma.account.update.mockResolvedValue({});
+
+      const res = await service.submitVerification('acc-1', 'owner-1', {
+        documentType: 'commercial_register',
+        documentNumber: 'CR-999',
+        fileUrl: 'https://cdn.marketspace.eg/ver/doc.pdf',
+      });
+
+      expect(res.status).toBe('pending');
+      expect(mockPrisma.account.update).toHaveBeenCalledWith({
+        where: { id: 'acc-1' },
+        data: { verificationStatus: 'pending' },
+      });
     });
   });
 });

@@ -140,12 +140,16 @@ class AppThemeData {
         selectedColor: AppColors.primary,
         disabledColor: AppColors.disabled,
         secondarySelectedColor: AppColors.primary,
+        checkmarkColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-        labelStyle: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 12.5,
-          fontWeight: FontWeight.w500,
-        ),
+        labelStyle: WidgetStateTextStyle.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return TextStyle(
+            color: isSelected ? Colors.white : AppColors.textPrimary,
+            fontSize: 12.5,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          );
+        }),
         secondaryLabelStyle: const TextStyle(
           color: Colors.white,
           fontSize: 12.5,
@@ -153,6 +157,25 @@ class AppThemeData {
         ),
         side: const BorderSide(color: AppColors.border, width: 1.0),
         shape: const RoundedRectangleBorder(borderRadius: AppRadii.full),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return AppColors.primary;
+            }
+            return AppColors.surface;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return Colors.white;
+            }
+            return AppColors.textPrimary;
+          }),
+          side: const WidgetStatePropertyAll(
+            BorderSide(color: AppColors.border, width: 1.0),
+          ),
+        ),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
@@ -339,12 +362,18 @@ class AppThemeData {
         selectedColor: AppColors.darkPrimary,
         disabledColor: AppColors.darkDisabled,
         secondarySelectedColor: AppColors.darkPrimary,
+        checkmarkColor: AppColors.darkOnPrimary,
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-        labelStyle: const TextStyle(
-          color: AppColors.darkTextPrimary,
-          fontSize: 12.5,
-          fontWeight: FontWeight.w500,
-        ),
+        labelStyle: WidgetStateTextStyle.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return TextStyle(
+            color: isSelected
+                ? AppColors.darkOnPrimary
+                : AppColors.darkTextPrimary,
+            fontSize: 12.5,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          );
+        }),
         secondaryLabelStyle: const TextStyle(
           color: AppColors.darkOnPrimary,
           fontSize: 12.5,
@@ -352,6 +381,25 @@ class AppThemeData {
         ),
         side: const BorderSide(color: AppColors.darkBorder, width: 1.0),
         shape: const RoundedRectangleBorder(borderRadius: AppRadii.full),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return AppColors.darkPrimary;
+            }
+            return AppColors.darkSurface;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return AppColors.darkOnPrimary;
+            }
+            return AppColors.darkTextPrimary;
+          }),
+          side: const WidgetStatePropertyAll(
+            BorderSide(color: AppColors.darkBorder, width: 1.0),
+          ),
+        ),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.darkDivider,

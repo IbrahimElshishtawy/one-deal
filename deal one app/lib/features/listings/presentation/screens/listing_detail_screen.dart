@@ -367,6 +367,7 @@ class _DetailView extends ConsumerWidget {
                   DropdownButton<String>(
                     value: selectedReason,
                     isExpanded: true,
+                    dropdownColor: AppColors.surfaceOf(context),
                     items: const [
                       DropdownMenuItem(
                         value: 'scam',

@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReportStatus, ReportReason } from '../../core/enums/domain.enums';
 import { ModerationService } from './moderation.service';
@@ -14,6 +15,19 @@ describe('ModerationService (Milestone 8)', () => {
       findMany: jest.fn(),
       count: jest.fn(),
       update: jest.fn(),
+    },
+    accountVerification: {
+      count: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
+    account: {
+      update: jest.fn(),
+    },
+    moderationLog: {
+      create: jest.fn(),
     },
     auditLog: {
       create: jest.fn(),
@@ -97,6 +111,79 @@ describe('ModerationService (Milestone 8)', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('adjudicateVerification', () => {
+    it('should approve account verification, update account verificationStatus, and log moderation & audit entries', async () => {
+      mockPrisma.accountVerification.findUnique
+        .mockResolvedValueOnce({
+          id: 'ver-1',
+          accountId: 'acc-1',
+          status: 'pending',
+        })
+        .mockResolvedValueOnce({
+          id: 'ver-1',
+          accountId: 'acc-1',
+          status: 'approved',
+        });
+      mockPrisma.accountVerification.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.account.update.mockResolvedValue({});
+      mockPrisma.moderationLog.create.mockResolvedValue({});
+      mockPrisma.auditLog.create.mockResolvedValue({});
+
+      const res = await service.adjudicateVerification('ver-1', 'mod-1', {
+        action: 'approve',
+        notes: 'Valid commercial register',
+      });
+
+      expect(res?.status).toBe('approved');
+      expect(mockPrisma.accountVerification.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'ver-1', status: 'pending' },
+        }),
+      );
+      expect(mockPrisma.account.update).toHaveBeenCalledWith({
+        where: { id: 'acc-1' },
+        data: { verificationStatus: 'approved' },
+      });
+      expect(mockPrisma.moderationLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            targetType: 'verification',
+            targetId: 'ver-1',
+            action: 'verify',
+          }),
+        }),
+      );
+    });
+
+    it('should throw ConflictException and skip logging if verification is already adjudicated', async () => {
+      mockPrisma.accountVerification.findUnique.mockResolvedValue({
+        id: 'ver-1',
+        accountId: 'acc-1',
+        status: 'approved',
+      });
+      mockPrisma.accountVerification.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.adjudicateVerification('ver-1', 'mod-1', { action: 'approve' }),
+      ).rejects.toThrow(ConflictException);
+
+      expect(mockPrisma.moderationLog.create).not.toHaveBeenCalled();
+      expect(mockPrisma.auditLog.create).not.toHaveBeenCalled();
+    });
+
+    it('should require rejectionReason when rejecting verification', async () => {
+      mockPrisma.accountVerification.findUnique.mockResolvedValue({
+        id: 'ver-1',
+        accountId: 'acc-1',
+        status: 'pending',
+      });
+
+      await expect(
+        service.adjudicateVerification('ver-1', 'mod-1', { action: 'reject' }),
+      ).rejects.toThrow();
     });
   });
 });

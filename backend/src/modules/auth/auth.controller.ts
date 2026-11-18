@@ -22,8 +22,13 @@ import { ResendOtpDto } from './dto/resend-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { LoginPasswordDto } from './dto/login-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { SetPasswordDto } from './dto/set-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ActiveSessionResponseDto } from './dto/session-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RateLimit, RateLimitGuard } from '../../core/guards/rate-limit.guard';
 import {
   CurrentUser,
   AuthenticatedUser,
@@ -138,6 +143,104 @@ export class AuthController {
     @Headers('x-trace-id') traceId?: string,
   ) {
     return this.loginWithPassword(dto, req, traceId);
+  }
+
+  @Post('password/set')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('BearerAuth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Set an initial password for an OTP-registered user',
+  })
+  @ApiResponse({ status: 200, description: 'Password set successfully' })
+  @ApiResponse({ status: 400, description: 'Password already set' })
+  async setPassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SetPasswordDto,
+    @Req() req: FastifyRequest,
+    @Headers('x-trace-id') traceId?: string,
+  ) {
+    return this.authService.setPassword(
+      user.id,
+      dto,
+      req.ip,
+      req.headers['user-agent'],
+      traceId,
+    );
+  }
+
+  @Post('password/change')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('BearerAuth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Change current password and revoke other active sessions',
+  })
+  @ApiResponse({ status: 200, description: 'Password changed successfully' })
+  @ApiResponse({ status: 401, description: 'Current password is incorrect' })
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: FastifyRequest,
+    @Headers('x-trace-id') traceId?: string,
+  ) {
+    return this.authService.changePassword(
+      user.id,
+      dto,
+      user.sessionId,
+      req.ip,
+      req.headers['user-agent'],
+      traceId,
+    );
+  }
+
+  @Post('password/forgot')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(3, 900, { anonymousLimit: 5 })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Request password reset OTP (always returns 200 to prevent enumeration)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Generic reset confirmation returned',
+  })
+  @ApiResponse({ status: 429, description: 'Too many requests' })
+  async forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+    @Req() req: FastifyRequest,
+    @Headers('x-trace-id') traceId?: string,
+  ) {
+    return this.authService.forgotPassword(
+      dto,
+      req.ip,
+      req.headers['user-agent'],
+      traceId,
+    );
+  }
+
+  @Post('password/reset')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 900, { anonymousLimit: 10 })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reset password using PASSWORD_RESET OTP and revoke all sessions',
+  })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired OTP' })
+  @ApiResponse({ status: 429, description: 'Too many requests' })
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+    @Req() req: FastifyRequest,
+    @Headers('x-trace-id') traceId?: string,
+  ) {
+    return this.authService.resetPassword(
+      dto,
+      req.ip,
+      req.headers['user-agent'],
+      traceId,
+    );
   }
 
   @Post('refresh')

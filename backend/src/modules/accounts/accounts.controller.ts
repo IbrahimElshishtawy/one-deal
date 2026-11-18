@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +22,8 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
+import { UpsertServiceAreaDto } from './dto/upsert-service-area.dto';
+import { SubmitVerificationDto } from './dto/submit-verification.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   CurrentUser,
@@ -161,5 +164,69 @@ export class AccountsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.accountsService.removeMember(accountId, user.id, targetUserId);
+  }
+
+  @Get(':id/service-areas')
+  @ApiOperation({ summary: 'List geographic service areas covered by account' })
+  @ApiResponse({ status: 200, description: 'Service areas returned' })
+  async getServiceAreas(@Param('id', ParseUUIDPipe) accountId: string) {
+    return this.accountsService.getServiceAreas(accountId);
+  }
+
+  @Post(':id/service-areas')
+  @ApiBearerAuth('BearerAuth')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Add or update a service area for seller account' })
+  @ApiResponse({ status: 200, description: 'Service area saved' })
+  async upsertServiceArea(
+    @Param('id', ParseUUIDPipe) accountId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpsertServiceAreaDto,
+  ) {
+    return this.accountsService.upsertServiceArea(accountId, user.id, dto);
+  }
+
+  @Delete(':id/service-areas/:serviceAreaId')
+  @ApiBearerAuth('BearerAuth')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Remove a service area from seller account' })
+  @ApiResponse({ status: 200, description: 'Service area removed' })
+  async removeServiceArea(
+    @Param('id', ParseUUIDPipe) accountId: string,
+    @Param('serviceAreaId', ParseUUIDPipe) serviceAreaId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.accountsService.removeServiceArea(
+      accountId,
+      serviceAreaId,
+      user.id,
+    );
+  }
+
+  @Get(':id/verifications')
+  @ApiBearerAuth('BearerAuth')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'List verification submissions for seller account' })
+  @ApiResponse({ status: 200, description: 'Verification requests returned' })
+  async getAccountVerifications(
+    @Param('id', ParseUUIDPipe) accountId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.accountsService.getAccountVerifications(accountId, user.id);
+  }
+
+  @Post(':id/verifications')
+  @ApiBearerAuth('BearerAuth')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Submit verification document for seller account' })
+  @ApiResponse({ status: 201, description: 'Verification submitted' })
+  async submitVerification(
+    @Param('id', ParseUUIDPipe) accountId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SubmitVerificationDto,
+  ) {
+    return this.accountsService.submitVerification(accountId, user.id, dto);
   }
 }

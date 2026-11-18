@@ -10,6 +10,10 @@ class ApiEndpoints {
   static const String resendOtp = '/auth/otp/resend';
   static const String verifyOtp = '/auth/otp/verify';
   static const String login = '/auth/login';
+  static const String setPassword = '/auth/password/set';
+  static const String changePassword = '/auth/password/change';
+  static const String forgotPassword = '/auth/password/forgot';
+  static const String resetPassword = '/auth/password/reset';
   static const String refreshToken = '/auth/refresh';
   static const String logout = '/auth/logout';
   static const String authMe = '/auth/me';
@@ -30,6 +34,12 @@ class ApiEndpoints {
   static String inviteMember(String id) => '/accounts/$id/members/invite';
   static String removeMember(String id, String userId) =>
       '/accounts/$id/members/$userId';
+  static String accountServiceAreas(String id) =>
+      '/accounts/$id/service-areas';
+  static String accountServiceAreaDetail(String id, String serviceAreaId) =>
+      '/accounts/$id/service-areas/$serviceAreaId';
+  static String accountVerifications(String id) =>
+      '/accounts/$id/verifications';
 
   // Categories & Dynamic Attributes
   static const String categories = '/categories';
@@ -70,6 +80,20 @@ class ApiEndpoints {
   static const String conversations = '/conversations';
   static String conversationMessages(String id) => '/conversations/$id/messages';
 
-  // Push Notifications
+  // Push Notifications & Inbox
+  static const String notifications = '/notifications';
+  static const String markAllNotificationsRead = '/notifications/read-all';
+  static String markNotificationRead(String id) => '/notifications/$id/read';
   static const String deviceToken = '/notifications/device-token';
+
+  // Admin: Settings, Verifications & Staff Management
+  static const String adminSettings = '/admin/settings';
+  static String adminSettingByKey(String key) => '/admin/settings/$key';
+  static const String adminModerationVerifications =
+      '/admin/moderation/verifications';
+  static String adminModerationVerificationDecision(String id) =>
+      '/admin/moderation/verifications/$id/decision';
+  static const String adminStaffRoles = '/admin/staff/roles';
+  static const String adminStaff = '/admin/staff';
+  static String adminStaffById(String id) => '/admin/staff/$id';
 }

@@ -1,8 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { AdjudicateReportDto } from './dto/adjudicate-report.dto';
 import { AdjudicateListingDto } from './dto/adjudicate-listing.dto';
+import { AdjudicateVerificationDto } from './dto/adjudicate-verification.dto';
 
 @Injectable()
 export class ModerationService {
@@ -249,5 +255,126 @@ export class ModerationService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  /**
+   * Lists pending account verification requests for moderators.
+   */
+  async getPendingVerifications(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+
+    const [total, verifications] = await Promise.all([
+      this.prisma.accountVerification.count({ where: { status: 'pending' } }),
+      this.prisma.accountVerification.findMany({
+        where: { status: 'pending' },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'asc' },
+        include: {
+          account: {
+            select: {
+              id: true,
+              displayName: true,
+              accountType: true,
+              slug: true,
+              owner: { select: { id: true, fullName: true, phone: true } },
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      verifications,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Approves or rejects an account verification submission and updates account trust status.
+   */
+  async adjudicateVerification(
+    verificationId: string,
+    moderatorId: string,
+    dto: AdjudicateVerificationDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
+    const verification = await this.prisma.accountVerification.findUnique({
+      where: { id: verificationId },
+    });
+
+    if (!verification) {
+      throw new NotFoundException('Account verification request not found');
+    }
+
+    if (dto.action === 'reject' && !dto.rejectionReason?.trim()) {
+      throw new BadRequestException(
+        'Rejection reason is required when rejecting a verification request',
+      );
+    }
+
+    const newStatus = dto.action === 'approve' ? 'approved' : 'rejected';
+
+    return this.prisma.$transaction(async (tx) => {
+      const updateResult = await tx.accountVerification.updateMany({
+        where: { id: verificationId, status: 'pending' },
+        data: {
+          status: newStatus,
+          rejectionReason:
+            dto.action === 'reject' ? dto.rejectionReason!.trim() : null,
+          reviewedAt: new Date(),
+        },
+      });
+
+      if (updateResult.count === 0) {
+        throw new ConflictException(
+          'Account verification request has already been adjudicated',
+        );
+      }
+
+      const updatedVerification = await tx.accountVerification.findUnique({
+        where: { id: verificationId },
+      });
+
+      await tx.account.update({
+        where: { id: verification.accountId },
+        data: { verificationStatus: newStatus },
+      });
+
+      await tx.moderationLog.create({
+        data: {
+          targetType: 'verification',
+          targetId: verificationId,
+          action: dto.action === 'approve' ? 'verify' : 'reject',
+          notes: dto.notes ?? dto.rejectionReason ?? null,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorType: 'staff',
+          actorId: moderatorId,
+          action: `MODERATE_VERIFICATION_${dto.action.toUpperCase()}`,
+          targetEntity: 'account_verification',
+          targetId: verificationId,
+          ipAddress: ipAddress?.slice(0, 50),
+          userAgent: userAgent?.slice(0, 500),
+          diffPayload: {
+            accountId: verification.accountId,
+            previousStatus: verification.status,
+            newStatus,
+            rejectionReason: dto.rejectionReason ?? null,
+          },
+        },
+      });
+
+      return updatedVerification;
+    });
   }
 }

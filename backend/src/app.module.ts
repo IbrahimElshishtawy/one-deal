@@ -20,6 +20,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { LocationsModule } from './modules/locations/locations.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { QuotasModule } from './modules/quotas/quotas.module';
+import { PlatformSettingsModule } from './modules/platform-settings/platform-settings.module';
+import { StaffModule } from './modules/staff/staff.module';
 
 import { RedisModule } from './core/redis/redis.module';
 import { MetricsModule } from './core/metrics/metrics.module';
@@ -51,6 +53,8 @@ const isPaymentsEnabled = process.env.ENABLE_V2_PAYMENTS === 'true';
     LocationsModule,
     FavoritesModule,
     QuotasModule,
+    PlatformSettingsModule,
+    StaffModule,
     ...(isPaymentsEnabled ? [PaymentsModule] : []),
   ],
   controllers: [HealthController],

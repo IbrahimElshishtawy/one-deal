@@ -8,6 +8,7 @@ export interface JwtPayload {
   sub: string;
   phone: string;
   role: string;
+  sid?: string;
   iss?: string;
   aud?: string;
   iat?: number;
@@ -58,6 +59,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       fullName: user.fullName,
       role: payload.role || 'USER',
       status: user.isActive ? 'ACTIVE' : 'SUSPENDED',
+      sessionId: payload.sid,
     };
   }
 }
