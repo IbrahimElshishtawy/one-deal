@@ -1,12 +1,15 @@
 import {
   Injectable,
   UnauthorizedException,
+  BadRequestException,
   InternalServerErrorException,
   Logger,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../core/database/prisma.service';
+import { RedisService } from '../../core/redis/redis.service';
 
 @Injectable()
 export class VideoService {
@@ -14,11 +17,14 @@ export class VideoService {
   private readonly streamApiToken: string;
   private readonly streamAccountId: string;
   private readonly webhookSecret: string;
+  private readonly webhookToleranceSeconds: number;
   private readonly nodeEnv: string;
+  private readonly processedWebhookCache = new Map<string, number>();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    @Optional() private readonly redis?: RedisService,
   ) {
     this.streamApiToken = this.configService.get<string>(
       'CLOUDFLARE_STREAM_API_TOKEN',
@@ -31,6 +37,10 @@ export class VideoService {
     this.webhookSecret = this.configService.get<string>(
       'CLOUDFLARE_STREAM_WEBHOOK_SECRET',
       '',
+    );
+    this.webhookToleranceSeconds = this.configService.get<number>(
+      'VIDEO_WEBHOOK_TOLERANCE_SEC',
+      300,
     );
     this.nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
   }
@@ -102,12 +112,19 @@ export class VideoService {
   }
 
   /**
-   * Verifies Cloudflare Stream Webhook-Signature header (time=<ts>,sig1=<hmac_sha256>)
+   * Verifies Cloudflare Stream Webhook-Signature header (time=<ts>,sig1=<hmac_sha256>),
+   * validates timestamp freshness, prevents replay/duplicate processing via Redis idempotency,
    * and updates video processing status in DB.
    */
-  async handleWebhook(payload: any, signatureHeader?: string) {
+  async handleWebhook(
+    payload: any,
+    signatureHeader?: string,
+    rawBody?: string,
+  ) {
     const hasRealWebhookSecret =
       !!this.webhookSecret && !this.webhookSecret.startsWith('placeholder');
+
+    let parsedParts: { time: string; sig1: string } | null = null;
 
     if (hasRealWebhookSecret || this.nodeEnv === 'production') {
       if (!signatureHeader || !hasRealWebhookSecret) {
@@ -115,7 +132,25 @@ export class VideoService {
           'Missing Cloudflare Stream webhook signature or secret',
         );
       }
-      const isValid = this.verifyWebhookSignature(payload, signatureHeader);
+      parsedParts = this.parseSignatureHeader(signatureHeader);
+      if (!parsedParts) {
+        throw new UnauthorizedException(
+          'Malformed Cloudflare Stream webhook signature header',
+        );
+      }
+
+      if (!this.isTimestampFresh(parsedParts.time)) {
+        throw new UnauthorizedException(
+          'Cloudflare Stream webhook timestamp is expired or outside tolerance window',
+        );
+      }
+
+      const bodyToVerify =
+        typeof rawBody === 'string' && rawBody.length > 0 ? rawBody : payload;
+      const isValid = this.verifyWebhookSignature(
+        bodyToVerify,
+        signatureHeader,
+      );
       if (!isValid) {
         throw new UnauthorizedException(
           'Invalid Cloudflare Stream webhook signature',
@@ -123,32 +158,114 @@ export class VideoService {
       }
     }
 
-    const uid = payload?.uid || payload?.data?.uid;
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new BadRequestException('Malformed video webhook payload');
+    }
+
+    const uid = payload?.uid ?? payload?.data?.uid;
     const readyToStream =
       payload?.readyToStream ?? payload?.data?.readyToStream;
 
-    if (uid) {
-      await this.prisma.listingMedia.updateMany({
-        where: { storageKey: { contains: uid } },
-        data: {
-          processingStatus: readyToStream ? 'ready' : 'failed',
-        },
-      });
+    if (typeof uid !== 'string' || !/^[a-zA-Z0-9_-]{6,128}$/.test(uid)) {
+      throw new BadRequestException(
+        'Video webhook payload is missing a valid stream uid',
+      );
     }
+
+    if (typeof readyToStream !== 'boolean') {
+      throw new BadRequestException(
+        'Video webhook payload must include a boolean readyToStream field',
+      );
+    }
+
+    // Idempotency & replay protection
+    const eventFingerprint = crypto
+      .createHash('sha256')
+      .update(
+        `${parsedParts?.time ?? 'unsigned'}:${parsedParts?.sig1 ?? ''}:${uid}:${String(readyToStream)}`,
+      )
+      .digest('hex');
+    const isNewEvent = await this.claimWebhookEvent(eventFingerprint);
+    if (!isNewEvent) {
+      this.logger.warn(
+        `Duplicate or replayed Cloudflare Stream webhook ignored for uid=${uid}`,
+      );
+      return { received: true, duplicate: true };
+    }
+
+    await this.prisma.listingMedia.updateMany({
+      where: {
+        mediaType: 'video',
+        OR: [{ storageKey: uid }, { storageKey: { endsWith: `/${uid}` } }],
+      },
+      data: {
+        processingStatus: readyToStream ? 'ready' : 'failed',
+      },
+    });
 
     return { received: true };
   }
 
-  verifyWebhookSignature(payload: unknown, signatureHeader: string): boolean {
+  private parseSignatureHeader(
+    signatureHeader: string,
+  ): { time: string; sig1: string } | null {
     const parts = signatureHeader
       .split(',')
       .reduce<Record<string, string>>((acc, pair) => {
-        const [k, v] = pair.split('=');
-        if (k && v) acc[k.trim()] = v.trim();
+        const eqIdx = pair.indexOf('=');
+        if (eqIdx > 0) {
+          const k = pair.slice(0, eqIdx).trim();
+          const v = pair.slice(eqIdx + 1).trim();
+          if (k && v) acc[k] = v;
+        }
         return acc;
       }, {});
 
     if (!parts.time || !parts.sig1) {
+      return null;
+    }
+    if (!/^\d{9,12}$/.test(parts.time)) {
+      return null;
+    }
+    if (!/^[0-9a-f]{64}$/i.test(parts.sig1)) {
+      return null;
+    }
+    return { time: parts.time, sig1: parts.sig1 };
+  }
+
+  isTimestampFresh(
+    timeStr: string,
+    nowEpochSeconds = Math.floor(Date.now() / 1000),
+  ): boolean {
+    if (!/^\d{9,12}$/.test(timeStr)) return false;
+    const timestamp = Number(timeStr);
+    if (!Number.isFinite(timestamp)) return false;
+    return (
+      Math.abs(nowEpochSeconds - timestamp) <= this.webhookToleranceSeconds
+    );
+  }
+
+  private async claimWebhookEvent(fingerprint: string): Promise<boolean> {
+    const ttlSeconds = Math.max(this.webhookToleranceSeconds * 2, 600);
+    const key = `video:webhook:seen:${fingerprint}`;
+
+    if (this.redis) {
+      return this.redis.setIfNotExists(key, '1', ttlSeconds);
+    }
+
+    // Fallback in-memory idempotency set when Redis is not injected (unit tests)
+    const now = Date.now();
+    const existingExpiry = this.processedWebhookCache.get(key);
+    if (existingExpiry && now < existingExpiry) {
+      return false;
+    }
+    this.processedWebhookCache.set(key, now + ttlSeconds * 1000);
+    return true;
+  }
+
+  verifyWebhookSignature(payload: unknown, signatureHeader: string): boolean {
+    const parts = this.parseSignatureHeader(signatureHeader);
+    if (!parts) {
       return false;
     }
 

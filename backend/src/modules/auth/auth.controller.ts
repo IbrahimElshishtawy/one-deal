@@ -40,6 +40,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('otp/send')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 900, { anonymousLimit: 10, bucketKey: 'auth:otp:send' })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Dispatch SMS OTP verification code' })
   @ApiResponse({
@@ -66,6 +68,8 @@ export class AuthController {
   }
 
   @Post('otp/resend')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 900, { anonymousLimit: 10, bucketKey: 'auth:otp:resend' })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Resend SMS OTP verification code subject to cooldown',
@@ -86,6 +90,13 @@ export class AuthController {
   }
 
   @Post('otp/verify')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 900, {
+    anonymousLimit: 15,
+    bucketKey: 'auth:otp:verify',
+    limitEnvKey: 'RATE_LIMIT_OTP_VERIFY_MAX',
+    windowEnvKey: 'RATE_LIMIT_OTP_VERIFY_WINDOW_SEC',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -115,10 +126,18 @@ export class AuthController {
   }
 
   @Post('login')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 900, {
+    anonymousLimit: 10,
+    bucketKey: 'auth:login',
+    limitEnvKey: 'RATE_LIMIT_LOGIN_MAX',
+    windowEnvKey: 'RATE_LIMIT_LOGIN_WINDOW_SEC',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Password login fallback' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({ status: 429, description: 'Too many login attempts' })
   async loginWithPassword(
     @Body() dto: LoginPasswordDto,
     @Req() req: FastifyRequest,
@@ -135,6 +154,13 @@ export class AuthController {
   }
 
   @Post('password/login')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 900, {
+    anonymousLimit: 10,
+    bucketKey: 'auth:login',
+    limitEnvKey: 'RATE_LIMIT_LOGIN_MAX',
+    windowEnvKey: 'RATE_LIMIT_LOGIN_WINDOW_SEC',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Password login alias' })
   async loginPasswordAlias(
@@ -244,6 +270,13 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(20, 900, {
+    anonymousLimit: 30,
+    bucketKey: 'auth:refresh',
+    limitEnvKey: 'RATE_LIMIT_REFRESH_MAX',
+    windowEnvKey: 'RATE_LIMIT_REFRESH_WINDOW_SEC',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -255,6 +288,7 @@ export class AuthController {
     description:
       'Invalid/expired token or reuse detected (all sessions terminated)',
   })
+  @ApiResponse({ status: 429, description: 'Too many refresh requests' })
   async refreshToken(
     @Body() dto: RefreshTokenDto,
     @Req() req: FastifyRequest,
@@ -266,6 +300,13 @@ export class AuthController {
   }
 
   @Post('token/refresh')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(20, 900, {
+    anonymousLimit: 30,
+    bucketKey: 'auth:refresh',
+    limitEnvKey: 'RATE_LIMIT_REFRESH_MAX',
+    windowEnvKey: 'RATE_LIMIT_REFRESH_WINDOW_SEC',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Rotate refresh token alias (OpenAPI compatibility)',
@@ -280,15 +321,23 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Revoke active refresh token session' })
+  @ApiOperation({
+    summary: 'Revoke active refresh token session and denylist access token',
+  })
   @ApiResponse({ status: 200, description: 'Session revoked successfully' })
   async logout(
     @Body() dto: RefreshTokenDto,
     @Req() req: FastifyRequest,
     @Headers('x-trace-id') traceId?: string,
+    @Headers('authorization') authorization?: string,
   ) {
     const user = (req as any).user as AuthenticatedUser | undefined;
-    return this.authService.logout(dto, user?.id, traceId);
+    const rawAccessToken =
+      typeof authorization === 'string' &&
+      authorization.toLowerCase().startsWith('bearer ')
+        ? authorization.slice(7).trim()
+        : undefined;
+    return this.authService.logout(dto, user?.id, traceId, rawAccessToken);
   }
 
   @Post('sessions/terminate-all')

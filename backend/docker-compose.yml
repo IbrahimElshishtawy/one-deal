@@ -70,8 +70,11 @@ services:
       REDIS_QUEUE_PORT: 6379
       ENABLE_WORKERS: 'false'
       ENABLE_SWAGGER: ${ENABLE_SWAGGER:-false}
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-replace_with_64_character_hex_secret_in_production}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-replace_with_64_character_hex_secret_in_production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      METRICS_AUTH_TOKEN: ${METRICS_AUTH_TOKEN:-}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET must be set}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET must be set}
     ports:
       - '3000:3000'
     depends_on:
@@ -100,8 +103,11 @@ services:
       REDIS_QUEUE_PORT: 6379
       ENABLE_WORKERS: 'true'
       ENABLE_SWAGGER: 'false'
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-replace_with_64_character_hex_secret_in_production}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-replace_with_64_character_hex_secret_in_production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      METRICS_AUTH_TOKEN: ${METRICS_AUTH_TOKEN:-}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET must be set}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET must be set}
     depends_on:
       - pgbouncer
       - redis-cache

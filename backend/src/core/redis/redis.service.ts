@@ -30,6 +30,21 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     string,
     { value: string; expiresAt?: number }
   >();
+  private readonly inMemoryRateLimits = new Map<
+    string,
+    { count: number; expiresAt: number }
+  >();
+  private readonly maxInMemoryRateLimitKeys = 10_000;
+
+  private static readonly RATE_LIMIT_LUA_SCRIPT = `
+    local current = redis.call("INCR", KEYS[1])
+    local ttl = redis.call("TTL", KEYS[1])
+    if current == 1 or ttl == -1 then
+      redis.call("EXPIRE", KEYS[1], tonumber(ARGV[1]))
+      ttl = tonumber(ARGV[1])
+    end
+    return {current, ttl}
+  `;
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -361,6 +376,40 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       }
     }
     this.inMemoryFallback.delete(key);
+    this.inMemoryRateLimits.delete(key);
+  }
+
+  /**
+   * Atomically sets a key only if it does not already exist, with a mandatory TTL.
+   * Returns true if the key was created, false if it already existed.
+   */
+  async setIfNotExists(
+    key: string,
+    value: string,
+    ttlSeconds: number,
+  ): Promise<boolean> {
+    const safeTtl = Math.max(1, Math.floor(ttlSeconds));
+    if (this.isCacheHealthy && this.cacheClient) {
+      try {
+        const res = await this.cacheClient.set(key, value, 'EX', safeTtl, 'NX');
+        return res === 'OK';
+      } catch (err) {
+        this.logger.warn(
+          `Error executing SET NX EX on Redis Cache [${key}]: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    const now = Date.now();
+    const existing = this.inMemoryFallback.get(key);
+    if (existing && (!existing.expiresAt || now < existing.expiresAt)) {
+      return false;
+    }
+    this.inMemoryFallback.set(key, {
+      value: JSON.stringify(value),
+      expiresAt: now + safeTtl * 1000,
+    });
+    return true;
   }
 
   async incr(key: string): Promise<number> {
@@ -384,17 +433,70 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     key: string,
     maxRequests: number,
     windowSeconds: number,
-  ): Promise<{ allowed: boolean; remaining: number }> {
-    const current = await this.incr(key);
-    if (current === 1) {
-      if (this.isCacheHealthy && this.cacheClient) {
-        await this.cacheClient.expire(key, windowSeconds);
+  ): Promise<{ allowed: boolean; remaining: number; resetSeconds: number }> {
+    const safeWindow = Math.max(1, Math.floor(windowSeconds));
+
+    if (this.isCacheHealthy && this.cacheClient) {
+      try {
+        const result = (await this.cacheClient.eval(
+          RedisService.RATE_LIMIT_LUA_SCRIPT,
+          1,
+          key,
+          String(safeWindow),
+        )) as [number | string, number | string];
+
+        const current = Number(result?.[0] ?? 1);
+        const ttl = Number(result?.[1] ?? safeWindow);
+        const resetSeconds = ttl > 0 ? ttl : safeWindow;
+        const allowed = current <= maxRequests;
+        const remaining = Math.max(0, maxRequests - current);
+        return { allowed, remaining, resetSeconds };
+      } catch (err) {
+        this.logger.warn(
+          `Atomic Redis rate-limit failed for [${key}], using bounded in-memory fallback: ${(err as Error).message}`,
+        );
       }
     }
 
-    const allowed = current <= maxRequests;
-    const remaining = Math.max(0, maxRequests - current);
-    return { allowed, remaining };
+    // Bounded local fallback so rate limiting degrades safely even when Redis is temporarily unreachable
+    const now = Date.now();
+    const existing = this.inMemoryRateLimits.get(key);
+
+    if (!existing || now >= existing.expiresAt) {
+      if (this.inMemoryRateLimits.size >= this.maxInMemoryRateLimitKeys) {
+        // Evict expired entries first, then oldest entry if still full
+        for (const [k, entry] of this.inMemoryRateLimits.entries()) {
+          if (now >= entry.expiresAt) {
+            this.inMemoryRateLimits.delete(k);
+          }
+        }
+        if (this.inMemoryRateLimits.size >= this.maxInMemoryRateLimitKeys) {
+          const firstKey = this.inMemoryRateLimits.keys().next().value;
+          if (firstKey !== undefined) {
+            this.inMemoryRateLimits.delete(firstKey);
+          }
+        }
+      }
+
+      const expiresAt = now + safeWindow * 1000;
+      this.inMemoryRateLimits.set(key, { count: 1, expiresAt });
+      return {
+        allowed: 1 <= maxRequests,
+        remaining: Math.max(0, maxRequests - 1),
+        resetSeconds: safeWindow,
+      };
+    }
+
+    existing.count += 1;
+    const resetSeconds = Math.max(
+      1,
+      Math.ceil((existing.expiresAt - now) / 1000),
+    );
+    return {
+      allowed: existing.count <= maxRequests,
+      remaining: Math.max(0, maxRequests - existing.count),
+      resetSeconds,
+    };
   }
 
   isRedisConnected(): boolean {

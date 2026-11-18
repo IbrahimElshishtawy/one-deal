@@ -41,10 +41,19 @@ export class OtpService {
     @Inject(SMS_GATEWAY_ADAPTER)
     private readonly smsAdapter: ISmsGatewayAdapter,
   ) {
-    this.otpPepper = this.configService.get<string>(
-      'JWT_ACCESS_SECRET',
-      'deal_one_fallback_pepper',
-    );
+    const configuredSecret =
+      this.configService.get<string>('JWT_ACCESS_SECRET');
+    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+    if (!configuredSecret) {
+      if (nodeEnv === 'production') {
+        throw new Error(
+          'JWT_ACCESS_SECRET must be configured in production for OTP hashing.',
+        );
+      }
+      this.otpPepper = 'dev_only_otp_pepper_not_for_production';
+    } else {
+      this.otpPepper = configuredSecret;
+    }
   }
 
   /**

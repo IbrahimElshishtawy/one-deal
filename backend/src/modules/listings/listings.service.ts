@@ -541,8 +541,6 @@ export class ListingsService {
         limit,
         hasMore: !!nextCursor,
       },
-      items: mappedData,
-      nextCursor,
     };
 
     await this.redis?.set?.(cacheKey, feedResponse, 30);

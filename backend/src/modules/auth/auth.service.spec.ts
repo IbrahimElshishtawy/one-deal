@@ -264,6 +264,51 @@ describe('AuthService (Phase 03 Modular Architecture)', () => {
         }),
       ).rejects.toThrow(UnauthorizedException);
     });
+
+    it('should return identical generic error for suspended account to prevent status enumeration', async () => {
+      const hash = await argon2.hash('RealPassword123!');
+
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-suspended-id',
+        phone: '+201012345678',
+        passwordHash: hash,
+        isActive: false,
+        deletedAt: null,
+      });
+
+      await expect(
+        service.loginWithPassword({
+          phone: '01012345678',
+          password: 'RealPassword123!',
+        }),
+      ).rejects.toThrow('Invalid phone number or password.');
+    });
+
+    it('should enforce per-account distributed rate limit when RedisService rejects repeated login attempts', async () => {
+      const mockRedis = {
+        checkRateLimit: jest.fn().mockResolvedValue({
+          allowed: false,
+          remaining: 0,
+          resetSeconds: 120,
+        }),
+        del: jest.fn(),
+      };
+      const rateLimitedService = new AuthService(
+        mockPrisma as any,
+        mockPhoneNormalization as any,
+        mockOtpService as any,
+        mockSessionService as any,
+        mockSecurityAudit as any,
+        mockRedis as any,
+      );
+
+      await expect(
+        rateLimitedService.loginWithPassword({
+          phone: '01012345678',
+          password: 'WrongPassword999!',
+        }),
+      ).rejects.toThrow(/Too many login attempts/);
+    });
   });
 
   describe('Session Management & Rotation Delegation', () => {

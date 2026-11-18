@@ -68,4 +68,30 @@ describe('TransformInterceptor', () => {
       error: done.fail,
     });
   });
+
+  it('should preserve Flutter listings feed contract without redundant items field', (done) => {
+    const feedPayload = {
+      data: [{ id: 'listing-1', title: 'Toyota Corolla', sellerPhone: null }],
+      meta: {
+        nextCursor: '2026-11-18T00:00:00.000Z',
+        next_cursor: '2026-11-18T00:00:00.000Z',
+        limit: 20,
+        hasMore: true,
+      },
+    };
+    interceptor
+      .intercept({} as any, { handle: () => of(feedPayload) })
+      .subscribe({
+        next: (val) => {
+          expect(val).toEqual({
+            success: true,
+            data: feedPayload.data,
+            meta: feedPayload.meta,
+          });
+          expect((val as any).items).toBeUndefined();
+          done();
+        },
+        error: done.fail,
+      });
+  });
 });

@@ -1,14 +1,16 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Optional } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../core/database/prisma.service';
+import { SessionService } from '../services/session.service';
 
 export interface JwtPayload {
   sub: string;
   phone: string;
   role: string;
   sid?: string;
+  jti?: string;
   iss?: string;
   aud?: string;
   iat?: number;
@@ -20,6 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    @Optional() private readonly sessionService?: SessionService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -34,6 +37,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   async validate(payload: JwtPayload) {
     if (!payload.sub || !payload.phone) {
       throw new UnauthorizedException('JWT token contains invalid claims.');
+    }
+
+    if (this.sessionService) {
+      const revoked = await this.sessionService.isAccessTokenRevoked(payload);
+      if (revoked) {
+        throw new UnauthorizedException(
+          'Access token has been revoked. Please sign in again.',
+        );
+      }
     }
 
     const user = await this.prisma.user.findUnique({

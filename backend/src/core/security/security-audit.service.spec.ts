@@ -75,4 +75,52 @@ describe('SecurityAuditService', () => {
       }),
     });
   });
+
+  it('should redact nested and substring-matching sensitive metadata keys', async () => {
+    await service.logEvent({
+      action: 'WEBHOOK_DEBUG',
+      targetEntity: 'Video',
+      metadata: {
+        apiKey: 'sk_live_12345',
+        nested: {
+          private_key: '-----BEGIN PRIVATE KEY-----',
+          safeField: 'ok',
+        },
+      },
+    });
+
+    expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        diffPayload: {
+          apiKey: '[REDACTED]',
+          nested: {
+            private_key: '[REDACTED]',
+            safeField: 'ok',
+          },
+        },
+      }),
+    });
+  });
+
+  it('should rethrow DB errors in queue worker mode (rethrow=true) so BullMQ retries', async () => {
+    mockPrisma.auditLog.create.mockRejectedValueOnce(
+      new Error('DB transient timeout'),
+    );
+
+    await expect(
+      service.persistAuditRecord(
+        {
+          actorType: 'system',
+          actorId: null,
+          action: 'TEST_RETRY',
+          targetEntity: 'User',
+          targetId: null,
+          ipAddress: null,
+          userAgent: null,
+          diffPayload: {},
+        },
+        true,
+      ),
+    ).rejects.toThrow('DB transient timeout');
+  });
 });

@@ -68,11 +68,16 @@ export class HealthController {
         : 'idle'
       : 'active';
 
+    const isProduction = process.env.NODE_ENV === 'production';
     const responsePayload = {
       status: isHealthy ? 'healthy' : 'unhealthy',
       checks: {
         database: dbHealthy ? 'up' : 'down',
-        postgis: postgisHealthy ? `up (${postgisVersion ?? 'active'})` : 'down',
+        postgis: postgisHealthy
+          ? isProduction
+            ? 'up'
+            : `up (${postgisVersion ?? 'active'})`
+          : 'down',
         redis_cache: cacheHealthy ? 'up' : 'down',
         redis_queue: queueHealthy ? 'up' : 'down',
         workers: workerStatus,

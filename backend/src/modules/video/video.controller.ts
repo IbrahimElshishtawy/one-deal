@@ -5,10 +5,12 @@ import {
   Body,
   Headers,
   Query,
+  Req,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { FastifyRequest } from 'fastify';
 import {
   ApiTags,
   ApiOperation,
@@ -45,9 +47,11 @@ export class VideoController {
   @ApiResponse({ status: 200, description: 'Webhook received' })
   async handleWebhook(
     @Body() payload: any,
+    @Req() req: FastifyRequest,
     @Headers('webhook-signature') signature?: string,
   ) {
-    return this.videoService.handleWebhook(payload, signature);
+    const rawBody = (req as any).rawBody as string | undefined;
+    return this.videoService.handleWebhook(payload, signature, rawBody);
   }
 
   @Get('video-feed')

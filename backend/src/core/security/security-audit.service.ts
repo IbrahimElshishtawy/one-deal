@@ -67,10 +67,21 @@ export class SecurityAuditService implements OnModuleInit, OnModuleDestroy {
         this.auditWorker = new Worker(
           'audit-logs',
           async (job) => {
-            await this.persistAuditRecord(job.data as NormalizedAuditRecord);
+            await this.persistAuditRecord(
+              job.data as NormalizedAuditRecord,
+              true,
+            );
           },
           { connection, concurrency: 5 },
         );
+        this.auditWorker.on('failed', (job, err) => {
+          this.logger.error(
+            `🚨 Audit queue job [${job?.id}] failed (attempt ${job?.attemptsMade}/${job?.opts?.attempts ?? 1}): ${err.message}`,
+          );
+        });
+        this.auditWorker.on('error', (err) => {
+          this.logger.error(`🚨 Audit queue worker error: ${err.message}`);
+        });
       }
     }
   }
@@ -88,7 +99,7 @@ export class SecurityAuditService implements OnModuleInit, OnModuleDestroy {
         await this.auditQueue.add('persist-audit', record, {
           removeOnComplete: 1000,
           removeOnFail: 5000,
-          attempts: 3,
+          attempts: 5,
           backoff: { type: 'exponential', delay: 1000 },
         });
         return;
@@ -150,8 +161,9 @@ export class SecurityAuditService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  private async persistAuditRecord(
+  async persistAuditRecord(
     record: NormalizedAuditRecord,
+    rethrow = false,
   ): Promise<void> {
     try {
       await this.prisma.auditLog.create({
@@ -175,29 +187,37 @@ export class SecurityAuditService implements OnModuleInit, OnModuleDestroy {
         `🚨 FAILED to record security audit log for action [${record.action}]: ${err.message}`,
         err.stack,
       );
+      if (rethrow) {
+        throw err;
+      }
     }
   }
 
   private sanitizeMetadata(
     obj: Record<string, unknown>,
   ): Record<string, unknown> {
-    const sensitiveKeys = new Set([
-      'code',
-      'otp',
+    const sensitiveExact = new Set(['code', 'otp', 'jwt', 'cookie']);
+    const sensitiveSubstrings = [
       'password',
-      'passwordhash',
-      'refreshtoken',
-      'accesstoken',
-      'authorization',
       'secret',
       'token',
-    ]);
+      'authorization',
+      'apikey',
+      'api_key',
+      'privatekey',
+      'private_key',
+    ];
+
+    const isSensitiveKey = (key: string): boolean => {
+      const lowerKey = key.toLowerCase();
+      if (sensitiveExact.has(lowerKey)) return true;
+      return sensitiveSubstrings.some((part) => lowerKey.includes(part));
+    };
 
     const sanitized: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(obj)) {
-      const lowerKey = key.toLowerCase();
-      if (sensitiveKeys.has(lowerKey)) {
+      if (isSensitiveKey(key)) {
         sanitized[key] = '[REDACTED]';
       } else if (
         value &&

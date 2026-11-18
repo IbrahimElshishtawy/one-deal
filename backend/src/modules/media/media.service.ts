@@ -172,14 +172,62 @@ export class MediaService {
   }
 
   /**
-   * Confirms upload completion, validates path isolation, and optionally attaches to listing.
+   * Strictly validates storage key structure, resource type, owner identity, and blocks path traversal.
+   * Canonical format: uploads/images/YYYY-MM/<userId>/<filename>.<jpg|jpeg|png|webp>
    */
-  async confirmUpload(userId: string, dto: ConfirmUploadDto) {
-    if (!dto.storageKey.includes(`/${userId}/`)) {
+  validateStorageKeyOwnership(userId: string, storageKey: string): void {
+    if (!storageKey || typeof storageKey !== 'string') {
+      throw new ForbiddenException('Invalid storage key');
+    }
+
+    if (
+      storageKey !== storageKey.trim() ||
+      storageKey.startsWith('/') ||
+      storageKey.includes('..') ||
+      storageKey.includes('\\') ||
+      storageKey.includes('?') ||
+      storageKey.includes('#') ||
+      storageKey.includes('\0') ||
+      /%2e|%2f|%5c/i.test(storageKey)
+    ) {
+      throw new ForbiddenException(
+        'Invalid storage key format or disallowed path characters',
+      );
+    }
+
+    const segments = storageKey.split('/');
+    if (segments.length !== 5) {
+      throw new ForbiddenException(
+        'Storage key does not match allowed storage path structure',
+      );
+    }
+
+    const [root, resourceType, datePrefix, ownerSegment, fileName] = segments;
+
+    if (root !== 'uploads' || resourceType !== 'images') {
+      throw new ForbiddenException('Unsupported media resource path');
+    }
+
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(datePrefix)) {
+      throw new ForbiddenException('Invalid media storage date prefix');
+    }
+
+    if (!userId || ownerSegment !== userId) {
       throw new ForbiddenException(
         'Cannot confirm upload for storage keys belonging to other users',
       );
     }
+
+    if (!/^[a-zA-Z0-9_-]{1,128}\.(jpg|jpeg|png|webp)$/i.test(fileName)) {
+      throw new ForbiddenException('Invalid media filename or extension');
+    }
+  }
+
+  /**
+   * Confirms upload completion, validates strict path isolation, and optionally attaches to listing.
+   */
+  async confirmUpload(userId: string, dto: ConfirmUploadDto) {
+    this.validateStorageKeyOwnership(userId, dto.storageKey);
 
     const publicUrl = `${this.publicDomain}/${dto.storageKey}`;
     let mediaRecord = null;

@@ -2,10 +2,15 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Logger,
+  Optional,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../core/database/prisma.service';
+import { RedisService } from '../../core/redis/redis.service';
 import { PhoneNormalizationService } from '../../core/identity/phone-normalization.service';
 import { SecurityAuditService } from '../../core/security/security-audit.service';
 import { OtpService } from './services/otp.service';
@@ -30,6 +35,8 @@ export class AuthService {
     private readonly otpService: OtpService,
     private readonly sessionService: SessionService,
     private readonly securityAudit: SecurityAuditService,
+    @Optional() private readonly redis?: RedisService,
+    @Optional() private readonly configService?: ConfigService,
   ) {}
 
   /**
@@ -235,6 +242,8 @@ export class AuthService {
 
   /**
    * Password login fallback for administrative and legacy accounts.
+   * Enforces per-account distributed rate limiting and consistent error messages
+   * to prevent brute-force and account enumeration.
    */
   async loginWithPassword(
     dto: LoginPasswordDto,
@@ -244,11 +253,50 @@ export class AuthService {
   ) {
     const normalizedPhone = this.phoneNormalization.normalize(dto.phone);
 
+    // Per-account distributed rate limit (complements IP-level RateLimitGuard)
+    const loginMax =
+      this.configService?.get<number>('RATE_LIMIT_LOGIN_MAX', 5) ?? 5;
+    const loginWindowSec =
+      this.configService?.get<number>('RATE_LIMIT_LOGIN_WINDOW_SEC', 900) ??
+      900;
+    const accountThrottleKey = `auth:ratelimit:login:account:${normalizedPhone}`;
+
+    if (this.redis) {
+      const throttle = await this.redis.checkRateLimit(
+        accountThrottleKey,
+        loginMax,
+        loginWindowSec,
+      );
+      if (!throttle.allowed) {
+        const retryAfter = throttle.resetSeconds ?? loginWindowSec;
+        await this.securityAudit.logEvent({
+          action: 'PASSWORD_LOGIN_RATE_LIMITED',
+          targetEntity: 'Phone',
+          targetId: normalizedPhone,
+          ipAddress,
+          userAgent,
+          correlationId,
+          metadata: { retryAfterSeconds: retryAfter },
+        });
+        throw new HttpException(
+          {
+            statusCode: HttpStatus.TOO_MANY_REQUESTS,
+            error: 'Too Many Requests',
+            message: `Too many login attempts. Please try again after ${retryAfter} seconds.`,
+            details: { retryAfterSeconds: retryAfter },
+          },
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { phone: normalizedPhone },
     });
 
     if (!user || !user.passwordHash) {
+      // Equalize timing with Argon2 work to prevent timing-based account enumeration
+      await argon2.hash(dto.password);
       await this.securityAudit.logEvent({
         action: 'PASSWORD_LOGIN_FAILED',
         targetEntity: 'Phone',
@@ -261,12 +309,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid phone number or password.');
     }
 
-    if (!user.isActive || user.deletedAt) {
-      throw new UnauthorizedException('Account suspended or deactivated.');
-    }
-
     const isMatch = await argon2.verify(user.passwordHash, dto.password);
-    if (!isMatch) {
+    if (!isMatch || !user.isActive || user.deletedAt) {
       await this.securityAudit.logEvent({
         action: 'PASSWORD_LOGIN_FAILED',
         actorType: 'user',
@@ -276,9 +320,16 @@ export class AuthService {
         ipAddress,
         userAgent,
         correlationId,
-        metadata: { reason: 'PASSWORD_MISMATCH' },
+        metadata: {
+          reason: !isMatch ? 'PASSWORD_MISMATCH' : 'ACCOUNT_INACTIVE',
+        },
       });
       throw new UnauthorizedException('Invalid phone number or password.');
+    }
+
+    // Clear per-account throttle counter after a valid login
+    if (this.redis) {
+      await this.redis.del(accountThrottleKey);
     }
 
     const ownedMembership = await this.prisma.accountMember.findFirst({
@@ -346,14 +397,23 @@ export class AuthService {
   }
 
   /**
-   * Revokes active session.
+   * Revokes active session and denylists associated access token in Redis.
    */
   async logout(
     dto: RefreshTokenDto,
     authenticatedUserId?: string,
     correlationId?: string,
+    rawAccessToken?: string,
   ) {
     const token = dto.refreshToken || dto.refresh_token || '';
+    if (rawAccessToken) {
+      return this.sessionService.revokeSessionByToken(
+        token,
+        authenticatedUserId,
+        correlationId,
+        rawAccessToken,
+      );
+    }
     return this.sessionService.revokeSessionByToken(
       token,
       authenticatedUserId,

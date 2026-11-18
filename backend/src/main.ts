@@ -10,6 +10,12 @@ import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 
 import { AppModule } from './app.module';
+import { parseTrustProxy } from './core/config/env.config';
+import {
+  buildCorsOptions,
+  buildHelmetOptions,
+  shouldEnableSwagger,
+} from './core/security/http-security.config';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { TransformInterceptor } from './core/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './core/interceptors/logging.interceptor';
@@ -18,27 +24,51 @@ import { MetricsInterceptor } from './core/metrics/metrics.interceptor';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
+  const trustProxy = parseTrustProxy(process.env.TRUST_PROXY);
+
+  const fastifyAdapter = new FastifyAdapter({
+    logger: false, // Structured logging handled by LoggingInterceptor
+    maxParamLength: 200,
+    trustProxy,
+  });
+
+  // Preserve raw JSON body string for HMAC webhook signature verification
+  fastifyAdapter
+    .getInstance()
+    .addContentTypeParser(
+      'application/json',
+      { parseAs: 'string' },
+      (req, body, done) => {
+        const raw = typeof body === 'string' ? body : body.toString('utf8');
+        (req as any).rawBody = raw;
+        if (!raw || raw.trim() === '') {
+          done(null, {});
+          return;
+        }
+        try {
+          done(null, JSON.parse(raw));
+        } catch (err: any) {
+          err.statusCode = 400;
+          done(err, undefined);
+        }
+      },
+    );
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({
-      logger: false, // Structured logging handled by LoggingInterceptor / Pino
-      maxParamLength: 200,
-    }),
+    fastifyAdapter,
   );
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT', 3000);
-  const corsOrigin = configService.get<string>('CORS_ORIGIN', '*');
+  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+  const corsOrigin = configService.get<string>('CORS_ORIGIN', '');
+  const enableSwagger = configService.get<boolean>('ENABLE_SWAGGER', false);
+  const swaggerEnabled = shouldEnableSwagger(nodeEnv, enableSwagger);
 
   // Security Middleware
-  await app.register(helmet, {
-    contentSecurityPolicy: false, // Allow Swagger UI
-  });
-
-  await app.register(cors, {
-    origin: corsOrigin === '*' ? true : corsOrigin.split(','),
-    credentials: true,
-  });
+  await app.register(helmet, buildHelmetOptions(swaggerEnabled));
+  await app.register(cors, buildCorsOptions(corsOrigin, nodeEnv));
 
   // Global Validation & Exception Pipelines
   app.useGlobalPipes(
@@ -69,9 +99,7 @@ async function bootstrap() {
   });
 
   // Swagger Documentation Setup (disabled in production by default)
-  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
-  const enableSwagger = configService.get<boolean>('ENABLE_SWAGGER', false);
-  if (nodeEnv !== 'production' || enableSwagger) {
+  if (swaggerEnabled) {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('Deal One API (صفقة ون)')
       .setDescription(
@@ -97,7 +125,9 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   await app.listen(port, '0.0.0.0');
-  logger.log(`🚀 Deal One Backend running on http://0.0.0.0:${port}`);
+  logger.log(
+    `🚀 Deal One Backend running on http://0.0.0.0:${port} (env=${nodeEnv}, trustProxy=${JSON.stringify(trustProxy)})`,
+  );
 }
 
 bootstrap();

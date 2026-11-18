@@ -1,9 +1,11 @@
-import { Controller, Get, Res } from '@nestjs/common';
+import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { MetricsService } from './metrics.service';
+import { MetricsAuthGuard } from './metrics-auth.guard';
 
 @ApiExcludeController()
+@UseGuards(MetricsAuthGuard)
 @Controller('metrics')
 export class MetricsController {
   constructor(private readonly metricsService: MetricsService) {}

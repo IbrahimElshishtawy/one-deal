@@ -1,8 +1,14 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../../core/database/prisma.service';
+import { RedisService } from '../../../core/redis/redis.service';
 import { SecurityAuditService } from '../../../core/security/security-audit.service';
 
 export interface TokenPair {
@@ -27,6 +33,7 @@ export interface ActiveSessionDto {
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
   private readonly accessTokenExpiry = '15m';
+  private readonly accessTokenTtlSeconds = 900;
   private readonly refreshTokenExpiryDays = 30;
   private readonly jwtIssuer = 'deal-one.eg';
   private readonly jwtAudience = 'deal-one-mobile';
@@ -36,6 +43,7 @@ export class SessionService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly securityAudit: SecurityAuditService,
+    @Optional() private readonly redis?: RedisService,
   ) {}
 
   /**
@@ -79,13 +87,15 @@ export class SessionService {
       },
     });
 
-    // 3. Mint short-lived JWT Access Token bound to session ID (sid)
+    // 3. Mint short-lived JWT Access Token bound to session ID (sid) and unique token ID (jti)
+    const jti = crypto.randomUUID();
     const accessToken = this.jwtService.sign(
       {
         sub: userId,
         phone,
         role,
         sid: session.id,
+        jti,
       },
       {
         secret: accessSecret,
@@ -154,6 +164,15 @@ export class SessionService {
       );
 
       // Revoke the entire compromised session family or all sessions for this user
+      const activeFamilySessions = await this.prisma.userSession.findMany({
+        where: {
+          userId: session.userId,
+          isRevoked: false,
+          ...(session.familyId ? { familyId: session.familyId } : {}),
+        },
+        select: { id: true },
+      });
+
       await this.prisma.userSession.updateMany({
         where: {
           userId: session.userId,
@@ -162,6 +181,14 @@ export class SessionService {
         },
         data: { isRevoked: true },
       });
+
+      // Immediately denylist access tokens for the compromised session(s) in Redis
+      await this.denylistSessionId(session.id);
+      if (Array.isArray(activeFamilySessions)) {
+        await Promise.all(
+          activeFamilySessions.map((s) => this.denylistSessionId(s.id)),
+        );
+      }
 
       await this.securityAudit.logEvent({
         action: 'REFRESH_TOKEN_REUSE_DETECTED',
@@ -277,13 +304,18 @@ export class SessionService {
   }
 
   /**
-   * Revokes an active session by refresh token or session ID.
+   * Revokes an active session by refresh token and denylists associated access tokens in Redis.
    */
   async revokeSessionByToken(
     rawRefreshToken: string,
     authenticatedUserId?: string,
     correlationId?: string,
+    rawAccessToken?: string,
   ): Promise<{ success: boolean; message: string }> {
+    if (rawAccessToken) {
+      await this.denylistRawAccessToken(rawAccessToken);
+    }
+
     const hash = this.hashRefreshToken(rawRefreshToken);
 
     const session = await this.prisma.userSession.findFirst({
@@ -318,6 +350,9 @@ export class SessionService {
       data: { isRevoked: true },
     });
 
+    // Immediately denylist the session's access tokens in Redis until expiration
+    await this.denylistSessionId(session.id);
+
     await this.securityAudit.logEvent({
       action: 'SESSION_REVOKED',
       actorType: 'user',
@@ -334,7 +369,7 @@ export class SessionService {
   }
 
   /**
-   * Revokes all active sessions belonging to the user.
+   * Revokes all active sessions belonging to the user and invalidates all existing access tokens.
    */
   async revokeAllUserSessions(
     userId: string,
@@ -347,6 +382,9 @@ export class SessionService {
       },
       data: { isRevoked: true },
     });
+
+    // Mark all access tokens issued at or before now as revoked in Redis
+    await this.denylistUserTokensBeforeNow(userId);
 
     await this.securityAudit.logEvent({
       action: 'ALL_USER_SESSIONS_REVOKED',
@@ -365,13 +403,23 @@ export class SessionService {
   }
 
   /**
-   * Revokes all active sessions belonging to the user except the current session (if known).
+   * Revokes all active sessions belonging to the user except the current session (if known),
+   * and denylists those revoked sessions' access tokens in Redis while preserving the current device.
    */
   async revokeOtherUserSessions(
     userId: string,
     currentSessionId?: string,
     correlationId?: string,
   ): Promise<{ success: boolean; revokedCount: number }> {
+    const otherSessions = await this.prisma.userSession.findMany({
+      where: {
+        userId,
+        isRevoked: false,
+        ...(currentSessionId ? { id: { not: currentSessionId } } : {}),
+      },
+      select: { id: true },
+    });
+
     const result = await this.prisma.userSession.updateMany({
       where: {
         userId,
@@ -380,6 +428,10 @@ export class SessionService {
       },
       data: { isRevoked: true },
     });
+
+    if (Array.isArray(otherSessions)) {
+      await Promise.all(otherSessions.map((s) => this.denylistSessionId(s.id)));
+    }
 
     await this.securityAudit.logEvent({
       action: 'OTHER_USER_SESSIONS_REVOKED',
@@ -398,6 +450,127 @@ export class SessionService {
       success: true,
       revokedCount: result.count,
     };
+  }
+
+  /**
+   * Denylists a session ID in Redis for the maximum access-token lifetime.
+   */
+  async denylistSessionId(
+    sessionId: string,
+    ttlSeconds = this.accessTokenTtlSeconds,
+  ): Promise<void> {
+    if (!sessionId || !this.redis) return;
+    await this.redis.set(
+      `auth:revoked:sid:${sessionId}`,
+      '1',
+      Math.max(1, ttlSeconds),
+    );
+  }
+
+  /**
+   * Denylists a specific JWT JTI in Redis until its expiration.
+   */
+  async denylistJti(
+    jti: string,
+    ttlSeconds = this.accessTokenTtlSeconds,
+  ): Promise<void> {
+    if (!jti || !this.redis) return;
+    await this.redis.set(
+      `auth:revoked:jti:${jti}`,
+      '1',
+      Math.max(1, ttlSeconds),
+    );
+  }
+
+  /**
+   * Denylists all access tokens issued for a user at or before the current timestamp.
+   */
+  async denylistUserTokensBeforeNow(
+    userId: string,
+    ttlSeconds = this.accessTokenTtlSeconds,
+  ): Promise<void> {
+    if (!userId || !this.redis) return;
+    const nowEpoch = Math.floor(Date.now() / 1000);
+    await this.redis.set(
+      `auth:revoked:user_before:${userId}`,
+      nowEpoch,
+      Math.max(1, ttlSeconds),
+    );
+  }
+
+  /**
+   * Safely verifies and denylists a raw Bearer access token (by jti and sid) until its exp.
+   */
+  async denylistRawAccessToken(rawAccessToken: string): Promise<void> {
+    if (!rawAccessToken || !this.redis) return;
+    const accessSecret = this.configService.get<string>('JWT_ACCESS_SECRET');
+    if (!accessSecret) return;
+
+    try {
+      const payload = this.jwtService.verify<{
+        jti?: string;
+        sid?: string;
+        exp?: number;
+      }>(rawAccessToken, {
+        secret: accessSecret,
+        issuer: this.jwtIssuer,
+        audience: this.jwtAudience,
+      });
+
+      const nowEpoch = Math.floor(Date.now() / 1000);
+      const remainingTtl = payload.exp
+        ? Math.max(1, payload.exp - nowEpoch)
+        : this.accessTokenTtlSeconds;
+
+      if (payload.jti) {
+        await this.denylistJti(payload.jti, remainingTtl);
+      }
+      if (payload.sid) {
+        await this.denylistSessionId(payload.sid, remainingTtl);
+      }
+    } catch {
+      // Token is already expired or invalid; no denylist action required.
+    }
+  }
+
+  /**
+   * Checks whether an access token payload has been revoked in Redis.
+   */
+  async isAccessTokenRevoked(payload: {
+    sub: string;
+    sid?: string;
+    jti?: string;
+    iat?: number;
+  }): Promise<boolean> {
+    if (!this.redis) return false;
+
+    if (payload.jti) {
+      const jtiRevoked = await this.redis.get(
+        `auth:revoked:jti:${payload.jti}`,
+      );
+      if (jtiRevoked) return true;
+    }
+
+    if (payload.sid) {
+      const sidRevoked = await this.redis.get(
+        `auth:revoked:sid:${payload.sid}`,
+      );
+      if (sidRevoked) return true;
+    }
+
+    if (payload.sub) {
+      const revokedBefore = await this.redis.get<number>(
+        `auth:revoked:user_before:${payload.sub}`,
+      );
+      if (
+        typeof revokedBefore === 'number' &&
+        (payload.iat ?? 0) <= revokedBefore
+      ) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
