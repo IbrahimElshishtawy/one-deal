@@ -71,10 +71,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get authNext => 'التالي';
 
   @override
+  String get authPrevious => 'السابق';
+
+  @override
   String get authCreateAccount => 'إنشاء حساب';
 
   @override
   String get authBrowseAsGuest => 'تصفح كزائر';
+
+  @override
+  String get onboarding1Subtitle => 'العقارات والسيارات';
 
   @override
   String get onboarding1Title => 'عالم من العقارات والسيارات بين يديك';
@@ -84,11 +90,17 @@ class AppLocalizationsAr extends AppLocalizations {
       'اكتشف أحدث العروض لبيع وشراء العقارات، السيارات، وخدمات الصيانة وقطع الغيار بكل سهولة.';
 
   @override
+  String get onboarding2Subtitle => 'الخدمات ومواد البناء';
+
+  @override
   String get onboarding2Title => 'تشطيبات وخدمات منزلية بالقرب منك';
 
   @override
   String get onboarding2Desc =>
       'تواصل مع المكاتب الهندسية واطلب مواد البناء والمستلزمات الكهربائية من أقرب الموردين والفنيين لمنطقتك.';
+
+  @override
+  String get onboarding3Subtitle => 'الأزياء والديكور والأجهزة';
 
   @override
   String get onboarding3Title => 'أناقتك وديكور منزلك بتواصل مباشر';

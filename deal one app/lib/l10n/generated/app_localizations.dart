@@ -218,6 +218,12 @@ abstract class AppLocalizations {
   /// **'Next'**
   String get authNext;
 
+  /// No description provided for @authPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get authPrevious;
+
   /// No description provided for @authCreateAccount.
   ///
   /// In en, this message translates to:
@@ -229,6 +235,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Browse as guest'**
   String get authBrowseAsGuest;
+
+  /// No description provided for @onboarding1Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Real Estate & Cars'**
+  String get onboarding1Subtitle;
 
   /// No description provided for @onboarding1Title.
   ///
@@ -242,6 +254,12 @@ abstract class AppLocalizations {
   /// **'Discover the latest offers to buy and sell properties, cars, maintenance services, and spare parts with ease.'**
   String get onboarding1Desc;
 
+  /// No description provided for @onboarding2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Home Services & Materials'**
+  String get onboarding2Subtitle;
+
   /// No description provided for @onboarding2Title.
   ///
   /// In en, this message translates to:
@@ -253,6 +271,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect with engineering offices and order building materials and electrical supplies from the nearest suppliers and technicians.'**
   String get onboarding2Desc;
+
+  /// No description provided for @onboarding3Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fashion, Decor & Appliances'**
+  String get onboarding3Subtitle;
 
   /// No description provided for @onboarding3Title.
   ///

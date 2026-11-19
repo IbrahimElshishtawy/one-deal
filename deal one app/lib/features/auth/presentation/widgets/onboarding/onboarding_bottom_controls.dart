@@ -1,24 +1,30 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
+import 'onboarding_navigation_button.dart';
 import 'onboarding_page_indicator.dart';
 
-/// Bottom onboarding controls matching the 3 Figma exports:
-/// 3-segment progress bar + full-width bright blue CTA with 1px white border.
+/// Bottom onboarding control cluster: 3-segment animated progress indicator
+/// + directional Previous / Next / Create Account navigation buttons.
 class OnboardingBottomControls extends StatelessWidget {
   final int currentPage;
   final int totalPages;
   final String primaryLabel;
+  final bool showPrevious;
   final bool isSubmitting;
+  final bool reducedMotion;
   final VoidCallback onPrimaryPressed;
+  final VoidCallback? onPreviousPressed;
 
   const OnboardingBottomControls({
     super.key,
     required this.currentPage,
     required this.totalPages,
     required this.primaryLabel,
+    required this.showPrevious,
     required this.isSubmitting,
+    this.reducedMotion = false,
     required this.onPrimaryPressed,
+    this.onPreviousPressed,
   });
 
   @override
@@ -29,47 +35,16 @@ class OnboardingBottomControls extends StatelessWidget {
         OnboardingPageIndicator(
           currentIndex: currentPage,
           totalPages: totalPages,
+          reducedMotion: reducedMotion,
         ),
-        const SizedBox(height: 22),
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: FilledButton(
-            key: const Key('onboarding_primary_button'),
-            onPressed: isSubmitting ? null : onPrimaryPressed,
-            style: FilledButton.styleFrom(
-              backgroundColor: AuthDesignTokens.onboardingCtaBlue,
-              disabledBackgroundColor: AuthDesignTokens.onboardingCtaBlue
-                  .withValues(alpha: 0.65),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  AuthDesignTokens.buttonRadius,
-                ),
-                side: const BorderSide(color: Colors.white, width: 1.2),
-              ),
-            ),
-            child: isSubmitting
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.3,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    primaryLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-          ),
+        const SizedBox(height: 20),
+        OnboardingNavigationButtonRow(
+          primaryLabel: primaryLabel,
+          showPrevious: showPrevious,
+          isSubmitting: isSubmitting,
+          reducedMotion: reducedMotion,
+          onPrimaryPressed: onPrimaryPressed,
+          onPreviousPressed: onPreviousPressed,
         ),
       ],
     );

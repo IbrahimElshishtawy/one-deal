@@ -21,13 +21,17 @@
   "authBrandNameEn": "DEAL ONE",
   "authSkip": "Skip",
   "authNext": "Next",
+  "authPrevious": "Previous",
   "authCreateAccount": "Create Account",
   "authBrowseAsGuest": "Browse as guest",
 
+  "onboarding1Subtitle": "Real Estate & Cars",
   "onboarding1Title": "A World of Real Estate & Cars in Your Hands",
   "onboarding1Desc": "Discover the latest offers to buy and sell properties, cars, maintenance services, and spare parts with ease.",
+  "onboarding2Subtitle": "Home Services & Materials",
   "onboarding2Title": "Finishing & Home Services Near You",
   "onboarding2Desc": "Connect with engineering offices and order building materials and electrical supplies from the nearest suppliers and technicians.",
+  "onboarding3Subtitle": "Fashion, Decor & Appliances",
   "onboarding3Title": "Your Style & Home Decor with Direct Contact",
   "onboarding3Desc": "Browse the latest fashion trends, decor pieces, and home appliances, and connect directly with sellers to close your deals safely and easily.",
 

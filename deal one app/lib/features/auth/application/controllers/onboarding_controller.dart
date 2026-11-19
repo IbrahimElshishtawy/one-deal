@@ -16,6 +16,13 @@ class OnboardingController extends AutoDisposeNotifier<OnboardingState> {
     state = state.copyWith(currentPage: clamped);
   }
 
+  /// Navigates back one onboarding slide when not on the first slide.
+  bool previousPage() {
+    if (state.currentPage <= 0 || state.isSubmitting) return false;
+    state = state.copyWith(currentPage: state.currentPage - 1);
+    return true;
+  }
+
   Future<bool> advanceOrComplete() async {
     if (!state.isLastPage) {
       state = state.copyWith(currentPage: state.currentPage + 1);

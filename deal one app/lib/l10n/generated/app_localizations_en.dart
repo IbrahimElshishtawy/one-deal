@@ -73,10 +73,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authNext => 'Next';
 
   @override
+  String get authPrevious => 'Previous';
+
+  @override
   String get authCreateAccount => 'Create Account';
 
   @override
   String get authBrowseAsGuest => 'Browse as guest';
+
+  @override
+  String get onboarding1Subtitle => 'Real Estate & Cars';
 
   @override
   String get onboarding1Title => 'A World of Real Estate & Cars in Your Hands';
@@ -86,11 +92,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Discover the latest offers to buy and sell properties, cars, maintenance services, and spare parts with ease.';
 
   @override
+  String get onboarding2Subtitle => 'Home Services & Materials';
+
+  @override
   String get onboarding2Title => 'Finishing & Home Services Near You';
 
   @override
   String get onboarding2Desc =>
       'Connect with engineering offices and order building materials and electrical supplies from the nearest suppliers and technicians.';
+
+  @override
+  String get onboarding3Subtitle => 'Fashion, Decor & Appliances';
 
   @override
   String get onboarding3Title => 'Your Style & Home Decor with Direct Contact';
