@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:market_space/app/app_localization.dart';
 import 'package:market_space/core/errors/app_exception.dart';
 import 'package:market_space/core/providers/app_settings_providers.dart';
 import 'package:market_space/core/providers/core_providers.dart';
@@ -36,6 +37,8 @@ Widget _buildRoutedApp({
   required FakeAuthRepository repo,
   String initialLocation = RouteNames.onboarding,
   Object? initialExtra,
+  Locale locale = const Locale('ar'),
+  ThemeMode themeMode = ThemeMode.light,
 }) {
   final router = GoRouter(
     initialLocation: initialLocation,
@@ -97,7 +100,15 @@ Widget _buildRoutedApp({
       authRepositoryProvider.overrideWithValue(repo),
       otpAutoTimerEnabledProvider.overrideWithValue(false),
     ],
-    child: MaterialApp.router(locale: const Locale('ar'), routerConfig: router),
+    child: MaterialApp.router(
+      locale: locale,
+      themeMode: themeMode,
+      theme: AppThemeData.lightTheme,
+      darkTheme: AppThemeData.darkTheme,
+      localizationsDelegates: AppLocalization.localizationsDelegates,
+      supportedLocales: AppLocalization.supportedLocales,
+      routerConfig: router,
+    ),
   );
 }
 
@@ -128,17 +139,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('كل ما تحتاجه في مكان واحد'), findsOneWidget);
+      expect(find.text('عالم من العقارات والسيارات بين يديك'), findsOneWidget);
+      expect(find.byKey(const Key('onboarding_skip_button')), findsOneWidget);
 
       await tester.tap(find.text('التالي'));
       await tester.pumpAndSettle();
-      expect(find.text('تواصل مباشر وصفقات آمنة'), findsOneWidget);
+      expect(find.text('تشطيبات وخدمات منزلية بالقرب منك'), findsOneWidget);
+      expect(find.byKey(const Key('onboarding_skip_button')), findsOneWidget);
 
       await tester.tap(find.text('التالي'));
       await tester.pumpAndSettle();
-      expect(find.text('أفضل العروض بالقرب منك'), findsOneWidget);
+      expect(find.text('أناقتك وديكور منزلك بتواصل مباشر'), findsOneWidget);
+      expect(find.byKey(const Key('onboarding_skip_button')), findsNothing);
 
-      await tester.tap(find.text('ابدأ الآن'));
+      await tester.tap(find.text('إنشاء حساب'));
       await tester.pumpAndSettle();
 
       expect(find.text('أنشئ حسابك في Deal One'), findsOneWidget);
@@ -529,6 +543,107 @@ void main() {
         tester.widget<Text>(find.text('إعادة المحاولة')).style?.color,
         AuthDesignTokens.darkTextPrimary,
       );
+    },
+  );
+
+  testWidgets(
+    'English (LTR) locale renders Onboarding, Sign Up, Login, OTP, and Success cleanly',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildRoutedApp(
+          prefs: prefs,
+          secureStorage: secureStorage,
+          tokens: tokens,
+          repo: repo,
+          initialLocation: RouteNames.onboarding,
+          locale: const Locale('en'),
+          themeMode: ThemeMode.dark,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final onboardingCtx = tester.element(find.byType(OnboardingPage));
+      expect(Directionality.of(onboardingCtx), TextDirection.ltr);
+      expect(Theme.of(onboardingCtx).brightness, Brightness.dark);
+      expect(
+        find.text('A World of Real Estate & Cars in Your Hands'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Skip'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Create your Deal One account'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('signup_submit_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Please enter your full name'), findsOneWidget);
+      expect(find.text('Please enter your phone number'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('signup_fullname_field')),
+        'Ahmed Hassan',
+      );
+      await tester.enterText(
+        find.byKey(const Key('signup_phone_field')),
+        '01012345678',
+      );
+      await tester.tap(find.byKey(const Key('signup_submit_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enter Verification Code'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('otp_hidden_input')),
+        '123456',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Verified Successfully!'), findsOneWidget);
+      expect(find.text('Continue to App'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Profile language selector switches between Arabic (RTL) and English (LTR) live',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            preferencesServiceProvider.overrideWithValue(prefs),
+            secureStorageServiceProvider.overrideWithValue(secureStorage),
+            tokenProvider.overrideWithValue(tokens),
+            authRepositoryProvider.overrideWithValue(repo),
+          ],
+          child: Consumer(
+            builder: (context, ref, _) {
+              final locale = ref.watch(appLocaleProvider);
+              return MaterialApp(
+                locale: locale,
+                theme: AppThemeData.lightTheme,
+                darkTheme: AppThemeData.darkTheme,
+                localizationsDelegates: AppLocalization.localizationsDelegates,
+                supportedLocales: AppLocalization.supportedLocales,
+                home: const ProfileScreen(),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('حسابي'), findsOneWidget);
+      await tester.ensureVisible(find.text('English'));
+      await tester.tap(find.text('English'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('My Account'), findsOneWidget);
+      expect(await prefs.getString(StorageKeys.languageCode), 'en');
+
+      await tester.ensureVisible(find.text('العربية'));
+      await tester.tap(find.text('العربية'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('حسابي'), findsOneWidget);
+      expect(await prefs.getString(StorageKeys.languageCode), 'ar');
     },
   );
 }
