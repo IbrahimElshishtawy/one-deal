@@ -5,8 +5,11 @@ import '../storage/storage_keys.dart';
 import 'core_providers.dart';
 
 class LocaleNotifier extends Notifier<Locale> {
+  bool _userUpdated = false;
+
   @override
   Locale build() {
+    _userUpdated = false;
     _loadSaved();
     return const Locale('ar');
   }
@@ -14,12 +17,14 @@ class LocaleNotifier extends Notifier<Locale> {
   Future<void> _loadSaved() async {
     final prefs = ref.read(preferencesServiceProvider);
     final savedCode = await prefs.getString(StorageKeys.languageCode);
+    if (_userUpdated) return;
     if (savedCode != null && savedCode.isNotEmpty) {
       state = Locale(savedCode);
     }
   }
 
   Future<void> setLocale(Locale newLocale) async {
+    _userUpdated = true;
     state = newLocale;
     final prefs = ref.read(preferencesServiceProvider);
     await prefs.setString(StorageKeys.languageCode, newLocale.languageCode);

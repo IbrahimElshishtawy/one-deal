@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/auth_session.dart';
+import '../../l10n/auth_l10n_extension.dart';
 import '../../theme/auth_design_tokens.dart';
 
 /// Informative modal dialog shown when tapping Google or Apple social buttons,
@@ -20,17 +21,13 @@ class UnavailableProviderDialog extends StatelessWidget {
     );
   }
 
-  String get _providerLabel {
-    switch (provider) {
-      case SocialAuthProviderType.google:
-        return 'البريد الإلكتروني';
-      case SocialAuthProviderType.apple:
-        return 'حساب آبل';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final l10n = context.authL10n;
+    final providerLabel = provider == SocialAuthProviderType.google
+        ? l10n.authProviderEmail
+        : l10n.authProviderApple;
+
     return AlertDialog(
       backgroundColor: AuthDesignTokens.backgroundOf(context),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -48,7 +45,7 @@ class UnavailableProviderDialog extends StatelessWidget {
         ),
       ),
       title: Text(
-        'التسجيل عبر $_providerLabel غير مفعل حالياً',
+        l10n.providerUnavailableTitle(providerLabel),
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 17.5,
@@ -57,7 +54,7 @@ class UnavailableProviderDialog extends StatelessWidget {
         ),
       ),
       content: Text(
-        'يدعم نظام ديل ون حالياً التسجيل والتحقق الآمن عبر رقم الهاتف المصري ورمز التحقق (OTP). يرجى إدخال رقم هاتفك للمتابعة.',
+        l10n.providerUnavailableBody,
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 13.5,
@@ -76,11 +73,11 @@ class UnavailableProviderDialog extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
             child: Text(
-              'فهمت، المتابعة برقم الهاتف',
-              style: TextStyle(fontWeight: FontWeight.w700),
+              l10n.providerUnavailableButton,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ),

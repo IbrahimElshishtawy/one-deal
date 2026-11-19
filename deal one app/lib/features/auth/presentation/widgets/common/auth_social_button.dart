@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/auth_session.dart';
+import '../../l10n/auth_l10n_extension.dart';
 import '../../theme/auth_design_tokens.dart';
 import 'auth_brand_icons.dart';
 
-/// Social authentication divider and Email / Apple provider action buttons
-/// matching `login.png` and `انشاء حساب.png`.
+/// Social authentication divider and Email / Apple pill action buttons
+/// matching `Log-in.png` and `Sign-Up.png`.
 class AuthSocialSection extends StatelessWidget {
   final ValueChanged<SocialAuthProviderType> onProviderSelected;
 
@@ -13,6 +14,7 @@ class AuthSocialSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.authL10n;
     return Column(
       children: [
         Row(
@@ -26,7 +28,7 @@ class AuthSocialSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                'أو المتابعة عبر',
+                l10n.authOrContinueWith,
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
@@ -48,7 +50,7 @@ class AuthSocialSection extends StatelessWidget {
             Expanded(
               child: _SocialProviderButton(
                 key: const Key('social_email_button'),
-                label: 'البريد الإلكتروني',
+                label: l10n.authProviderEmail,
                 icon: const GmailMarkIcon(size: 20),
                 onPressed: () =>
                     onProviderSelected(SocialAuthProviderType.google),
@@ -58,7 +60,7 @@ class AuthSocialSection extends StatelessWidget {
             Expanded(
               child: _SocialProviderButton(
                 key: const Key('social_apple_button'),
-                label: 'حساب آبل',
+                label: l10n.authProviderApple,
                 icon: Icon(
                   Icons.apple,
                   size: 22,
@@ -91,19 +93,20 @@ class _SocialProviderButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const pillRadius = 24.0;
     return Container(
       height: AuthDesignTokens.socialButtonHeight,
       decoration: BoxDecoration(
         color: AuthDesignTokens.surfaceOf(context),
-        borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
+        borderRadius: BorderRadius.circular(pillRadius),
         border: Border.all(color: AuthDesignTokens.borderOf(context)),
         boxShadow: AuthDesignTokens.cardShadowOf(context),
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
+        borderRadius: BorderRadius.circular(pillRadius),
         child: InkWell(
-          borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
+          borderRadius: BorderRadius.circular(pillRadius),
           onTap: onPressed,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),

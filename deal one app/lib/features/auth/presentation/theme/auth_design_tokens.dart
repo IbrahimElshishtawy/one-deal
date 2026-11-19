@@ -12,6 +12,12 @@ class AuthDesignTokens {
   static const Color navyPrimaryDarkMode = Color(0xFF3A7AFE);
   static const Color navySurface = Color(0xFF1E3258);
   static const Color actionBlue = Color(0xFF3A7AFE);
+  static const Color onboardingCtaBlue = Color(0xFF4285F4);
+  static const Color onboardingScrimDark = Color(0xFF0A0F1C);
+  static const Color onboardingSkyLightTop = Color(0xFFCDE2FA);
+  static const Color onboardingSkyLightBottom = Color(0xFFE8F1FA);
+  static const Color onboardingSkyDarkTop = Color(0xFF0F1B2E);
+  static const Color onboardingSkyDarkBottom = Color(0xFF16243B);
   static const Color actionBlueTint = Color(0xFFEEF4FF);
   static const Color focusOrange = Color(0xFFE68A2E);
   static const Color focusOrangeTint = Color(0xFFFFF7ED);

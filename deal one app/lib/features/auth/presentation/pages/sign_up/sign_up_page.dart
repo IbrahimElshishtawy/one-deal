@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/routing/route_names.dart';
+import '../../l10n/auth_l10n_extension.dart';
 import '../../providers/auth_providers.dart';
 import '../../theme/auth_design_tokens.dart';
 import '../../widgets/bottom_sheets/email_fallback_sheet.dart';
@@ -15,7 +16,7 @@ import '../../widgets/common/auth_social_button.dart';
 import '../../widgets/dialogs/unavailable_provider_dialog.dart';
 import '../../widgets/sign_up/sign_up_form_card.dart';
 
-/// Deal One Sign Up page matching `ui/انشاء حساب.png`.
+/// Deal One Sign Up page matching `Sign-Up.png`.
 class SignUpPage extends ConsumerStatefulWidget {
   final String? redirectTo;
 
@@ -49,9 +50,17 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
 
     final state = ref.read(signUpControllerProvider);
     if (state.hasDeliveryFailure) {
+      final l10n = context.authL10n;
+      final localizedReason = state.errorKind != null
+          ? AuthLocalizedMessages.authError(
+              l10n,
+              state.errorKind!,
+              fallback: state.submitError,
+            )
+          : state.submitError;
       _showDeliveryFailureSheet(
         displayPhone: state.deliveryFailurePhone!,
-        failureReason: state.submitError,
+        failureReason: localizedReason,
       );
       notifier.clearDeliveryFailure();
     }
@@ -74,8 +83,27 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.authL10n;
     final state = ref.watch(signUpControllerProvider);
     final controller = ref.read(signUpControllerProvider.notifier);
+
+    final localizedNameError = AuthLocalizedMessages.fullNameError(
+      l10n,
+      state.fullNameErrorCode,
+      fallback: state.fullNameError,
+    );
+    final localizedPhoneError = AuthLocalizedMessages.phoneError(
+      l10n,
+      state.phoneErrorCode,
+      fallback: state.phoneError,
+    );
+    final localizedSubmitError = state.errorKind != null
+        ? AuthLocalizedMessages.authError(
+            l10n,
+            state.errorKind!,
+            fallback: state.submitError,
+          )
+        : state.submitError;
 
     return AuthScaffoldShell(
       footer: Column(
@@ -85,7 +113,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'لديك حساب بالفعل؟ ',
+                l10n.signUpAlreadyHaveAccount,
                 style: TextStyle(
                   fontSize: 13.5,
                   color: AuthDesignTokens.mutedOf(context),
@@ -99,7 +127,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                       : RouteNames.login,
                 ),
                 child: Text(
-                  'تسجيل الدخول',
+                  l10n.signUpGoToLogin,
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
@@ -133,7 +161,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
               ),
               onPressed: () => context.go(RouteNames.root),
               child: Text(
-                'تصفح كزائر',
+                l10n.authBrowseAsGuest,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -143,17 +171,17 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
             ),
           ),
           const SizedBox(height: AuthDesignTokens.spaceMd),
-          const AuthLogoHeader(
-            title: 'أنشئ حسابك في Deal One',
-            subtitle: 'ابحث عن عقارك، سيارتك، وصفقاتك في مكان واحد.',
+          AuthLogoHeader(
+            title: l10n.signUpTitle,
+            subtitle: l10n.signUpSubtitle,
           ),
           const SizedBox(height: AuthDesignTokens.headerToFormGap),
           SignUpFormCard(
             fullNameController: _fullNameController,
             phoneController: _phoneController,
-            fullNameError: state.fullNameError,
-            phoneError: state.phoneError,
-            submitError: state.submitError,
+            fullNameError: localizedNameError,
+            phoneError: localizedPhoneError,
+            submitError: localizedSubmitError,
             isSubmitting: state.isSubmitting,
             onFullNameChanged: controller.updateFullName,
             onPhoneChanged: controller.updatePhone,

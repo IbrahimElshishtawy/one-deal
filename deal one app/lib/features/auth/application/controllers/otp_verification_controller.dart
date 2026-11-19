@@ -64,6 +64,7 @@ class OtpVerificationController
         cooldownRemainingSeconds: nextCooldown,
         expiryRemainingSeconds: 0,
         status: OtpStatus.expired,
+        errorKind: AuthErrorKind.expiredOtp,
         errorMessage: 'انتهت صلاحية رمز التحقق، يرجى طلب رمز جديد',
       );
       return;
@@ -121,6 +122,7 @@ class OtpVerificationController
     if (state.isExpired) {
       state = state.copyWith(
         status: OtpStatus.expired,
+        errorKind: AuthErrorKind.expiredOtp,
         errorMessage: 'انتهت صلاحية رمز التحقق، يرجى طلب رمز جديد',
       );
       return null;
@@ -130,10 +132,12 @@ class OtpVerificationController
       return null;
     }
 
+    final validationErrorCode = OtpCodeValidator.validateCode(state.code);
     final validationError = OtpCodeValidator.validate(state.code);
-    if (validationError != null) {
+    if (validationErrorCode != null) {
       state = state.copyWith(
         status: OtpStatus.invalid,
+        validationErrorCode: validationErrorCode,
         errorMessage: validationError,
       );
       return null;
@@ -177,6 +181,7 @@ class OtpVerificationController
 
       state = state.copyWith(
         status: mappedStatus,
+        errorKind: feedback.kind,
         errorMessage: feedback.message,
         failedAttempts: nextAttempts,
         expiryRemainingSeconds: mappedStatus == OtpStatus.expired
@@ -217,6 +222,7 @@ class OtpVerificationController
       final mappedStatus = _mapErrorKindToOtpStatus(feedback.kind);
       state = state.copyWith(
         status: mappedStatus,
+        errorKind: feedback.kind,
         errorMessage: feedback.message,
       );
       return false;

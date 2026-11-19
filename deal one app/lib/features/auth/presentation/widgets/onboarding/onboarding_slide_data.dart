@@ -1,49 +1,49 @@
-import 'package:flutter/material.dart';
+import '../../../../../l10n/generated/app_localizations.dart';
 
-enum OnboardingIllustrationType { marketplaceHub, verifiedTrust, localDeals }
+enum OnboardingIllustrationType {
+  realEstateAndCars,
+  homeServicesAndMaterials,
+  fashionAndDecor,
+}
 
-/// Immutable content descriptor for each Deal One onboarding slide.
+/// Immutable content descriptor for each Deal One onboarding slide
+/// matching the 3 Figma onboarding reference screens.
 class OnboardingSlideData {
   final OnboardingIllustrationType illustrationType;
-  final String badgeText;
   final String title;
   final String description;
   final String primaryButtonLabel;
-  final IconData accentIcon;
+  final bool showSkip;
 
   const OnboardingSlideData({
     required this.illustrationType,
-    required this.badgeText,
     required this.title,
     required this.description,
     required this.primaryButtonLabel,
-    required this.accentIcon,
+    required this.showSkip,
   });
 
-  static const List<OnboardingSlideData> slides = [
+  static List<OnboardingSlideData> localizedSlides(AppLocalizations l10n) => [
     OnboardingSlideData(
-      illustrationType: OnboardingIllustrationType.marketplaceHub,
-      badgeText: 'سوق واحد متكامل',
-      title: 'كل ما تحتاجه في مكان واحد',
-      description: 'تصفح آلاف الإعلانات الموثوقة في العقارات، السيارات، الإلكترونيات والخدمات في جميع محافظات مصر.',
-      primaryButtonLabel: 'التالي',
-      accentIcon: Icons.storefront_rounded,
+      illustrationType: OnboardingIllustrationType.realEstateAndCars,
+      title: l10n.onboardingSlide1Title,
+      description: l10n.onboardingSlide1Description,
+      primaryButtonLabel: l10n.onboardingNext,
+      showSkip: true,
     ),
     OnboardingSlideData(
-      illustrationType: OnboardingIllustrationType.verifiedTrust,
-      badgeText: 'أمان ومصداقية',
-      title: 'تواصل مباشر وصفقات آمنة',
-      description: 'حسابات موثقة برقم الهاتف وتقييمات حقيقية وتفاصيل دقيقة لكل إعلان لتشتري وتبيع بثقة تامة.',
-      primaryButtonLabel: 'التالي',
-      accentIcon: Icons.verified_user_rounded,
+      illustrationType: OnboardingIllustrationType.homeServicesAndMaterials,
+      title: l10n.onboardingSlide2Title,
+      description: l10n.onboardingSlide2Description,
+      primaryButtonLabel: l10n.onboardingNext,
+      showSkip: true,
     ),
     OnboardingSlideData(
-      illustrationType: OnboardingIllustrationType.localDeals,
-      badgeText: 'أقرب لك دائماً',
-      title: 'أفضل العروض بالقرب منك',
-      description: 'ابحث بذكاء حسب المحافظة والمنطقة والفئة السعرية وتابع إعلاناتك المفضلة لحظة بلحظة.',
-      primaryButtonLabel: 'ابدأ الآن',
-      accentIcon: Icons.location_on_rounded,
+      illustrationType: OnboardingIllustrationType.fashionAndDecor,
+      title: l10n.onboardingSlide3Title,
+      description: l10n.onboardingSlide3Description,
+      primaryButtonLabel: l10n.onboardingCreateAccount,
+      showSkip: false,
     ),
   ];
 }

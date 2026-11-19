@@ -1,10 +1,21 @@
 {
   "@@locale": "en",
-  "appTitle": "Market Space",
+  "appTitle": "Deal One",
+  "brandNameAr": "Deal One",
+  "brandNameEn": "DEAL ONE",
   "retry": "Retry",
   "cancel": "Cancel",
   "confirm": "Confirm",
   "close": "Close",
+  "copy": "Copy",
+  "copiedItem": "{label} copied",
+  "@copiedItem": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
   "networkError": "No internet connection. Please check your network.",
   "serverError": "An unexpected server error occurred. Please try again later.",
   "timeoutError": "The connection timed out. Please try again.",
@@ -15,5 +26,274 @@
   "initializationFailed": "Application failed to initialize.",
   "pageNotFound": "Page not found.",
   "backToHome": "Back to Home",
-  "timeRemainingText": "timeRemainingText"
+  "timeRemainingText": "Time remaining",
+
+  "onboardingSkip": "Skip",
+  "onboardingNext": "Next",
+  "onboardingCreateAccount": "Create Account",
+  "onboardingBrowseGuest": "Browse as Guest",
+  "onboardingSlide1Title": "A World of Real Estate & Cars in Your Hands",
+  "onboardingSlide1Description": "Discover the latest offers to buy and sell properties, cars, maintenance services, and spare parts with ease.",
+  "onboardingSlide2Title": "Finishing & Home Services Near You",
+  "onboardingSlide2Description": "Connect with engineering offices and order construction materials and electrical supplies from the nearest suppliers and technicians.",
+  "onboardingSlide3Title": "Your Style & Home Decor with Direct Contact",
+  "onboardingSlide3Description": "Browse the latest fashion trends, decor pieces, and home appliances, and contact sellers directly to complete your deals safely and easily.",
+
+  "authBrowseAsGuest": "Browse as Guest",
+  "authOrContinueWith": "Or continue with",
+  "authProviderEmail": "Email",
+  "authProviderApple": "Apple Account",
+  "authLegalPrefix": "By continuing, you agree to our ",
+  "authLegalTerms": "Terms of Service",
+  "authLegalAnd": " and ",
+  "authLegalPrivacy": "Privacy Policy",
+  "authLegalSuffix": ".",
+
+  "signUpTitle": "Create your Deal One account",
+  "signUpSubtitle": "Find your property, car, and deals in one place.",
+  "signUpNameHint": "Enter your name here",
+  "signUpPhoneHint": "01XXXXXXXXX",
+  "signUpWhatsappNote": "A verification code will be sent via WhatsApp",
+  "signUpSubmitButton": "Send Verification Code",
+  "signUpAlreadyHaveAccount": "Already have an account? ",
+  "signUpGoToLogin": "Log In",
+
+  "loginTitle": "Welcome Back",
+  "loginSubtitle": "Enter your WhatsApp number to continue exploring properties and purchases",
+  "loginSubmitButton": "Log In",
+  "loginNoAccount": "Don't have an account? ",
+  "loginCreateAccountNow": "Create Account Now",
+
+  "otpTitle": "Enter Verification Code",
+  "otpSubtitle": "Enter the {length}-digit code sent to\n[{phone}] via WhatsApp",
+  "@otpSubtitle": {
+    "placeholders": {
+      "length": {
+        "type": "int"
+      },
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "otpChangePhone": "Change Number",
+  "otpVerifyButton": "Verify Code",
+  "otpRetryButton": "Try Again",
+  "otpRetryWithCooldown": "Try Again ({cooldown})",
+  "@otpRetryWithCooldown": {
+    "placeholders": {
+      "cooldown": {
+        "type": "String"
+      }
+    }
+  },
+  "otpResendingLabel": "Sending a new code...",
+  "otpDidNotReceive": "Didn't receive the code? ",
+  "otpResendAgain": "Resend",
+  "otpResendCountdown": "Resend {cooldown}",
+  "@otpResendCountdown": {
+    "placeholders": {
+      "cooldown": {
+        "type": "String"
+      }
+    }
+  },
+  "otpSendingLabel": "Sending...",
+  "otpExpiryRemaining": "Code expires in: {time}",
+  "@otpExpiryRemaining": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "otpWhatsappHelp": "Didn't receive the code via WhatsApp?",
+  "otpSupportPrompt": "Having trouble logging in? Contact Support",
+  "otpResendInCooldown": "Send new code in {cooldown}",
+  "@otpResendInCooldown": {
+    "placeholders": {
+      "cooldown": {
+        "type": "String"
+      }
+    }
+  },
+  "otpRequestNewCode": "Request a new verification code",
+  "otpResentSuccess": "A new verification code has been sent",
+  "otpWaitCooldownSms": "Please wait {cooldown} before resending via SMS",
+  "@otpWaitCooldownSms": {
+    "placeholders": {
+      "cooldown": {
+        "type": "String"
+      }
+    }
+  },
+  "otpWaitCooldownNewCode": "Please wait {cooldown} before requesting a new code",
+  "@otpWaitCooldownNewCode": {
+    "placeholders": {
+      "cooldown": {
+        "type": "String"
+      }
+    }
+  },
+  "otpSemanticsLabel": "{length}-digit verification code input",
+  "@otpSemanticsLabel": {
+    "placeholders": {
+      "length": {
+        "type": "int"
+      }
+    }
+  },
+  "otpNoActiveSessionTitle": "No Active Verification Session",
+  "otpNoActiveSessionSubtitle": "Please enter your phone number first to receive a verification code.",
+  "otpBackToLogin": "Back to Log In",
+  "otpRemainingAttemptsOne": "You have only 1 attempt remaining before temporary lockout",
+  "otpRemainingAttemptsTwo": "You have only 2 attempts remaining before temporary lockout",
+  "otpRemainingAttemptsMany": "You have {count} attempts remaining before temporary lockout",
+  "@otpRemainingAttemptsMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "otpExpiredTitle": "Verification code expired, please request a new code",
+  "otpExpiredBody": "The security timeout has elapsed to protect your account and transactions. You can generate a new code immediately and continue verification.",
+
+  "whatsappFailureTitle": "Unable to Send via WhatsApp",
+  "whatsappFailureDefaultSubtitle": "Sorry, this number is not registered on WhatsApp. Please use another method.",
+  "whatsappFailureSendEmail": "Send via Email",
+  "whatsappFailureResendSms": "Resend via SMS",
+  "whatsappFailureEditPhone": "Edit Number",
+  "whatsappFailureNeedHelp": "Need help logging in?",
+
+  "emailFallbackTitle": "Email Verification",
+  "emailFallbackSubtitle": "Enter your email address to check alternative code delivery availability.",
+  "emailFallbackLabel": "Email Address",
+  "emailFallbackSubmit": "Verify Email Address",
+  "emailFallbackUnsupported": "Email OTP delivery is not currently available from the server. Please complete verification via SMS on your Egyptian mobile number (+20).",
+
+  "supportTitle": "Technical Support - Deal One",
+  "supportSubtitle": "If you repeatedly have trouble receiving your verification code, contact our support team or copy the details below:",
+  "supportEmailTitle": "Support Email",
+  "supportHotlineTitle": "Customer Service",
+
+  "providerUnavailableTitle": "Sign in with {provider} is not enabled yet",
+  "@providerUnavailableTitle": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "providerUnavailableBody": "Deal One currently supports secure registration and verification using an Egyptian phone number and one-time verification code (OTP). Please enter your phone number to continue.",
+  "providerUnavailableButton": "Got it, continue with phone",
+
+  "successTitle": "Verified Successfully!",
+  "successSubtitleDefault": "Your account is now ready to use and search for your property and purchases.",
+  "successSubtitleWithName": "Welcome, {name}\nYour account is now ready to use and search for your property and purchases.",
+  "@successSubtitleWithName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "successContinueButton": "Continue to App",
+
+  "validationNameRequired": "Please enter your full name",
+  "validationNameTooShort": "Full name must be at least 2 characters",
+  "validationNameTooLong": "Full name is too long",
+  "validationNameLetters": "Please enter a valid name containing letters",
+  "validationPhoneRequired": "Please enter your phone number",
+  "validationPhoneInvalid": "Enter a valid Egyptian mobile number (e.g. 01012345678)",
+  "validationEmailRequired": "Please enter your email address",
+  "validationEmailInvalid": "Invalid email address format",
+  "validationOtpRequired": "Please enter the verification code",
+  "validationOtpIncomplete": "Please enter the {length}-digit verification code",
+  "@validationOtpIncomplete": {
+    "placeholders": {
+      "length": {
+        "type": "int"
+      }
+    }
+  },
+  "validationOtpDigitsOnly": "Verification code must contain digits only",
+
+  "authErrorNetwork": "No internet connection. Check your network and try again.",
+  "authErrorTimeout": "Connection to the server timed out. Please try again.",
+  "authErrorUnexpectedResponse": "Received an unexpected response from the server. Please try again later.",
+  "authErrorWhatsappUnavailable": "Sorry, this number is not registered on WhatsApp. Please use another method.",
+  "authErrorOtpDeliveryFailed": "Unable to send the verification code right now. Please verify your number or try again later.",
+  "authErrorMaxAttempts": "Maximum verification attempts exceeded (5 attempts). Please request a new verification code.",
+  "authErrorOtpExpired": "Verification code expired, please request a new code",
+  "authErrorOtpInvalid": "Incorrect verification code, please check and try again",
+  "authErrorInvalidRefreshToken": "Your session has expired. Please log in again.",
+  "authErrorRateLimited": "Too many recent requests. Please wait for the countdown to finish before requesting a new code.",
+  "authErrorAccountNotFound": "No account was found associated with this number.",
+  "authErrorExistingAccount": "This phone number is already registered. You can log in directly.",
+  "authErrorInvalidPhone": "Enter a valid Egyptian mobile number (e.g. 01012345678)",
+  "authErrorValidation": "Please review the entered information and try again.",
+  "authErrorAccountSuspended": "This account is currently not authorized to sign in. Please contact support.",
+  "authErrorUnauthorized": "Session expired or invalid credentials. Please try again.",
+  "authErrorServer": "An unexpected server error occurred. Please try again later.",
+
+  "legalTermsTitle": "Terms of Service",
+  "legalPrivacyTitle": "Privacy Policy",
+  "legalTermsSection1Title": "1. Using Deal One Platform",
+  "legalTermsSection1Body": "When using Deal One, you agree to publish accurate listings compliant with the laws of the Arab Republic of Egypt and refrain from impersonation or misleading information.",
+  "legalTermsSection2Title": "2. Account & Phone Verification",
+  "legalTermsSection2Body": "Accounts are verified using an active Egyptian mobile number via a one-time password (OTP). You are responsible for keeping your session secure and never sharing verification codes.",
+  "legalTermsSection3Title": "3. User Transactions",
+  "legalTermsSection3Body": "Deal One is a classifieds and listing platform connecting buyers and sellers. Always inspect items and verify ownership documents before completing any financial transaction.",
+  "legalPrivacySection1Title": "1. Data We Collect",
+  "legalPrivacySection1Body": "We collect only your full name, Egyptian phone number, and listing details you provide to activate your account and enable trusted in-app communication.",
+  "legalPrivacySection2Title": "2. Token & Session Security",
+  "legalPrivacySection2Body": "Session tokens (JWT Access & Refresh Tokens) are stored inside encrypted secure storage on your device and are never shared with third parties for marketing.",
+  "legalPrivacySection3Title": "3. Your Account Rights",
+  "legalPrivacySection3Body": "You can update your name, log out from all sessions, or request account deletion at any time through account settings or by contacting support.",
+
+  "profileTitleGuest": "My Account",
+  "profileTitleAuth": "My Account & Profile",
+  "profileGuestHeadline": "Sign in to access your listings and messages",
+  "profileLoginWithPhone": "Log in with Phone Number",
+  "profileRegisteredUser": "Registered User",
+  "profileIdAvailable": "ID available",
+  "profileDailyQuotaTitle": "Daily Contact Quota (Cairo Time)",
+  "profileDailyQuotaRemaining": "Remaining today: {remaining} of {limit} phone reveals",
+  "@profileDailyQuotaRemaining": {
+    "placeholders": {
+      "remaining": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "profileDailyQuotaNote": "Quota resets automatically at midnight Cairo time.",
+  "profileDailyQuotaError": "Unable to load daily quota details",
+  "profileAccountsTitle": "Seller & Showroom Accounts",
+  "profileAccountsEmpty": "No additional showroom accounts",
+  "profileAccountsError": "Unable to load accounts",
+  "profileVerified": "Verified",
+  "profileUnderReview": "Under Review",
+  "profileRoleLabel": "Role: {role} • {status}",
+  "@profileRoleLabel": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "profileLogout": "Log Out",
+  "settingsThemeTitle": "App Appearance",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsLanguageTitle": "App Language",
+  "settingsLanguageArabic": "العربية",
+  "settingsLanguageEnglish": "English"
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/auth_l10n_extension.dart';
 import '../../theme/auth_design_tokens.dart';
 
-/// Standard legal footer shown at the bottom of Deal One auth screens.
+/// Standard localized legal footer shown at the bottom of Deal One auth screens.
 class AuthLegalFooter extends StatefulWidget {
   final VoidCallback? onTermsTap;
   final VoidCallback? onPrivacyTap;
@@ -41,6 +42,7 @@ class _AuthLegalFooterState extends State<AuthLegalFooter> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.authL10n;
     final baseStyle = TextStyle(
       fontSize: 11.5,
       height: 1.5,
@@ -59,19 +61,19 @@ class _AuthLegalFooterState extends State<AuthLegalFooter> {
       TextSpan(
         style: baseStyle,
         children: [
-          const TextSpan(text: 'بالمتابعة، فإنك توافق على '),
+          TextSpan(text: l10n.authLegalPrefix),
           TextSpan(
-            text: 'شروط الخدمة',
+            text: l10n.authLegalTerms,
             recognizer: widget.onTermsTap != null ? _termsRecognizer : null,
             style: linkStyle,
           ),
-          const TextSpan(text: ' و'),
+          TextSpan(text: l10n.authLegalAnd),
           TextSpan(
-            text: 'سياسة الخصوصية',
+            text: l10n.authLegalPrivacy,
             recognizer: widget.onPrivacyTap != null ? _privacyRecognizer : null,
             style: linkStyle,
           ),
-          const TextSpan(text: '.'),
+          TextSpan(text: l10n.authLegalSuffix),
         ],
       ),
       textAlign: TextAlign.center,

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../domain/validators/auth_validators.dart';
+import '../../l10n/auth_l10n_extension.dart';
 import '../../theme/auth_design_tokens.dart';
 
-/// 6-digit left-to-right OTP entry strip matching `otp.png` and
-/// `لو المستخدم دخل الرمز غلط.png` with amber focus, vertical cursor bar,
-/// red error borders, paste support, and SMS-autofill.
+/// 6-digit left-to-right OTP entry strip matching `Verification via OTP code.png`
+/// and `Verification via OTP code _Faild State_.png` with amber focus border,
+/// vertical cursor bar, red error borders, paste support, and SMS-autofill.
 class OtpPinBoxes extends StatefulWidget {
   final String code;
   final int length;
@@ -102,8 +103,9 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.authL10n;
     return Semantics(
-      label: 'حقل إدخال رمز التحقق المكون من ${widget.length} أرقام',
+      label: l10n.otpSemanticsLabel(widget.length),
       textField: true,
       child: Directionality(
         textDirection: TextDirection.ltr,
@@ -161,15 +163,15 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
                                     widget.code.length == widget.length &&
                                     index == widget.length - 1));
 
-                        final focusColor = AuthDesignTokens.focusBorderOf(
-                          context,
-                        );
+                        const focusAccent = AuthDesignTokens.focusOrange;
                         final borderColor = widget.hasError
                             ? AuthDesignTokens.errorRed
                             : (isActiveCell
-                                  ? focusColor
+                                  ? focusAccent
                                   : (digit.isNotEmpty
-                                        ? focusColor.withValues(alpha: 0.45)
+                                        ? AuthDesignTokens.headingOf(
+                                            context,
+                                          ).withValues(alpha: 0.35)
                                         : AuthDesignTokens.borderOf(context)));
 
                         final fillColor = AuthDesignTokens.surfaceOf(context);
@@ -191,7 +193,7 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
                               border: Border.all(
                                 color: borderColor,
                                 width: (widget.hasError || isActiveCell)
-                                    ? 1.7
+                                    ? 1.8
                                     : 1.0,
                               ),
                               boxShadow: AuthDesignTokens.cardShadowOf(context),
@@ -212,7 +214,7 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
                                           width: 2,
                                           height: 24,
                                           decoration: BoxDecoration(
-                                            color: focusColor,
+                                            color: focusAccent,
                                             borderRadius: BorderRadius.circular(
                                               2,
                                             ),

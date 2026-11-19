@@ -1,5 +1,6 @@
 import '../../data/mappers/auth_error_mapper.dart';
 import '../../domain/entities/auth_session.dart';
+import '../../domain/validators/auth_validators.dart';
 
 /// State for the 3-page onboarding carousel.
 class OnboardingState {
@@ -37,7 +38,9 @@ class SignUpState {
   final String fullName;
   final String phone;
   final String? fullNameError;
+  final FullNameValidationError? fullNameErrorCode;
   final String? phoneError;
+  final PhoneValidationError? phoneErrorCode;
   final String? submitError;
   final AuthErrorKind? errorKind;
   final String? deliveryFailurePhone;
@@ -48,7 +51,9 @@ class SignUpState {
     this.fullName = '',
     this.phone = '',
     this.fullNameError,
+    this.fullNameErrorCode,
     this.phoneError,
+    this.phoneErrorCode,
     this.submitError,
     this.errorKind,
     this.deliveryFailurePhone,
@@ -63,8 +68,10 @@ class SignUpState {
     String? fullName,
     String? phone,
     String? fullNameError,
+    FullNameValidationError? fullNameErrorCode,
     bool clearFullNameError = false,
     String? phoneError,
+    PhoneValidationError? phoneErrorCode,
     bool clearPhoneError = false,
     String? submitError,
     bool clearSubmitError = false,
@@ -82,7 +89,13 @@ class SignUpState {
       fullNameError: clearFullNameError
           ? null
           : (fullNameError ?? this.fullNameError),
+      fullNameErrorCode: clearFullNameError
+          ? null
+          : (fullNameErrorCode ?? this.fullNameErrorCode),
       phoneError: clearPhoneError ? null : (phoneError ?? this.phoneError),
+      phoneErrorCode: clearPhoneError
+          ? null
+          : (phoneErrorCode ?? this.phoneErrorCode),
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
       errorKind: clearErrorKind ? null : (errorKind ?? this.errorKind),
       deliveryFailurePhone: clearDeliveryFailure
@@ -100,6 +113,7 @@ class SignUpState {
 class LoginState {
   final String phone;
   final String? phoneError;
+  final PhoneValidationError? phoneErrorCode;
   final String? submitError;
   final AuthErrorKind? errorKind;
   final String? deliveryFailurePhone;
@@ -109,6 +123,7 @@ class LoginState {
   const LoginState({
     this.phone = '',
     this.phoneError,
+    this.phoneErrorCode,
     this.submitError,
     this.errorKind,
     this.deliveryFailurePhone,
@@ -122,6 +137,7 @@ class LoginState {
   LoginState copyWith({
     String? phone,
     String? phoneError,
+    PhoneValidationError? phoneErrorCode,
     bool clearPhoneError = false,
     String? submitError,
     bool clearSubmitError = false,
@@ -136,6 +152,9 @@ class LoginState {
     return LoginState(
       phone: phone ?? this.phone,
       phoneError: clearPhoneError ? null : (phoneError ?? this.phoneError),
+      phoneErrorCode: clearPhoneError
+          ? null
+          : (phoneErrorCode ?? this.phoneErrorCode),
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
       errorKind: clearErrorKind ? null : (errorKind ?? this.errorKind),
       deliveryFailurePhone: clearDeliveryFailure
@@ -174,6 +193,8 @@ class OtpVerificationState {
   final String code;
   final OtpStatus status;
   final String? errorMessage;
+  final AuthErrorKind? errorKind;
+  final OtpValidationError? validationErrorCode;
   final int cooldownRemainingSeconds;
   final int expiryRemainingSeconds;
   final int failedAttempts;
@@ -189,6 +210,8 @@ class OtpVerificationState {
     this.code = '',
     this.status = OtpStatus.initial,
     this.errorMessage,
+    this.errorKind,
+    this.validationErrorCode,
     this.cooldownRemainingSeconds = 60,
     this.expiryRemainingSeconds = 180,
     this.failedAttempts = 0,
@@ -209,10 +232,16 @@ class OtpVerificationState {
       status == OtpStatus.expired ||
       status == OtpStatus.locked;
   bool get hasBannerError =>
-      errorMessage != null && errorMessage!.trim().isNotEmpty;
+      (errorMessage != null && errorMessage!.trim().isNotEmpty) ||
+      errorKind != null ||
+      validationErrorCode != null;
   int get remainingAttempts =>
       (maxAttempts - failedAttempts).clamp(0, maxAttempts);
-  bool get canSubmit => code.length == 6 && !isBusy && !isExpired && !isLocked;
+  bool get canSubmit =>
+      code.length == OtpCodeValidator.requiredLength &&
+      !isBusy &&
+      !isExpired &&
+      !isLocked;
   bool get canResend => cooldownRemainingSeconds <= 0 && !isBusy;
 
   /// Formats `cooldownRemainingSeconds` as `M:SS` (e.g. `0:59`).
@@ -244,6 +273,8 @@ class OtpVerificationState {
     String? code,
     OtpStatus? status,
     String? errorMessage,
+    AuthErrorKind? errorKind,
+    OtpValidationError? validationErrorCode,
     bool clearErrorMessage = false,
     int? cooldownRemainingSeconds,
     int? expiryRemainingSeconds,
@@ -262,6 +293,10 @@ class OtpVerificationState {
       errorMessage: clearErrorMessage
           ? null
           : (errorMessage ?? this.errorMessage),
+      errorKind: clearErrorMessage ? null : (errorKind ?? this.errorKind),
+      validationErrorCode: clearErrorMessage
+          ? null
+          : (validationErrorCode ?? this.validationErrorCode),
       cooldownRemainingSeconds:
           cooldownRemainingSeconds ?? this.cooldownRemainingSeconds,
       expiryRemainingSeconds:

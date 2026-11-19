@@ -6,6 +6,7 @@ import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/features/accounts/presentation/providers/accounts_providers.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
 import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
 import 'package:market_space/features/quotas/presentation/providers/quotas_providers.dart';
 
@@ -14,13 +15,14 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.authL10n;
     final session = ref.watch(sessionProvider);
     final quotaAsync = ref.watch(myQuotaUsageProvider);
     final accountsAsync = ref.watch(myAccountsProvider);
 
     if (!session.isAuthenticated) {
       return Scaffold(
-        appBar: AppBar(title: const Text('حسابي')),
+        appBar: AppBar(title: Text(l10n.profileTitleGuest)),
         body: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -33,10 +35,13 @@ class ProfileScreen extends ConsumerWidget {
                   color: AppColors.primaryOf(context),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'سجّل الدخول للوصول إلى إعلاناتك والتواصل',
+                Text(
+                  l10n.profileGuestHeadline,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -46,15 +51,17 @@ class ProfileScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     icon: const Icon(Icons.login),
-                    label: const Text(
-                      'تسجيل الدخول برقم الهاتف',
-                      style: TextStyle(fontSize: 16),
+                    label: Text(
+                      l10n.profileLoginWithPhone,
+                      style: const TextStyle(fontSize: 16),
                     ),
                     onPressed: () => context.push(RouteNames.login),
                   ),
                 ),
                 const SizedBox(height: 24),
                 const _ThemeModeCard(),
+                const SizedBox(height: 12),
+                const _LanguageSelectorCard(),
               ],
             ),
           ),
@@ -63,7 +70,7 @@ class ProfileScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('حسابي والملف الشخصي')),
+      appBar: AppBar(title: Text(l10n.profileTitleAuth)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -90,16 +97,16 @@ class ProfileScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'المستخدم المسجل',
-                          style: TextStyle(
+                        Text(
+                          l10n.profileRegisteredUser,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          session.userId ?? 'المعرف متوفر',
+                          session.userId ?? l10n.profileIdAvailable,
                           style: TextStyle(
                             color: AppColors.textMutedOf(context),
                           ),
@@ -130,11 +137,13 @@ class ProfileScreen extends ConsumerWidget {
                         color: AppColors.successOf(context),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
-                        'حصة التواصل اليومية (توقيت القاهرة)',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Text(
+                          l10n.profileDailyQuotaTitle,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -159,7 +168,10 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'المتبقي اليوم: ${quota.remaining} من أصل ${quota.limit} كشوفات أرقام',
+                          l10n.profileDailyQuotaRemaining(
+                            quota.remaining,
+                            quota.limit,
+                          ),
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondaryOf(context),
@@ -167,7 +179,7 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'تتجدد الحصة تلقائياً عند منتصف ليل كل يوم بتوقيت القاهرة.',
+                          l10n.profileDailyQuotaNote,
                           style: TextStyle(
                             fontSize: 11,
                             color: AppColors.textMutedOf(context),
@@ -176,8 +188,7 @@ class ProfileScreen extends ConsumerWidget {
                       ],
                     ),
                     loading: () => const LinearProgressIndicator(),
-                    error: (_, _) =>
-                        const Text('تعذر تحميل معلومات الحصة اليومية'),
+                    error: (_, _) => Text(l10n.profileDailyQuotaError),
                   ),
                 ],
               ),
@@ -195,16 +206,19 @@ class ProfileScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'حسابات البيع والمعارض التابعة',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.profileAccountsTitle,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   accountsAsync.when(
                     data: (accounts) {
                       if (accounts.isEmpty) {
                         return Text(
-                          'لا توجد حسابات معارض إضافية',
+                          l10n.profileAccountsEmpty,
                           style: TextStyle(
                             color: AppColors.textMutedOf(context),
                           ),
@@ -217,7 +231,12 @@ class ProfileScreen extends ConsumerWidget {
                             leading: const Icon(Icons.store),
                             title: Text(acc.displayName),
                             subtitle: Text(
-                              'الصفة: ${acc.role} • ${acc.isVerified ? "موثق" : "قيد المراجعة"}',
+                              l10n.profileRoleLabel(
+                                acc.role,
+                                acc.isVerified
+                                    ? l10n.profileVerified
+                                    : l10n.profileUnderReview,
+                              ),
                             ),
                           );
                         }).toList(),
@@ -226,7 +245,7 @@ class ProfileScreen extends ConsumerWidget {
                     loading: () => const Center(
                       child: CircularProgressIndicator.adaptive(),
                     ),
-                    error: (_, _) => const Text('تعذر تحميل الحسابات'),
+                    error: (_, _) => Text(l10n.profileAccountsError),
                   ),
                 ],
               ),
@@ -235,6 +254,8 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           const _ThemeModeCard(),
+          const SizedBox(height: 12),
+          const _LanguageSelectorCard(),
           const SizedBox(height: 24),
 
           // Logout Button
@@ -245,7 +266,10 @@ class ProfileScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             icon: const Icon(Icons.logout),
-            label: const Text('تسجيل الخروج', style: TextStyle(fontSize: 16)),
+            label: Text(
+              l10n.profileLogout,
+              style: const TextStyle(fontSize: 16),
+            ),
             onPressed: () async {
               await ref.read(authControllerProvider.notifier).logout();
             },
@@ -261,6 +285,7 @@ class _ThemeModeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.authL10n;
     final currentMode = ref.watch(appThemeModeProvider);
 
     return Card(
@@ -278,9 +303,12 @@ class _ThemeModeCard extends ConsumerWidget {
                   color: AppColors.primaryOf(context),
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'مظهر التطبيق',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.settingsThemeTitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -296,21 +324,88 @@ class _ThemeModeCard extends ConsumerWidget {
                         .setThemeMode(selection.first);
                   }
                 },
-                segments: const [
+                segments: [
                   ButtonSegment<ThemeMode>(
                     value: ThemeMode.system,
-                    icon: Icon(Icons.settings_brightness_outlined, size: 18),
-                    label: Text('النظام'),
+                    icon: const Icon(
+                      Icons.settings_brightness_outlined,
+                      size: 18,
+                    ),
+                    label: Text(l10n.settingsThemeSystem),
                   ),
                   ButtonSegment<ThemeMode>(
                     value: ThemeMode.light,
-                    icon: Icon(Icons.light_mode_outlined, size: 18),
-                    label: Text('فاتح'),
+                    icon: const Icon(Icons.light_mode_outlined, size: 18),
+                    label: Text(l10n.settingsThemeLight),
                   ),
                   ButtonSegment<ThemeMode>(
                     value: ThemeMode.dark,
-                    icon: Icon(Icons.dark_mode_outlined, size: 18),
-                    label: Text('داكن'),
+                    icon: const Icon(Icons.dark_mode_outlined, size: 18),
+                    label: Text(l10n.settingsThemeDark),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageSelectorCard extends ConsumerWidget {
+  const _LanguageSelectorCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.authL10n;
+    final currentLocale = ref.watch(appLocaleProvider);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.language_rounded,
+                  size: 20,
+                  color: AppColors.primaryOf(context),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.settingsLanguageTitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<String>(
+                key: const Key('profile_language_selector'),
+                selected: {currentLocale.languageCode},
+                onSelectionChanged: (selection) {
+                  if (selection.isNotEmpty) {
+                    ref
+                        .read(appLocaleProvider.notifier)
+                        .setLocale(Locale(selection.first));
+                  }
+                },
+                segments: [
+                  ButtonSegment<String>(
+                    value: 'ar',
+                    label: Text(l10n.settingsLanguageArabic),
+                  ),
+                  ButtonSegment<String>(
+                    value: 'en',
+                    label: Text(l10n.settingsLanguageEnglish),
                   ),
                 ],
               ),

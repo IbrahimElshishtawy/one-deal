@@ -27,10 +27,12 @@ class LoginController extends AutoDisposeNotifier<LoginState> {
   Future<PendingAuthContext?> submit({String? redirectTo}) async {
     if (state.isSubmitting) return null;
 
+    final phoneErrorCode = EgyptianPhoneValidator.validateCode(state.phone);
     final phoneError = EgyptianPhoneValidator.validate(state.phone);
-    if (phoneError != null) {
+    if (phoneErrorCode != null) {
       state = state.copyWith(
         phoneError: phoneError,
+        phoneErrorCode: phoneErrorCode,
         clearSubmitError: true,
         clearErrorKind: true,
         clearDeliveryFailure: true,
@@ -42,6 +44,7 @@ class LoginController extends AutoDisposeNotifier<LoginState> {
     if (normalizedPhone == null) {
       state = state.copyWith(
         phoneError: 'أدخل رقم موبايل مصري صحيح (مثال: 01012345678)',
+        phoneErrorCode: PhoneValidationError.invalidEgyptianMobile,
       );
       return null;
     }

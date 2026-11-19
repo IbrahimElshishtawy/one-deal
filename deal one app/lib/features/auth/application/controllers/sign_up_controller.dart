@@ -37,15 +37,19 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
   Future<PendingAuthContext?> submit({String? redirectTo}) async {
     if (state.isSubmitting) return null;
 
+    final nameErrorCode = FullNameValidator.validateCode(state.fullName);
+    final phoneErrorCode = EgyptianPhoneValidator.validateCode(state.phone);
     final nameError = FullNameValidator.validate(state.fullName);
     final phoneError = EgyptianPhoneValidator.validate(state.phone);
 
-    if (nameError != null || phoneError != null) {
+    if (nameErrorCode != null || phoneErrorCode != null) {
       state = state.copyWith(
         fullNameError: nameError,
-        clearFullNameError: nameError == null,
+        fullNameErrorCode: nameErrorCode,
+        clearFullNameError: nameErrorCode == null,
         phoneError: phoneError,
-        clearPhoneError: phoneError == null,
+        phoneErrorCode: phoneErrorCode,
+        clearPhoneError: phoneErrorCode == null,
         clearSubmitError: true,
         clearErrorKind: true,
         clearDeliveryFailure: true,
@@ -58,6 +62,7 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
     if (normalizedPhone == null) {
       state = state.copyWith(
         phoneError: 'أدخل رقم موبايل مصري صحيح (مثال: 01012345678)',
+        phoneErrorCode: PhoneValidationError.invalidEgyptianMobile,
       );
       return null;
     }
