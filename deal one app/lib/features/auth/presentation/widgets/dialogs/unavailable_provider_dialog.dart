@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../app/app_localization.dart';
 import '../../../domain/entities/auth_session.dart';
 import '../../theme/auth_design_tokens.dart';
 
-/// Informative modal dialog shown when tapping Google or Apple social buttons,
+/// Informative modal dialog shown when tapping Email or Apple social buttons,
 /// transparently explaining that authentication currently runs over Egyptian SMS OTP.
 class UnavailableProviderDialog extends StatelessWidget {
   final SocialAuthProviderType provider;
@@ -20,17 +21,20 @@ class UnavailableProviderDialog extends StatelessWidget {
     );
   }
 
-  String get _providerLabel {
+  String _providerLabel(AppLocalizations l10n) {
     switch (provider) {
       case SocialAuthProviderType.google:
-        return 'البريد الإلكتروني';
+        return l10n.authEmailProvider;
       case SocialAuthProviderType.apple:
-        return 'حساب آبل';
+        return l10n.authAppleProvider;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+    final providerName = _providerLabel(l10n);
+
     return AlertDialog(
       backgroundColor: AuthDesignTokens.backgroundOf(context),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -48,7 +52,7 @@ class UnavailableProviderDialog extends StatelessWidget {
         ),
       ),
       title: Text(
-        'التسجيل عبر $_providerLabel غير مفعل حالياً',
+        l10n.unavailableProviderTitle(providerName),
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 17.5,
@@ -57,7 +61,7 @@ class UnavailableProviderDialog extends StatelessWidget {
         ),
       ),
       content: Text(
-        'يدعم نظام ديل ون حالياً التسجيل والتحقق الآمن عبر رقم الهاتف المصري ورمز التحقق (OTP). يرجى إدخال رقم هاتفك للمتابعة.',
+        l10n.unavailableProviderBody,
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 13.5,
@@ -76,11 +80,11 @@ class UnavailableProviderDialog extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
             child: Text(
-              'فهمت، المتابعة برقم الهاتف',
-              style: TextStyle(fontWeight: FontWeight.w700),
+              l10n.unavailableProviderCta,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ),

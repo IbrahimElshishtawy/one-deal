@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:market_space/app/app_localization.dart';
 import 'package:market_space/core/errors/app_exception.dart';
 import 'package:market_space/core/providers/app_settings_providers.dart';
 import 'package:market_space/core/providers/core_providers.dart';
@@ -36,6 +37,8 @@ Widget _buildRoutedApp({
   required FakeAuthRepository repo,
   String initialLocation = RouteNames.onboarding,
   Object? initialExtra,
+  Locale locale = const Locale('ar'),
+  ThemeMode themeMode = ThemeMode.light,
 }) {
   final router = GoRouter(
     initialLocation: initialLocation,
@@ -97,7 +100,15 @@ Widget _buildRoutedApp({
       authRepositoryProvider.overrideWithValue(repo),
       otpAutoTimerEnabledProvider.overrideWithValue(false),
     ],
-    child: MaterialApp.router(locale: const Locale('ar'), routerConfig: router),
+    child: MaterialApp.router(
+      locale: locale,
+      themeMode: themeMode,
+      theme: AppThemeData.lightTheme,
+      darkTheme: AppThemeData.darkTheme,
+      localizationsDelegates: AppLocalization.localizationsDelegates,
+      supportedLocales: AppLocalization.supportedLocales,
+      routerConfig: router,
+    ),
   );
 }
 
@@ -128,17 +139,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('كل ما تحتاجه في مكان واحد'), findsOneWidget);
+      expect(find.text('عالم من العقارات والسيارات بين يديك'), findsOneWidget);
+      expect(find.byKey(const Key('onboarding_skip_button')), findsOneWidget);
 
       await tester.tap(find.text('التالي'));
       await tester.pumpAndSettle();
-      expect(find.text('تواصل مباشر وصفقات آمنة'), findsOneWidget);
+      expect(find.text('تشطيبات وخدمات منزلية بالقرب منك'), findsOneWidget);
+      expect(find.byKey(const Key('onboarding_skip_button')), findsOneWidget);
 
       await tester.tap(find.text('التالي'));
       await tester.pumpAndSettle();
-      expect(find.text('أفضل العروض بالقرب منك'), findsOneWidget);
+      expect(find.text('أناقتك وديكور منزلك بتواصل مباشر'), findsOneWidget);
+      expect(find.byKey(const Key('onboarding_skip_button')), findsNothing);
 
-      await tester.tap(find.text('ابدأ الآن'));
+      await tester.tap(find.text('إنشاء حساب'));
       await tester.pumpAndSettle();
 
       expect(find.text('أنشئ حسابك في Deal One'), findsOneWidget);
@@ -529,6 +543,149 @@ void main() {
         tester.widget<Text>(find.text('إعادة المحاولة')).style?.color,
         AuthDesignTokens.darkTextPrimary,
       );
+    },
+  );
+
+  testWidgets(
+    'English LTR renders Onboarding, Sign Up, Login, OTP, Error states, and Success cleanly in Dark Mode',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildRoutedApp(
+          prefs: prefs,
+          secureStorage: secureStorage,
+          tokens: tokens,
+          repo: repo,
+          initialLocation: RouteNames.onboarding,
+          locale: const Locale('en'),
+          themeMode: ThemeMode.dark,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        Directionality.of(tester.element(find.byType(OnboardingPage))),
+        TextDirection.ltr,
+      );
+      expect(
+        find.text('A World of Real Estate & Cars in Your Hands'),
+        findsOneWidget,
+      );
+      expect(find.text('Skip'), findsOneWidget);
+
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      expect(find.text('Finishing & Home Services Near You'), findsOneWidget);
+
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Your Style & Home Decor with Direct Contact'),
+        findsOneWidget,
+      );
+      expect(find.text('Skip'), findsNothing);
+
+      await tester.tap(find.text('Create Account'));
+      await tester.pumpAndSettle();
+      expect(find.text('Create your Deal One account'), findsOneWidget);
+
+      // Trigger localized English validation errors
+      await tester.tap(find.byKey(const Key('signup_submit_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Please enter your full name'), findsOneWidget);
+      expect(find.text('Please enter your phone number'), findsOneWidget);
+
+      // Navigate to Login and verify English copy + dark theme background
+      await tester.ensureVisible(find.byKey(const Key('signup_to_login_button')));
+      await tester.tap(find.byKey(const Key('signup_to_login_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Welcome Back'), findsOneWidget);
+      expect(find.text('Log In'), findsOneWidget);
+
+      // Enter valid Egyptian phone and advance to OTP
+      await tester.enterText(
+        find.byKey(const Key('login_phone_field')),
+        '01012345678',
+      );
+      await tester.tap(find.byKey(const Key('login_submit_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Enter Verification Code'), findsOneWidget);
+
+      // Verify invalid OTP state renders English banner + attempts pill
+      repo.nextVerifyError = const UnauthorizedException(
+        message: 'Incorrect OTP code.',
+      );
+      await tester.enterText(
+        find.byKey(const Key('otp_hidden_input')),
+        '000000',
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Incorrect verification code, please check and try again'),
+        findsOneWidget,
+      );
+
+      // Retry with valid code -> Success screen in English
+      repo.nextVerifyError = null;
+      await tester.tap(find.byKey(const Key('otp_retry_button')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('otp_hidden_input')),
+        '123456',
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Verified Successfully!'), findsOneWidget);
+      expect(find.text('Continue to Login'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Profile language selector switches Arabic RTL and English LTR live and persists locale',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            preferencesServiceProvider.overrideWithValue(prefs),
+            secureStorageServiceProvider.overrideWithValue(secureStorage),
+            tokenProvider.overrideWithValue(tokens),
+            authRepositoryProvider.overrideWithValue(repo),
+          ],
+          child: Consumer(
+            builder: (context, ref, _) {
+              final locale = ref.watch(appLocaleProvider);
+              return MaterialApp(
+                locale: locale,
+                theme: AppThemeData.lightTheme,
+                darkTheme: AppThemeData.darkTheme,
+                localizationsDelegates: AppLocalization.localizationsDelegates,
+                supportedLocales: AppLocalization.supportedLocales,
+                home: const ProfileScreen(),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Default Arabic RTL
+      expect(find.text('حسابي'), findsOneWidget);
+      expect(find.text('لغة التطبيق'), findsOneWidget);
+      expect(
+        Directionality.of(tester.element(find.byType(ProfileScreen))),
+        TextDirection.rtl,
+      );
+
+      // Switch to English LTR
+      await tester.ensureVisible(find.text('English'));
+      await tester.tap(find.text('English'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('My Account'), findsOneWidget);
+      expect(find.text('App Language'), findsOneWidget);
+      expect(
+        Directionality.of(tester.element(find.byType(ProfileScreen))),
+        TextDirection.ltr,
+      );
+      expect(await prefs.getString(StorageKeys.languageCode), 'en');
     },
   );
 }

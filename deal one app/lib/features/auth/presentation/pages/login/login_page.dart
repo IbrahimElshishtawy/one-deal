@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../app/app_localization.dart';
 import '../../../../../core/routing/route_names.dart';
 import '../../providers/auth_providers.dart';
 import '../../theme/auth_design_tokens.dart';
+import '../../utils/auth_error_localizer.dart';
 import '../../widgets/bottom_sheets/email_fallback_sheet.dart';
 import '../../widgets/bottom_sheets/support_contact_sheet.dart';
 import '../../widgets/bottom_sheets/whatsapp_delivery_failure_sheet.dart';
@@ -15,7 +17,7 @@ import '../../widgets/common/auth_social_button.dart';
 import '../../widgets/dialogs/unavailable_provider_dialog.dart';
 import '../../widgets/login/login_form_card.dart';
 
-/// Deal One Login page matching `ui/login.png`.
+/// Deal One Login page matching `Log-in.png`.
 class LoginPage extends ConsumerStatefulWidget {
   final String? redirectTo;
 
@@ -47,9 +49,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     final state = ref.read(loginControllerProvider);
     if (state.hasDeliveryFailure) {
+      final localizedReason = AuthErrorLocalizer.resolveMessage(
+        context,
+        rawMessage: state.submitError,
+        errorKind: state.errorKind,
+      );
       _showDeliveryFailureSheet(
         displayPhone: state.deliveryFailurePhone!,
-        failureReason: state.submitError,
+        failureReason: localizedReason,
       );
       notifier.clearDeliveryFailure();
     }
@@ -74,16 +81,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(loginControllerProvider);
     final controller = ref.read(loginControllerProvider.notifier);
+    final l10n = AppLocalization.of(context);
+
+    final localizedPhoneError = AuthErrorLocalizer.resolveMessage(
+      context,
+      rawMessage: state.phoneError,
+    );
+    final localizedSubmitError = AuthErrorLocalizer.resolveMessage(
+      context,
+      rawMessage: state.submitError,
+      errorKind: state.errorKind,
+    );
 
     return AuthScaffoldShell(
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
-                'ليس لديك حساب؟ ',
+                l10n.loginNoAccountPrompt,
                 style: TextStyle(
                   fontSize: 13.5,
                   color: AuthDesignTokens.mutedOf(context),
@@ -97,7 +116,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       : RouteNames.signUp,
                 ),
                 child: Text(
-                  'إنشاء حساب الآن',
+                  l10n.loginCreateAccountLink,
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
@@ -131,7 +150,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
               onPressed: () => context.go(RouteNames.root),
               child: Text(
-                'تصفح كزائر',
+                l10n.authBrowseAsGuest,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -141,15 +160,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
           ),
           const SizedBox(height: AuthDesignTokens.spaceMd),
-          const AuthLogoHeader(
-            title: 'أهلاً بك مجدداً',
-            subtitle: 'أدخل رقم الواتساب للمتابعة واستكشاف\nالعقارات والمشاريع',
+          AuthLogoHeader(
+            title: l10n.loginTitle,
+            subtitle: l10n.loginSubtitle,
           ),
           const SizedBox(height: AuthDesignTokens.headerToFormGap),
           LoginFormCard(
             phoneController: _phoneController,
-            phoneError: state.phoneError,
-            submitError: state.submitError,
+            phoneError: localizedPhoneError,
+            submitError: localizedSubmitError,
             isSubmitting: state.isSubmitting,
             onPhoneChanged: controller.updatePhone,
             onSubmit: _handleSubmit,

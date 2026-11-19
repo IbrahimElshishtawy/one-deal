@@ -1,69 +1,58 @@
-# Deal One Backend — Final Production Readiness Report
+# Deal One — Final Production Readiness Report (Phases Eight & Eleven)
 
 **Date:** 2026-11-19  
-**Branch:** `staging-validation` (branched cleanly from `main` @ `8d444da`)  
-**Final Release Decision:** **`READY FOR STAGING VALIDATION`** *(External Cloud Infrastructure Blockers: Railway Staging Environment, Live Railway `TRUST_PROXY` Header Observation, and Railway DB Backup/Restore Drill)*
+**Branch:** `staging-validation` (`712c254`, branched from `main` @ `8d444da`)  
+**Final Release Gate Status:** **`BLOCKED`** *(Local remediation & regression validation are complete — `READY FOR STAGING VALIDATION` — but live Railway Staging deployment, live `TRUST_PROXY` verification, cloud progressive k6 load testing, Railway DB backup/restore drill, and production secret rotation are BLOCKED pending project owner authorization for paid Railway resources and production variable updates.)*
 
 ---
 
-## 1. Independent Verification Matrix (Phase One)
+## 1. Phase Eight — Railway Infrastructure Review (`airy-creativity`)
 
-| Finding | Previous Status | Current Code Status | Test & Runtime Evidence | Final Status |
-|---|---|---|---|---|
-| **F-01** JWT secret management & fail-fast env | FIXED AND VERIFIED | Confirmed hardened; zero prod defaults | `env.config.spec.ts` (16/16); live `NODE_ENV=production` boot verified | **VERIFIED (Unit + Live Local Staging)** |
-| **F-02** Auth rate limiting & status enumeration | FIXED AND VERIFIED | Confirmed on login, refresh, OTP send/resend/verify, forgot/reset | `auth.service.spec.ts`, `rate-limit.guard.spec.ts`, `staging-validation.e2e-spec.ts` (real Redis 429 + `Retry-After`) | **VERIFIED (Unit + Real E2E)** |
-| **F-03** `/metrics` endpoint protection | FIXED AND VERIFIED | Confirmed `MetricsAuthGuard` on `MetricsController` | `metrics-auth.guard.spec.ts` (4/4); live `NODE_ENV=production` curl (`401` unauth, `200` Bearer) | **VERIFIED (Unit + Real E2E + Live Prod-Mode HTTP)** |
-| **F-04** `TRUST_PROXY` & XFF anti-spoofing | FIXED BUT NOT FULLY VERIFIED | Confirmed `parseTrustProxy` rejects `true`; `RateLimitGuard` uses `request.ip`; Railway domain audit shows single edge proxy (`*.up.railway.app`, no Cloudflare) | `staging-validation.e2e-spec.ts` (forged leftmost XFF ignored under `trustProxy=1`, separate clients isolated) | **VERIFIED LOCALLY / BLOCKED ON LIVE RAILWAY STAGING** |
-| **F-05** CORS & HTTP security headers | FIXED AND VERIFIED | Confirmed explicit origin allowlist + strict Helmet CSP/HSTS/XFO | `http-security.config.spec.ts` (9/9); live `NODE_ENV=production` curl (authorized origin allowed, `evil.example` rejected) | **VERIFIED (Unit + Live Prod-Mode HTTP)** |
-| **F-06** Atomic Redis rate limiting | FIXED AND VERIFIED | Confirmed single Lua `EVAL` script + bounded fallback | `redis.service.spec.ts` (9/9); `staging-validation.e2e-spec.ts` (real Redis concurrency + TTL verified) | **VERIFIED (Unit + Real Redis E2E)** |
-| **F-07** Strict media ownership validation | FIXED AND VERIFIED | Confirmed canonical 5-segment path + traversal rejection | `media-video-notifications.spec.ts`, `security-integration.e2e-spec.ts` | **VERIFIED (Unit + Real E2E)** |
-| **F-08** Video webhook replay & idempotency | FIXED AND VERIFIED | **Fixed startup crash** (`rawBody: true` in `main.ts` instead of duplicate Fastify JSON parser); HMAC + ±300s timestamp + Redis `SET NX EX` | `media-video-notifications.spec.ts`, `staging-validation.e2e-spec.ts` (real Redis dedup + expired/invalid 401) | **VERIFIED (Unit + Real E2E)** |
-| **F-09** Logout & access-token revocation | FIXED AND VERIFIED | **Fixed same-second race condition** caught by `new-features.e2e-spec.ts` (`iatMs` ms cutoff + per-`sid` denylist on `revokeAllUserSessions`) | `jwt.strategy.spec.ts` (4/4), `new-features.e2e-spec.ts`, `staging-validation.e2e-spec.ts` (immediate `401` on revoked access token, Device B preserved, Redis TTL verified) | **VERIFIED (Unit + Real DB/Redis E2E)** |
-| **F-10** Audit queue retries & redaction | FIXED AND VERIFIED | Confirmed `rethrow=true` in worker mode, 5x backoff, expanded redaction | `security-audit.service.spec.ts` (4/4); live `NODE_ENV=production` boot with `AUDIT_QUEUE_ENABLED=true` | **VERIFIED (Unit + Live Local Staging)** |
-| **F-11** Flutter feed API compatibility | FIXED AND VERIFIED | Confirmed `GET /api/v1/listings` returns `{ success, data, meta }` without duplicate `items` | `flutter analyze` (0 issues), `flutter test` (10/10 passed), `staging-validation.e2e-spec.ts` | **VERIFIED (Flutter Analyze + Flutter Tests + Real E2E)** |
-| **F-12** `Retry-After` & PostGIS redaction | FIXED AND VERIFIED | Confirmed `Retry-After` header + `postgis: "up"` in prod | Live `NODE_ENV=production` `/health/ready` verified `postgis: "up"` | **VERIFIED (Unit + Live Prod-Mode HTTP)** |
+Read-only inspection of Railway project `airy-creativity` (`036ef563-b1f9-4d6e-b901-802946a28e0a`, environment `production` `6e684155-b2d5-4367-a785-0bbccf411428`) via `describe-environment`, `describe-service`, `get-service-metrics`, and `get-logs`:
 
----
+| Component | Current Railway Configuration | Measured 24h Utilization | Findings & Bottlenecks |
+|---|---|---|---|
+| **Backend (`one-deal-cJjt`)** | `2 vCPU / 1 GB RAM`, 1 replica (`iad`), `RAILPACK` builder, port `8080`, domain `one-deal-cjjt-production.up.railway.app`, **only 5 env vars** (`DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `NODE_ENV`, `REDIS_URL`) | `CPU max 0.037`, `MEM max 82.6 MB` — **CURRENTLY `[CRASHED]`** (`7b624ca1`) | 1. Crashed due to `FST_ERR_CTP_ALREADY_PRESENT` on `main` (fixed on `staging-validation`).<br>2. Missing `CORS_ORIGIN`, `TRUST_PROXY`, `METRICS_AUTH_TOKEN`.<br>3. Swagger logged active before crash (verify `NODE_ENV=production`).<br>4. Single replica with `1 GB RAM` cannot sustain 5,000 VUs. |
+| **Duplicate Backend (`one-deal`)** | `2 vCPU / 1 GB RAM`, 1 replica (`iad`), no domain, same `main` repo | **CURRENTLY `[CRASHED]`** (`ab0a55d2`) | Redundant service; review and remove to avoid wasted resources or stale deployments. |
+| **PostgreSQL (`Postgres`)** | `postgis/postgis:16-3.4-alpine`, `2 vCPU / 1 GB RAM`, 1 replica (`iad`), `500 MB` volume (`postgres-volume`) | `CPU max 0.019`, `MEM 52–65 MB`, `DISK 165.5 MB / 500 MB` (**Online**) | 1. No HA (`postgres-ha` off).<br>2. No PITR (`Buckets: 0`).<br>3. `500 MB` disk is small for production growth.<br>4. `PGBOUNCER_ENABLED=false` + `DATABASE_CONNECTION_LIMIT=10` will bottleneck multi-replica scaling. |
+| **Redis (`Redis`)** | `redis:8.2`, `2 vCPU / 1 GB RAM`, 1 replica (`iad`), `500 MB` volume (`redis-volume`), `--save 60 1` | `CPU max 0.007`, `MEM 22–36 MB`, `DISK 57.1 MB / 500 MB` (**Online**) | Shared single Redis serves both Cache and BullMQ Queue on Railway (`REDIS_URL`). Under high load, separate Cache (`allkeys-lru`) and Queue (`noeviction` + AOF) instances are recommended to prevent queue key eviction. |
+| **Networking & Health** | Railway Edge TLS (`iad`), private networking (`postgres`, `redis`, `one-deal-cjjt`), `railway.json` defines `/health/live` (`120s`), `ON_FAILURE` (10 retries), `DOCKERFILE` builder | Tracing off | Live service config on `one-deal-cJjt` shows `builder: "RAILPACK"` rather than `DOCKERFILE` because `railway.json` sits at repo root while `rootDirectory: "backend"` is set. Verify Railway picks up `backend/Dockerfile` and `/health/live` healthcheck on staging. |
 
-## 2. Two Real Runtime Bugs Caught & Fixed During Staging Validation
-
-Executing real integration tests and booting the compiled production binary uncovered two bugs that static analysis and unit tests missed:
-1. **Fastify Startup Crash (`src/main.ts`):** Registering a manual `application/json` parser collided with NestJS `FastifyAdapter`'s built-in JSON parser (`FastifyError: Content type parser 'application/json' already present`). Fixed by using NestJS native `{ rawBody: true }` in `NestFactory.create(...)`.
-2. **Same-Second Post-Reset Login Race Condition (`src/modules/auth/services/session.service.ts`):** `resetPassword` followed immediately by `login` within the same Unix second caused `iat <= revokedBefore` to falsely reject the newly minted token. Fixed by denylisting all active `sid`s directly and using millisecond-precision `iatMs` for `user_before` cutoffs.
+### Infrastructure Changes Required to Improve Maximum Stable Concurrency
+(Evidence-based only — no arbitrary scaling claimed; actual limits must be measured in Phase Five progressive k6 tests):
+1. **Horizontal API Replicas + Load Balancing:** Scale API beyond 1 replica when CPU > 70% or p95 > 400ms.
+2. **Connection Pooling (PgBouncer):** Enable `PGBOUNCER_ENABLED=true` before running >2 API replicas to avoid PostgreSQL connection exhaustion.
+3. **Separate BullMQ Worker Service:** Run `ENABLE_WORKERS=true` in a dedicated worker service and `ENABLE_WORKERS=false` on HTTP API replicas so background jobs do not compete with HTTP event loop latency.
+4. **Separate Cache vs. Queue Redis:** Prevent LRU cache pressure from evicting BullMQ job state or JWT revocation keys (`auth:revoked:*`).
+5. **PostgreSQL Disk & Memory Headroom:** Expand volume beyond `500 MB` and enable scheduled backups + PITR.
 
 ---
 
-## 3. Verification Evidence Breakdown
+## 2. Phase Eleven — Independent Final Verification Matrix
 
-- **Verified by Source Inspection:** All 12 findings, Git history (`de78088` default JWT exposure), Prisma migrations (8/8 intact), Flutter DTOs/repositories.
-- **Verified by Unit Tests:** 35 suites / 222 tests passed (`npm test`).
-- **Verified by Real PostgreSQL/PostGIS & Real Redis E2E Tests:** 6 suites / 43 tests passed (`npm run test:e2e`), including `test/staging-validation.e2e-spec.ts`, `test/auth-database-redis.e2e-spec.ts`, `test/auth.e2e-spec.ts`, `test/security-integration.e2e-spec.ts`, `test/new-features.e2e-spec.ts`, `test/app.e2e-spec.ts`.
-- **Verified on Local Docker Production-Mode Staging (`NODE_ENV=production`):** Boot, `/health/live` (200), `/health/ready` (200, redacted PostGIS), `/metrics` (401 unauth / 200 Bearer), `/api/docs` (404), CORS allow/reject, graceful shutdown.
-- **Verified by Flutter Compatibility Tests:** `flutter analyze --no-pub` (0 issues), `flutter test` (10/10 repository tests passed).
-- **Verified by Real Local k6 Load Test:** 10,269 requests in 45.2s (up to 100 VUs), `227.3 req/s`, `0.00%` error rate, `p50=3.20ms`, `p90=27.51ms`, `p95=154.33ms`, `max=378.52ms`.
-- **Blocked by External Infrastructure / Owner Access:**
-  1. Provisioning a dedicated **Railway Staging environment** (only `production` exists in Railway project `airy-creativity`; creating paid cloud resources requires owner authorization).
-  2. Live **Railway Staging `TRUST_PROXY=1` header observation** against Railway's actual edge proxy.
-  3. **Railway PostgreSQL automated backup policy verification & staging restore drill** (`docs/DATABASE_BACKUP_RECOVERY_VERIFICATION.md`).
-  4. **Production JWT secret rotation** by owner (`docs/JWT_PRODUCTION_SECRET_ROTATION.md`).
-  5. **Cloud-scale k6 load test** on Railway Staging (if 5,000-VU cloud validation is required).
+| Control / Area | Local Evidence (Verified 2026-11-19) | Live Railway Staging Evidence | Final Status |
+|---|---|---|---|
+| **Critical & High Security Findings (F-01 – F-12)** | All 12 verified in source, unit tests (`222/222`), and real DB/Redis E2E (`43/43`) | Pending staging deployment | **VERIFIED LOCALLY / PENDING STAGING** |
+| **`TRUST_PROXY` & Anti-Spoofing** | Verified locally (`trustProxy: 1` + real Redis E2E; `true` rejected) | **BLOCKED** — No Railway staging env to observe live `X-Forwarded-For` | **BLOCKED** |
+| **CORS & HTTP Headers** | Verified (`http-security.config.spec.ts` + live local prod-mode HTTP) | Pending staging verification | **VERIFIED LOCALLY / PENDING STAGING** |
+| **JWT Secrets & Production Rotation** | Fail-fast validation verified; `de78088` exposure documented; runbook ready | **REQUIRES OWNER AUTHORIZATION** — Production vars not rotated | **BLOCKED (OWNER ACTION)** |
+| **Logout & Immediate Token Revocation** | Verified (`session.service.ts` ms-precision `iatMs` + `sid`/`jti` Redis denylist; `43/43` E2E) | Pending staging verification | **VERIFIED LOCALLY / PENDING STAGING** |
+| **Redis (Rate Limit, TTL, Queue)** | Verified against real Docker Dual Redis (`redis.service.spec.ts` + E2E) | Production Redis online; staging Redis not provisioned | **VERIFIED LOCALLY / PENDING STAGING** |
+| **PostgreSQL & PostGIS** | Verified (`postgis/postgis:16-3.4-alpine`, 8/8 migrations, 37 tables) | Production Postgres online; staging Postgres not provisioned | **VERIFIED LOCALLY / PENDING STAGING** |
+| **Webhook Signature & Replay Protection** | Verified (`{ rawBody: true }` + HMAC + ±300s + Redis `SET NX EX`) | Pending staging verification | **VERIFIED LOCALLY / PENDING STAGING** |
+| **`/metrics` Auth & Swagger Disable** | Verified (`401` unauth / `200` Bearer; `/api/docs` `404` in prod) | Production currently missing `METRICS_AUTH_TOKEN` & crashed | **VERIFIED LOCALLY / PENDING STAGING** |
+| **Flutter Compatibility** | `flutter analyze` (`0` issues), `flutter test` (`81/81` passed), feed contract E2E passed | N/A (client compatibility verified) | **VERIFIED** |
+| **Database Backups & Restore Drill** | Local isolated PostGIS restore drill passed (`1.98s` RTO, 8 migrations, 37 tables) | **BLOCKED** — Railway PITR not enabled (`0` buckets); no staging DB restore drill | **BLOCKED** |
+| **Progressive k6 Load Testing (toward 5,000 VUs)** | Local baseline only: `100 VUs`, `p95=154.33ms`, `227.31 req/s`, `0%` errors | **BLOCKED** — No Railway staging env; 5,000 VUs **NOT** tested | **BLOCKED** |
 
 ---
 
-## 4. Environment Configuration Validation Matrix (Phase Nine)
+## 3. Release Gate Decision
 
-| Variable | Required in Prod | Local Staging Configured | Validated | Notes |
-|---|---|---|---|---|
-| `NODE_ENV` | Yes | `production` | Yes | Enforces fail-fast config & Swagger disable |
-| `PORT` | Yes (Railway) | `3099` | Yes | Binds `0.0.0.0:${PORT}` |
-| `DATABASE_URL` | Yes | Local Docker PostGIS 16.4/3.4.3 | Yes | Advisory-locked migrations verified |
-| `REDIS_URL` / `REDIS_CACHE_*` / `REDIS_QUEUE_*` | Yes | Local Docker Dual Redis (6379/6380) | Yes | Lua rate-limit, JWT denylist, webhook dedup, BullMQ |
-| `JWT_ACCESS_SECRET` | Yes | Random 64-hex (ephemeral) | Yes | ≥32 chars, entropy ≥3.0, non-placeholder, ≠ refresh |
-| `JWT_REFRESH_SECRET` | Yes | Random 64-hex (ephemeral) | Yes | Independent from access secret |
-| `CORS_ORIGIN` | Yes | `https://staging.dealone.eg,...` | Yes | Wildcard `*` rejected at startup |
-| `TRUST_PROXY` | Yes | `1` | Yes | Blanket `true` rejected at startup |
-| `METRICS_AUTH_TOKEN` | Yes | Random 48-hex (ephemeral) | Yes | Constant-time Bearer/`X-Metrics-Token` auth |
-| `ENABLE_SWAGGER` | No (`false`) | `false` | Yes | `/api/docs` returns `404` |
-| `AUDIT_QUEUE_ENABLED` | Optional | `true` | Yes | BullMQ worker retries DB failures (5x backoff) |
-| `CLOUDFLARE_STREAM_WEBHOOK_SECRET` | If video used | Staging E2E secret | Yes | HMAC + ±300s timestamp + Redis idempotency |
-| `R2_*` Storage Credentials | If media upload used | Checked in unit tests | Yes | Fails safely in prod if missing |
+- **Current Status:** **`BLOCKED`** (Locally `READY FOR STAGING VALIDATION`, blocked on Railway cloud staging provisioning and owner-authorized production actions).
+- **Cannot advance to `STAGING VALIDATION PASSED`, `READY FOR PRODUCTION REVIEW`, or `PRODUCTION READY`** until all 5 external Railway blockers are executed with real cloud evidence:
+  1. Provision isolated Railway `staging` environment (`staging-api`, `staging-postgres`, `staging-redis`).
+  2. Observe live Railway Staging headers and confirm `TRUST_PROXY=1`.
+  3. Execute E2E suite against live Railway Staging URL.
+  4. Execute progressive k6 load test stages against Railway Staging and record actual max stable VUs / p95 / p99.
+  5. Enable Railway Postgres backups/PITR, execute isolated staging restore drill, and execute owner-authorized production secret rotation (`JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `METRICS_AUTH_TOKEN`, `CORS_ORIGIN`, `TRUST_PROXY`) alongside merging the `staging-validation` crash fix to `main`.

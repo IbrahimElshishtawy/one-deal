@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../../app/app_localization.dart';
 import '../../../domain/validators/auth_validators.dart';
 import '../../theme/auth_design_tokens.dart';
 
@@ -102,8 +103,10 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+
     return Semantics(
-      label: 'حقل إدخال رمز التحقق المكون من ${widget.length} أرقام',
+      label: l10n.otpSemanticsLabel(widget.length),
       textField: true,
       child: Directionality(
         textDirection: TextDirection.ltr,
@@ -161,15 +164,15 @@ class _OtpPinBoxesState extends State<OtpPinBoxes> {
                                     widget.code.length == widget.length &&
                                     index == widget.length - 1));
 
-                        final focusColor = AuthDesignTokens.focusBorderOf(
-                          context,
-                        );
+                        const focusColor = AuthDesignTokens.focusOrange;
                         final borderColor = widget.hasError
                             ? AuthDesignTokens.errorRed
                             : (isActiveCell
                                   ? focusColor
                                   : (digit.isNotEmpty
-                                        ? focusColor.withValues(alpha: 0.45)
+                                        ? AuthDesignTokens.primaryActionOf(
+                                            context,
+                                          ).withValues(alpha: 0.45)
                                         : AuthDesignTokens.borderOf(context)));
 
                         final fillColor = AuthDesignTokens.surfaceOf(context);

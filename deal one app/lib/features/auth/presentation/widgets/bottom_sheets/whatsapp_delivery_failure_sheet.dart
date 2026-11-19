@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../app/app_localization.dart';
 import '../../theme/auth_design_tokens.dart';
 import '../common/auth_brand_icons.dart';
 import '../common/auth_secondary_button.dart';
 
-/// Modal bottom sheet matching `هنا لو المستخدم الرقم مش موجود عليها واتس.png`,
+/// Modal bottom sheet matching `Verification via OTP code _Unable to send to WhatsApp State_.png`,
 /// surfaced when OTP delivery via WhatsApp/SMS fails or when troubleshooting delivery.
 class WhatsAppDeliveryFailureSheet extends StatelessWidget {
   final String displayPhone;
@@ -54,6 +55,8 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         AuthDesignTokens.spaceXl,
@@ -118,7 +121,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
           ),
           const SizedBox(height: AuthDesignTokens.spaceBase),
           Text(
-            'تعذر الإرسال عبر واتساب',
+            l10n.whatsappSheetTitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
@@ -128,7 +131,9 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
           ),
           const SizedBox(height: AuthDesignTokens.spaceSm),
           Text(
-            subtitle?.trim().isNotEmpty == true ? subtitle! : 'عذراً، هذا الرقم غير مسجل على تطبيق واتساب. يرجى استخدام طريقة أخرى',
+            subtitle?.trim().isNotEmpty == true
+                ? subtitle!
+                : l10n.whatsappSheetDefaultSubtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.5,
@@ -200,17 +205,17 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  GmailMarkIcon(size: 20),
-                  SizedBox(width: AuthDesignTokens.spaceMd - 2),
+                  const GmailMarkIcon(size: 20),
+                  const SizedBox(width: AuthDesignTokens.spaceMd - 2),
                   Flexible(
                     child: Text(
-                      'إرسال رسالة عبر البريد الإلكتروني',
+                      l10n.whatsappSheetEmailCta,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
                       ),
@@ -223,7 +228,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
           const SizedBox(height: AuthDesignTokens.spaceMd),
           AuthSecondaryButton(
             key: const Key('sheet_send_sms_button'),
-            label: 'إعادة الإرسال عبر رسالة SMS',
+            label: l10n.whatsappSheetSmsCta,
             leadingIcon: Icons.sms_outlined,
             onPressed: () {
               Navigator.of(context).pop();
@@ -243,7 +248,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
               color: AuthDesignTokens.headingOf(context),
             ),
             label: Text(
-              'تعديل الرقم',
+              l10n.whatsappSheetEditPhone,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -263,7 +268,7 @@ class WhatsAppDeliveryFailureSheet extends StatelessWidget {
               color: AuthDesignTokens.mutedOf(context),
             ),
             label: Text(
-              'تحتاج مساعدة في تسجيل الدخول؟',
+              l10n.whatsappSheetNeedHelp,
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w500,

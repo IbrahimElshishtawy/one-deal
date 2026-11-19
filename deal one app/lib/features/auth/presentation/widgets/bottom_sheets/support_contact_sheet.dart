@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../../app/app_localization.dart';
 import '../../theme/auth_design_tokens.dart';
 
 /// Interactive support contact bottom sheet accessible from OTP troubleshooting.
@@ -27,15 +28,19 @@ class SupportContactSheet extends StatelessWidget {
     String value,
     String label,
   ) async {
+    final l10n = AppLocalization.of(context);
     await Clipboard.setData(ClipboardData(text: value));
     if (!context.mounted) return;
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('تم نسخ $label')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.supportCopiedSnack(label))));
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
       child: Column(
@@ -54,7 +59,7 @@ class SupportContactSheet extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            'الدعم الفني - ديل ون',
+            l10n.supportSheetTitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 19,
@@ -64,7 +69,7 @@ class SupportContactSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'إذا واجهت صعوبة متكررة في استلام رمز التحقق، يمكنك التواصل مع فريق الدعم أو نسخ بيانات التواصل أدناه:',
+            l10n.supportSheetSubtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.5,
@@ -75,18 +80,20 @@ class SupportContactSheet extends StatelessWidget {
           const SizedBox(height: 18),
           _SupportTile(
             icon: Icons.email_outlined,
-            title: 'البريد الإلكتروني للدعم',
+            title: l10n.supportEmailTitle,
             value: supportEmail,
+            copyTooltip: l10n.supportCopyTooltip,
             onCopy: () =>
-                _copyValue(context, supportEmail, 'البريد الإلكتروني'),
+                _copyValue(context, supportEmail, l10n.supportEmailTitle),
           ),
           const SizedBox(height: 10),
           _SupportTile(
             icon: Icons.support_agent_rounded,
-            title: 'خدمة العملاء',
+            title: l10n.supportHotlineTitle,
             value: supportHotline,
+            copyTooltip: l10n.supportCopyTooltip,
             onCopy: () =>
-                _copyValue(context, supportHotline, 'رقم خدمة العملاء'),
+                _copyValue(context, supportHotline, l10n.supportHotlineTitle),
           ),
         ],
       ),
@@ -98,12 +105,14 @@ class _SupportTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
+  final String copyTooltip;
   final VoidCallback onCopy;
 
   const _SupportTile({
     required this.icon,
     required this.title,
     required this.value,
+    required this.copyTooltip,
     required this.onCopy,
   });
 
@@ -149,7 +158,7 @@ class _SupportTile extends StatelessWidget {
           IconButton(
             onPressed: onCopy,
             icon: const Icon(Icons.copy_rounded, size: 19),
-            tooltip: 'نسخ',
+            tooltip: copyTooltip,
           ),
         ],
       ),

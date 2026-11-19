@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../app/app_localization.dart';
 import '../../../domain/entities/auth_session.dart';
 import '../../theme/auth_design_tokens.dart';
 
@@ -10,43 +11,47 @@ class LegalDocumentPage extends StatelessWidget {
 
   const LegalDocumentPage({super.key, required this.documentType});
 
-  String get _title => documentType == LegalDocumentType.termsOfService
-      ? 'شروط الاستخدام'
-      : 'سياسة الخصوصية';
-
-  List<_LegalSection> get _sections =>
+  String _title(AppLocalizations l10n) =>
       documentType == LegalDocumentType.termsOfService
-      ? const [
+      ? l10n.legalTermsTitle
+      : l10n.legalPrivacyTitle;
+
+  List<_LegalSection> _sections(AppLocalizations l10n) =>
+      documentType == LegalDocumentType.termsOfService
+      ? [
           _LegalSection(
-            heading: '1. استخدام منصة ديل ون',
-            body: 'تلتزم عند استخدام منصة ديل ون بنشر إعلانات حقيقية ومطابقة للقوانين المعمول بها في جمهورية مصر العربية، وعدم انتحال شخصية أو تقديم معلومات مضللة.',
+            heading: l10n.legalTermsSec1Heading,
+            body: l10n.legalTermsSec1Body,
           ),
           _LegalSection(
-            heading: '2. الحساب والتحقق برقم الهاتف',
-            body: 'يتم توثيق الحسابات برقم موبايل مصري فعّال عبر رمز تحقق لمرة واحدة (OTP). أنت مسؤول عن سرية جلسة الدخول وعدم مشاركة رموز التحقق مع أي طرف.',
+            heading: l10n.legalTermsSec2Heading,
+            body: l10n.legalTermsSec2Body,
           ),
           _LegalSection(
-            heading: '3. التعاملات بين المستخدمين',
-            body: 'ديل ون منصة وساطة وعرض إعلانات بين البائعين والمشترين. يرجى المعاينة الدقيقة والتأكد من مستندات الملكية قبل إتمام أي معاملة مالية.',
+            heading: l10n.legalTermsSec3Heading,
+            body: l10n.legalTermsSec3Body,
           ),
         ]
-      : const [
+      : [
           _LegalSection(
-            heading: '1. البيانات التي نجمعها',
-            body: 'نجمع فقط الاسم الكامل ورقم الهاتف المصري وبيانات الإعلانات التي تضيفها لتفعيل حسابك وتمكين التواصل الموثوق داخل التطبيق.',
+            heading: l10n.legalPrivacySec1Heading,
+            body: l10n.legalPrivacySec1Body,
           ),
           _LegalSection(
-            heading: '2. أمان الرموز والجلسات',
-            body: 'تُحفظ رموز الجلسة (JWT Access & Refresh Tokens) داخل التخزين المشفر على جهازك ولا تتم مشاركتها مع أي جهات خارجية لأغراض تسويقية.',
+            heading: l10n.legalPrivacySec2Heading,
+            body: l10n.legalPrivacySec2Body,
           ),
           _LegalSection(
-            heading: '3. حقوقك في الحساب',
-            body: 'يمكنك تعديل اسمك، تسجيل الخروج من جميع الجلسات، أو طلب حذف حسابك في أي وقت عبر إعدادات الحساب أو بالتواصل مع الدعم الفني.',
+            heading: l10n.legalPrivacySec3Heading,
+            body: l10n.legalPrivacySec3Body,
           ),
         ];
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+    final sections = _sections(l10n);
+
     return Scaffold(
       backgroundColor: AuthDesignTokens.backgroundOf(context),
       appBar: AppBar(
@@ -61,7 +66,7 @@ class LegalDocumentPage extends StatelessWidget {
           },
         ),
         title: Text(
-          _title,
+          _title(l10n),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -77,10 +82,10 @@ class LegalDocumentPage extends StatelessWidget {
             ),
             child: ListView.separated(
               padding: const EdgeInsets.all(AuthDesignTokens.horizontalPadding),
-              itemCount: _sections.length,
+              itemCount: sections.length,
               separatorBuilder: (_, _) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
-                final section = _sections[index];
+                final section = sections[index];
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(

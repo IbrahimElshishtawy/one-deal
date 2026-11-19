@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../app/app_localization.dart';
 import '../../../../../core/routing/route_names.dart';
 import '../../providers/auth_providers.dart';
 import '../../theme/auth_design_tokens.dart';
@@ -9,7 +10,10 @@ import '../../widgets/onboarding/onboarding_bottom_controls.dart';
 import '../../widgets/onboarding/onboarding_illustration.dart';
 import '../../widgets/onboarding/onboarding_slide_data.dart';
 
-/// 3-screen Deal One Onboarding carousel (Design Screens 1–3).
+/// 3-screen Deal One Onboarding flow faithfully reproducing:
+/// - `Onboarding 1 _Real Estate and Cars_.png`
+/// - `Onboarding 2 _Home services, construction materials, and electrical supplies_.png`
+/// - `Onboarding 3 _Clothing, accessories, appliances, and decor_.png`
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
 
@@ -42,7 +46,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       final targetPage = ref.read(onboardingControllerProvider).currentPage;
       await _pageController.animateToPage(
         targetPage,
-        duration: const Duration(milliseconds: 460),
+        duration: const Duration(milliseconds: 420),
         curve: const Cubic(0.22, 1.0, 0.36, 1.0),
       );
     }
@@ -54,167 +58,135 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     context.go(RouteNames.signUp);
   }
 
-  Future<void> _handleBrowseAsGuest() async {
-    await ref.read(onboardingControllerProvider.notifier).completeOnboarding();
-    if (!mounted) return;
-    context.go(RouteNames.root);
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(onboardingControllerProvider);
-    final slides = OnboardingSlideData.slides;
+    final slides = OnboardingSlideData.localizedSlides(context);
     final activeSlide = slides[state.currentPage];
+    final l10n = AppLocalization.of(context);
+    final isDark = AuthDesignTokens.isDark(context);
 
     return Scaffold(
-      backgroundColor: AuthDesignTokens.backgroundOf(context),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AuthDesignTokens.maxContentWidth,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AuthDesignTokens.horizontalPadding,
-                vertical: 16,
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'ديل ون',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AuthDesignTokens.headingOf(context),
-                        ),
-                      ),
-                      TextButton(
+      backgroundColor: AuthDesignTokens.onboardingScrimBottom,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Full-bleed swipeable onboarding slides
+          PageView.builder(
+            key: const Key('onboarding_pageview'),
+            controller: _pageController,
+            itemCount: slides.length,
+            onPageChanged: (index) {
+              ref.read(onboardingControllerProvider.notifier).setPage(index);
+            },
+            itemBuilder: (context, index) {
+              return OnboardingIllustration(slide: slides[index]);
+            },
+          ),
+
+          // Top Skip action (shown on slides 1 & 2, hidden on slide 3 per Figma)
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12, right: 16, left: 16),
+                child: activeSlide.showSkip
+                    ? TextButton(
                         key: const Key('onboarding_skip_button'),
                         onPressed: state.isSubmitting
                             ? null
                             : _handleSkipToAuth,
+                        style: TextButton.styleFrom(
+                          foregroundColor: isDark
+                              ? Colors.white
+                              : AuthDesignTokens.lightTextPrimary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          minimumSize: const Size(48, 40),
+                        ),
                         child: Text(
-                          'تخطي',
+                          l10n.authSkip,
                           style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AuthDesignTokens.mutedOf(context),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? Colors.white
+                                : AuthDesignTokens.lightTextPrimary,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Expanded(
-                    child: PageView.builder(
-                      key: const Key('onboarding_pageview'),
-                      controller: _pageController,
-                      itemCount: slides.length,
-                      onPageChanged: (index) {
-                        ref
-                            .read(onboardingControllerProvider.notifier)
-                            .setPage(index);
-                      },
-                      itemBuilder: (context, index) {
-                        final slide = slides[index];
-                        return _OnboardingSlideView(slide: slide);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  OnboardingBottomControls(
-                    currentPage: state.currentPage,
-                    totalPages: slides.length,
-                    primaryLabel: activeSlide.primaryButtonLabel,
-                    isSubmitting: state.isSubmitting,
-                    onPrimaryPressed: _handleNextOrStart,
-                    onBrowseAsGuest: _handleBrowseAsGuest,
-                  ),
-                ],
+                      )
+                    : const SizedBox.shrink(),
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
 
-class _OnboardingSlideView extends StatelessWidget {
-  final OnboardingSlideData slide;
-
-  const _OnboardingSlideView({required this.slide});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OnboardingIllustration(slide: slide),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+          // Bottom foreground overlay: title, description, 3-bar indicator, blue CTA
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AuthDesignTokens.maxContentWidth,
                   ),
-                  decoration: BoxDecoration(
-                    color: AuthDesignTokens.infoTintOf(context),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        slide.accentIcon,
-                        size: 16,
-                        color: AuthDesignTokens.linkOf(context),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        slide.badgeText,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: AuthDesignTokens.linkOf(context),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 240),
+                          child: Column(
+                            key: ValueKey<int>(state.currentPage),
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                activeSlide.title,
+                                textAlign: TextAlign.start,
+                                style: const TextStyle(
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  height: 1.35,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                activeSlide.description,
+                                textAlign: TextAlign.start,
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white.withValues(alpha: 0.90),
+                                  height: 1.55,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 22),
+                        OnboardingBottomControls(
+                          currentPage: state.currentPage,
+                          totalPages: slides.length,
+                          primaryLabel: activeSlide.primaryButtonLabel,
+                          isSubmitting: state.isSubmitting,
+                          onPrimaryPressed: _handleNextOrStart,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  slide.title,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: AuthDesignTokens.headingOf(context),
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  slide.description,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    color: AuthDesignTokens.bodyOf(context),
-                    height: 1.6,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

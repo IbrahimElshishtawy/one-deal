@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../../app/app_localization.dart';
 import '../../theme/auth_design_tokens.dart';
 import '../common/auth_brand_icons.dart';
 import '../common/auth_country_prefix.dart';
@@ -8,7 +9,7 @@ import '../common/auth_error_banner.dart';
 import '../common/auth_primary_button.dart';
 import '../common/auth_text_field.dart';
 
-/// Modular Sign Up form card matching `ui/انشاء حساب.png`.
+/// Modular Sign Up form card matching `Sign-Up.png`.
 class SignUpFormCard extends StatefulWidget {
   final TextEditingController fullNameController;
   final TextEditingController phoneController;
@@ -48,6 +49,9 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -57,7 +61,7 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
         ],
         AuthTextField(
           key: const Key('signup_fullname_field'),
-          hintText: 'اكتب اسمك هنا',
+          hintText: l10n.signUpFullNameHint,
           controller: widget.fullNameController,
           errorText: widget.fullNameError,
           leadingIcon: Icons.person_rounded,
@@ -71,7 +75,7 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
         const SizedBox(height: AuthDesignTokens.spaceMd),
         AuthTextField(
           key: const Key('signup_phone_field'),
-          hintText: '01XXXXXXXXX',
+          hintText: l10n.signUpPhoneHint,
           controller: widget.phoneController,
           focusNode: _phoneFocusNode,
           errorText: widget.phoneError,
@@ -85,7 +89,7 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.done,
           textDirection: TextDirection.ltr,
-          textAlign: TextAlign.right,
+          textAlign: isRtl ? TextAlign.right : TextAlign.left,
           autofillHints: const [AutofillHints.telephoneNumber],
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩+\s\-]')),
@@ -97,7 +101,7 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
         ),
         const SizedBox(height: AuthDesignTokens.spaceSm),
         Text(
-          'سيتم إرسال رمز التحقق عبر الواتساب',
+          l10n.signUpWhatsAppHelper,
           style: TextStyle(
             fontSize: 12,
             color: AuthDesignTokens.mutedOf(context),
@@ -106,7 +110,7 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
         const SizedBox(height: AuthDesignTokens.spaceLg),
         AuthPrimaryButton(
           key: const Key('signup_submit_button'),
-          label: 'إرسال رمز التحقق',
+          label: l10n.signUpSubmitButton,
           isLoading: widget.isSubmitting,
           onPressed: widget.onSubmit,
         ),

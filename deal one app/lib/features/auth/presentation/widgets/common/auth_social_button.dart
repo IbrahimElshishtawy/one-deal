@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../app/app_localization.dart';
 import '../../../domain/entities/auth_session.dart';
 import '../../theme/auth_design_tokens.dart';
 import 'auth_brand_icons.dart';
 
-/// Social authentication divider and Email / Apple provider action buttons
-/// matching `login.png` and `انشاء حساب.png`.
+/// Social authentication divider and pill-shaped Email / Apple provider action
+/// buttons matching `Log-in.png` and `Sign-Up.png`.
 class AuthSocialSection extends StatelessWidget {
   final ValueChanged<SocialAuthProviderType> onProviderSelected;
 
@@ -13,6 +14,8 @@ class AuthSocialSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+
     return Column(
       children: [
         Row(
@@ -26,7 +29,7 @@ class AuthSocialSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                'أو المتابعة عبر',
+                l10n.authOrContinueWith,
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
@@ -48,7 +51,7 @@ class AuthSocialSection extends StatelessWidget {
             Expanded(
               child: _SocialProviderButton(
                 key: const Key('social_email_button'),
-                label: 'البريد الإلكتروني',
+                label: l10n.authEmailProvider,
                 icon: const GmailMarkIcon(size: 20),
                 onPressed: () =>
                     onProviderSelected(SocialAuthProviderType.google),
@@ -58,7 +61,7 @@ class AuthSocialSection extends StatelessWidget {
             Expanded(
               child: _SocialProviderButton(
                 key: const Key('social_apple_button'),
-                label: 'حساب آبل',
+                label: l10n.authAppleProvider,
                 icon: Icon(
                   Icons.apple,
                   size: 22,
@@ -91,19 +94,21 @@ class _SocialProviderButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(AuthDesignTokens.socialPillRadius);
+
     return Container(
       height: AuthDesignTokens.socialButtonHeight,
       decoration: BoxDecoration(
         color: AuthDesignTokens.surfaceOf(context),
-        borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
+        borderRadius: radius,
         border: Border.all(color: AuthDesignTokens.borderOf(context)),
         boxShadow: AuthDesignTokens.cardShadowOf(context),
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
+        borderRadius: radius,
         child: InkWell(
-          borderRadius: BorderRadius.circular(AuthDesignTokens.buttonRadius),
+          borderRadius: radius,
           onTap: onPressed,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),

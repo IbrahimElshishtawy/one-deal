@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../theme/auth_design_tokens.dart';
 import 'onboarding_slide_data.dart';
 
-/// Rich layered visual illustration for each Deal One onboarding screen.
+/// Full-bleed illustrated backdrop matching the 3 Deal One onboarding Figma
+/// exports, with a dark bottom gradient scrim for legible foreground copy.
 class OnboardingIllustration extends StatelessWidget {
   final OnboardingSlideData slide;
 
@@ -12,248 +13,75 @@ class OnboardingIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = AuthDesignTokens.isDark(context);
-    final circleBg = isDark
-        ? AuthDesignTokens.darkSurface
-        : const Color(0xFFF1F5FB);
 
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 300, maxHeight: 280),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 240,
-            height: 240,
-            decoration: BoxDecoration(
-              color: circleBg,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AuthDesignTokens.borderOf(context),
-                width: 1.2,
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Top-anchored full-bleed Figma illustration
+        Container(
+          color: AuthDesignTokens.onboardingScrimBottom,
+          child: Image.asset(
+            slide.artworkAssetPath,
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+            errorBuilder: (_, _, _) => Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFFBFD7ED),
+                    Color(0xFF476985),
+                    AuthDesignTokens.onboardingScrimBottom,
+                  ],
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  _fallbackIcon,
+                  size: 96,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
               ),
             ),
           ),
-          Container(
-            width: 176,
-            height: 176,
+        ),
+        // Subtle dark tint in Dark Mode to reduce glare on the bright sky
+        if (isDark)
+          DecoratedBox(
             decoration: BoxDecoration(
-              color: AuthDesignTokens.backgroundOf(context),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AuthDesignTokens.navyPrimary.withValues(alpha: 0.08),
-                  blurRadius: 24,
-                  offset: const Offset(0, 10),
-                ),
+              color: Colors.black.withValues(alpha: 0.22),
+            ),
+          ),
+        // Bottom dark gradient scrim ensuring crisp white text contrast
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [0.0, 0.48, 0.72, 0.88, 1.0],
+              colors: [
+                Color(0x000E1521),
+                Color(0x140E1521),
+                Color(0xB80E1521),
+                Color(0xEE0E1521),
+                AuthDesignTokens.onboardingScrimBottom,
               ],
             ),
-            child: _buildCenterVisual(context),
           ),
-          ..._buildFloatingCards(context),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildCenterVisual(BuildContext context) {
+  IconData get _fallbackIcon {
     switch (slide.illustrationType) {
-      case OnboardingIllustrationType.marketplaceHub:
-        return Padding(
-          padding: const EdgeInsets.all(24),
-          child: Image.asset(
-            AuthDesignTokens.logoAssetPath,
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => Icon(
-              Icons.storefront_rounded,
-              size: 64,
-              color: AuthDesignTokens.primaryActionOf(context),
-            ),
-          ),
-        );
-      case OnboardingIllustrationType.verifiedTrust:
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AuthDesignTokens.infoTintOf(context),
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: const Icon(
-                Icons.verified_user_rounded,
-                size: 40,
-                color: AuthDesignTokens.actionBlue,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AuthDesignTokens.successTintOf(context),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'حساب موثق',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: AuthDesignTokens.successTextOf(context),
-                ),
-              ),
-            ),
-          ],
-        );
-      case OnboardingIllustrationType.localDeals:
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AuthDesignTokens.warningTintOf(context),
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: const Icon(
-                Icons.location_on_rounded,
-                size: 42,
-                color: AuthDesignTokens.focusOrange,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AuthDesignTokens.softPillOf(context),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'عروض قريبة منك',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: AuthDesignTokens.headingOf(context),
-                ),
-              ),
-            ),
-          ],
-        );
+      case OnboardingIllustrationType.realEstateAndCars:
+        return Icons.directions_car_filled_rounded;
+      case OnboardingIllustrationType.homeServicesAndMaterials:
+        return Icons.home_repair_service_rounded;
+      case OnboardingIllustrationType.fashionAndDecor:
+        return Icons.checkroom_rounded;
     }
-  }
-
-  List<Widget> _buildFloatingCards(BuildContext context) {
-    switch (slide.illustrationType) {
-      case OnboardingIllustrationType.marketplaceHub:
-        return [
-          const Positioned(
-            top: 22,
-            right: 18,
-            child: _FloatingBadge(
-              icon: Icons.directions_car_filled_rounded,
-              label: 'سيارات',
-              accent: AuthDesignTokens.actionBlue,
-            ),
-          ),
-          const Positioned(
-            bottom: 24,
-            left: 16,
-            child: _FloatingBadge(
-              icon: Icons.apartment_rounded,
-              label: 'عقارات',
-              accent: AuthDesignTokens.focusOrange,
-            ),
-          ),
-        ];
-      case OnboardingIllustrationType.verifiedTrust:
-        return [
-          Positioned(
-            top: 22,
-            left: 14,
-            child: _FloatingBadge(
-              icon: Icons.lock_outline_rounded,
-              label: 'تحقق فوري',
-              accent: AuthDesignTokens.primaryActionOf(context),
-            ),
-          ),
-          Positioned(
-            bottom: 22,
-            right: 18,
-            child: _FloatingBadge(
-              icon: Icons.handshake_rounded,
-              label: 'تواصل مباشر',
-              accent: AuthDesignTokens.successGreen,
-            ),
-          ),
-        ];
-      case OnboardingIllustrationType.localDeals:
-        return [
-          const Positioned(
-            top: 22,
-            right: 16,
-            child: _FloatingBadge(
-              icon: Icons.tune_rounded,
-              label: 'بحث ذكي',
-              accent: AuthDesignTokens.actionBlue,
-            ),
-          ),
-          const Positioned(
-            bottom: 22,
-            left: 18,
-            child: _FloatingBadge(
-              icon: Icons.favorite_rounded,
-              label: 'المفضلة',
-              accent: AuthDesignTokens.errorRed,
-            ),
-          ),
-        ];
-    }
-  }
-}
-
-class _FloatingBadge extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color accent;
-
-  const _FloatingBadge({
-    required this.icon,
-    required this.label,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-      decoration: BoxDecoration(
-        color: AuthDesignTokens.backgroundOf(context),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AuthDesignTokens.borderOf(context)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: accent),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AuthDesignTokens.headingOf(context),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

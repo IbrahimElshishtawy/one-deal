@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
-
-/// Animated 3-dot page indicator matching the onboarding bottom bar.
+/// Full-width 3-segment horizontal bar indicator matching the onboarding
+/// Figma exports (`Onboarding 1–3`): pure white active segment, translucent
+/// inactive segments. Respects RTL/LTR directionality automatically.
 class OnboardingPageIndicator extends StatelessWidget {
   final int currentIndex;
   final int totalPages;
@@ -15,22 +15,25 @@ class OnboardingPageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = AuthDesignTokens.primaryActionOf(context);
-    final inactiveColor = AuthDesignTokens.borderOf(context);
-
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(totalPages, (index) {
         final isActive = index == currentIndex;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: isActive ? 26 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: isActive ? activeColor : inactiveColor,
-            borderRadius: BorderRadius.circular(12),
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsetsDirectional.only(
+              end: index == totalPages - 1 ? 0 : 10,
+            ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              height: 4.5,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.45),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
           ),
         );
       }),

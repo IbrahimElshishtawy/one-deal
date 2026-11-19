@@ -1,49 +1,59 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
-enum OnboardingIllustrationType { marketplaceHub, verifiedTrust, localDeals }
+import '../../../../../app/app_localization.dart';
 
-/// Immutable content descriptor for each Deal One onboarding slide.
+enum OnboardingIllustrationType {
+  realEstateAndCars,
+  homeServicesAndMaterials,
+  fashionAndDecor,
+}
+
+/// Immutable content descriptor for each Deal One onboarding slide
+/// matching the 3 Figma exports in `ui/Authentication & Account Screens/`.
 class OnboardingSlideData {
   final OnboardingIllustrationType illustrationType;
-  final String badgeText;
+  final String artworkAssetPath;
   final String title;
   final String description;
   final String primaryButtonLabel;
-  final IconData accentIcon;
+  final bool showSkip;
 
   const OnboardingSlideData({
     required this.illustrationType,
-    required this.badgeText,
+    required this.artworkAssetPath,
     required this.title,
     required this.description,
     required this.primaryButtonLabel,
-    required this.accentIcon,
+    required this.showSkip,
   });
 
-  static const List<OnboardingSlideData> slides = [
-    OnboardingSlideData(
-      illustrationType: OnboardingIllustrationType.marketplaceHub,
-      badgeText: 'سوق واحد متكامل',
-      title: 'كل ما تحتاجه في مكان واحد',
-      description: 'تصفح آلاف الإعلانات الموثوقة في العقارات، السيارات، الإلكترونيات والخدمات في جميع محافظات مصر.',
-      primaryButtonLabel: 'التالي',
-      accentIcon: Icons.storefront_rounded,
-    ),
-    OnboardingSlideData(
-      illustrationType: OnboardingIllustrationType.verifiedTrust,
-      badgeText: 'أمان ومصداقية',
-      title: 'تواصل مباشر وصفقات آمنة',
-      description: 'حسابات موثقة برقم الهاتف وتقييمات حقيقية وتفاصيل دقيقة لكل إعلان لتشتري وتبيع بثقة تامة.',
-      primaryButtonLabel: 'التالي',
-      accentIcon: Icons.verified_user_rounded,
-    ),
-    OnboardingSlideData(
-      illustrationType: OnboardingIllustrationType.localDeals,
-      badgeText: 'أقرب لك دائماً',
-      title: 'أفضل العروض بالقرب منك',
-      description: 'ابحث بذكاء حسب المحافظة والمنطقة والفئة السعرية وتابع إعلاناتك المفضلة لحظة بلحظة.',
-      primaryButtonLabel: 'ابدأ الآن',
-      accentIcon: Icons.location_on_rounded,
-    ),
-  ];
+  static List<OnboardingSlideData> localizedSlides(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+    return [
+      OnboardingSlideData(
+        illustrationType: OnboardingIllustrationType.realEstateAndCars,
+        artworkAssetPath: 'assets/image/onboarding_1.png',
+        title: l10n.onboarding1Title,
+        description: l10n.onboarding1Desc,
+        primaryButtonLabel: l10n.authNext,
+        showSkip: true,
+      ),
+      OnboardingSlideData(
+        illustrationType: OnboardingIllustrationType.homeServicesAndMaterials,
+        artworkAssetPath: 'assets/image/onboarding_2.png',
+        title: l10n.onboarding2Title,
+        description: l10n.onboarding2Desc,
+        primaryButtonLabel: l10n.authNext,
+        showSkip: true,
+      ),
+      OnboardingSlideData(
+        illustrationType: OnboardingIllustrationType.fashionAndDecor,
+        artworkAssetPath: 'assets/image/onboarding_3.png',
+        title: l10n.onboarding3Title,
+        description: l10n.onboarding3Desc,
+        primaryButtonLabel: l10n.authCreateAccount,
+        showSkip: false,
+      ),
+    ];
+  }
 }

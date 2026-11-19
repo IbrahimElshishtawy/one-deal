@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../app/app_localization.dart';
 import '../../../domain/validators/auth_validators.dart';
 import '../../theme/auth_design_tokens.dart';
+import '../../utils/auth_error_localizer.dart';
 import '../common/auth_error_banner.dart';
 import '../common/auth_primary_button.dart';
 import '../common/auth_text_field.dart';
@@ -31,7 +33,7 @@ class EmailFallbackSheet extends StatefulWidget {
 class _EmailFallbackSheetState extends State<EmailFallbackSheet> {
   final TextEditingController _emailController = TextEditingController();
   String? _emailError;
-  String? _unsupportedNotice;
+  bool _showUnsupportedNotice = false;
 
   @override
   void dispose() {
@@ -44,19 +46,24 @@ class _EmailFallbackSheetState extends State<EmailFallbackSheet> {
     if (error != null) {
       setState(() {
         _emailError = error;
-        _unsupportedNotice = null;
+        _showUnsupportedNotice = false;
       });
       return;
     }
 
     setState(() {
       _emailError = null;
-      _unsupportedNotice = 'إرسال رمز التحقق عبر البريد الإلكتروني غير متاح حالياً من الخادم. يرجى إتمام التحقق عبر رسالة SMS على رقم الموبايل المصري (+20).';
+      _showUnsupportedNotice = true;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+    final localizedEmailError = _emailError != null
+        ? AuthErrorLocalizer.localizeValidationMessage(context, _emailError!)
+        : null;
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         24,
@@ -80,7 +87,7 @@ class _EmailFallbackSheetState extends State<EmailFallbackSheet> {
           ),
           const SizedBox(height: 18),
           Text(
-            'التحقق بالبريد الإلكتروني',
+            l10n.emailFallbackTitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 19,
@@ -90,7 +97,7 @@ class _EmailFallbackSheetState extends State<EmailFallbackSheet> {
           ),
           const SizedBox(height: 8),
           Text(
-            'أدخل بريدك الإلكتروني للتحقق من إمكانية إرسال رمز بديل.',
+            l10n.emailFallbackSubtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.5,
@@ -100,36 +107,36 @@ class _EmailFallbackSheetState extends State<EmailFallbackSheet> {
           const SizedBox(height: 18),
           AuthTextField(
             key: const Key('email_fallback_field'),
-            label: 'البريد الإلكتروني',
-            hintText: 'name@example.com',
+            label: l10n.emailFallbackLabel,
+            hintText: l10n.emailFallbackHint,
             controller: _emailController,
-            errorText: _emailError,
+            errorText: localizedEmailError,
             leadingIcon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
             textDirection: TextDirection.ltr,
             onChanged: (_) {
-              if (_emailError != null || _unsupportedNotice != null) {
+              if (_emailError != null || _showUnsupportedNotice) {
                 setState(() {
                   _emailError = null;
-                  _unsupportedNotice = null;
+                  _showUnsupportedNotice = false;
                 });
               }
             },
             onSubmitted: (_) => _handleSubmit(),
           ),
-          if (_unsupportedNotice != null) ...[
+          if (_showUnsupportedNotice) ...[
             const SizedBox(height: 14),
             AuthErrorBanner(
               key: const Key('email_fallback_notice'),
-              message: _unsupportedNotice!,
+              message: l10n.emailFallbackUnsupported,
               icon: Icons.info_outline_rounded,
             ),
           ],
           const SizedBox(height: 18),
           AuthPrimaryButton(
             key: const Key('email_fallback_submit'),
-            label: 'التحقق من البريد الإلكتروني',
+            label: l10n.emailFallbackSubmit,
             onPressed: _handleSubmit,
           ),
         ],
