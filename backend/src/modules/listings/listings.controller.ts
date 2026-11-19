@@ -25,6 +25,7 @@ import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 import { FilterListingsDto } from './dto/filter-listings.dto';
+import { BatchPriceRefreshDto } from './dto/batch-price-refresh.dto';
 import { UpdateListingStatusDto } from './dto/update-listing-status.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
@@ -44,6 +45,17 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Feed items returned' })
   async getFeed(@Query() filters: FilterListingsDto) {
     return this.listingsService.getListingsFeed(filters);
+  }
+
+  @Post('prices/batch')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Batch refresh live authoritative prices and availability for up to 50 listings',
+  })
+  @ApiResponse({ status: 200, description: 'Batch price snapshot returned' })
+  async getBatchPrices(@Body() dto: BatchPriceRefreshDto) {
+    return this.listingsService.getBatchPrices(dto.ids);
   }
 
   @Get(':id')

@@ -6,14 +6,6 @@ import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
 import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
 
-/// Shared brand colors extracted from Deal One Home Hub reference designs.
-class DealOneDesignColors {
-  static const Color navy = Color(0xFF1B2B48);
-  static const Color navySoft = Color(0xFF2E405E);
-  static const Color priceAmber = Color(0xFFD97706);
-  static const Color canvasLight = Color(0xFFF6F7FA);
-}
-
 String formatEgpPrice(double price, {bool isArabic = true}) {
   final formatted = NumberFormat('#,##0', 'en_US').format(price.round());
   return isArabic ? '$formatted ج.م' : 'EGP $formatted';

@@ -38,6 +38,8 @@ class CategoryMapper {
     );
   }
 
+  static CategoryItem toEntity(CategoryDto dto) => toCategoryEntity(dto);
+
   static CategoryItem toCategoryEntity(CategoryDto dto) {
     return CategoryItem(
       id: dto.id,
@@ -48,6 +50,7 @@ class CategoryMapper {
       iconUrl: dto.iconUrl,
       parentId: dto.parentId,
       sortOrder: dto.sortOrder,
+      listingsCount: dto.listingsCount,
       subcategories: dto.children.map(toCategoryEntity).toList(),
       fields: dto.fields.map(toFieldEntity).toList(),
     );

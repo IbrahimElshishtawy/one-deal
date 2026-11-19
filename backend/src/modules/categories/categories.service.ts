@@ -142,6 +142,7 @@ export class CategoriesService {
     });
 
     await this.redis?.del('categories:tree');
+    await this.redis?.incr?.('home:feed:ver').catch(() => undefined);
     return created;
   }
 

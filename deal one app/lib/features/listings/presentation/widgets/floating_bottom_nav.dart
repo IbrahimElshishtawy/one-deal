@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:market_space/core/routing/route_names.dart';
-import 'package:market_space/features/listings/presentation/widgets/deal_one_listing_card.dart';
+import 'package:market_space/core/theme/app_colors.dart';
 
 /// Floating dark-navy pill navigation bar matching `Home 1 - Main Hub.png`.
 class DealOneFloatingBottomNav extends StatelessWidget {

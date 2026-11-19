@@ -44,6 +44,7 @@ class CategoryDto {
   final String? iconUrl;
   final String? parentId;
   final int sortOrder;
+  final int listingsCount;
   final bool isActive;
   final List<CategoryDto> children;
   final List<CategoryFieldDto> fields;
@@ -57,6 +58,7 @@ class CategoryDto {
     this.iconUrl,
     this.parentId,
     this.sortOrder = 0,
+    this.listingsCount = 0,
     this.isActive = true,
     this.children = const [],
     this.fields = const [],
@@ -75,6 +77,9 @@ class CategoryDto {
       iconUrl: json['iconUrl']?.toString() ?? json['icon_url']?.toString(),
       parentId: json['parentId']?.toString() ?? json['parent_id']?.toString(),
       sortOrder: (json['sortOrder'] ?? json['sort_order'] ?? 0) as int,
+      listingsCount:
+          ((json['listingsCount'] ?? json['listings_count'] ?? 0) as num)
+              .toInt(),
       isActive: json['isActive'] != false && json['is_active'] != false,
       children: childrenRaw != null
           ? childrenRaw

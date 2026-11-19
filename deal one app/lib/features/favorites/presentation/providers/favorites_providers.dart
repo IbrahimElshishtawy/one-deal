@@ -47,3 +47,12 @@ final favoritesProvider =
   final repository = ref.watch(favoritesRepositoryProvider);
   return FavoritesNotifier(repository);
 });
+
+/// Alias for controller access across feature modules.
+final favoritesControllerProvider = favoritesProvider;
+
+/// Reactive set of favorited listing IDs for O(1) lookup in product cards.
+final favoriteIdsProvider = Provider<Set<String>>((ref) {
+  final favs = ref.watch(favoritesProvider).valueOrNull ?? const [];
+  return favs.map((f) => f.listing.id).toSet();
+});

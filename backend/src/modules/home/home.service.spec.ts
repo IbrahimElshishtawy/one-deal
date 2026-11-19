@@ -91,4 +91,56 @@ describe('HomeService', () => {
       }),
     );
   });
+
+  it('returns server-driven section home feed with filterConfig, livePreviews, and providers', async () => {
+    const prisma = createMockPrisma();
+    prisma.category.findFirst = jest.fn().mockResolvedValue({
+      id: 'cat-re',
+      slug: 'real-estate',
+      nameAr: 'عقارات',
+      nameEn: 'Real Estate',
+      iconUrl: 'home_work',
+      sortOrder: 1,
+      fields: [],
+      children: [
+        {
+          id: 'sub-apt',
+          parentId: 'cat-re',
+          slug: 'apartments-for-sale',
+          nameAr: 'شقق للبيع',
+          nameEn: 'Apartments for Sale',
+          iconUrl: 'apartment',
+          sortOrder: 1,
+          fields: [
+            {
+              fieldKey: 'rooms',
+              labelAr: 'عدد الغرف',
+              labelEn: 'Bedrooms',
+              fieldType: 'number',
+              validationRules: null,
+              sortOrder: 1,
+            },
+          ],
+        },
+      ],
+    });
+
+    const service = new HomeService(
+      prisma as any,
+      createConfig({ NODE_ENV: 'development', ENABLE_DEMO_DATA: true }),
+    );
+
+    const section = await service.getSectionHome('real-estate', { limit: 6 });
+
+    expect(section.schemaVersion).toBe('1.0');
+    expect(section.priceFreshnessTtlSeconds).toBe(60);
+    expect(section.section.canonicalSlug).toBe('real-estate');
+    expect(section.section.subcategories).toHaveLength(1);
+    expect(section.livePreviews).toHaveLength(1);
+    expect(section.providers).toHaveLength(1);
+    expect(section.filterConfig.supportsListingKind).toBe(true);
+    expect(section.filterConfig.fields).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'rooms' })]),
+    );
+  });
 });

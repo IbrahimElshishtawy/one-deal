@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../cache/hybrid_cache_manager.dart';
+import '../cache/price_freshness_service.dart';
 import '../config/app_config.dart';
 import '../errors/app_failure.dart';
 import '../errors/error_mapper.dart';
 import '../logging/app_logger.dart';
+import '../marketplace/section_home_repository.dart';
 import '../network/api_client.dart';
 import '../network/api_endpoints.dart';
 import '../network/network_info.dart';
@@ -41,6 +44,37 @@ final preferencesServiceProvider = Provider<PreferencesService>((ref) {
   throw UnimplementedError(
     'preferencesServiceProvider must be overridden in ProviderScope',
   );
+});
+
+/// Provides the two-tier Hybrid Local Cache (L1 Memory + L2 Persistent).
+final hybridCacheManagerProvider = Provider<HybridCacheManager>((ref) {
+  final prefs = ref.watch(preferencesServiceProvider);
+  return HybridCacheManager(preferencesService: prefs);
+});
+
+/// Live network connectivity stream (true = offline, false = online).
+final isOfflineProvider = StreamProvider<bool>((ref) async* {
+  final networkInfo = ref.watch(networkInfoProvider);
+  yield !(await networkInfo.isConnected);
+  await for (final connected in networkInfo.onConnectivityChanged) {
+    yield !connected;
+  }
+});
+
+/// Provides authoritative batch price refresh state across all visible listings.
+final livePricesProvider =
+    StateNotifierProvider<LivePricesNotifier, Map<String, LivePriceSnapshot>>(
+      (ref) {
+        final apiClient = ref.watch(apiClientProvider);
+        return LivePricesNotifier(apiClient);
+      },
+    );
+
+/// Provides the unified Server-Driven Home & Section Feed repository.
+final sectionHomeRepositoryProvider = Provider<SectionHomeRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  final cache = ref.watch(hybridCacheManagerProvider);
+  return SectionHomeRepository(apiClient: apiClient, cache: cache);
 });
 
 /// Provides platform-backed hardware encrypted secure storage.

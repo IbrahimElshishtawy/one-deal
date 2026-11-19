@@ -469,11 +469,21 @@ export class ListingsService {
 
     // Ordering logic
     const sortVal = sort || sort_by;
-    let orderBy: any = [{ refreshedAt: 'desc' }];
+    let orderBy: any = [{ refreshedAt: 'desc' }, { id: 'desc' }];
     if (sortVal === 'price_asc') {
-      orderBy = [{ price: 'asc' }, { refreshedAt: 'desc' }];
+      orderBy = [{ price: 'asc' }, { refreshedAt: 'desc' }, { id: 'desc' }];
     } else if (sortVal === 'price_desc') {
-      orderBy = [{ price: 'desc' }, { refreshedAt: 'desc' }];
+      orderBy = [{ price: 'desc' }, { refreshedAt: 'desc' }, { id: 'desc' }];
+    } else if (sortVal === 'oldest') {
+      orderBy = [{ refreshedAt: 'asc' }, { id: 'asc' }];
+    } else if (sortVal === 'most_viewed') {
+      orderBy = [{ viewsCount: 'desc' }, { refreshedAt: 'desc' }, { id: 'desc' }];
+    } else if (sortVal === 'featured' || sortVal === 'featured_first') {
+      orderBy = [
+        { promotedUntil: { sort: 'desc', nulls: 'last' } },
+        { refreshedAt: 'desc' },
+        { id: 'desc' },
+      ];
     }
 
     const items = await this.prisma.listing.findMany({
@@ -1109,7 +1119,64 @@ export class ListingsService {
     return updated;
   }
 
+  /**
+   * Authoritative batch price & availability snapshot for up to 50 listings.
+   * Uses minimal column projection + short-TTL Redis caching to avoid N+1 client requests.
+   */
+  async getBatchPrices(ids: string[]) {
+    const uniqueIds = Array.from(new Set(ids)).slice(0, 50);
+    if (uniqueIds.length === 0) {
+      return {
+        generatedAt: new Date().toISOString(),
+        priceFreshnessTtlSeconds: 60,
+        items: [],
+      };
+    }
+
+    const sortedKey = [...uniqueIds].sort().join(',');
+    const feedVer = (await this.redis?.get<number>('listings:feed:ver')) ?? 0;
+    const hash = crypto.createHash('sha1').update(sortedKey).digest('hex');
+    const cacheKey = `listings:prices:v${feedVer}:${hash}`;
+
+    const cached = await this.redis?.get<any>(cacheKey);
+    if (cached) return cached;
+
+    const rows = await this.prisma.listing.findMany({
+      where: {
+        id: { in: uniqueIds },
+        publicationStatus: 'published',
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        price: true,
+        currency: true,
+        availabilityStatus: true,
+        updatedAt: true,
+      },
+    });
+
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      priceFreshnessTtlSeconds: 60,
+      items: rows.map((row) => ({
+        id: row.id,
+        price: Number(row.price),
+        currency: row.currency || 'EGP',
+        availabilityStatus: row.availabilityStatus,
+        updatedAt: row.updatedAt.toISOString(),
+        version: row.updatedAt.getTime(),
+      })),
+    };
+
+    await this.redis?.set(cacheKey, payload, 15);
+    return payload;
+  }
+
   private async invalidateFeedCache(): Promise<void> {
-    await this.redis?.incr?.('listings:feed:ver').catch(() => undefined);
+    await Promise.all([
+      this.redis?.incr?.('listings:feed:ver').catch(() => undefined),
+      this.redis?.incr?.('home:feed:ver').catch(() => undefined),
+    ]);
   }
 }

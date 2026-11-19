@@ -25,6 +25,9 @@ import 'package:market_space/features/auth/presentation/providers/auth_providers
 class _AlwaysConnectedNetworkInfo implements NetworkInfo {
   @override
   Future<bool> get isConnected async => true;
+
+  @override
+  Stream<bool> get onConnectivityChanged => const Stream<bool>.empty();
 }
 
 typedef _StubResponder = ResponseBody Function(

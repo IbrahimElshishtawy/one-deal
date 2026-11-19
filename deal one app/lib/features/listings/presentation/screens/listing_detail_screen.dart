@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:market_space/core/errors/error_presenter.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
@@ -19,39 +20,70 @@ class ListingDetailScreen extends ConsumerWidget {
     final detailAsync = ref.watch(listingDetailsFamily(listingId));
 
     return detailAsync.when(
-      data: (item) => _DetailView(item: item),
+      data: (item) {
+        // Persist in last-viewed cache without blocking UI
+        ref.read(hybridCacheManagerProvider).recordViewedListing(
+              id: item.id,
+              title: item.title,
+              price: item.price,
+              currency: item.currency,
+              imageUrl: item.primaryImageUrl,
+              categorySlug: item.categorySlug,
+            );
+        return _DetailView(item: item);
+      },
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator.adaptive()),
       ),
-      error: (err, _) => Scaffold(
-        appBar: AppBar(title: const Text('تفاصيل الإعلان')),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: AppColors.errorOf(context),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'تعذر تحميل تفاصيل الإعلان: $err',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () =>
-                      ref.invalidate(listingDetailsFamily(listingId)),
-                  child: const Text('إعادة المحاولة'),
-                ),
-              ],
+      error: (err, _) {
+        final isArabic = Directionality.of(context) == TextDirection.rtl;
+        final presented = ErrorPresenter.present(err, isArabic: isArabic);
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(isArabic ? 'تفاصيل الإعلان' : 'Listing Details'),
+          ),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    presented.kind == FeatureErrorKind.offline
+                        ? Icons.wifi_off_rounded
+                        : Icons.error_outline,
+                    size: 48,
+                    color: AppColors.errorOf(context),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    presented.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    presented.message,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textMutedOf(context)),
+                  ),
+                  if (presented.canRetry) ...[
+                    const SizedBox(height: 14),
+                    ElevatedButton(
+                      onPressed: () =>
+                          ref.invalidate(listingDetailsFamily(listingId)),
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -17,6 +17,9 @@ import 'package:market_space/features/search/presentation/providers/search_provi
 class _AlwaysConnectedNetworkInfo implements NetworkInfo {
   @override
   Future<bool> get isConnected async => true;
+
+  @override
+  Stream<bool> get onConnectivityChanged => const Stream<bool>.empty();
 }
 
 class _InMemorySecureStorage implements SecureStorageService {

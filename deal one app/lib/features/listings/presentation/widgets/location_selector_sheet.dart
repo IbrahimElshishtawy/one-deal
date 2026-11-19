@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:market_space/core/theme/app_colors.dart';
-import 'package:market_space/features/listings/presentation/widgets/deal_one_listing_card.dart';
 import 'package:market_space/features/locations/domain/entities/location_entity.dart';
 import 'package:market_space/features/locations/presentation/providers/locations_providers.dart';
 

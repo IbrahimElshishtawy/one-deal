@@ -53,11 +53,13 @@ class ApiEndpoints {
 
   // Listings Lifecycle & Contact Reveal
   static const String listings = '/listings';
+  static const String batchPrices = '/listings/prices/batch';
   static const String home = '/home';
   static const String homeFeatured = '/home/featured';
   static const String homeLatest = '/home/latest';
   static const String homeRecommended = '/home/recommended';
   static const String homeCategories = '/home/categories';
+  static String homeSection(String slug) => '/home/sections/$slug';
   static String listingDetails(String id) => '/listings/$id';
   static String listingAvailability(String id) => '/listings/$id/availability';
   static String listingStatus(String id) => '/listings/$id/status';
@@ -67,6 +69,7 @@ class ApiEndpoints {
 
   // Search
   static const String search = '/search';
+  static const String searchSuggestions = '/search/suggestions';
 
   // Favorites
   static const String favorites = '/favorites';

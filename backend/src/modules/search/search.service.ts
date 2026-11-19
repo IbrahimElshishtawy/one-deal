@@ -253,13 +253,23 @@ export class SearchService {
       } catch {}
     }
 
-    // Ordering logic
+    // Ordering logic with stable deterministic tie-breaker (id) for pagination
     const sortVal = sort || sort_by;
-    let orderBy: any = [{ refreshedAt: 'desc' }];
+    let orderBy: any = [{ refreshedAt: 'desc' }, { id: 'desc' }];
     if (sortVal === 'price_asc') {
-      orderBy = [{ price: 'asc' }, { refreshedAt: 'desc' }];
+      orderBy = [{ price: 'asc' }, { refreshedAt: 'desc' }, { id: 'desc' }];
     } else if (sortVal === 'price_desc') {
-      orderBy = [{ price: 'desc' }, { refreshedAt: 'desc' }];
+      orderBy = [{ price: 'desc' }, { refreshedAt: 'desc' }, { id: 'desc' }];
+    } else if (sortVal === 'oldest') {
+      orderBy = [{ refreshedAt: 'asc' }, { id: 'asc' }];
+    } else if (sortVal === 'most_viewed') {
+      orderBy = [{ viewsCount: 'desc' }, { refreshedAt: 'desc' }, { id: 'desc' }];
+    } else if (sortVal === 'featured' || sortVal === 'featured_first') {
+      orderBy = [
+        { promotedUntil: { sort: 'desc', nulls: 'last' } },
+        { refreshedAt: 'desc' },
+        { id: 'desc' },
+      ];
     }
 
     const [total, items] = await Promise.all([
@@ -298,6 +308,7 @@ export class SearchService {
       }),
     ]);
 
+    const now = new Date();
     return {
       data: items.map((item) => ({
         id: item.id,
@@ -305,7 +316,9 @@ export class SearchService {
         description: item.description,
         price: Number(item.price),
         currency: item.currency || 'EGP',
+        condition: (item.attributes as any)?.condition || 'USED',
         listingKind: item.listingKind,
+        categoryId: item.categoryId,
         category: item.category,
         governorateName: item.area?.city?.governorate?.nameAr ?? '',
         cityName: item.area?.city?.nameAr ?? '',
@@ -317,6 +330,8 @@ export class SearchService {
         imageUrl: item.media?.[0]?.publicUrl ?? null,
         media: item.media ?? [],
         attributes: (item.attributes as any) || {},
+        viewsCount: item.viewsCount,
+        isFeatured: Boolean(item.promotedUntil && item.promotedUntil > now),
         account: item.account
           ? {
               id: item.account.id,
@@ -342,5 +357,101 @@ export class SearchService {
         query: q || '',
       },
     };
+  }
+
+  /**
+   * Fast autocomplete suggestions combining matching categories and published listing titles.
+   */
+  async getSuggestions(
+    rawQuery: string,
+    categorySlug?: string,
+    limit: number = 8,
+  ) {
+    const term = rawQuery.trim();
+    if (term.length < 2) {
+      return { query: term, suggestions: [] };
+    }
+
+    const normalized = normalizeArabicText(term);
+    const listingWhere: any = {
+      publicationStatus: 'published',
+      deletedAt: null,
+      OR: [
+        { searchNormalizedText: { contains: normalized, mode: 'insensitive' } },
+        { title: { contains: term, mode: 'insensitive' } },
+      ],
+    };
+
+    const isProd = process.env.NODE_ENV === 'production';
+    const enableDemo = process.env.ENABLE_DEMO_DATA === 'true';
+    if (isProd && !enableDemo) {
+      listingWhere.isDemo = false;
+    }
+
+    if (categorySlug) {
+      const cat = await this.prisma.category.findFirst({
+        where: { slug: categorySlug.toLowerCase().replace(/_/g, '-') },
+        include: { children: { select: { id: true } } },
+      });
+      if (cat) {
+        listingWhere.categoryId = {
+          in: [cat.id, ...cat.children.map((c) => c.id)],
+        };
+      }
+    }
+
+    const [categories, listings] = await Promise.all([
+      this.prisma.category.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { nameAr: { contains: term, mode: 'insensitive' } },
+            { nameEn: { contains: term, mode: 'insensitive' } },
+          ],
+        },
+        select: { slug: true, nameAr: true, nameEn: true },
+        take: 3,
+      }),
+      this.prisma.listing.findMany({
+        where: listingWhere,
+        select: { id: true, title: true, category: { select: { slug: true } } },
+        orderBy: [{ viewsCount: 'desc' }, { refreshedAt: 'desc' }],
+        take: limit,
+      }),
+    ]);
+
+    const seen = new Set<string>();
+    const suggestions: Array<{
+      text: string;
+      type: 'category' | 'listing';
+      categorySlug?: string;
+      listingId?: string;
+    }> = [];
+
+    for (const c of categories) {
+      if (!seen.has(c.nameAr)) {
+        seen.add(c.nameAr);
+        suggestions.push({
+          text: c.nameAr,
+          type: 'category',
+          categorySlug: c.slug,
+        });
+      }
+    }
+
+    for (const l of listings) {
+      if (suggestions.length >= limit) break;
+      if (!seen.has(l.title)) {
+        seen.add(l.title);
+        suggestions.push({
+          text: l.title,
+          type: 'listing',
+          categorySlug: l.category?.slug,
+          listingId: l.id,
+        });
+      }
+    }
+
+    return { query: term, suggestions };
   }
 }

@@ -31,6 +31,7 @@ class CategoryItem {
   final String? iconUrl;
   final String? parentId;
   final int sortOrder;
+  final int listingsCount;
   final List<CategoryItem> subcategories;
   final List<CategoryField> fields;
 
@@ -43,6 +44,7 @@ class CategoryItem {
     this.iconUrl,
     this.parentId,
     this.sortOrder = 0,
+    this.listingsCount = 0,
     this.subcategories = const [],
     this.fields = const [],
   });

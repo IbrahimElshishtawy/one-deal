@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
 
+/// Shared brand colors extracted from Deal One 7-Home reference designs.
+class DealOneDesignColors {
+  static const Color navy = Color(0xFF1B2B48);
+  static const Color navySoft = Color(0xFF2E405E);
+  static const Color priceAmber = Color(0xFFD97706);
+  static const Color amberPrice = Color(0xFFD97706);
+  static const Color canvasLight = Color(0xFFF6F7FA);
+}
+
 /// Centralized Monochrome Design System Color Tokens.
 /// Exclusively Black, White, and Grayscale shades for the core identity,
 /// with clear semantic colors for states (Success, Warning, Error, Info).
@@ -27,6 +36,7 @@ class AppColors {
   // ==========================================
   static const Color darkBackground = Color(0xFF121212);
   static const Color darkSurface = Color(0xFF1C1C1C);
+  static const Color darkSurfaceElevated = Color(0xFF262626);
   static const Color darkSurfaceSecondary = Color(0xFF262626);
   static const Color darkSurfaceTertiary = Color(0xFF303030);
   static const Color darkTextPrimary = Color(0xFFFFFFFF);

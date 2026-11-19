@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { HomeService } from './home.service';
 import { HomeQueryDto } from './dto/home-query.dto';
@@ -46,5 +46,19 @@ export class HomeController {
   @ApiResponse({ status: 200, description: 'Popular categories returned' })
   async getPopularCategories() {
     return this.homeService.getPopularCategories();
+  }
+
+  @Get('sections/:sectionSlug')
+  @ApiOperation({
+    summary:
+      'Get server-driven Section Home Feed (subcategories, promotions, live previews, featured, latest, providers, filterConfig)',
+  })
+  @ApiResponse({ status: 200, description: 'Section home feed returned' })
+  @ApiResponse({ status: 404, description: 'Section not found' })
+  async getSectionHome(
+    @Param('sectionSlug') sectionSlug: string,
+    @Query() query: HomeQueryDto,
+  ) {
+    return this.homeService.getSectionHome(sectionSlug, query);
   }
 }

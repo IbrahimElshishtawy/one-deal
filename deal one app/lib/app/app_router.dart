@@ -5,6 +5,7 @@ import '../core/routing/app_page_transitions.dart';
 import '../core/routing/route_guards.dart';
 import '../core/routing/route_names.dart';
 import '../features/accounts/presentation/screens/profile_screen.dart';
+import '../features/appliances_decor/presentation/pages/appliances_decor_home_page.dart';
 import '../features/auth/domain/entities/auth_session.dart';
 import '../features/auth/presentation/pages/legal/legal_document_page.dart';
 import '../features/auth/presentation/pages/login/login_page.dart';
@@ -12,10 +13,15 @@ import '../features/auth/presentation/pages/onboarding/onboarding_page.dart';
 import '../features/auth/presentation/pages/otp_verification/otp_verification_page.dart';
 import '../features/auth/presentation/pages/sign_up/sign_up_page.dart';
 import '../features/auth/presentation/pages/verification_success/verification_success_page.dart';
+import '../features/cars_maintenance/presentation/pages/cars_maintenance_home_page.dart';
+import '../features/construction_electrical/presentation/pages/construction_electrical_home_page.dart';
+import '../features/fashion_accessories/presentation/pages/fashion_accessories_home_page.dart';
 import '../features/favorites/presentation/screens/favorites_screen.dart';
-import '../features/listings/presentation/screens/home_feed_screen.dart';
 import '../features/listings/presentation/screens/listing_detail_screen.dart';
+import '../features/main_hub/presentation/pages/main_hub_page.dart';
+import '../features/real_estate/presentation/pages/real_estate_home_page.dart';
 import '../features/search/presentation/screens/search_screen.dart';
+import '../features/services_engineering/presentation/pages/services_engineering_home_page.dart';
 
 class AppRouter {
   static GoRouter createRouter({
@@ -39,7 +45,67 @@ class AppRouter {
                 context: context,
                 state: state,
                 style: CinematicTransitionStyle.reveal,
-                child: const HomeFeedScreen(),
+                child: const MainHubPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.realEstate,
+          name: RouteNames.realEstateName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: const RealEstateHomePage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.homeAppliances,
+          name: RouteNames.homeAppliancesName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: const AppliancesDecorHomePage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.homeServices,
+          name: RouteNames.homeServicesName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: const ServicesEngineeringHomePage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.buildingMaterials,
+          name: RouteNames.buildingMaterialsName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: const ConstructionElectricalHomePage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.cars,
+          name: RouteNames.carsName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: const CarsMaintenanceHomePage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.fashion,
+          name: RouteNames.fashionName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                child: const FashionAccessoriesHomePage(),
               ),
         ),
         GoRoute(

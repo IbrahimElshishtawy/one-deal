@@ -16,13 +16,19 @@ final searchActiveQueryDtoProvider = StateProvider<SearchQueryDto>((ref) {
   return const SearchQueryDto();
 });
 
+final searchHistoryProvider = FutureProvider<List<String>>((ref) async {
+  final cache = ref.watch(hybridCacheManagerProvider);
+  return cache.getSearchHistory();
+});
+
 final searchResultsProvider = FutureProvider<SearchResult>((ref) async {
   final repository = ref.watch(searchRepositoryProvider);
   final queryDto = ref.watch(searchActiveQueryDtoProvider);
+  final cache = ref.watch(hybridCacheManagerProvider);
 
-  if (!queryDto.hasAnyFilter) {
-    // Default browse: return latest products from backend when browsing without filters
-    return repository.search(queryDto);
+  if (queryDto.query.trim().length >= 2) {
+    await cache.addSearchHistory(queryDto.query.trim());
+    ref.invalidate(searchHistoryProvider);
   }
 
   return repository.search(queryDto);
