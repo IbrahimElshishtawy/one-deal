@@ -385,8 +385,11 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
                 ),
               ),
           ] else ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 4,
+              runSpacing: 4,
               children: [
                 Text(
                   l10n.otpDidNotReceive,

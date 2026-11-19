@@ -109,8 +109,9 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 l10n.signUpAlreadyHaveAccount,

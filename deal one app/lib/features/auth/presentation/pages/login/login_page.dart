@@ -102,8 +102,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 l10n.loginNoAccount,
@@ -164,10 +165,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
           ),
           const SizedBox(height: AuthDesignTokens.spaceMd),
-          AuthLogoHeader(
-            title: l10n.loginTitle,
-            subtitle: l10n.loginSubtitle,
-          ),
+          AuthLogoHeader(title: l10n.loginTitle, subtitle: l10n.loginSubtitle),
           const SizedBox(height: AuthDesignTokens.headerToFormGap),
           LoginFormCard(
             phoneController: _phoneController,

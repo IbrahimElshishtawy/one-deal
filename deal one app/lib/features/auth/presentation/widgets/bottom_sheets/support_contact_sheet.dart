@@ -32,9 +32,8 @@ class SupportContactSheet extends StatelessWidget {
     await Clipboard.setData(ClipboardData(text: value));
     if (!context.mounted) return;
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.copiedItem(label))));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l10n.copiedItem(label))));
   }
 
   @override
