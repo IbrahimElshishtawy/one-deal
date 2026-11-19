@@ -307,6 +307,21 @@ export const envSchema = z.object({
   FIREBASE_CLIENT_EMAIL: z.string().optional().default(''),
   FIREBASE_PRIVATE_KEY: z.string().optional().default(''),
 
+  // Transactional Email (Resend)
+  RESEND_API_KEY: z.string().optional().default(''),
+  EMAIL_FROM: z.string().optional().default('Deal One <onboarding@resend.dev>'),
+  EMAIL_REPLY_TO: z.string().email().optional(),
+  APP_PUBLIC_URL: z
+    .string()
+    .url()
+    .default('https://one-deal-cjjt-production.up.railway.app'),
+  EMAIL_VERIFICATION_TTL_MINUTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(1440)
+    .default(30),
+
   // Observability / Error Tracking
   SENTRY_DSN: z.string().optional().default(''),
 });

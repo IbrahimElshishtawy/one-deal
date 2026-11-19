@@ -4,6 +4,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { WorkerService } from '../../workers/worker.service';
+import { EmailService } from '../../modules/email/email.service';
 
 @ApiTags('Health')
 @Controller('health')
@@ -12,6 +13,7 @@ export class HealthController {
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
     @Optional() private readonly workerService?: WorkerService,
+    @Optional() private readonly emailService?: EmailService,
   ) {}
 
   @Get(['liveness', 'live'])
@@ -81,6 +83,9 @@ export class HealthController {
         redis_cache: cacheHealthy ? 'up' : 'down',
         redis_queue: queueHealthy ? 'up' : 'down',
         workers: workerStatus,
+        email: this.emailService
+          ? this.emailService.getReadinessStatus()
+          : 'unconfigured',
       },
       timestamp: new Date().toISOString(),
     };

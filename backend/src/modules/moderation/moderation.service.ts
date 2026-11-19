@@ -3,16 +3,25 @@ import {
   BadRequestException,
   ConflictException,
   NotFoundException,
+  Logger,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { AdjudicateReportDto } from './dto/adjudicate-report.dto';
 import { AdjudicateListingDto } from './dto/adjudicate-listing.dto';
 import { AdjudicateVerificationDto } from './dto/adjudicate-verification.dto';
+import { EmailService } from '../email/email.service';
+import { normalizeEmailLocale } from '../email/templates/email-layout.template';
 
 @Injectable()
 export class ModerationService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ModerationService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly emailService?: EmailService,
+  ) {}
 
   /**
    * Retrieves pending listings awaiting human moderation review.
@@ -79,7 +88,7 @@ export class ModerationService {
     const newModerationStatus = isApprove ? 'approved' : 'rejected';
     const newPublicationStatus = isApprove ? 'published' : 'draft';
 
-    return this.prisma.$transaction(async (tx) => {
+    const updatedListing = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.listing.update({
         where: { id: listingId },
         data: {
@@ -122,6 +131,69 @@ export class ModerationService {
 
       return updated;
     });
+
+    if (this.emailService && (this.prisma as any).account?.findUnique) {
+      this.notifyListingModerationDecision(
+        listing.accountId,
+        listingId,
+        listing.title,
+        isApprove,
+        dto.reasonCode,
+        dto.notes,
+      );
+    }
+
+    return updatedListing;
+  }
+
+  private notifyListingModerationDecision(
+    accountId: string,
+    listingId: string,
+    listingTitle: string,
+    isApprove: boolean,
+    reasonCode?: string,
+    notes?: string,
+  ): void {
+    this.prisma.account
+      .findUnique({
+        where: { id: accountId },
+        select: {
+          owner: {
+            select: { email: true, fullName: true, preferredLanguage: true },
+          },
+        },
+      })
+      .then((account) => {
+        const owner = account?.owner;
+        if (!owner?.email || !this.emailService) return;
+        const locale = normalizeEmailLocale(owner.preferredLanguage);
+        const listingUrl = `${this.emailService.getAppPublicUrl()}/listings/${listingId}`;
+        if (isApprove) {
+          return this.emailService.sendListingApprovedEmail({
+            to: owner.email,
+            displayName: owner.fullName,
+            listingTitle,
+            listingUrl,
+            locale,
+            idempotencyKey: `listing-approved-${listingId}`,
+          });
+        }
+        return this.emailService.sendListingRejectedEmail({
+          to: owner.email,
+          displayName: owner.fullName,
+          listingTitle,
+          reasonCode,
+          reasonNotes: notes,
+          listingUrl,
+          locale,
+          idempotencyKey: `listing-rejected-${listingId}-${Date.now()}`,
+        });
+      })
+      .catch((err) =>
+        this.logger.warn(
+          `Non-blocking moderation email failed for listing ${listingId}: ${err?.message}`,
+        ),
+      );
   }
 
   /**

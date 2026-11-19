@@ -71,6 +71,7 @@ describe('HealthController', () => {
               redis_cache: 'up',
               redis_queue: 'up',
               workers: 'active',
+              email: 'unconfigured',
             },
           }),
         }),

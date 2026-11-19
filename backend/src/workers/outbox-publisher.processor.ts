@@ -1,11 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../core/database/prisma.service';
 import { NotificationProcessor } from './notification.processor';
+import { EmailService } from '../modules/email/email.service';
+import { normalizeEmailLocale } from '../modules/email/templates/email-layout.template';
 
 /**
  * OutboxPublisherProcessor implements the Transactional Outbox relay (Pattern F).
  * It atomically claims PENDING events from `outbox_events`, dispatches them to
- * downstream handlers (e.g., push notifications), and marks them PUBLISHED or FAILED.
+ * downstream handlers (e.g., push notifications, transactional emails), and marks
+ * them PUBLISHED or FAILED.
  */
 @Injectable()
 export class OutboxPublisherProcessor {
@@ -14,6 +17,7 @@ export class OutboxPublisherProcessor {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationProcessor: NotificationProcessor,
+    @Optional() private readonly emailService?: EmailService,
   ) {}
 
   async publishPendingEvents(batchSize = 50): Promise<{
@@ -106,7 +110,54 @@ export class OutboxPublisherProcessor {
       return;
     }
 
-    // Domain events (LISTING_CREATED, LISTING_SUBMITTED_FOR_MODERATION, PAYMENT_SUCCEEDED, etc.)
+    if (
+      eventType === 'PAYMENT_SUCCEEDED' &&
+      payload?.paymentId &&
+      this.emailService &&
+      (this.prisma as any).payment?.findUnique
+    ) {
+      try {
+        const payment = await this.prisma.payment.findUnique({
+          where: { id: String(payload.paymentId) },
+          include: {
+            user: {
+              select: { email: true, fullName: true, preferredLanguage: true },
+            },
+            package: { select: { nameAr: true, nameEn: true } },
+            listing: { select: { title: true } },
+          },
+        });
+        if (payment?.user?.email) {
+          const locale = normalizeEmailLocale(payment.user.preferredLanguage);
+          await this.emailService.sendPaymentReceiptEmail({
+            to: payment.user.email,
+            displayName: payment.user.fullName,
+            amountEgp: String(payment.amountEgp),
+            currency: 'EGP',
+            packageName:
+              locale === 'en'
+                ? payment.package?.nameEn
+                : payment.package?.nameAr,
+            listingTitle: payment.listing?.title,
+            transactionReference: String(
+              payload.transactionId ||
+                payment.gatewayTransactionId ||
+                payment.id,
+            ),
+            paidAt: payment.updatedAt,
+            locale,
+            idempotencyKey: `payment-receipt-${payment.id}`,
+          });
+        }
+      } catch (err: any) {
+        this.logger.warn(
+          `Non-blocking payment receipt email failed for payment ${payload.paymentId}: ${err?.message}`,
+        );
+      }
+      return;
+    }
+
+    // Domain events (LISTING_CREATED, LISTING_SUBMITTED_FOR_MODERATION, etc.)
     this.logger.log(
       `📨 [Outbox Dispatch] Event=${eventType} Payload=${JSON.stringify(payload)}`,
     );

@@ -24,6 +24,8 @@ import { SetPasswordDto } from './dto/set-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { EmailService } from '../email/email.service';
+import { normalizeEmailLocale } from '../email/templates/email-layout.template';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +39,7 @@ export class AuthService {
     private readonly securityAudit: SecurityAuditService,
     @Optional() private readonly redis?: RedisService,
     @Optional() private readonly configService?: ConfigService,
+    @Optional() private readonly emailService?: EmailService,
   ) {}
 
   /**
@@ -164,6 +167,22 @@ export class AuthService {
           defaultAccountId: primaryAccount.id,
         },
       });
+
+      if (user.email && this.emailService) {
+        const registeredUserId = user.id;
+        this.emailService
+          .sendWelcomeEmail({
+            to: user.email,
+            displayName: user.fullName,
+            locale: normalizeEmailLocale(user.preferredLanguage),
+            idempotencyKey: `welcome-${registeredUserId}`,
+          })
+          .catch((err) =>
+            this.logger.warn(
+              `Non-blocking welcome email failed for user ${registeredUserId}: ${err?.message}`,
+            ),
+          );
+      }
     } else {
       // Existing User Verification
       if (!user.isActive || user.deletedAt) {
@@ -425,7 +444,19 @@ export class AuthService {
    * Revokes all active sessions for authenticated user.
    */
   async terminateAllSessions(userId: string, correlationId?: string) {
-    return this.sessionService.revokeAllUserSessions(userId, correlationId);
+    const result = await this.sessionService.revokeAllUserSessions(
+      userId,
+      correlationId,
+    );
+    if (this.emailService) {
+      this.dispatchSecurityEmailForUser(
+        userId,
+        'ALL_SESSIONS_TERMINATED',
+        undefined,
+        correlationId,
+      );
+    }
+    return result;
   }
 
   /**
@@ -555,6 +586,15 @@ export class AuthService {
       metadata: { revokedOtherSessions: revocation.revokedCount },
     });
 
+    if (this.emailService) {
+      this.dispatchSecurityEmailForUser(
+        user.id,
+        'PASSWORD_CHANGED',
+        ipAddress,
+        correlationId,
+      );
+    }
+
     return {
       success: true,
       message: 'Password changed successfully.',
@@ -667,10 +707,54 @@ export class AuthService {
       metadata: { revokedSessions: revocation.revokedCount },
     });
 
+    if (this.emailService) {
+      this.dispatchSecurityEmailForUser(
+        user.id,
+        'PASSWORD_RESET',
+        ipAddress,
+        correlationId,
+      );
+    }
+
     return {
       success: true,
       message:
         'Password reset successfully. All active sessions have been signed out.',
     };
+  }
+
+  private dispatchSecurityEmailForUser(
+    userId: string,
+    eventKind:
+      'PASSWORD_CHANGED' | 'PASSWORD_RESET' | 'ALL_SESSIONS_TERMINATED',
+    ipAddress?: string,
+    correlationId?: string,
+  ): void {
+    if (!this.emailService || !(this.prisma as any).user?.findUnique) {
+      return;
+    }
+    this.prisma.user
+      .findUnique({
+        where: { id: userId },
+        select: { email: true, fullName: true, preferredLanguage: true },
+      })
+      .then((profile) => {
+        if (!profile?.email) return;
+        return this.emailService!.sendSecurityNotificationEmail({
+          to: profile.email,
+          displayName: profile.fullName,
+          eventKind,
+          ipAddress,
+          locale: normalizeEmailLocale(profile.preferredLanguage),
+          idempotencyKey: correlationId
+            ? `sec-${eventKind.toLowerCase()}-${userId}-${correlationId}`
+            : undefined,
+        });
+      })
+      .catch((err) =>
+        this.logger.warn(
+          `Non-blocking security email (${eventKind}) failed for user ${userId}: ${err?.message}`,
+        ),
+      );
   }
 }
