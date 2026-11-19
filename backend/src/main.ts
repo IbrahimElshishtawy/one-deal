@@ -32,31 +32,10 @@ async function bootstrap() {
     trustProxy,
   });
 
-  // Preserve raw JSON body string for HMAC webhook signature verification
-  fastifyAdapter
-    .getInstance()
-    .addContentTypeParser(
-      'application/json',
-      { parseAs: 'string' },
-      (req, body, done) => {
-        const raw = typeof body === 'string' ? body : body.toString('utf8');
-        (req as any).rawBody = raw;
-        if (!raw || raw.trim() === '') {
-          done(null, {});
-          return;
-        }
-        try {
-          done(null, JSON.parse(raw));
-        } catch (err: any) {
-          err.statusCode = 400;
-          done(err, undefined);
-        }
-      },
-    );
-
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     fastifyAdapter,
+    { rawBody: true },
   );
 
   const configService = app.get(ConfigService);
