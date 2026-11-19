@@ -17,6 +17,7 @@ class ApiEndpoints {
   static const String refreshToken = '/auth/refresh';
   static const String logout = '/auth/logout';
   static const String authMe = '/auth/me';
+  static const String devGuestLogin = '/auth/dev-guest';
   static const String activeSessions = '/auth/sessions';
   static const String terminateAllSessions = '/auth/sessions/terminate-all';
 
@@ -52,6 +53,11 @@ class ApiEndpoints {
 
   // Listings Lifecycle & Contact Reveal
   static const String listings = '/listings';
+  static const String home = '/home';
+  static const String homeFeatured = '/home/featured';
+  static const String homeLatest = '/home/latest';
+  static const String homeRecommended = '/home/recommended';
+  static const String homeCategories = '/home/categories';
   static String listingDetails(String id) => '/listings/$id';
   static String listingAvailability(String id) => '/listings/$id/availability';
   static String listingStatus(String id) => '/listings/$id/status';

@@ -87,6 +87,30 @@ export class FilterListingsDto {
   @IsEnum(ListingCondition)
   condition?: ListingCondition;
 
+  @ApiPropertyOptional({
+    enum: ['sale', 'rent', 'buy', 'service', 'product'],
+    description: 'Listing kind (sale, rent, service, product)',
+  })
+  @IsOptional()
+  @IsString()
+  listingKind?: string;
+
+  @ApiPropertyOptional({ description: 'Return only featured/promoted listings' })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  featured?: boolean;
+
+  @ApiPropertyOptional({ description: 'Clothing or product size' })
+  @IsOptional()
+  @IsString()
+  size?: string;
+
+  @ApiPropertyOptional({ description: 'Product or vehicle color' })
+  @IsOptional()
+  @IsString()
+  color?: string;
+
   // Geographic spatial filtering
   @ApiPropertyOptional({ description: 'User latitude coordinate (-90 to 90)' })
   @IsOptional()

@@ -5,6 +5,25 @@ abstract class ListingsRepository {
   /// Fetches listings feed with filter and cursor pagination
   Future<ListingFeed> getListingsFeed(FilterListingsDto filters);
 
+  /// Fetches featured listings for Home screen
+  Future<List<ListingItem>> getFeaturedListings({
+    int? governorateId,
+    int? cityId,
+    String? categorySlug,
+    int limit = 10,
+  });
+
+  /// Fetches recommended listings for Home screen
+  Future<List<ListingItem>> getRecommendedListings({
+    int? governorateId,
+    int? cityId,
+    String? categorySlug,
+    int limit = 10,
+  });
+
+  /// Fetches promotional hero banners from Home API
+  Future<List<HomePromotion>> getHomePromotions();
+
   /// Fetches single listing details by ID
   Future<ListingItem> getListingDetails(String id);
 

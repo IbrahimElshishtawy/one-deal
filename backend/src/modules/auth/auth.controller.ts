@@ -387,4 +387,31 @@ export class AuthController {
       status: user.status,
     };
   }
+
+  @Post('dev-guest')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 900, { anonymousLimit: 30, bucketKey: 'auth:dev-guest' })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Issue a scoped non-admin JWT session for the Development Guest account (strictly disabled in production)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Development guest session issued',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Disabled in production or when ENABLE_DEV_AUTH_BYPASS is false',
+  })
+  async devGuestLogin(
+    @Req() req: FastifyRequest,
+    @Headers('x-trace-id') traceId?: string,
+  ) {
+    return this.authService.authenticateDevGuest(
+      req.headers['user-agent'],
+      req.ip,
+      traceId,
+    );
+  }
 }

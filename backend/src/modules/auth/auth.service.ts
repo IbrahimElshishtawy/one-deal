@@ -1,6 +1,7 @@
 import {
   Injectable,
   UnauthorizedException,
+  ForbiddenException,
   BadRequestException,
   HttpException,
   HttpStatus,
@@ -720,6 +721,126 @@ export class AuthService {
       success: true,
       message:
         'Password reset successfully. All active sessions have been signed out.',
+    };
+  }
+
+  /**
+   * Issues a real backend JWT session for a fixed, non-admin Development Guest user.
+   * Strictly fail-closed in production and whenever ENABLE_DEV_AUTH_BYPASS !== true.
+   */
+  async authenticateDevGuest(
+    userAgent?: string,
+    ipAddress?: string,
+    correlationId?: string,
+  ) {
+    const nodeEnv =
+      this.configService?.get<string>('NODE_ENV', process.env.NODE_ENV || 'production') ||
+      'production';
+    const bypassEnabled =
+      this.configService?.get<boolean>('ENABLE_DEV_AUTH_BYPASS', false) === true;
+
+    if (nodeEnv === 'production' || !bypassEnabled) {
+      throw new ForbiddenException(
+        'Development guest authentication is disabled in this environment',
+      );
+    }
+
+    const devGuestPhone = '+201000000001';
+    const devGuestEmail = 'dev.guest@dealone.local';
+    const devGuestName = 'مصطفى هيكل';
+    const devGuestSlug = 'dev-guest-account';
+
+    const user = await this.prisma.user.upsert({
+      where: { phone: devGuestPhone },
+      update: {
+        isActive: true,
+        isDemo: true,
+      },
+      create: {
+        phone: devGuestPhone,
+        email: devGuestEmail,
+        fullName: devGuestName,
+        isPhoneVerified: true,
+        isEmailVerified: true,
+        isActive: true,
+        isDemo: true,
+        preferredLanguage: 'ar',
+      },
+    });
+
+    const account = await this.prisma.account.upsert({
+      where: { slug: devGuestSlug },
+      update: {
+        ownerUserId: user.id,
+        isActive: true,
+        isDemo: true,
+      },
+      create: {
+        slug: devGuestSlug,
+        ownerUserId: user.id,
+        accountType: 'individual',
+        displayName: devGuestName,
+        bio: 'حساب ضيف التطوير الافتراضي لتطبيق ديل ون',
+        verificationStatus: 'approved',
+        isActive: true,
+        isDemo: true,
+      },
+    });
+
+    await this.prisma.accountMember.upsert({
+      where: {
+        uq_account_user: {
+          accountId: account.id,
+          userId: user.id,
+        },
+      },
+      update: { role: 'owner' },
+      create: {
+        accountId: account.id,
+        userId: user.id,
+        role: 'owner',
+      },
+    });
+
+    const tokens = await this.sessionService.createSession(
+      user.id,
+      user.phone,
+      'USER',
+      userAgent,
+      ipAddress,
+    );
+
+    await this.securityAudit.logEvent({
+      action: 'DEV_GUEST_AUTHENTICATED',
+      actorType: 'user',
+      actorId: user.id,
+      targetEntity: 'User',
+      targetId: user.id,
+      ipAddress,
+      userAgent,
+      correlationId,
+      metadata: { sessionId: tokens.sessionId, env: nodeEnv },
+    });
+
+    return {
+      user: {
+        id: user.id,
+        phone: user.phone,
+        email: user.email,
+        fullName: user.fullName,
+        role: 'USER',
+        avatarUrl: user.avatarUrl,
+        isPhoneVerified: user.isPhoneVerified,
+        isDemo: true,
+      },
+      activeAccount: {
+        id: account.id,
+        accountType: account.accountType,
+        displayName: account.displayName,
+        role: 'owner',
+      },
+      tokens,
+      isDemoGuest: true,
     };
   }
 

@@ -3,21 +3,32 @@ import { EGYPT_GEOGRAPHY } from './geography-data';
 import { DEAL_ONE_TAXONOMY } from './taxonomy-data';
 import { DEMO_SELLERS } from './demo-sellers-data';
 import { DEMO_LISTINGS_TEMPLATES } from './demo-listings-generator';
+import { normalizeArabicText } from '../../src/modules/search/arabic-normalizer';
 
 const prisma = new PrismaClient();
 
+const DEV_GUEST_USER = {
+  phone: '+201000000001',
+  email: 'dev.guest@dealone.local',
+  fullName: 'مصطفى هيكل',
+  accountSlug: 'dev-guest-account',
+  bio: 'حساب ضيف التطوير الافتراضي لتطبيق ديل ون',
+};
+
 async function resetDemoData() {
-  console.log('🧹 [DEMO ISOLATION] Resetting existing demo data safely...');
+  console.log('🧹 [DEMO ISOLATION] Cleaning existing demo data safely (isDemo = true only)...');
 
   // Delete only records explicitly tagged with isDemo: true
-  // Respecting foreign keys and cascading order
+  // Respecting foreign keys and cascading order — NEVER touches real user records (isDemo = false)
   const delMedia = await prisma.listingMedia.deleteMany({
     where: { listing: { isDemo: true } },
   });
   console.log(`   - Deleted ${delMedia.count} demo listing media records`);
 
   const delFavs = await prisma.favorite.deleteMany({
-    where: { listing: { isDemo: true } },
+    where: {
+      OR: [{ listing: { isDemo: true } }, { user: { isDemo: true } }],
+    },
   });
   console.log(`   - Deleted ${delFavs.count} demo favorite bookmarks`);
 
@@ -41,45 +52,72 @@ async function resetDemoData() {
   });
   console.log(`   - Deleted ${delAccounts.count} demo seller accounts`);
 
+  const delSessions = await prisma.userSession.deleteMany({
+    where: { user: { isDemo: true } },
+  });
+  console.log(`   - Deleted ${delSessions.count} demo user sessions`);
+
   const delUsers = await prisma.user.deleteMany({
-    where: { isDemo: true },
+    where: {
+      isDemo: true,
+      ownedAccounts: { none: {} },
+    },
   });
   console.log(`   - Deleted ${delUsers.count} demo users`);
 
-  console.log('✅ Demo data reset completed without affecting real user records.\n');
+  console.log('✅ Demo data cleanup completed without affecting real user records.\n');
 }
 
 async function main() {
   const args = process.argv.slice(2);
-  const isResetOnly = args.includes('--reset-demo') || process.env.RESET_DEMO === 'true';
-  const isProd = process.env.NODE_ENV === 'production';
-  const allowDemoSeedingInProd = process.env.ALLOW_DEMO_SEEDING === 'true';
+  const isCleanOnly =
+    args.includes('--reset-demo') ||
+    args.includes('--clean-demo') ||
+    process.env.RESET_DEMO === 'true';
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const isProd = nodeEnv === 'production';
+  const enableDemoData = process.env.ENABLE_DEMO_DATA === 'true';
+  const allowDemoCleanup = process.env.ALLOW_DEMO_CLEANUP === 'true';
+  const explicitProdOverride =
+    process.env.ALLOW_DEMO_SEEDING_IN_PROD === 'true';
 
   console.log('====================================================');
   console.log('🌱 Deal One Marketplace Database Seeder');
-  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`   Environment:        ${nodeEnv}`);
+  console.log(`   ENABLE_DEMO_DATA:   ${enableDemoData}`);
+  console.log(`   ALLOW_DEMO_CLEANUP: ${allowDemoCleanup}`);
   console.log('====================================================\n');
 
-  // Production Gate Protection
-  if (isProd && !allowDemoSeedingInProd) {
-    if (isResetOnly) {
+  // 1. Standalone Demo Cleanup Mode
+  if (isCleanOnly) {
+    if (!allowDemoCleanup) {
       throw new Error(
-        '🚨 PRODUCTION SAFETY BLOCK: Automated destructive cleanup is prohibited in production without ALLOW_DEMO_SEEDING=true',
+        '🚨 SAFETY BLOCK: Demo cleanup requires ALLOW_DEMO_CLEANUP=true.',
       );
     }
-    console.warn(
-      '⚠️ Notice: Production environment detected. Seeding only base taxonomy and administrative reference data.',
-    );
-  }
-
-  // 1. Reset Demo Data if requested
-  if (isResetOnly) {
+    if (isProd && !explicitProdOverride) {
+      throw new Error(
+        '🚨 PRODUCTION SAFETY BLOCK: Demo cleanup in production requires both ALLOW_DEMO_CLEANUP=true and ALLOW_DEMO_SEEDING_IN_PROD=true.',
+      );
+    }
     await resetDemoData();
     return;
   }
 
-  // Also clean existing demo data before re-seeding to ensure strict idempotency
-  await resetDemoData();
+  // Production Gate Protection for Seeding
+  const shouldSeedDemo = isProd
+    ? enableDemoData && explicitProdOverride
+    : enableDemoData;
+
+  if (isProd && !shouldSeedDemo) {
+    console.warn(
+      '⚠️ Production environment detected (demo seeding disabled by default). Seeding ONLY base geography and taxonomy reference data.',
+    );
+  } else if (!shouldSeedDemo) {
+    console.warn(
+      'ℹ️ ENABLE_DEMO_DATA is not true. Seeding ONLY base geography and taxonomy reference data.',
+    );
+  }
 
   // 2. Seed Geography (Governorates, Cities, Areas with PostGIS Centroids)
   console.log('📍 Seeding Egyptian Administrative Geography...');
@@ -242,9 +280,88 @@ async function main() {
       }
     }
   }
+  // Deactivate any legacy root categories not in Deal One's 6 approved sections (only if they have 0 listings)
+  const approvedRootSlugs = DEAL_ONE_TAXONOMY.map((c) => c.slug);
+  await prisma.category.updateMany({
+    where: {
+      parentId: null,
+      slug: { notIn: approvedRootSlugs },
+      listings: { none: {} },
+    },
+    data: { isActive: false },
+  });
   console.log(`   ✔ Taxonomy seeded: 6 sections and ${categoryMap.size} category identifiers.\n`);
 
-  // 4. Seed Verified Egyptian Demo Sellers & Branches
+  // Stop here if demo data seeding is disabled (e.g. Production)
+  if (!shouldSeedDemo) {
+    console.log('====================================================');
+    console.log('✅ BASE REFERENCE DATA SEED COMPLETED (NO DEMO DATA)');
+    console.log('====================================================');
+    return;
+  }
+
+  // Clean existing demo data before re-seeding to guarantee strict idempotency without duplicates
+  await resetDemoData();
+
+  // 4. Seed Fixed Development Guest Account
+  console.log('👤 Seeding Development Guest Account...');
+  const devGuest = await prisma.user.upsert({
+    where: { phone: DEV_GUEST_USER.phone },
+    update: {
+      fullName: DEV_GUEST_USER.fullName,
+      email: DEV_GUEST_USER.email,
+      isPhoneVerified: true,
+      isEmailVerified: true,
+      isActive: true,
+      isDemo: true,
+    },
+    create: {
+      phone: DEV_GUEST_USER.phone,
+      fullName: DEV_GUEST_USER.fullName,
+      email: DEV_GUEST_USER.email,
+      isPhoneVerified: true,
+      isEmailVerified: true,
+      isActive: true,
+      isDemo: true,
+      preferredLanguage: 'ar',
+    },
+  });
+  const devGuestAccount = await prisma.account.upsert({
+    where: { slug: DEV_GUEST_USER.accountSlug },
+    update: {
+      ownerUserId: devGuest.id,
+      displayName: DEV_GUEST_USER.fullName,
+      isActive: true,
+      isDemo: true,
+    },
+    create: {
+      slug: DEV_GUEST_USER.accountSlug,
+      ownerUserId: devGuest.id,
+      accountType: 'individual',
+      displayName: DEV_GUEST_USER.fullName,
+      bio: DEV_GUEST_USER.bio,
+      verificationStatus: 'approved',
+      isActive: true,
+      isDemo: true,
+    },
+  });
+  await prisma.accountMember.upsert({
+    where: {
+      uq_account_user: {
+        accountId: devGuestAccount.id,
+        userId: devGuest.id,
+      },
+    },
+    update: { role: 'owner' },
+    create: {
+      accountId: devGuestAccount.id,
+      userId: devGuest.id,
+      role: 'owner',
+    },
+  });
+  console.log(`   ✔ Development Guest seeded: ${devGuest.fullName} (${devGuest.phone})\n`);
+
+  // 5. Seed Verified Egyptian Demo Sellers & Branches
   console.log('🏢 Seeding Verified Demo Sellers & Branches...');
   const accountMap = new Map<string, string>();
 
@@ -350,6 +467,11 @@ async function main() {
     const daysAgo = (totalListingsCount % 14) + 1;
     const refreshedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
     const expiresAt = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000);
+    // Mark ~20% of listings evenly across all categories as Featured (promotedUntil in future)
+    const isFeatured = totalListingsCount % 5 === 0;
+    const promotedUntil = isFeatured
+      ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      : null;
 
     const listing = await prisma.listing.create({
       data: {
@@ -358,6 +480,9 @@ async function main() {
         areaId,
         title: template.title,
         description: template.description,
+        searchNormalizedText: normalizeArabicText(
+          `${template.title} ${template.description}`,
+        ),
         price: template.price,
         currency: 'EGP',
         listingKind: template.listingKind,
@@ -369,12 +494,30 @@ async function main() {
         attributes: (template.attributes as any) || {},
         viewsCount: 45 + (totalListingsCount * 17) % 350,
         contactRevealsCount: 3 + (totalListingsCount * 3) % 25,
+        promotedUntil,
         approvedAt: refreshedAt,
         refreshedAt,
         expiresAt,
         createdAt: refreshedAt,
       },
     });
+
+    // Seed a few sample favorites for the Development Guest account
+    if (totalListingsCount < 4) {
+      await prisma.favorite.upsert({
+        where: {
+          uq_user_favorite: {
+            userId: devGuest.id,
+            listingId: listing.id,
+          },
+        },
+        update: {},
+        create: {
+          userId: devGuest.id,
+          listingId: listing.id,
+        },
+      });
+    }
 
     totalListingsCount++;
 

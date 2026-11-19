@@ -25,6 +25,10 @@ export class SearchService {
       minPrice,
       maxPrice,
       condition,
+      listingKind,
+      featured,
+      size,
+      color,
       sort,
       sort_by,
       lat,
@@ -59,11 +63,20 @@ export class SearchService {
       deletedAt: null,
     };
 
-    if (condition) {
-      where.condition = condition;
+    if (listingKind) {
+      where.listingKind = listingKind;
     }
 
-    if (isDemo !== undefined) {
+    if (featured === true) {
+      where.promotedUntil = { gt: new Date() };
+    }
+
+    const isProd = process.env.NODE_ENV === 'production';
+    const enableDemo = process.env.ENABLE_DEMO_DATA === 'true';
+
+    if (isProd && !enableDemo) {
+      where.isDemo = false;
+    } else if (isDemo !== undefined) {
       where.isDemo = isDemo;
     }
 
@@ -136,6 +149,21 @@ export class SearchService {
 
     // Dynamic Category Attribute Filters inside JSONB
     const andFilters: any[] = [];
+    if (condition) {
+      andFilters.push({
+        attributes: { path: ['condition'], equals: condition },
+      });
+    }
+    if (size) {
+      andFilters.push({
+        attributes: { path: ['size'], equals: size },
+      });
+    }
+    if (color) {
+      andFilters.push({
+        attributes: { path: ['color'], equals: color },
+      });
+    }
     if (rooms !== undefined) {
       andFilters.push({
         attributes: { path: ['rooms'], equals: Number(rooms) },

@@ -34,6 +34,8 @@ class ListingItem {
   final bool isVerified;
   final Map<String, dynamic> attributes;
   final int viewsCount;
+  final int favoritesCount;
+  final bool isFeatured;
   final DateTime? createdAt;
 
   const ListingItem({
@@ -58,17 +60,47 @@ class ListingItem {
     this.isVerified = false,
     this.attributes = const {},
     this.viewsCount = 0,
+    this.favoritesCount = 0,
+    this.isFeatured = false,
     this.createdAt,
   });
 
   String? get primaryImageUrl => media.isNotEmpty ? media.first.publicUrl : null;
-  
+
   String localizedLocation(String langCode) {
     if (cityNameAr.isNotEmpty) {
       return areaNameAr.isNotEmpty ? '$cityNameAr - $areaNameAr' : cityNameAr;
     }
     return governorateNameAr;
   }
+}
+
+class HomePromotion {
+  final String id;
+  final String badgeAr;
+  final String badgeEn;
+  final String titleAr;
+  final String titleEn;
+  final String subtitleAr;
+  final String subtitleEn;
+  final String ctaAr;
+  final String ctaEn;
+  final String categorySlug;
+  final String imageUrl;
+
+  const HomePromotion({
+    required this.id,
+    required this.badgeAr,
+    required this.badgeEn,
+    required this.titleAr,
+    required this.titleEn,
+    required this.subtitleAr,
+    required this.subtitleEn,
+    required this.ctaAr,
+    required this.ctaEn,
+    required this.categorySlug,
+    required this.imageUrl,
+  });
 }
 
 class ListingFeed {

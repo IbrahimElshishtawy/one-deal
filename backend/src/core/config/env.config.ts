@@ -208,6 +208,11 @@ export const envSchema = z.object({
   AUTO_APPROVE_LISTINGS: boolFlag(false),
   AUDIT_QUEUE_ENABLED: boolFlag(false),
 
+  // Demo Data & Development Guest Auth Controls (Fail-Closed in Production)
+  ENABLE_DEMO_DATA: boolFlag(false),
+  ALLOW_DEMO_CLEANUP: boolFlag(false),
+  ENABLE_DEV_AUTH_BYPASS: boolFlag(false),
+
   // Observability / Internal Endpoints Protection
   METRICS_AUTH_TOKEN: z.string().optional().default(''),
 
@@ -377,6 +382,12 @@ export function validateEnv(config: Record<string, unknown>): EnvConfig {
   }
 
   if (isProd) {
+    if (data.ENABLE_DEV_AUTH_BYPASS) {
+      errors.push(
+        '[ENABLE_DEV_AUTH_BYPASS]: Development auth bypass is strictly prohibited in production',
+      );
+    }
+
     if (!data.DATABASE_URL) {
       errors.push('[DATABASE_URL]: DATABASE_URL is required in production');
     }

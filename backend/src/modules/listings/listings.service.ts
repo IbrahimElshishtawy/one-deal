@@ -247,6 +247,10 @@ export class ListingsService {
       minPrice,
       maxPrice,
       condition,
+      listingKind,
+      featured,
+      size,
+      color,
       lat,
       latitude,
       lng,
@@ -277,11 +281,23 @@ export class ListingsService {
       deletedAt: null,
     };
 
-    if (condition) {
-      where.condition = condition;
+    if (listingKind) {
+      where.listingKind = listingKind;
     }
 
-    if (isDemo !== undefined) {
+    if (featured === true) {
+      where.promotedUntil = { gt: new Date() };
+    }
+
+    const isProd =
+      this.configService.get<string>('NODE_ENV', 'development') ===
+      'production';
+    const enableDemo =
+      this.configService.get<boolean>('ENABLE_DEMO_DATA', false) === true;
+
+    if (isProd && !enableDemo) {
+      where.isDemo = false;
+    } else if (isDemo !== undefined) {
       where.isDemo = isDemo;
     }
 
@@ -347,6 +363,21 @@ export class ListingsService {
 
     // Dynamic Category Attribute Filters inside JSONB
     const andFilters: any[] = [];
+    if (condition) {
+      andFilters.push({
+        attributes: { path: ['condition'], equals: condition },
+      });
+    }
+    if (size) {
+      andFilters.push({
+        attributes: { path: ['size'], equals: size },
+      });
+    }
+    if (color) {
+      andFilters.push({
+        attributes: { path: ['color'], equals: color },
+      });
+    }
     if (rooms !== undefined) {
       andFilters.push({
         attributes: { path: ['rooms'], equals: Number(rooms) },
@@ -481,6 +512,9 @@ export class ListingsService {
             verificationStatus: true,
           },
         },
+        _count: {
+          select: { favorites: true },
+        },
       },
     });
 
@@ -493,45 +527,53 @@ export class ListingsService {
       results = items.slice(0, limit);
     }
 
-    const mappedData = results.map((item) => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      price: Number(item.price),
-      currency: item.currency || 'EGP',
-      listingKind: item.listingKind,
-      contactChannel: item.contactChannel,
-      moderationStatus: item.moderationStatus,
-      publicationStatus: item.publicationStatus,
-      availabilityStatus: item.availabilityStatus,
-      isDemo: item.isDemo,
-      categoryId: item.categoryId,
-      category: item.category,
-      governorateName: item.area.city.governorate.nameAr,
-      cityName: item.area.city.nameAr,
-      areaName: item.area.nameAr,
-      location: `${item.area.city.nameAr}، ${item.area.city.governorate.nameAr}`,
-      primaryImageUrl: item.media[0]?.publicUrl ?? null,
-      imageUrl: item.media[0]?.publicUrl ?? null,
-      media: item.media,
-      attributes: (item.attributes as any) || {},
-      viewsCount: item.viewsCount,
-      contactRevealsCount: item.contactRevealsCount,
-      account: {
-        id: item.account.id,
-        displayName: item.account.displayName,
-        slug: item.account.slug,
-        accountType: item.account.accountType,
-        logoUrl: item.account.logoUrl,
-        verificationStatus: item.account.verificationStatus,
-      },
-      sellerName: item.account.displayName,
-      sellerPhone: null,
-      sellerType: item.account.accountType,
-      isVerified: item.account.verificationStatus === 'approved',
-      refreshedAt: item.refreshedAt,
-      createdAt: item.createdAt,
-    }));
+    const now = new Date();
+    const mappedData = results.map((item) => {
+      const attrs = (item.attributes as any) || {};
+      return {
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        price: Number(item.price),
+        currency: item.currency || 'EGP',
+        condition: attrs.condition || 'USED',
+        listingKind: item.listingKind,
+        contactChannel: item.contactChannel,
+        moderationStatus: item.moderationStatus,
+        publicationStatus: item.publicationStatus,
+        availabilityStatus: item.availabilityStatus,
+        isDemo: item.isDemo,
+        isFeatured: Boolean(item.promotedUntil && item.promotedUntil > now),
+        categoryId: item.categoryId,
+        category: item.category,
+        governorateName: item.area.city.governorate.nameAr,
+        cityName: item.area.city.nameAr,
+        areaName: item.area.nameAr,
+        location: `${item.area.city.nameAr}، ${item.area.city.governorate.nameAr}`,
+        primaryImageUrl: item.media[0]?.publicUrl ?? null,
+        imageUrl: item.media[0]?.publicUrl ?? null,
+        thumbnail: item.media[0]?.thumbnailUrl ?? item.media[0]?.publicUrl ?? null,
+        media: item.media,
+        attributes: attrs,
+        viewsCount: item.viewsCount,
+        favoritesCount: (item as any)._count?.favorites ?? 0,
+        contactRevealsCount: item.contactRevealsCount,
+        account: {
+          id: item.account.id,
+          displayName: item.account.displayName,
+          slug: item.account.slug,
+          accountType: item.account.accountType,
+          logoUrl: item.account.logoUrl,
+          verificationStatus: item.account.verificationStatus,
+        },
+        sellerName: item.account.displayName,
+        sellerPhone: null,
+        sellerType: item.account.accountType,
+        isVerified: item.account.verificationStatus === 'approved',
+        refreshedAt: item.refreshedAt,
+        createdAt: item.createdAt,
+      };
+    });
 
     const feedResponse = {
       data: mappedData,
@@ -577,6 +619,9 @@ export class ListingsService {
             },
           },
         },
+        _count: {
+          select: { favorites: true },
+        },
       },
     });
 
@@ -592,7 +637,26 @@ export class ListingsService {
       })
       .catch(() => {});
 
-    return listing;
+    const attrs = (listing.attributes as any) || {};
+    return {
+      ...listing,
+      price: Number(listing.price),
+      condition: attrs.condition || 'USED',
+      isFeatured: Boolean(
+        listing.promotedUntil && listing.promotedUntil > new Date(),
+      ),
+      favoritesCount: (listing as any)._count?.favorites ?? 0,
+      governorateName: listing.area?.city?.governorate?.nameAr ?? '',
+      cityName: listing.area?.city?.nameAr ?? '',
+      areaName: listing.area?.nameAr ?? '',
+      location: listing.area?.city
+        ? `${listing.area.city.nameAr}، ${listing.area.city.governorate?.nameAr ?? ''}`
+        : '',
+      sellerName: listing.account?.displayName ?? '',
+      sellerType: listing.account?.accountType ?? 'individual',
+      isVerified: listing.account?.verificationStatus === 'approved',
+      primaryImageUrl: listing.media?.[0]?.publicUrl ?? null,
+    };
   }
 
   /**

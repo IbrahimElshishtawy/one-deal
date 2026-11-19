@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'environment.dart';
 
 class AppConfig {
@@ -11,6 +13,13 @@ class AppConfig {
   final bool enableLogging;
   final bool enableMockMode;
 
+  /// Enables automatic Development Guest backend session (`POST /auth/dev-guest`).
+  /// Strictly fail-closed (always false) in production.
+  final bool enableDevGuestAuth;
+
+  /// Launches directly on the Home Hub without gating on Onboarding/Login.
+  final bool startOnHome;
+
   const AppConfig({
     required this.environment,
     required this.apiBaseUrl,
@@ -18,7 +27,10 @@ class AppConfig {
     required this.receiveTimeout,
     required this.enableLogging,
     required this.enableMockMode,
-  });
+    bool enableDevGuestAuth = false,
+    this.startOnHome = true,
+  }) : enableDevGuestAuth =
+           environment == AppEnvironment.production ? false : enableDevGuestAuth;
 
   factory AppConfig.development() {
     return const AppConfig(
@@ -28,6 +40,8 @@ class AppConfig {
       receiveTimeout: Duration(seconds: 15),
       enableLogging: true,
       enableMockMode: false,
+      enableDevGuestAuth: true,
+      startOnHome: true,
     );
   }
 
@@ -39,6 +53,8 @@ class AppConfig {
       receiveTimeout: Duration(seconds: 15),
       enableLogging: true,
       enableMockMode: false,
+      enableDevGuestAuth: false,
+      startOnHome: true,
     );
   }
 
@@ -50,17 +66,21 @@ class AppConfig {
       receiveTimeout: Duration(seconds: 15),
       enableLogging: false,
       enableMockMode: false,
+      enableDevGuestAuth: false,
+      startOnHome: false,
     );
   }
 
   factory AppConfig.fromEnvironment() {
-    const envName = String.fromEnvironment(
-      'APP_ENV',
-      defaultValue: 'production',
-    );
+    const rawEnvName = String.fromEnvironment('APP_ENV');
     const customBaseUrl = String.fromEnvironment('API_BASE_URL');
 
-    final baseConfig = switch (envName) {
+    // Fail-closed: release builds always default to production unless explicitly overridden.
+    final resolvedEnv = rawEnvName.trim().isNotEmpty
+        ? rawEnvName.trim()
+        : (kReleaseMode ? 'production' : 'development');
+
+    final baseConfig = switch (resolvedEnv) {
       'development' => AppConfig.development(),
       'staging' => AppConfig.staging(),
       _ => AppConfig.production(),
@@ -77,6 +97,8 @@ class AppConfig {
       receiveTimeout: baseConfig.receiveTimeout,
       enableLogging: baseConfig.enableLogging,
       enableMockMode: false,
+      enableDevGuestAuth: baseConfig.enableDevGuestAuth,
+      startOnHome: baseConfig.startOnHome,
     );
   }
 }

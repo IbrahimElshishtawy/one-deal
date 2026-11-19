@@ -38,7 +38,9 @@ class _MarketSpaceAppState extends ConsumerState<MarketSpaceApp> {
   @override
   void initState() {
     super.initState();
-    final initialRoute = widget.dependencies.onboardingCompleted
+    final appConfig = ref.read(appConfigProvider);
+    final initialRoute =
+        (appConfig.startOnHome || widget.dependencies.onboardingCompleted)
         ? RouteNames.root
         : RouteNames.onboarding;
     final routeGuard = SessionRouteGuard(

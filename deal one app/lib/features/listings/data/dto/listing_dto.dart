@@ -43,6 +43,8 @@ class ListingItemDto {
   final bool isVerified;
   final Map<String, dynamic> attributes;
   final int viewsCount;
+  final int favoritesCount;
+  final bool isFeatured;
   final String createdAt;
 
   const ListingItemDto({
@@ -67,22 +69,47 @@ class ListingItemDto {
     this.isVerified = false,
     this.attributes = const {},
     this.viewsCount = 0,
+    this.favoritesCount = 0,
+    this.isFeatured = false,
     required this.createdAt,
   });
 
   factory ListingItemDto.fromJson(Map<String, dynamic> json) {
-    final category = json['category'] as Map<String, dynamic>? ?? {};
-    final area = json['area'] as Map<String, dynamic>? ?? {};
-    final city = area['city'] as Map<String, dynamic>? ?? {};
-    final governorate = city['governorate'] as Map<String, dynamic>? ?? {};
+    final category = json['category'] is Map
+        ? Map<String, dynamic>.from(json['category'] as Map)
+        : <String, dynamic>{};
+    final area = json['area'] is Map
+        ? Map<String, dynamic>.from(json['area'] as Map)
+        : <String, dynamic>{};
+    final city = area['city'] is Map
+        ? Map<String, dynamic>.from(area['city'] as Map)
+        : <String, dynamic>{};
+    final governorate = city['governorate'] is Map
+        ? Map<String, dynamic>.from(city['governorate'] as Map)
+        : <String, dynamic>{};
+    final account = json['account'] is Map
+        ? Map<String, dynamic>.from(json['account'] as Map)
+        : <String, dynamic>{};
 
     final mediaList = (json['media'] as List?)
             ?.map((m) => ListingMediaDto.fromJson(Map<String, dynamic>.from(m as Map)))
             .toList() ??
         [];
+    if (mediaList.isEmpty) {
+      final fallbackImg = json['primaryImageUrl']?.toString() ?? json['imageUrl']?.toString();
+      if (fallbackImg != null && fallbackImg.isNotEmpty) {
+        mediaList.add(ListingMediaDto(id: 'primary', mediaType: 'image', publicUrl: fallbackImg));
+      }
+    }
 
     final rawPrice = json['price'];
-    final double parsedPrice = rawPrice is num ? rawPrice.toDouble() : (double.tryParse(rawPrice?.toString() ?? '') ?? 0.0);
+    final double parsedPrice = rawPrice is num
+        ? rawPrice.toDouble()
+        : (double.tryParse(rawPrice?.toString() ?? '') ?? 0.0);
+
+    final attrs = json['attributes'] is Map
+        ? Map<String, dynamic>.from(json['attributes'] as Map)
+        : <String, dynamic>{};
 
     return ListingItemDto(
       id: json['id']?.toString() ?? '',
@@ -90,22 +117,41 @@ class ListingItemDto {
       description: json['description']?.toString() ?? '',
       price: parsedPrice,
       currency: json['currency']?.toString() ?? 'EGP',
-      condition: json['condition']?.toString() ?? 'USED',
+      condition: json['condition']?.toString() ?? attrs['condition']?.toString() ?? 'USED',
       listingKind: json['listingKind']?.toString() ?? json['listing_kind']?.toString() ?? 'sale',
       categoryId: category['id']?.toString() ?? json['categoryId']?.toString() ?? '',
       categoryNameAr: category['nameAr']?.toString() ?? category['name_ar']?.toString() ?? '',
       categoryNameEn: category['nameEn']?.toString() ?? category['name_en']?.toString() ?? '',
       categorySlug: category['slug']?.toString() ?? '',
-      areaNameAr: area['nameAr']?.toString() ?? area['name_ar']?.toString() ?? '',
-      cityNameAr: city['nameAr']?.toString() ?? city['name_ar']?.toString() ?? '',
-      governorateNameAr: governorate['nameAr']?.toString() ?? governorate['name_ar']?.toString() ?? '',
+      areaNameAr: area['nameAr']?.toString() ??
+          area['name_ar']?.toString() ??
+          json['areaName']?.toString() ??
+          '',
+      cityNameAr: city['nameAr']?.toString() ??
+          city['name_ar']?.toString() ??
+          json['cityName']?.toString() ??
+          '',
+      governorateNameAr: governorate['nameAr']?.toString() ??
+          governorate['name_ar']?.toString() ??
+          json['governorateName']?.toString() ??
+          '',
       media: mediaList,
-      sellerName: json['sellerName']?.toString() ?? json['seller_name']?.toString() ?? '',
+      sellerName: json['sellerName']?.toString() ??
+          json['seller_name']?.toString() ??
+          account['displayName']?.toString() ??
+          '',
       sellerPhone: json['sellerPhone']?.toString() ?? json['seller_phone']?.toString(),
-      sellerType: json['sellerType']?.toString() ?? json['seller_type']?.toString() ?? 'individual',
-      isVerified: json['isVerified'] == true || json['is_verified'] == true,
-      attributes: json['attributes'] is Map ? Map<String, dynamic>.from(json['attributes'] as Map) : {},
+      sellerType: json['sellerType']?.toString() ??
+          json['seller_type']?.toString() ??
+          account['accountType']?.toString() ??
+          'individual',
+      isVerified: json['isVerified'] == true ||
+          json['is_verified'] == true ||
+          account['verificationStatus'] == 'approved',
+      attributes: attrs,
       viewsCount: (json['viewsCount'] ?? json['views_count'] as num?)?.toInt() ?? 0,
+      favoritesCount: (json['favoritesCount'] ?? json['favorites_count'] as num?)?.toInt() ?? 0,
+      isFeatured: json['isFeatured'] == true || json['is_featured'] == true,
       createdAt: json['createdAt']?.toString() ?? json['created_at']?.toString() ?? '',
     );
   }

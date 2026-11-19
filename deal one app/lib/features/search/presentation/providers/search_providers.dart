@@ -13,22 +13,16 @@ final searchRepositoryProvider = Provider<SearchRepository>((ref) {
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
 final searchActiveQueryDtoProvider = StateProvider<SearchQueryDto>((ref) {
-  final queryText = ref.watch(searchQueryProvider);
-  return SearchQueryDto(query: queryText);
+  return const SearchQueryDto();
 });
 
 final searchResultsProvider = FutureProvider<SearchResult>((ref) async {
   final repository = ref.watch(searchRepositoryProvider);
   final queryDto = ref.watch(searchActiveQueryDtoProvider);
-  
-  if (queryDto.query.trim().isEmpty) {
-    return const SearchResult(
-      items: [],
-      totalCount: 0,
-      currentPage: 1,
-      totalPages: 1,
-      query: '',
-    );
+
+  if (!queryDto.hasAnyFilter) {
+    // Default browse: return latest products from backend when browsing without filters
+    return repository.search(queryDto);
   }
 
   return repository.search(queryDto);

@@ -95,6 +95,9 @@ Future<String?> validateSessionViaBackend(ApiClient apiClient) async {
   return null;
 }
 
+/// Holds the display name of the active user (including Development Guest).
+final activeUserDisplayNameProvider = StateProvider<String?>((ref) => null);
+
 /// Manages authentication session lifecycle.
 class SessionNotifier extends Notifier<SessionState> {
   @override
@@ -113,7 +116,10 @@ class SessionNotifier extends Notifier<SessionState> {
     final hasRefresh = refreshToken != null && refreshToken.isNotEmpty;
 
     if (!hasAccess && !hasRefresh) {
-      state = const SessionState.unauthenticated();
+      final established = await _tryEstablishDevGuestSession();
+      if (!established) {
+        state = const SessionState.unauthenticated();
+      }
       return;
     }
 
@@ -138,6 +144,7 @@ class SessionNotifier extends Notifier<SessionState> {
         final failure = ErrorMapper.map(error);
         if (failure is UnauthorizedFailure || failure is ForbiddenFailure) {
           await logout();
+          await _tryEstablishDevGuestSession();
           return;
         }
         // On transient network/timeout failure, retain provisional session only if an access token exists.
@@ -157,6 +164,67 @@ class SessionNotifier extends Notifier<SessionState> {
       );
     } else {
       state = const SessionState.unauthenticated();
+    }
+  }
+
+  /// Automatically authenticates the fixed non-admin Development Guest account
+  /// with the backend when running in DEVELOPMENT mode. Strictly disabled in Production.
+  Future<bool> _tryEstablishDevGuestSession() async {
+    final config = ref.read(appConfigProvider);
+    if (!config.enableDevGuestAuth || config.environment.isProduction) {
+      return false;
+    }
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final tokens = ref.read(tokenProvider);
+      final secureStorage = ref.read(secureStorageServiceProvider);
+
+      final response = await apiClient.post(
+        ApiEndpoints.devGuestLogin,
+        data: const <String, dynamic>{},
+      );
+      final raw = response.data;
+      if (raw is! Map) return false;
+
+      final payload = raw['data'] is Map
+          ? Map<String, dynamic>.from(raw['data'] as Map)
+          : Map<String, dynamic>.from(raw);
+      final tokenMap = payload['tokens'] is Map
+          ? Map<String, dynamic>.from(payload['tokens'] as Map)
+          : const <String, dynamic>{};
+      final userMap = payload['user'] is Map
+          ? Map<String, dynamic>.from(payload['user'] as Map)
+          : const <String, dynamic>{};
+
+      final accessToken = tokenMap['accessToken']?.toString() ?? '';
+      final refreshToken = tokenMap['refreshToken']?.toString() ?? '';
+      final userId = userMap['id']?.toString();
+      final fullName = userMap['fullName']?.toString();
+
+      if (accessToken.isEmpty || refreshToken.isEmpty) {
+        return false;
+      }
+
+      await tokens.saveTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      );
+      if (userId != null && userId.isNotEmpty) {
+        await secureStorage.write(StorageKeys.userId, userId);
+      }
+      if (fullName != null && fullName.isNotEmpty) {
+        ref.read(activeUserDisplayNameProvider.notifier).state = fullName;
+      }
+
+      state = SessionState(
+        status: SessionStatus.authenticated,
+        userId: userId,
+      );
+      return true;
+    } catch (_) {
+      // Fail safely: allow browsing Home even if backend dev-guest is unavailable or disabled.
+      return false;
     }
   }
 

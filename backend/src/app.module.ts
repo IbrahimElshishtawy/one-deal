@@ -11,6 +11,7 @@ import { AccountsModule } from './modules/accounts/accounts.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { MediaModule } from './modules/media/media.module';
 import { ListingsModule } from './modules/listings/listings.module';
+import { HomeModule } from './modules/home/home.module';
 import { SearchModule } from './modules/search/search.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { VideoModule } from './modules/video/video.module';
@@ -47,6 +48,7 @@ const isPaymentsEnabled = process.env.ENABLE_V2_PAYMENTS === 'true';
     CategoriesModule,
     MediaModule,
     ListingsModule,
+    HomeModule,
     SearchModule,
     ChatModule,
     VideoModule,

@@ -39,6 +39,8 @@ class ListingMapper {
       isVerified: dto.isVerified,
       attributes: dto.attributes,
       viewsCount: dto.viewsCount,
+      favoritesCount: dto.favoritesCount,
+      isFeatured: dto.isFeatured,
       createdAt: parsedDate,
     );
   }
