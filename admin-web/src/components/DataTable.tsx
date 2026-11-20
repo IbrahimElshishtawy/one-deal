@@ -66,6 +66,9 @@ export function DataTable<T>({
               <div className="relative w-64 max-w-full">
                 <Search className="pointer-events-none absolute top-2.5 h-4 w-4 text-muted-foreground ltr:left-3 rtl:right-3" />
                 <Input
+                  id="table-search-input"
+                  name="tableSearch"
+                  aria-label={searchPlaceholder || t.common.search}
                   value={search ?? ''}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder={searchPlaceholder || t.common.search}

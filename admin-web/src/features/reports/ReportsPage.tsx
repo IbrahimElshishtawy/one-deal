@@ -27,14 +27,29 @@ interface ReportRow {
   assignedTo: { id: string; fullName: string } | null;
 }
 
+interface ModerationLogRow {
+  id: string;
+  targetType: string;
+  targetId: string;
+  action: string;
+  reasonCode: string | null;
+  notes: string | null;
+  createdAt: string;
+  staff: { id: string; fullName: string; email: string } | null;
+}
+
 export function ReportsPage() {
   const { t, locale } = useI18n();
+  const isAr = locale === 'ar';
   const qc = useQueryClient();
 
+  const [tab, setTab] = useState<'queue' | 'logs'>('queue');
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('open');
   const [priority, setPriority] = useState('');
   const [q, setQ] = useState('');
+  const [logsPage, setLogsPage] = useState(1);
+  const [logsTargetType, setLogsTargetType] = useState('');
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [noteInput, setNoteInput] = useState('');
   const [adjudicateTarget, setAdjudicateTarget] = useState<{
@@ -44,10 +59,26 @@ export function ReportsPage() {
 
   const query = useQuery({
     queryKey: ['admin-reports', page, status, priority, q],
+    enabled: tab === 'queue',
     queryFn: ({ signal }) =>
       apiClient.get<{ items: ReportRow[]; meta: PaginationMeta }>(
         '/admin/moderation/queue',
         { page, limit: 20, status, priority: priority || undefined, q },
+        { signal },
+      ),
+  });
+
+  const logsQuery = useQuery({
+    queryKey: ['admin-moderation-logs', logsPage, logsTargetType],
+    enabled: tab === 'logs',
+    queryFn: ({ signal }) =>
+      apiClient.get<{ items: ModerationLogRow[]; meta: PaginationMeta }>(
+        '/admin/moderation/logs',
+        {
+          page: logsPage,
+          limit: 30,
+          targetType: logsTargetType || undefined,
+        },
         { signal },
       ),
   });
@@ -138,8 +169,107 @@ export function ReportsPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">{t.nav.reports}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-2xl font-bold">{t.nav.reports}</h2>
+        <div className="flex rounded-lg border bg-card p-1 text-xs">
+          <button
+            type="button"
+            onClick={() => setTab('queue')}
+            className={`rounded-md px-3 py-1.5 font-medium ${
+              tab === 'queue'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {isAr ? 'قائمة البلاغات' : 'Reports Queue'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('logs')}
+            className={`rounded-md px-3 py-1.5 font-medium ${
+              tab === 'logs'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {isAr ? 'سجل المراجعة والقرارات' : 'Moderation History'}
+          </button>
+        </div>
+      </div>
 
+      {tab === 'logs' && (
+        <DataTable
+          rowKey={(r) => r.id}
+          data={logsQuery.data?.items ?? []}
+          meta={logsQuery.data?.meta}
+          isLoading={logsQuery.isLoading}
+          onPageChange={setLogsPage}
+          filters={
+            <Select
+              value={logsTargetType}
+              onChange={(e) => {
+                setLogsPage(1);
+                setLogsTargetType(e.target.value);
+              }}
+              className="w-44"
+            >
+              <option value="">{isAr ? 'النوع: الكل' : 'Target: All'}</option>
+              <option value="listing">listing</option>
+              <option value="account">account</option>
+              <option value="report">report</option>
+              <option value="verification">verification</option>
+            </Select>
+          }
+          columns={[
+            {
+              key: 'target',
+              header: isAr ? 'الهدف' : 'Target',
+              render: (l) => (
+                <div>
+                  <p className="font-medium capitalize">{l.targetType}</p>
+                  <p className="font-mono text-xs text-muted-foreground">
+                    {l.targetId.slice(0, 8)}...
+                  </p>
+                </div>
+              ),
+            },
+            {
+              key: 'action',
+              header: isAr ? 'القرار' : 'Decision',
+              render: (l) => <StatusBadge status={l.action} />,
+            },
+            {
+              key: 'staff',
+              header: isAr ? 'المراجع' : 'Moderator',
+              render: (l) => (
+                <span className="text-xs">
+                  {l.staff?.fullName || (isAr ? 'النظام' : 'System')}
+                </span>
+              ),
+            },
+            {
+              key: 'notes',
+              header: t.common.notes,
+              render: (l) => (
+                <span className="text-xs text-muted-foreground">
+                  {l.notes || l.reasonCode || '-'}
+                </span>
+              ),
+            },
+            {
+              key: 'createdAt',
+              header: t.common.createdAt,
+              render: (l) => (
+                <span className="text-xs text-muted-foreground">
+                  {new Date(l.createdAt).toLocaleString()}
+                </span>
+              ),
+            },
+          ]}
+        />
+      )}
+
+      {tab === 'queue' && (
       <DataTable
         rowKey={(r) => r.id}
         data={query.data?.items ?? []}
@@ -273,6 +403,7 @@ export function ReportsPage() {
           },
         ]}
       />
+      )}
 
       <Modal
         open={Boolean(selectedReportId)}

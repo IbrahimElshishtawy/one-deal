@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
   BarChart3,
   Bell,
+  ChevronDown,
   FileText,
   Flag,
   FolderTree,
@@ -24,6 +26,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { apiClient } from '../core/api/client';
 import { useAuth } from '../core/auth/AuthContext';
 import { useI18n } from '../core/i18n/I18nContext';
 import { useTheme } from '../core/theme/ThemeContext';
@@ -44,6 +47,27 @@ export function AppShell() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [quickSearch, setQuickSearch] = useState('');
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const alertsQuery = useQuery({
+    queryKey: ['header-alerts-summary'],
+    enabled: hasPermission('analytics.read'),
+    staleTime: 30_000,
+    queryFn: ({ signal }) =>
+      apiClient.get<{
+        kpis: {
+          listings: { pending: number };
+          moderation: { openReports: number; pendingVerifications: number };
+        };
+      }>('/admin/dashboard/overview', undefined, { signal }),
+  });
+
+  const pendingListings = alertsQuery.data?.kpis.listings.pending ?? 0;
+  const openReports = alertsQuery.data?.kpis.moderation.openReports ?? 0;
+  const pendingVerifications =
+    alertsQuery.data?.kpis.moderation.pendingVerifications ?? 0;
+  const totalAlerts = pendingListings + openReports + pendingVerifications;
 
   const navItems: NavItem[] = useMemo(
     () => [
@@ -183,7 +207,7 @@ export function AppShell() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 z-50 flex w-64 flex-col border-e bg-card transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 z-50 flex w-64 flex-col border-e bg-card transition-transform lg:static lg:!translate-x-0 ${
           sidebarOpen
             ? 'translate-x-0'
             : 'ltr:-translate-x-full rtl:translate-x-full'
@@ -272,6 +296,9 @@ export function AppShell() {
             <div className="relative">
               <Search className="pointer-events-none absolute top-2.5 h-4 w-4 text-muted-foreground ltr:left-3 rtl:right-3" />
               <Input
+                id="header-quick-search"
+                name="quickSearch"
+                aria-label={t.common.search}
                 value={quickSearch}
                 onChange={(e) => setQuickSearch(e.target.value)}
                 placeholder={t.common.search}
@@ -281,6 +308,61 @@ export function AppShell() {
           </form>
 
           <div className="flex items-center gap-2">
+            {hasPermission('analytics.read') && (
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setNotifOpen((o) => !o);
+                    setProfileOpen(false);
+                  }}
+                  aria-label={t.nav.notifications}
+                  title={locale === 'ar' ? 'تنبيهات المراجعة' : 'Queue Alerts'}
+                >
+                  <Bell className="h-4 w-4" />
+                  {totalAlerts > 0 && (
+                    <span className="rounded-full bg-rose-600 px-1.5 py-0.2 text-[10px] font-bold text-white">
+                      {totalAlerts}
+                    </span>
+                  )}
+                </Button>
+                {notifOpen && (
+                  <div className="absolute top-full z-50 mt-2 w-64 rounded-xl border bg-card p-3 shadow-lg ltr:right-0 rtl:left-0">
+                    <p className="mb-2 text-xs font-bold">
+                      {locale === 'ar' ? 'قوائم بانتظار المراجعة' : 'Pending Queues'}
+                    </p>
+                    <div className="space-y-1 text-xs">
+                      <Link
+                        to="/listings"
+                        onClick={() => setNotifOpen(false)}
+                        className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-muted"
+                      >
+                        <span>{t.nav.listings}</span>
+                        <span className="font-bold">{pendingListings}</span>
+                      </Link>
+                      <Link
+                        to="/reports"
+                        onClick={() => setNotifOpen(false)}
+                        className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-muted"
+                      >
+                        <span>{t.nav.reports}</span>
+                        <span className="font-bold">{openReports}</span>
+                      </Link>
+                      <Link
+                        to="/verification"
+                        onClick={() => setNotifOpen(false)}
+                        className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-muted"
+                      >
+                        <span>{t.nav.verification}</span>
+                        <span className="font-bold">{pendingVerifications}</span>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <Button
               variant="outline"
               size="sm"
@@ -304,21 +386,53 @@ export function AppShell() {
               )}
             </Button>
 
-            <Link
-              to="/security"
-              className="hidden items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs hover:bg-muted sm:flex"
-            >
-              <span className="font-semibold">{admin?.fullName}</span>
-            </Link>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => void logout()}
-              title={t.common.logout}
-            >
-              <LogOut className="h-4 w-4 text-destructive" />
-            </Button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileOpen((o) => !o);
+                  setNotifOpen(false);
+                }}
+                className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs hover:bg-muted"
+              >
+                <span className="hidden font-semibold sm:inline">
+                  {admin?.fullName}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+              {profileOpen && (
+                <div className="absolute top-full z-50 mt-2 w-56 rounded-xl border bg-card p-3 shadow-lg ltr:right-0 rtl:left-0">
+                  <p className="text-xs font-bold">{admin?.fullName}</p>
+                  <p className="truncate font-mono text-[11px] text-muted-foreground">
+                    {admin?.email}
+                  </p>
+                  <p className="mt-1 inline-block rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                    {admin?.role?.name}
+                  </p>
+                  <div className="mt-3 space-y-1 border-t pt-2 text-xs">
+                    <Link
+                      to="/security"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted"
+                    >
+                      <Lock className="h-3.5 w-3.5" />
+                      <span>{t.nav.security}</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        void logout();
+                      }}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-destructive hover:bg-destructive/10"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      <span>{t.common.logout}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

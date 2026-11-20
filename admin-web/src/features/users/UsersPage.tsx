@@ -61,13 +61,31 @@ interface UserDetailResponse {
   accountHistory: Array<{ id: string; action: string; createdAt: string }>;
 }
 
+interface SellerAccountRow {
+  id: string;
+  displayName: string;
+  slug: string;
+  accountType: string;
+  verificationStatus: string;
+  isActive: boolean;
+  createdAt: string;
+  owner: { id: string; fullName: string; phone: string };
+  _count: { listings: number; branches: number };
+}
+
 export function UsersPage() {
   const { t, locale } = useI18n();
+  const isAr = locale === 'ar';
   const qc = useQueryClient();
 
+  const [tab, setTab] = useState<'users' | 'accounts'>('users');
   const [page, setPage] = useState(1);
   const [q, setQ] = useState('');
   const [moderationStatus, setModerationStatus] = useState('all');
+  const [accPage, setAccPage] = useState(1);
+  const [accQ, setAccQ] = useState('');
+  const [accountType, setAccountType] = useState('');
+  const [verificationStatus, setVerificationStatus] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [noteInput, setNoteInput] = useState('');
   const [confirmState, setConfirmState] = useState<{
@@ -77,12 +95,37 @@ export function UsersPage() {
 
   const usersQuery = useQuery({
     queryKey: ['admin-users', page, q, moderationStatus],
+    enabled: tab === 'users',
     queryFn: ({ signal }) =>
       apiClient.get<{ items: UserRow[]; meta: PaginationMeta }>(
         '/admin/users',
         { page, limit: 20, q, moderationStatus },
         { signal },
       ),
+  });
+
+  const accountsQuery = useQuery({
+    queryKey: ['admin-seller-accounts', accPage, accQ, accountType, verificationStatus],
+    enabled: tab === 'accounts',
+    queryFn: ({ signal }) =>
+      apiClient.get<{ items: SellerAccountRow[]; meta: PaginationMeta }>(
+        '/admin/accounts',
+        {
+          page: accPage,
+          limit: 20,
+          q: accQ,
+          accountType: accountType || undefined,
+          verificationStatus: verificationStatus || undefined,
+        },
+        { signal },
+      ),
+  });
+
+  const accountStatusMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      apiClient.patch(`/admin/accounts/${id}/status`, { isActive }),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ['admin-seller-accounts'] }),
   });
 
   const detailQuery = useQuery({
@@ -148,8 +191,155 @@ export function UsersPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-2xl font-bold">{t.nav.users}</h2>
+        <div className="flex rounded-lg border bg-card p-1 text-xs">
+          <button
+            type="button"
+            onClick={() => setTab('users')}
+            className={`rounded-md px-3 py-1.5 font-medium ${
+              tab === 'users'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {isAr ? 'المستخدمون' : 'Marketplace Users'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('accounts')}
+            className={`rounded-md px-3 py-1.5 font-medium ${
+              tab === 'accounts'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {isAr ? 'حسابات البائعين والشركات' : 'Seller Accounts'}
+          </button>
+        </div>
       </div>
 
+      {tab === 'accounts' && (
+        <DataTable
+          rowKey={(r) => r.id}
+          data={accountsQuery.data?.items ?? []}
+          meta={accountsQuery.data?.meta}
+          isLoading={accountsQuery.isLoading}
+          error={
+            accountsQuery.error instanceof ApiClientError
+              ? accountsQuery.error.message
+              : null
+          }
+          onRetry={() => void accountsQuery.refetch()}
+          onPageChange={setAccPage}
+          search={accQ}
+          onSearchChange={(val) => {
+            setAccPage(1);
+            setAccQ(val);
+          }}
+          filters={
+            <div className="flex flex-wrap gap-2">
+              <Select
+                value={accountType}
+                onChange={(e) => {
+                  setAccPage(1);
+                  setAccountType(e.target.value);
+                }}
+                className="w-36"
+              >
+                <option value="">{isAr ? 'النوع: الكل' : 'Type: All'}</option>
+                <option value="individual">individual</option>
+                <option value="company">company</option>
+              </Select>
+              <Select
+                value={verificationStatus}
+                onChange={(e) => {
+                  setAccPage(1);
+                  setVerificationStatus(e.target.value);
+                }}
+                className="w-40"
+              >
+                <option value="">{isAr ? 'التوثيق: الكل' : 'Verification: All'}</option>
+                <option value="pending">{t.common.pending}</option>
+                <option value="approved">{t.common.approved}</option>
+                <option value="rejected">{t.common.rejected}</option>
+              </Select>
+            </div>
+          }
+          columns={[
+            {
+              key: 'account',
+              header: isAr ? 'اسم الحساب' : 'Account',
+              render: (a) => (
+                <div>
+                  <p className="font-medium">{a.displayName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {a.accountType} • /{a.slug}
+                  </p>
+                </div>
+              ),
+            },
+            {
+              key: 'owner',
+              header: isAr ? 'المالك' : 'Owner',
+              render: (a) => (
+                <div className="text-xs">
+                  <p>{a.owner.fullName}</p>
+                  <p className="font-mono text-muted-foreground">{a.owner.phone}</p>
+                </div>
+              ),
+            },
+            {
+              key: 'ver',
+              header: isAr ? 'التوثيق' : 'Verification',
+              render: (a) => <StatusBadge status={a.verificationStatus} />,
+            },
+            {
+              key: 'active',
+              header: t.common.status,
+              render: (a) => (
+                <StatusBadge status={a.isActive ? 'active' : 'inactive'} />
+              ),
+            },
+            {
+              key: 'counts',
+              header: isAr ? 'الإعلانات / الفروع' : 'Listings / Branches',
+              render: (a) => (
+                <span className="text-xs">
+                  {a._count.listings} / {a._count.branches}
+                </span>
+              ),
+            },
+            {
+              key: 'actions',
+              header: t.common.actions,
+              render: (a) => (
+                <PermissionGate permission="users.update">
+                  <Button
+                    size="sm"
+                    variant={a.isActive ? 'outline' : 'primary'}
+                    disabled={accountStatusMutation.isPending}
+                    onClick={() =>
+                      accountStatusMutation.mutate({
+                        id: a.id,
+                        isActive: !a.isActive,
+                      })
+                    }
+                  >
+                    {a.isActive
+                      ? isAr
+                        ? 'تعطيل'
+                        : 'Deactivate'
+                      : isAr
+                        ? 'تفعيل'
+                        : 'Activate'}
+                  </Button>
+                </PermissionGate>
+              ),
+            },
+          ]}
+        />
+      )}
+
+      {tab === 'users' && (
       <DataTable
         rowKey={(r) => r.id}
         data={usersQuery.data?.items ?? []}
@@ -291,6 +481,7 @@ export function UsersPage() {
           },
         ]}
       />
+      )}
 
       <Modal
         open={Boolean(selectedUserId)}

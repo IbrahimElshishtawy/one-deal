@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, FileSearch, RotateCcw, X } from 'lucide-react';
+import { Check, Eye, FileSearch, RotateCcw, X } from 'lucide-react';
 import { apiClient, ApiClientError } from '../../core/api/client';
 import { useI18n } from '../../core/i18n/I18nContext';
+import { useAuth } from '../../core/auth/AuthContext';
 import { PermissionGate } from '../../core/auth/PermissionGate';
 import { DataTable, PaginationMeta } from '../../components/DataTable';
 import {
@@ -21,6 +22,8 @@ interface VerificationRow {
   fileUrl: string | null;
   status: string;
   rejectionReason: string | null;
+  assignedToStaffId?: string | null;
+  notes?: string | null;
   createdAt: string;
   reviewedAt: string | null;
   account: {
@@ -35,11 +38,14 @@ interface VerificationRow {
 
 export function VerificationPage() {
   const { t, locale } = useI18n();
+  const isAr = locale === 'ar';
+  const { hasPermission } = useAuth();
   const qc = useQueryClient();
 
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('pending');
   const [q, setQ] = useState('');
+  const [selectedVerId, setSelectedVerId] = useState<string | null>(null);
   const [docModal, setDocModal] = useState<{
     id: string;
     documentType: string;
@@ -61,6 +67,50 @@ export function VerificationPage() {
         { page, limit: 20, status, q },
         { signal },
       ),
+  });
+
+  const detailQuery = useQuery({
+    queryKey: ['admin-verification-detail', selectedVerId],
+    enabled: Boolean(selectedVerId),
+    queryFn: ({ signal }) =>
+      apiClient.get<{
+        verification: VerificationRow & { notes?: string | null };
+        history: Array<{
+          id: string;
+          action: string;
+          notes: string | null;
+          createdAt: string;
+          staff?: { fullName: string; email: string } | null;
+        }>;
+      }>(`/admin/moderation/verifications/${selectedVerId}`, undefined, {
+        signal,
+      }),
+  });
+
+  const staffQuery = useQuery({
+    queryKey: ['admin-staff-list-min'],
+    enabled: hasPermission('admins.read'),
+    queryFn: ({ signal }) =>
+      apiClient.get<{ items: Array<{ id: string; fullName: string }> }>(
+        '/admin/staff',
+        { page: 1, limit: 50 },
+        { signal },
+      ),
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: ({ id, staffId }: { id: string; staffId: string }) =>
+      apiClient.post(`/admin/moderation/verifications/${id}/assign`, {
+        staffId: staffId || undefined,
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin-verifications'] });
+      if (selectedVerId) {
+        void qc.invalidateQueries({
+          queryKey: ['admin-verification-detail', selectedVerId],
+        });
+      }
+    },
   });
 
   const decisionMutation = useMutation({
@@ -138,7 +188,9 @@ export function VerificationPage() {
             <option value="pending">{t.common.pending}</option>
             <option value="approved">{t.common.approved}</option>
             <option value="rejected">{t.common.rejected}</option>
-            <option value="resubmission_required">Resubmission</option>
+            <option value="resubmission">
+              {isAr ? 'إعادة تقديم' : 'Resubmission'}
+            </option>
           </Select>
         }
         columns={[
@@ -185,6 +237,14 @@ export function VerificationPage() {
             header: t.common.actions,
             render: (r) => (
               <div className="flex flex-wrap gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedVerId(r.id)}
+                  title={t.common.view}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
                 <PermissionGate permission="verification.documents.read">
                   <Button
                     size="sm"
@@ -270,6 +330,83 @@ export function VerificationPage() {
                 {docModal.fileUrl}
               </a>
             </p>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={Boolean(selectedVerId)}
+        onClose={() => setSelectedVerId(null)}
+        title={isAr ? 'تفاصيل وسجل التوثيق' : 'Verification Details & History'}
+      >
+        {detailQuery.data && (
+          <div className="space-y-4 text-sm">
+            <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+              <div>
+                <p className="font-semibold">
+                  {detailQuery.data.verification.account.displayName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {detailQuery.data.verification.account.owner.fullName} •{' '}
+                  {detailQuery.data.verification.account.owner.phone}
+                </p>
+              </div>
+              <StatusBadge status={detailQuery.data.verification.status} />
+            </div>
+
+            <PermissionGate permission="verification.approve">
+              <div>
+                <label className="mb-1 block text-xs font-medium">
+                  {isAr ? 'إسناد المراجع' : 'Assign Reviewer'}
+                </label>
+                <Select
+                  defaultValue={
+                    detailQuery.data.verification.assignedToStaffId || ''
+                  }
+                  onChange={(e) =>
+                    assignMutation.mutate({
+                      id: detailQuery.data!.verification.id,
+                      staffId: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">
+                    {isAr ? 'اختر مراجعاً...' : 'Assign Reviewer...'}
+                  </option>
+                  {(staffQuery.data?.items ?? []).map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.fullName}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </PermissionGate>
+
+            <div>
+              <h4 className="mb-1.5 text-xs font-semibold">
+                {isAr ? 'سجل إجراءات التوثيق' : 'Verification History'}
+              </h4>
+              <div className="max-h-40 divide-y overflow-y-auto rounded border text-xs">
+                {detailQuery.data.history.length === 0 ? (
+                  <p className="p-2 text-muted-foreground">
+                    {isAr ? 'لا يوجد سجل سابق' : 'No verification history yet'}
+                  </p>
+                ) : (
+                  detailQuery.data.history.map((h) => (
+                    <div key={h.id} className="flex justify-between p-2">
+                      <span>
+                        <strong>{h.action}</strong>{' '}
+                        {h.staff ? `(${h.staff.fullName})` : ''}{' '}
+                        {h.notes && `— ${h.notes}`}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {new Date(h.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         )}
       </Modal>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Plus, Send, Users } from 'lucide-react';
+import { CheckCircle2, Plus, Send, Users, XCircle } from 'lucide-react';
 import { apiClient, ApiClientError } from '../../core/api/client';
 import { useI18n } from '../../core/i18n/I18nContext';
 import { PermissionGate } from '../../core/auth/PermissionGate';
@@ -46,6 +46,7 @@ export function NotificationsPage() {
     bodyAr: '',
     bodyEn: '',
     audienceType: 'all' as 'all' | 'verified' | 'new_users' | 'category',
+    scheduledAt: '',
     submitForApproval: true,
   });
 
@@ -68,7 +69,18 @@ export function NotificationsPage() {
   };
 
   const createMutation = useMutation({
-    mutationFn: () => apiClient.post('/admin/notifications/campaigns', form),
+    mutationFn: () =>
+      apiClient.post('/admin/notifications/campaigns', {
+        titleAr: form.titleAr,
+        titleEn: form.titleEn,
+        bodyAr: form.bodyAr,
+        bodyEn: form.bodyEn,
+        audienceType: form.audienceType,
+        scheduledAt: form.scheduledAt
+          ? new Date(form.scheduledAt).toISOString()
+          : undefined,
+        submitForApproval: form.submitForApproval,
+      }),
     onSuccess: () => {
       setCreateOpen(false);
       setForm({
@@ -77,6 +89,7 @@ export function NotificationsPage() {
         bodyAr: '',
         bodyEn: '',
         audienceType: 'all',
+        scheduledAt: '',
         submitForApproval: true,
       });
       void qc.invalidateQueries({ queryKey: ['admin-notification-campaigns'] });
@@ -96,6 +109,13 @@ export function NotificationsPage() {
   const sendMutation = useMutation({
     mutationFn: (id: string) =>
       apiClient.post(`/admin/notifications/campaigns/${id}/send`),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ['admin-notification-campaigns'] }),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiClient.post(`/admin/notifications/campaigns/${id}/cancel`),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: ['admin-notification-campaigns'] }),
   });
@@ -137,7 +157,9 @@ export function NotificationsPage() {
             <option value="draft">draft</option>
             <option value="pending_approval">pending_approval</option>
             <option value="approved">approved</option>
+            <option value="scheduled">scheduled</option>
             <option value="sent">sent</option>
+            <option value="cancelled">cancelled</option>
           </Select>
         }
         columns={[
@@ -198,7 +220,7 @@ export function NotificationsPage() {
                   )}
                 </PermissionGate>
                 <PermissionGate permission="notifications.send">
-                  {c.status === 'approved' && (
+                  {['approved', 'scheduled'].includes(c.status) && (
                     <Button
                       size="sm"
                       onClick={() => sendMutation.mutate(c.id)}
@@ -206,6 +228,21 @@ export function NotificationsPage() {
                     >
                       <Send className="h-3.5 w-3.5" />
                       Send
+                    </Button>
+                  )}
+                </PermissionGate>
+                <PermissionGate permission="notifications.create">
+                  {['draft', 'pending_approval', 'approved', 'scheduled'].includes(
+                    c.status,
+                  ) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => cancelMutation.mutate(c.id)}
+                      disabled={cancelMutation.isPending}
+                      title="Cancel Campaign"
+                    >
+                      <XCircle className="h-3.5 w-3.5 text-rose-600" />
                     </Button>
                   )}
                 </PermissionGate>
@@ -299,6 +336,19 @@ export function NotificationsPage() {
               />
               Submit for Approval
             </label>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium">
+              Schedule At (optional)
+            </label>
+            <Input
+              type="datetime-local"
+              value={form.scheduledAt}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, scheduledAt: e.target.value }))
+              }
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

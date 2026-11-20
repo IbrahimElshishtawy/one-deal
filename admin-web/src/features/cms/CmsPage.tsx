@@ -28,6 +28,8 @@ interface CmsItem {
   sortOrder: number;
   status: string;
   isActive: boolean;
+  startsAt?: string | null;
+  endsAt?: string | null;
   revisions: Array<{
     version: number;
     savedAt: string;
@@ -60,6 +62,8 @@ export function CmsPage() {
     placement: 'home_hero',
     sortOrder: 0,
     status: 'draft',
+    startsAt: '',
+    endsAt: '',
   });
 
   const query = useQuery({
@@ -74,6 +78,10 @@ export function CmsPage() {
 
   const saveMutation = useMutation({
     mutationFn: () => {
+      const schedulePayload = {
+        startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : undefined,
+        endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : undefined,
+      };
       if (editing) {
         return apiClient.patch(`/admin/cms/${editing.id}`, {
           titleAr: form.titleAr,
@@ -85,11 +93,13 @@ export function CmsPage() {
           placement: form.placement || null,
           sortOrder: Number(form.sortOrder),
           status: form.status,
+          ...schedulePayload,
         });
       }
       return apiClient.post('/admin/cms', {
         ...form,
         sortOrder: Number(form.sortOrder),
+        ...schedulePayload,
       });
     },
     onSuccess: () => {
@@ -130,6 +140,8 @@ export function CmsPage() {
                 placement: 'home_hero',
                 sortOrder: 0,
                 status: 'draft',
+                startsAt: '',
+                endsAt: '',
               });
               setModalOpen(true);
             }}
@@ -168,6 +180,7 @@ export function CmsPage() {
             >
               <option value="all">{t.common.all}</option>
               <option value="draft">draft</option>
+              <option value="scheduled">scheduled</option>
               <option value="published">published</option>
               <option value="archived">archived</option>
             </Select>
@@ -233,6 +246,8 @@ export function CmsPage() {
                         placement: c.placement || '',
                         sortOrder: c.sortOrder,
                         status: c.status,
+                        startsAt: c.startsAt ? c.startsAt.slice(0, 16) : '',
+                        endsAt: c.endsAt ? c.endsAt.slice(0, 16) : '',
                       });
                       setModalOpen(true);
                     }}
@@ -360,6 +375,35 @@ export function CmsPage() {
               value={form.sortOrder}
               onChange={(e) =>
                 setForm((f) => ({ ...f, sortOrder: Number(e.target.value) }))
+              }
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Select
+              value={form.status}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, status: e.target.value }))
+              }
+            >
+              <option value="draft">draft</option>
+              <option value="scheduled">scheduled</option>
+              <option value="published">published</option>
+              <option value="archived">archived</option>
+            </Select>
+            <Input
+              type="datetime-local"
+              title="Starts At (optional)"
+              value={form.startsAt}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, startsAt: e.target.value }))
+              }
+            />
+            <Input
+              type="datetime-local"
+              title="Ends At (optional)"
+              value={form.endsAt}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, endsAt: e.target.value }))
               }
             />
           </div>

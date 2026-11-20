@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Edit, KeyRound, Plus, ShieldOff, UserCheck, UserX } from 'lucide-react';
+import { Edit, Eye, KeyRound, Plus, ShieldOff, UserCheck, UserX } from 'lucide-react';
 import { apiClient, ApiClientError } from '../../core/api/client';
 import { useI18n } from '../../core/i18n/I18nContext';
 import { PermissionGate } from '../../core/auth/PermissionGate';
@@ -36,6 +36,7 @@ export function AdminAccountsPage() {
   const [q, setQ] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffRow | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
   const [inviteForm, setInviteForm] = useState({
@@ -68,6 +69,34 @@ export function AdminAccountsPage() {
     queryKey: ['admin-staff-roles'],
     queryFn: ({ signal }) =>
       apiClient.get<RoleOption[]>('/admin/staff/roles', undefined, { signal }),
+  });
+
+  const detailQuery = useQuery({
+    queryKey: ['admin-staff-detail', selectedStaffId],
+    enabled: Boolean(selectedStaffId),
+    queryFn: ({ signal }) =>
+      apiClient.get<{
+        staff: StaffRow;
+        activeSessions: Array<{
+          id: string;
+          ipAddress: string;
+          mfaVerified: boolean;
+          lastUsedAt: string;
+        }>;
+        recentAuditLogs: Array<{
+          id: string;
+          action: string;
+          targetEntity: string;
+          createdAt: string;
+        }>;
+        recentLoginAttempts: Array<{
+          id: string;
+          ipAddress: string;
+          isSuccess: boolean;
+          failureReason: string | null;
+          createdAt: string;
+        }>;
+      }>(`/admin/staff/${selectedStaffId}`, undefined, { signal }),
   });
 
   const inviteMutation = useMutation({
@@ -187,6 +216,14 @@ export function AdminAccountsPage() {
             header: t.common.actions,
             render: (s) => (
               <div className="flex flex-wrap gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedStaffId(s.id)}
+                  title="View Activity & Sessions"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
                 <PermissionGate permission="admins.update">
                   <Button
                     size="sm"
@@ -419,6 +456,59 @@ export function AdminAccountsPage() {
               >
                 {t.common.save}
               </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={Boolean(selectedStaffId)}
+        onClose={() => setSelectedStaffId(null)}
+        title={`Admin Activity & Sessions — ${detailQuery.data?.staff.fullName || ''}`}
+        maxWidth="max-w-3xl"
+      >
+        {detailQuery.data && (
+          <div className="space-y-4 text-xs">
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <p className="font-semibold">
+                {detailQuery.data.staff.fullName} ({detailQuery.data.staff.email})
+              </p>
+              <p className="text-muted-foreground">
+                Role: {detailQuery.data.staff.role.name} • Active Sessions:{' '}
+                {detailQuery.data.activeSessions.length}
+              </p>
+            </div>
+            <div>
+              <h4 className="mb-1.5 font-semibold">Recent Administrative Actions</h4>
+              <div className="max-h-40 divide-y overflow-y-auto rounded border">
+                {detailQuery.data.recentAuditLogs.length === 0 ? (
+                  <p className="p-2 text-muted-foreground">No recorded actions</p>
+                ) : (
+                  detailQuery.data.recentAuditLogs.map((l) => (
+                    <div key={l.id} className="flex justify-between p-2">
+                      <span className="font-mono">{l.action} ({l.targetEntity})</span>
+                      <span className="text-muted-foreground">
+                        {new Date(l.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            <div>
+              <h4 className="mb-1.5 font-semibold">Recent Login Attempts</h4>
+              <div className="max-h-36 divide-y overflow-y-auto rounded border">
+                {detailQuery.data.recentLoginAttempts.map((a) => (
+                  <div key={a.id} className="flex justify-between p-2">
+                    <span className="font-mono">
+                      {a.isSuccess ? 'SUCCESS' : `FAILED (${a.failureReason || ''})`} • {a.ipAddress}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {new Date(a.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Key, ShieldCheck, Trash2 } from 'lucide-react';
 import { apiClient, ApiClientError } from '../../core/api/client';
 import { useAuth } from '../../core/auth/AuthContext';
+import { useI18n } from '../../core/i18n/I18nContext';
 import {
   Button,
   Card,
@@ -24,6 +25,8 @@ interface StaffSessionItem {
 
 export function SecurityProfilePage() {
   const { admin, refreshProfile } = useAuth();
+  const { locale } = useI18n();
+  const isAr = locale === 'ar';
   const qc = useQueryClient();
 
   const [mfaSetup, setMfaSetup] = useState<{
@@ -64,7 +67,13 @@ export function SecurityProfilePage() {
       );
       setMfaSetup(res);
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'MFA setup failed');
+      setError(
+        err instanceof ApiClientError
+          ? err.message
+          : isAr
+            ? 'فشل إعداد التحقق الثنائي'
+            : 'MFA setup failed',
+      );
     }
   };
 
@@ -80,9 +89,19 @@ export function SecurityProfilePage() {
       setMfaSetup(null);
       setTotpCode('');
       await refreshProfile();
-      setFeedback('MFA enabled. Store your recovery codes safely.');
+      setFeedback(
+        isAr
+          ? 'تم تفعيل التحقق الثنائي. احتفظ برموز الاسترداد في مكان آمن.'
+          : 'MFA enabled. Store your recovery codes safely.',
+      );
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Invalid code');
+      setError(
+        err instanceof ApiClientError
+          ? err.message
+          : isAr
+            ? 'رمز غير صحيح'
+            : 'Invalid code',
+      );
     }
   };
 
@@ -97,9 +116,17 @@ export function SecurityProfilePage() {
       setDisablePassword('');
       setDisableCode('');
       await refreshProfile();
-      setFeedback('MFA has been disabled.');
+      setFeedback(
+        isAr ? 'تم تعطيل التحقق الثنائي.' : 'MFA has been disabled.',
+      );
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Failed to disable MFA');
+      setError(
+        err instanceof ApiClientError
+          ? err.message
+          : isAr
+            ? 'تعذر تعطيل التحقق الثنائي'
+            : 'Failed to disable MFA',
+      );
     }
   };
 
@@ -114,12 +141,18 @@ export function SecurityProfilePage() {
       setCurrentPassword('');
       setNewPassword('');
       setFeedback(
-        `Password updated. ${res.revokedSessionsCount} other session(s) revoked.`,
+        isAr
+          ? `تم تحديث كلمة المرور وإبطال ${res.revokedSessionsCount} جلسة أخرى.`
+          : `Password updated. ${res.revokedSessionsCount} other session(s) revoked.`,
       );
       void qc.invalidateQueries({ queryKey: ['admin-auth-sessions'] });
     } catch (err) {
       setError(
-        err instanceof ApiClientError ? err.message : 'Password change failed',
+        err instanceof ApiClientError
+          ? err.message
+          : isAr
+            ? 'فشل تغيير كلمة المرور'
+            : 'Password change failed',
       );
     }
   };
@@ -127,9 +160,14 @@ export function SecurityProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Account Security & Active Sessions</h2>
+        <h2 className="text-2xl font-bold">
+          {isAr
+            ? 'أمان الحساب والجلسات النشطة'
+            : 'Account Security & Active Sessions'}
+        </h2>
         <p className="text-sm text-muted-foreground">
-          {admin?.fullName} • {admin?.email} • Role: <strong>{admin?.role.name}</strong>
+          {admin?.fullName} • {admin?.email} •{' '}
+          {isAr ? 'الدور:' : 'Role:'} <strong>{admin?.role.name}</strong>
         </p>
       </div>
 
@@ -145,46 +183,66 @@ export function SecurityProfilePage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-5 space-y-4">
+        <Card className="space-y-4 p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Two-Factor Authentication (TOTP)</h3>
+              <h3 className="font-semibold">
+                {isAr
+                  ? 'التحقق الثنائي (TOTP)'
+                  : 'Two-Factor Authentication (TOTP)'}
+              </h3>
             </div>
             <StatusBadge status={admin?.mfaEnabled ? 'active' : 'inactive'} />
           </div>
 
           {!admin?.mfaEnabled && !mfaSetup && (
-            <Button onClick={startMfaSetup}>Enroll TOTP Authenticator</Button>
+            <Button onClick={startMfaSetup}>
+              {isAr ? 'تفعيل تطبيق المصادقة TOTP' : 'Enroll TOTP Authenticator'}
+            </Button>
           )}
 
           {mfaSetup && (
-            <form onSubmit={confirmEnableMfa} className="space-y-3 rounded-lg border bg-muted/30 p-4">
+            <form
+              onSubmit={confirmEnableMfa}
+              className="space-y-3 rounded-lg border bg-muted/30 p-4"
+            >
               <p className="text-xs text-muted-foreground">
-                Add this Base32 secret to Google Authenticator / 1Password:
+                {isAr
+                  ? 'أضف مفتاح Base32 التالي إلى Google Authenticator أو 1Password:'
+                  : 'Add this Base32 secret to Google Authenticator / 1Password:'}
               </p>
-              <code className="block break-all rounded bg-card p-2 text-xs font-mono">
+              <code className="block break-all rounded bg-card p-2 font-mono text-xs">
                 {mfaSetup.secret}
               </code>
-              <p className="text-[11px] break-all text-muted-foreground">
+              <p className="break-all text-[11px] text-muted-foreground">
                 URI: {mfaSetup.otpauthUrl}
               </p>
               <div className="flex gap-2">
                 <Input
+                  id="totp-enable-code"
+                  name="totpCode"
+                  autoComplete="one-time-code"
                   value={totpCode}
                   onChange={(e) => setTotpCode(e.target.value)}
-                  placeholder="Enter 6-digit TOTP code"
+                  placeholder={
+                    isAr ? 'أدخل الرمز المكون من 6 أرقام' : 'Enter 6-digit TOTP code'
+                  }
                   required
                 />
-                <Button type="submit">Enable MFA</Button>
+                <Button type="submit">
+                  {isAr ? 'تفعيل MFA' : 'Enable MFA'}
+                </Button>
               </div>
             </form>
           )}
 
           {recoveryCodes && (
-            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 space-y-2">
+            <div className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
               <p className="text-xs font-semibold">
-                One-Time Recovery Codes (shown once):
+                {isAr
+                  ? 'رموز الاسترداد لمرة واحدة (تظهر مرة واحدة فقط):'
+                  : 'One-Time Recovery Codes (shown once):'}
               </p>
               <div className="grid grid-cols-2 gap-1 font-mono text-xs">
                 {recoveryCodes.map((c) => (
@@ -197,60 +255,83 @@ export function SecurityProfilePage() {
           )}
 
           {admin?.mfaEnabled && (
-            <form onSubmit={handleDisableMfa} className="space-y-2 pt-2 border-t">
+            <form
+              onSubmit={handleDisableMfa}
+              className="space-y-2 border-t pt-2"
+            >
               <p className="text-xs font-medium text-muted-foreground">
-                Disable MFA (requires current password + TOTP code)
+                {isAr
+                  ? 'تعطيل التحقق الثنائي (يتطلب كلمة المرور الحالية ورمز TOTP)'
+                  : 'Disable MFA (requires current password + TOTP code)'}
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
                 <Input
+                  id="mfa-disable-password"
                   type="password"
-                  placeholder="Current password"
+                  autoComplete="current-password"
+                  placeholder={isAr ? 'كلمة المرور الحالية' : 'Current password'}
                   value={disablePassword}
                   onChange={(e) => setDisablePassword(e.target.value)}
                   required
                 />
                 <Input
-                  placeholder="6-digit code"
+                  id="mfa-disable-code"
+                  autoComplete="one-time-code"
+                  placeholder={isAr ? 'رمز من 6 أرقام' : '6-digit code'}
                   value={disableCode}
                   onChange={(e) => setDisableCode(e.target.value)}
                   required
                 />
               </div>
               <Button type="submit" variant="destructive" size="sm">
-                Disable MFA
+                {isAr ? 'تعطيل MFA' : 'Disable MFA'}
               </Button>
             </form>
           )}
         </Card>
 
-        <Card className="p-5 space-y-4">
+        <Card className="space-y-4 p-5">
           <div className="flex items-center gap-2">
             <Key className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Change Password</h3>
+            <h3 className="font-semibold">
+              {isAr ? 'تغيير كلمة المرور' : 'Change Password'}
+            </h3>
           </div>
           <form onSubmit={handleChangePassword} className="space-y-3">
             <Input
+              id="sec-current-password"
               type="password"
-              placeholder="Current password"
+              autoComplete="current-password"
+              placeholder={isAr ? 'كلمة المرور الحالية' : 'Current password'}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
             />
             <Input
+              id="sec-new-password"
               type="password"
-              placeholder="New password (min 8 chars)"
+              autoComplete="new-password"
+              placeholder={
+                isAr
+                  ? 'كلمة المرور الجديدة (8 أحرف على الأقل)'
+                  : 'New password (min 8 chars)'
+              }
               minLength={8}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
-            <Button type="submit">Update Password</Button>
+            <Button type="submit">
+              {isAr ? 'تحديث كلمة المرور' : 'Update Password'}
+            </Button>
           </form>
         </Card>
       </div>
 
-      <Card className="p-5 space-y-4">
-        <h3 className="font-semibold">Active Admin Sessions</h3>
+      <Card className="space-y-4 p-5">
+        <h3 className="font-semibold">
+          {isAr ? 'جلسات الإدارة النشطة' : 'Active Admin Sessions'}
+        </h3>
         {sessionsQuery.isLoading ? (
           <LoadingState />
         ) : (
@@ -258,24 +339,35 @@ export function SecurityProfilePage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/50 text-xs text-muted-foreground">
                 <tr>
-                  <th className="px-3 py-2 text-start">IP Address</th>
-                  <th className="px-3 py-2 text-start">User Agent</th>
+                  <th className="px-3 py-2 text-start">
+                    {isAr ? 'عنوان IP' : 'IP Address'}
+                  </th>
+                  <th className="px-3 py-2 text-start">
+                    {isAr ? 'الجهاز / المتصفح' : 'User Agent'}
+                  </th>
                   <th className="px-3 py-2 text-start">MFA</th>
-                  <th className="px-3 py-2 text-start">Last Used</th>
-                  <th className="px-3 py-2 text-start">Action</th>
+                  <th className="px-3 py-2 text-start">
+                    {isAr ? 'آخر استخدام' : 'Last Used'}
+                  </th>
+                  <th className="px-3 py-2 text-start">
+                    {isAr ? 'إجراء' : 'Action'}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {(sessionsQuery.data ?? []).map((s) => (
                   <tr key={s.id}>
                     <td className="px-3 py-2 font-mono text-xs">
-                      {s.ipAddress} {s.isCurrent && '(Current)'}
+                      {s.ipAddress}{' '}
+                      {s.isCurrent && (isAr ? '(الحالية)' : '(Current)')}
                     </td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground max-w-xs truncate">
+                    <td className="max-w-xs truncate px-3 py-2 text-xs text-muted-foreground">
                       {s.userAgent || '-'}
                     </td>
                     <td className="px-3 py-2">
-                      <StatusBadge status={s.mfaVerified ? 'approved' : 'pending'} />
+                      <StatusBadge
+                        status={s.mfaVerified ? 'approved' : 'pending'}
+                      />
                     </td>
                     <td className="px-3 py-2 text-xs">
                       {new Date(s.lastUsedAt).toLocaleString()}
@@ -288,7 +380,7 @@ export function SecurityProfilePage() {
                         onClick={() => revokeMutation.mutate(s.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                        Revoke
+                        {isAr ? 'إبطال' : 'Revoke'}
                       </Button>
                     </td>
                   </tr>
@@ -301,3 +393,4 @@ export function SecurityProfilePage() {
     </div>
   );
 }
+

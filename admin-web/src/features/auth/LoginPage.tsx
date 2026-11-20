@@ -164,10 +164,11 @@ export function LoginPage() {
         {mode === 'login' && (
           <form onSubmit={handleSubmit(onLoginSubmit)} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium">
+              <label htmlFor="login-email" className="mb-1.5 block text-xs font-medium">
                 {t.auth.email}
               </label>
               <Input
+                id="login-email"
                 type="email"
                 autoComplete="email"
                 placeholder="superadmin@dealone.eg"
@@ -181,10 +182,11 @@ export function LoginPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-medium">
+              <label htmlFor="login-password" className="mb-1.5 block text-xs font-medium">
                 {t.auth.password}
               </label>
               <Input
+                id="login-password"
                 type="password"
                 autoComplete="current-password"
                 {...register('password')}
