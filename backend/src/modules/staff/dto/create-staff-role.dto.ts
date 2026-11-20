@@ -14,8 +14,14 @@ export class CreateStaffRoleDto {
   @MaxLength(50)
   name!: string;
 
+  @ApiPropertyOptional({ example: 'Content moderation specialist' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  description?: string;
+
   @ApiPropertyOptional({
-    example: ['listings:moderate', 'reports:resolve'],
+    example: ['listings.read', 'listings.approve'],
     type: [String],
   })
   @IsOptional()

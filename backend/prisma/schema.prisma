@@ -72,6 +72,12 @@ model User {
   isActive          Boolean        @default(true) @map("is_active")
   preferredLanguage String         @default("ar") @map("preferred_language") @db.VarChar(5)
   isDemo            Boolean        @default(false) @map("is_demo")
+  moderationStatus  String         @default("active") @map("moderation_status") @db.VarChar(20)
+  suspendedUntil    DateTime?      @map("suspended_until") @db.Timestamptz
+  suspensionReason  String?        @map("suspension_reason") @db.Text
+  bannedAt          DateTime?      @map("banned_at") @db.Timestamptz
+  banReason         String?        @map("ban_reason") @db.Text
+  internalNotes     Json?          @default("[]") @map("internal_notes")
   createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt         DateTime?      @map("deleted_at") @db.Timestamptz
@@ -203,6 +209,8 @@ model AccountVerification {
   status            String    @default("pending") @db.VarChar(20) // pending, approved, rejected
   rejectionReason   String?   @map("rejection_reason") @db.Text
   reviewedByStaffId String?   @map("reviewed_by_staff_id") @db.Uuid
+  assignedToStaffId String?   @map("assigned_to_staff_id") @db.Uuid
+  notes             String?   @db.Text
   reviewedAt        DateTime? @map("reviewed_at") @db.Timestamptz
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
@@ -409,7 +417,11 @@ model Report {
   reportedAccountId  String?   @map("reported_account_id") @db.Uuid
   reason             String    @db.VarChar(30) // scam, inappropriate, false_info, duplicate, prohibited, other
   details            String?   @db.Text
-  status             String    @default("open") @db.VarChar(20) // open, resolved, dismissed
+  status             String    @default("open") @db.VarChar(20) // open, resolved, dismissed, escalated
+  priority           String    @default("medium") @db.VarChar(20) // low, medium, high, critical
+  assignedToStaffId  String?   @map("assigned_to_staff_id") @db.Uuid
+  assignedAt         DateTime? @map("assigned_at") @db.Timestamptz
+  internalNotes      Json?     @default("[]") @map("internal_notes")
   resolvedByStaffId  String?   @map("resolved_by_staff_id") @db.Uuid
   resolutionNotes    String?   @map("resolution_notes") @db.Text
   resolvedAt         DateTime? @map("resolved_at") @db.Timestamptz
@@ -419,8 +431,10 @@ model Report {
   listing         Listing?   @relation(fields: [listingId], references: [id], onDelete: Cascade)
   reportedAccount Account?   @relation("ReportedAccountRelation", fields: [reportedAccountId], references: [id], onDelete: Cascade)
   resolvedBy      StaffUser? @relation("ResolvedReports", fields: [resolvedByStaffId], references: [id], onDelete: SetNull)
+  assignedTo      StaffUser? @relation("AssignedReports", fields: [assignedToStaffId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
+  @@index([assignedToStaffId, status])
   @@map("reports")
 }
 
@@ -519,28 +533,167 @@ model PlatformSetting {
 model StaffRole {
   id          Int         @id @default(autoincrement())
   name        String      @unique @db.VarChar(50)
+  description String?     @db.VarChar(255)
+  isSystem    Boolean     @default(false) @map("is_system")
   permissions Json        @default("[]")
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
   staffUsers  StaffUser[]
 
   @@map("staff_roles")
 }
 
 model StaffUser {
-  id           String   @id @default(uuid()) @db.Uuid
-  email        String   @unique @db.VarChar(255)
-  passwordHash String   @map("password_hash") @db.VarChar(255)
-  fullName     String   @map("full_name") @db.VarChar(120)
-  roleId       Int      @map("role_id")
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id                   String    @id @default(uuid()) @db.Uuid
+  email                String    @unique @db.VarChar(255)
+  passwordHash         String    @map("password_hash") @db.VarChar(255)
+  fullName             String    @map("full_name") @db.VarChar(120)
+  phone                String?   @db.VarChar(20)
+  department           String?   @db.VarChar(100)
+  jobTitle             String?   @map("job_title") @db.VarChar(100)
+  roleId               Int       @map("role_id")
+  status               String    @default("active") @db.VarChar(20) // invited, active, suspended, disabled, locked
+  isActive             Boolean   @default(true) @map("is_active")
+  mfaEnabled           Boolean   @default(false) @map("mfa_enabled")
+  mfaSecretEncrypted   String?   @map("mfa_secret_encrypted") @db.Text
+  mfaRecoveryCodesHash Json?     @map("mfa_recovery_codes_hash")
+  lastLoginAt          DateTime? @map("last_login_at") @db.Timestamptz
+  passwordChangedAt    DateTime? @map("password_changed_at") @db.Timestamptz
+  expiresAt            DateTime? @map("expires_at") @db.Timestamptz
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz
 
-  role                   StaffRole             @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  reviewedVerifications  AccountVerification[] @relation("ReviewedVerifications")
-  resolvedReports        Report[]              @relation("ResolvedReports")
-  platformSettingsUpdates PlatformSetting[]    @relation("StaffPlatformSettings")
-  moderationActions      ModerationLog[]
+  role                    StaffRole                 @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  sessions                StaffSession[]
+  loginAttempts           StaffLoginAttempt[]
+  passwordResetTokens     StaffPasswordResetToken[]
+  reviewedVerifications   AccountVerification[]     @relation("ReviewedVerifications")
+  resolvedReports         Report[]                  @relation("ResolvedReports")
+  assignedReports         Report[]                  @relation("AssignedReports")
+  platformSettingsUpdates PlatformSetting[]         @relation("StaffPlatformSettings")
+  moderationActions       ModerationLog[]
 
+  @@index([roleId, isActive])
   @@map("staff_users")
+}
+
+model StaffSession {
+  id               String   @id @default(uuid()) @db.Uuid
+  staffId          String   @map("staff_id") @db.Uuid
+  familyId         String   @map("family_id") @db.Uuid
+  refreshTokenHash String   @map("refresh_token_hash") @db.VarChar(255)
+  ipAddress        String   @map("ip_address") @db.VarChar(50)
+  userAgent        String?  @map("user_agent") @db.VarChar(500)
+  mfaVerified      Boolean  @default(false) @map("mfa_verified")
+  isRevoked        Boolean  @default(false) @map("is_revoked")
+  expiresAt        DateTime @map("expires_at") @db.Timestamptz
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  lastUsedAt       DateTime @default(now()) @map("last_used_at") @db.Timestamptz
+
+  staff StaffUser @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId, isRevoked])
+  @@index([familyId])
+  @@index([refreshTokenHash])
+  @@map("staff_sessions")
+}
+
+model StaffLoginAttempt {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @db.VarChar(255)
+  staffId       String?  @map("staff_id") @db.Uuid
+  ipAddress     String   @map("ip_address") @db.VarChar(50)
+  userAgent     String?  @map("user_agent") @db.VarChar(500)
+  isSuccess     Boolean  @map("is_success")
+  failureReason String?  @map("failure_reason") @db.VarChar(100)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  staff StaffUser? @relation(fields: [staffId], references: [id], onDelete: SetNull)
+
+  @@index([email, createdAt(sort: Desc)])
+  @@index([staffId, createdAt(sort: Desc)])
+  @@index([ipAddress, createdAt(sort: Desc)])
+  @@map("staff_login_attempts")
+}
+
+model StaffPasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  staffId   String    @map("staff_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  staff StaffUser @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId, expiresAt])
+  @@map("staff_password_resets")
+}
+
+model FeatureFlag {
+  key               String   @id @db.VarChar(100)
+  name              String   @db.VarChar(150)
+  description       String?  @db.Text
+  isEnabled         Boolean  @default(false) @map("is_enabled")
+  environment       String   @default("all") @db.VarChar(30)
+  rolloutPercentage Int      @default(100) @map("rollout_percentage")
+  rules             Json     @default("{}")
+  isSystem          Boolean  @default(false) @map("is_system")
+  updatedByStaffId  String?  @map("updated_by_staff_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("feature_flags")
+}
+
+model CmsItem {
+  id               String    @id @default(uuid()) @db.Uuid
+  type             String    @db.VarChar(30) // banner, home_section, page, faq, terms, privacy
+  slug             String    @unique @db.VarChar(150)
+  titleAr          String    @map("title_ar") @db.VarChar(255)
+  titleEn          String    @map("title_en") @db.VarChar(255)
+  bodyAr           String?   @map("body_ar") @db.Text
+  bodyEn           String?   @map("body_en") @db.Text
+  imageUrl         String?   @map("image_url") @db.VarChar(500)
+  targetUrl        String?   @map("target_url") @db.VarChar(500)
+  placement        String?   @db.VarChar(50)
+  sortOrder        Int       @default(0) @map("sort_order")
+  status           String    @default("draft") @db.VarChar(20) // draft, published, scheduled, archived
+  isActive         Boolean   @default(true) @map("is_active")
+  startsAt         DateTime? @map("starts_at") @db.Timestamptz
+  endsAt           DateTime? @map("ends_at") @db.Timestamptz
+  revisions        Json      @default("[]")
+  updatedByStaffId String?   @map("updated_by_staff_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([type, status, isActive, sortOrder])
+  @@map("cms_items")
+}
+
+model NotificationCampaign {
+  id                  String    @id @default(uuid()) @db.Uuid
+  titleAr             String    @map("title_ar") @db.VarChar(200)
+  titleEn             String    @map("title_en") @db.VarChar(200)
+  bodyAr              String    @map("body_ar") @db.Text
+  bodyEn              String    @map("body_en") @db.Text
+  audienceType        String    @default("all") @map("audience_type") @db.VarChar(30)
+  audienceFilter      Json      @default("{}") @map("audience_filter")
+  status              String    @default("draft") @db.VarChar(30) // draft, pending_approval, approved, scheduled, sent, cancelled
+  scheduledAt         DateTime? @map("scheduled_at") @db.Timestamptz
+  sentAt              DateTime? @map("sent_at") @db.Timestamptz
+  estimatedRecipients Int       @default(0) @map("estimated_recipients")
+  sentCount           Int       @default(0) @map("sent_count")
+  deliveredCount      Int       @default(0) @map("delivered_count")
+  failedCount         Int       @default(0) @map("failed_count")
+  createdByStaffId    String?   @map("created_by_staff_id") @db.Uuid
+  approvedByStaffId   String?   @map("approved_by_staff_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([status, createdAt(sort: Desc)])
+  @@map("notification_campaigns")
 }
 
 model ModerationLog {
@@ -573,6 +726,9 @@ model AuditLog {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([targetEntity, targetId, createdAt(sort: Desc)])
+  @@index([actorType, actorId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
   @@map("audit_log")
 }
 

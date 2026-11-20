@@ -40,8 +40,10 @@ export class PlatformSettingsService {
     dto: UpsertPlatformSettingDto,
     ipAddress?: string,
     userAgent?: string,
+    staffId?: string | null,
   ) {
     assertValidSettingKey(key);
+    const resolvedStaffId = staffId === undefined ? actorId : staffId;
     return this.prisma.$transaction(async (tx) => {
       const existing = await tx.platformSetting.findUnique({
         where: { key },
@@ -51,6 +53,8 @@ export class PlatformSettingsService {
         where: { key },
         update: {
           value: dto.value as Prisma.InputJsonValue,
+          ...(resolvedStaffId ? { updatedByStaffId: resolvedStaffId } : {}),
+          updatedAt: new Date(),
           ...(dto.description !== undefined
             ? { description: dto.description }
             : {}),
@@ -59,6 +63,7 @@ export class PlatformSettingsService {
           key,
           value: dto.value as Prisma.InputJsonValue,
           description: dto.description ?? null,
+          ...(resolvedStaffId ? { updatedByStaffId: resolvedStaffId } : {}),
         },
       });
 

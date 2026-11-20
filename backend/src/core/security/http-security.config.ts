@@ -53,6 +53,8 @@ export function buildCorsOptions(
       'X-Request-Id',
       'X-Account-Id',
       'X-Metrics-Token',
+      'X-CSRF-Token',
+      'X-Requested-With',
     ],
     exposedHeaders: [
       'X-Trace-Id',

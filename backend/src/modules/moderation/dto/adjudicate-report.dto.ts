@@ -1,15 +1,15 @@
-import { IsNotEmpty, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ReportStatus } from '../../../core/enums/domain.enums';
 
 export class AdjudicateReportDto {
   @ApiProperty({
-    enum: [ReportStatus.RESOLVED, ReportStatus.DISMISSED, ReportStatus.OPEN],
+    enum: ['open', 'resolved', 'dismissed', 'escalated'],
     example: ReportStatus.RESOLVED,
   })
   @IsNotEmpty()
-  @IsEnum(ReportStatus)
-  status!: ReportStatus;
+  @IsIn(['open', 'resolved', 'dismissed', 'escalated'])
+  status!: ReportStatus | 'escalated';
 
   @ApiPropertyOptional({
     example:
@@ -17,5 +17,11 @@ export class AdjudicateReportDto {
   })
   @IsOptional()
   @IsString()
+  @MaxLength(2000)
   actionTaken?: string;
+
+  @ApiPropertyOptional({ enum: ['low', 'medium', 'high', 'critical'] })
+  @IsOptional()
+  @IsIn(['low', 'medium', 'high', 'critical'])
+  priority?: 'low' | 'medium' | 'high' | 'critical';
 }

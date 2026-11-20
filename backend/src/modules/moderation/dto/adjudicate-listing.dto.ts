@@ -10,14 +10,14 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class AdjudicateListingDto {
   @ApiProperty({
     example: 'approve',
-    enum: ['approve', 'reject'],
+    enum: ['approve', 'reject', 'request_changes'],
     description: 'Moderator decision action',
   })
   @IsNotEmpty()
-  @IsIn(['approve', 'reject'], {
-    message: "Action must be either 'approve' or 'reject'",
+  @IsIn(['approve', 'reject', 'request_changes'], {
+    message: "Action must be 'approve', 'reject', or 'request_changes'",
   })
-  action!: 'approve' | 'reject';
+  action!: 'approve' | 'reject' | 'request_changes';
 
   @ApiPropertyOptional({
     example: 'PROHIBITED_COMMODITY',

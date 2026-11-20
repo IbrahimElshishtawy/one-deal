@@ -9,7 +9,8 @@ export type EmailTemplateKey =
   | 'listing-approved'
   | 'listing-rejected'
   | 'security-notification'
-  | 'payment-receipt';
+  | 'payment-receipt'
+  | 'admin-password-reset';
 
 export interface RenderedEmailTemplate {
   subject: string;

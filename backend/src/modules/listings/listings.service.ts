@@ -653,7 +653,13 @@ export class ListingsService {
       },
     });
 
-    if (!listing || listing.publicationStatus === 'archived') {
+    if (
+      !listing ||
+      listing.deletedAt !== null ||
+      ['archived', 'hidden', 'unpublished', 'draft'].includes(
+        listing.publicationStatus,
+      )
+    ) {
       throw new NotFoundException('Listing not found or has been removed');
     }
 

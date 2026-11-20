@@ -272,6 +272,16 @@ export const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
 
+  // Enterprise Admin Dashboard Security & Cookies
+  ADMIN_JWT_ACCESS_SECRET: z.string().optional().default(''),
+  ADMIN_JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
+  ADMIN_REFRESH_EXPIRES_DAYS: z.coerce.number().int().positive().default(7),
+  ADMIN_MFA_ENCRYPTION_KEY: z.string().optional().default(''),
+  ADMIN_COOKIE_NAME: z.string().default('dealone_admin_rt'),
+  ADMIN_COOKIE_DOMAIN: z.string().optional().default(''),
+  ADMIN_COOKIE_SAMESITE: z.enum(['strict', 'lax', 'none']).default('strict'),
+  ADMIN_PUBLIC_URL: z.string().url().default('http://localhost:5173'),
+
   // SMS & WhatsApp OTP Gateways (Egypt)
   SMS_PROVIDER: z.string().default('SMS_MISR'),
   SMS_MISR_USERNAME: z.string().optional().default(''),

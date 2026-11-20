@@ -24,6 +24,8 @@ import { QuotasModule } from './modules/quotas/quotas.module';
 import { PlatformSettingsModule } from './modules/platform-settings/platform-settings.module';
 import { StaffModule } from './modules/staff/staff.module';
 import { EmailModule } from './modules/email/email.module';
+import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
+import { AdminOperationsModule } from './modules/admin-operations/admin-operations.module';
 
 import { RedisModule } from './core/redis/redis.module';
 import { MetricsModule } from './core/metrics/metrics.module';
@@ -59,6 +61,8 @@ const isPaymentsEnabled = process.env.ENABLE_V2_PAYMENTS === 'true';
     QuotasModule,
     PlatformSettingsModule,
     StaffModule,
+    AdminAuthModule,
+    AdminOperationsModule,
     ...(isPaymentsEnabled ? [PaymentsModule] : []),
   ],
   controllers: [HealthController],

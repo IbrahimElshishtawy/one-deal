@@ -375,6 +375,13 @@ export class SessionService {
     userId: string,
     correlationId?: string,
   ): Promise<{ success: boolean; revokedCount: number }> {
+    const activeSessions = this.prisma.userSession.findMany
+      ? await this.prisma.userSession.findMany({
+          where: { userId, isRevoked: false },
+          select: { id: true },
+        })
+      : [];
+
     const result = await this.prisma.userSession.updateMany({
       where: {
         userId,
@@ -383,7 +390,11 @@ export class SessionService {
       data: { isRevoked: true },
     });
 
-    // Mark all access tokens issued at or before now as revoked in Redis
+    if (Array.isArray(activeSessions) && activeSessions.length > 0) {
+      await Promise.all(activeSessions.map((s) => this.denylistSessionId(s.id)));
+    }
+
+    // Mark all access tokens issued strictly before this second as revoked in Redis
     await this.denylistUserTokensBeforeNow(userId);
 
     await this.securityAudit.logEvent({
@@ -564,7 +575,7 @@ export class SessionService {
       );
       if (
         typeof revokedBefore === 'number' &&
-        (payload.iat ?? 0) <= revokedBefore
+        (payload.iat ?? 0) < revokedBefore
       ) {
         return true;
       }

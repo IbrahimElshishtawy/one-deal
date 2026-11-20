@@ -40,7 +40,7 @@ describe('migrate-deploy script helpers', () => {
     const migrations = migrateDeploy.listLocalMigrations(
       path.join(backendRoot, 'prisma', 'migrations'),
     );
-    expect(migrations).toHaveLength(8);
+    expect(migrations).toHaveLength(9);
     expect(migrations[0]).toBe('20261102232252_init_database_foundation');
     expect(migrations[5]).toBe('20261104230259_add_demo_marker_and_indexes');
     expect(migrations[6]).toBe(
@@ -48,6 +48,9 @@ describe('migrate-deploy script helpers', () => {
     );
     expect(migrations[7]).toBe(
       '20261117000002_add_trgm_jsonb_indexes_and_pg_stat_statements',
+    );
+    expect(migrations[8]).toBe(
+      '20261120000001_add_enterprise_admin_platform',
     );
   });
 

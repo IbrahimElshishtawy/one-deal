@@ -4,10 +4,10 @@ import {
   AdminCategoriesController,
 } from './categories.controller';
 import { CategoriesService } from './categories.service';
-import { AuthModule } from '../auth/auth.module';
+import { AdminAuthModule } from '../admin-auth/admin-auth.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AdminAuthModule],
   controllers: [CategoriesController, AdminCategoriesController],
   providers: [CategoriesService],
   exports: [CategoriesService],

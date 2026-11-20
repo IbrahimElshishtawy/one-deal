@@ -14,27 +14,26 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { FastifyRequest } from 'fastify';
-import { UserRole } from '../../core/enums/domain.enums';
 import { PlatformSettingsService } from './platform-settings.service';
 import { UpsertPlatformSettingDto } from './dto/upsert-platform-setting.dto';
 import { SettingKeyPipe } from './pipes/setting-key.pipe';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { AdminJwtAuthGuard } from '../admin-auth/guards/admin-jwt-auth.guard';
+import { PermissionsGuard } from '../admin-auth/guards/permissions.guard';
 import {
-  CurrentUser,
-  AuthenticatedUser,
-} from '../auth/decorators/current-user.decorator';
+  CurrentStaff,
+  Permissions,
+} from '../admin-auth/decorators/permissions.decorator';
+import { AuthenticatedStaff } from '../admin-auth/types/authenticated-staff.type';
 
 @ApiTags('Admin / Platform Settings')
 @ApiBearerAuth('BearerAuth')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.SUPER_ADMIN)
+@UseGuards(AdminJwtAuthGuard, PermissionsGuard)
 @Controller('admin/settings')
 export class PlatformSettingsController {
   constructor(private readonly settingsService: PlatformSettingsService) {}
 
   @Get()
+  @Permissions('settings.read')
   @ApiOperation({ summary: 'List all platform settings' })
   @ApiResponse({ status: 200, description: 'Platform settings returned' })
   async listSettings() {
@@ -42,6 +41,7 @@ export class PlatformSettingsController {
   }
 
   @Get(':key')
+  @Permissions('settings.read')
   @ApiOperation({ summary: 'Get a single platform setting by key' })
   @ApiResponse({ status: 200, description: 'Platform setting returned' })
   @ApiResponse({ status: 400, description: 'Invalid setting key format' })
@@ -51,21 +51,23 @@ export class PlatformSettingsController {
   }
 
   @Put(':key')
+  @Permissions('settings.update')
   @ApiOperation({ summary: 'Create or update a platform setting' })
   @ApiResponse({ status: 200, description: 'Platform setting saved' })
   @ApiResponse({ status: 400, description: 'Invalid setting key format' })
   async upsertSetting(
     @Param('key', SettingKeyPipe) key: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaff() staff: AuthenticatedStaff,
     @Body() dto: UpsertPlatformSettingDto,
     @Req() req: FastifyRequest,
   ) {
     return this.settingsService.upsertSetting(
       key,
-      user.id,
+      staff.id,
       dto,
       req.ip,
       req.headers['user-agent'] as string | undefined,
+      staff.staffId,
     );
   }
 }

@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
+import fastifyCookie from '@fastify/cookie';
 
 import { AppModule } from './app.module';
 import { parseTrustProxy } from './core/config/env.config';
@@ -65,6 +66,7 @@ async function bootstrap() {
   const swaggerEnabled = shouldEnableSwagger(nodeEnv, enableSwagger);
 
   // Security Middleware
+  await app.register(fastifyCookie);
   await app.register(helmet, buildHelmetOptions(swaggerEnabled));
   await app.register(cors, buildCorsOptions(corsOrigin, nodeEnv));
 
