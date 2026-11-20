@@ -10,6 +10,6 @@ export class BatchPriceRefreshDto {
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(50)
-  @IsUUID('4', { each: true })
+  @IsUUID('all', { each: true })
   ids!: string[];
 }

@@ -8,6 +8,7 @@ import 'package:market_space/core/network/api_endpoints.dart';
 import 'package:market_space/core/network/network_info.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/security/token_provider.dart';
+import 'package:market_space/core/storage/preferences_service.dart';
 import 'package:market_space/core/storage/secure_storage_service.dart';
 import 'package:market_space/features/categories/presentation/providers/categories_providers.dart';
 import 'package:market_space/features/listings/presentation/providers/listings_providers.dart';
@@ -20,6 +21,30 @@ class _AlwaysConnectedNetworkInfo implements NetworkInfo {
 
   @override
   Stream<bool> get onConnectivityChanged => const Stream<bool>.empty();
+}
+
+class _InMemoryPreferencesService implements PreferencesService {
+  final Map<String, Object> _store = {};
+  @override
+  Future<void> clear() async => _store.clear();
+  @override
+  Future<bool?> getBool(String key) async => _store[key] as bool?;
+  @override
+  Future<double?> getDouble(String key) async => _store[key] as double?;
+  @override
+  Future<int?> getInt(String key) async => _store[key] as int?;
+  @override
+  Future<String?> getString(String key) async => _store[key] as String?;
+  @override
+  Future<void> remove(String key) async => _store.remove(key);
+  @override
+  Future<void> setBool(String key, bool value) async => _store[key] = value;
+  @override
+  Future<void> setDouble(String key, double value) async => _store[key] = value;
+  @override
+  Future<void> setInt(String key, int value) async => _store[key] = value;
+  @override
+  Future<void> setString(String key, String value) async => _store[key] = value;
 }
 
 class _InMemorySecureStorage implements SecureStorageService {
@@ -110,6 +135,9 @@ void main() {
         overrides: [
           appConfigProvider.overrideWithValue(config),
           networkInfoProvider.overrideWithValue(networkInfo),
+          preferencesServiceProvider.overrideWithValue(
+            _InMemoryPreferencesService(),
+          ),
           secureStorageServiceProvider.overrideWithValue(secureStorage),
           tokenProvider.overrideWithValue(tokenProv),
           apiClientProvider.overrideWithValue(apiClient),
@@ -158,6 +186,32 @@ void main() {
       );
       final searchResult = await container.read(searchResultsProvider.future);
       expect(searchResult.items, isNotEmpty);
+
+      // 6. Verify all 6 independent Section Home APIs + Batch Price Refresh against live DB
+      final sectionRepo = container.read(sectionHomeRepositoryProvider);
+      for (final slug in [
+        'real-estate',
+        'home-appliances',
+        'services',
+        'building-materials',
+        'cars',
+        'fashion',
+      ]) {
+        final sectionFeed = await sectionRepo.fetchSectionHome(slug);
+        expect(sectionFeed.section.canonicalSlug, slug);
+        expect(sectionFeed.section.subcategories, isNotEmpty);
+        expect(sectionFeed.latest, isNotEmpty);
+        expect(sectionFeed.filterConfig.fields, isNotEmpty);
+      }
+
+      // 7. Verify authoritative Batch Price Refresh
+      await container
+          .read(livePricesProvider.notifier)
+          .refreshBatch([featured.first.id]);
+      expect(
+        container.read(livePricesProvider)[featured.first.id],
+        isNotNull,
+      );
     });
   });
 }

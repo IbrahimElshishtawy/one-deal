@@ -5,6 +5,7 @@ import {
   BadRequestException,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
@@ -26,6 +27,7 @@ import {
 
 @Injectable()
 export class ListingsService {
+  private readonly logger = new Logger(ListingsService.name);
   private readonly publicCdnDomain: string;
 
   constructor(
@@ -437,7 +439,11 @@ export class ListingsService {
             }
           }
         }
-      } catch {}
+      } catch {
+        throw new BadRequestException(
+          'Invalid JSON format for attributes filter',
+        );
+      }
     }
     if (andFilters.length > 0) {
       where.AND = andFilters;
@@ -464,7 +470,11 @@ export class ListingsService {
           LIMIT 300;
         `;
         where.id = { in: nearbyListings.map((r) => r.id) };
-      } catch {}
+      } catch (err: any) {
+        this.logger.warn(
+          `PostGIS spatial filter fallback in listings feed: ${err?.message || err}`,
+        );
+      }
     }
 
     // Ordering logic

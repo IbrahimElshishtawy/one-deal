@@ -58,8 +58,14 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
     this.active = true;
 
     if (this.redisService?.isQueueClientConnected()) {
-      await this.initBullMqWorkers();
-      return;
+      try {
+        await this.initBullMqWorkers();
+        return;
+      } catch (err: any) {
+        this.logger.error(
+          `⚠️ BullMQ worker initialization failed (${err?.message || err}); falling back to interval workers.`,
+        );
+      }
     }
 
     this.initLockedIntervals();
@@ -73,6 +79,10 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
     );
 
     this.maintenanceQueue = new Queue(WORKER_QUEUE_NAME, { connection });
+    this.maintenanceQueue.on('error', (err) => {
+      this.logger.error(`[BullMQ Queue Error] ${err?.message || err}`);
+    });
+
     this.maintenanceWorker = new Worker(
       WORKER_QUEUE_NAME,
       async (job) => {
@@ -91,6 +101,14 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
       },
       { connection, concurrency: 2 },
     );
+    this.maintenanceWorker.on('error', (err) => {
+      this.logger.error(`[BullMQ Worker Error] ${err?.message || err}`);
+    });
+    this.maintenanceWorker.on('failed', (job, err) => {
+      this.logger.warn(
+        `[BullMQ Job Failed] job=${job?.name ?? 'unknown'} id=${job?.id ?? 'n/a'}: ${err?.message || err}`,
+      );
+    });
 
     await Promise.allSettled([
       this.maintenanceQueue.add(

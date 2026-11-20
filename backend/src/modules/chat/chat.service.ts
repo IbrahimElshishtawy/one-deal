@@ -86,6 +86,7 @@ export class ChatService {
         ],
       },
       orderBy: { lastMessageAt: 'desc' },
+      take: 50,
       include: {
         listing: {
           select: {

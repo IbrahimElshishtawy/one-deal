@@ -55,19 +55,26 @@ export class UsersService {
   }
 
   async softDeleteAccount(userId: string) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        isActive: false,
-        deletedAt: new Date(),
-        fullName: 'Deleted Account',
-        avatarUrl: null,
-      },
-      select: {
-        id: true,
-        isActive: true,
-        deletedAt: true,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      await tx.userSession.updateMany({
+        where: { userId, isRevoked: false },
+        data: { isRevoked: true },
+      });
+
+      return tx.user.update({
+        where: { id: userId },
+        data: {
+          isActive: false,
+          deletedAt: new Date(),
+          fullName: 'Deleted Account',
+          avatarUrl: null,
+        },
+        select: {
+          id: true,
+          isActive: true,
+          deletedAt: true,
+        },
+      });
     });
   }
 }

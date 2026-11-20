@@ -47,6 +47,7 @@ export class FavoritesService {
         },
       },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
 
     return favorites.map((fav) => ({

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
 import { SearchQueryDto } from './dto/search-query.dto';
 import {
@@ -8,6 +8,7 @@ import {
 
 @Injectable()
 export class SearchService {
+  private readonly logger = new Logger(SearchService.name);
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -223,7 +224,11 @@ export class SearchService {
             }
           }
         }
-      } catch {}
+      } catch {
+        throw new BadRequestException(
+          'Invalid JSON format for attributes filter',
+        );
+      }
     }
     if (andFilters.length > 0) {
       where.AND = andFilters;
@@ -250,7 +255,11 @@ export class SearchService {
           LIMIT 300;
         `;
         where.id = { in: nearbyListings.map((r) => r.id) };
-      } catch {}
+      } catch (err: any) {
+        this.logger.warn(
+          `PostGIS spatial filter fallback in search: ${err?.message || err}`,
+        );
+      }
     }
 
     // Ordering logic with stable deterministic tie-breaker (id) for pagination

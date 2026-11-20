@@ -24,11 +24,30 @@ import { MetricsInterceptor } from './core/metrics/metrics.interceptor';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
+  // Process-level resilience: log unexpected rejections/exceptions without crashing the API server
+  if (process.listenerCount('unhandledRejection') === 0) {
+    process.on('unhandledRejection', (reason: unknown) => {
+      const msg = reason instanceof Error ? reason.message : String(reason);
+      const stack = reason instanceof Error ? reason.stack : undefined;
+      logger.error(`[Process] Unhandled Promise Rejection prevented crash: ${msg}`, stack);
+    });
+  }
+  if (process.listenerCount('uncaughtException') === 0) {
+    process.on('uncaughtException', (err: Error) => {
+      logger.error(
+        `[Process] Uncaught Exception prevented crash: ${err?.message || err}`,
+        err?.stack,
+      );
+    });
+  }
+
   const trustProxy = parseTrustProxy(process.env.TRUST_PROXY);
 
   const fastifyAdapter = new FastifyAdapter({
     logger: false, // Structured logging handled by LoggingInterceptor
     maxParamLength: 200,
+    bodyLimit: 2 * 1024 * 1024, // 2 MB cap to prevent memory-exhaustion crashes
+    requestTimeout: 30_000, // 30s request timeout
     trustProxy,
   });
 
@@ -109,4 +128,8 @@ async function bootstrap() {
   );
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  const logger = new Logger('Bootstrap');
+  logger.error(`Fatal startup error: ${err?.message || err}`, err?.stack);
+  process.exit(1);
+});

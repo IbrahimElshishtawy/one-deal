@@ -82,6 +82,47 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = String(exceptionResponse);
         code = normalizeErrorCode(status);
       }
+    } else if (
+      typeof exception === 'object' &&
+      exception !== null &&
+      'code' in exception &&
+      typeof (exception as any).code === 'string' &&
+      (exception as any).code.startsWith('P2')
+    ) {
+      // Safe, sanitized Prisma known request error mapping (never leaks schema/SQL)
+      const prismaCode = (exception as any).code as string;
+      if (prismaCode === 'P2023') {
+        status = HttpStatus.BAD_REQUEST;
+        code = 'INVALID_IDENTIFIER';
+        message = 'Invalid identifier format';
+      } else if (prismaCode === 'P2002') {
+        status = HttpStatus.CONFLICT;
+        code = 'CONFLICT';
+        message = 'A record with this unique value already exists';
+      } else if (prismaCode === 'P2025') {
+        status = HttpStatus.NOT_FOUND;
+        code = 'NOT_FOUND';
+        message = 'Requested resource was not found';
+      } else if (prismaCode === 'P2003') {
+        status = HttpStatus.BAD_REQUEST;
+        code = 'INVALID_REFERENCE';
+        message = 'Referenced resource does not exist';
+      } else {
+        this.logger.error(
+          `[${traceId}] Unmapped Prisma Error (${prismaCode}): ${(exception as any)?.message}`,
+        );
+      }
+    } else if (
+      typeof exception === 'object' &&
+      exception !== null &&
+      typeof (exception as any).statusCode === 'number' &&
+      (exception as any).statusCode >= 400 &&
+      (exception as any).statusCode < 500
+    ) {
+      // Fastify transport-level 4xx errors (e.g. 413 Payload Too Large, 400 Invalid JSON, 415 Unsupported Media Type)
+      status = (exception as any).statusCode;
+      code = normalizeErrorCode(status, (exception as any).code);
+      message = (exception as any).message || 'Invalid request';
     } else {
       // Unhandled / Internal exception
       const err = exception as Error;
@@ -89,6 +130,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
         `[${traceId}] Unhandled Exception: ${err?.message || exception}`,
         err?.stack,
       );
+    }
+
+    if (response.sent || (response.raw as any)?.headersSent) {
+      this.logger.warn(
+        `[${traceId}] Skipping error reply because headers were already sent (status=${status})`,
+      );
+      return;
     }
 
     // Ensure trace headers on response

@@ -297,6 +297,11 @@ void main() {
     expect(find.text('مواد بناء وكهرباء'), findsOneWidget);
     expect(find.text('سيارات وصيانة'), findsOneWidget);
     expect(find.text('أزياء وإكسسوارات'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('الخدمات الأكثر طلباً'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('الخدمات الأكثر طلباً'), findsOneWidget);
   });
 
@@ -305,6 +310,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('معاينات حية'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('التفاصيل'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('التفاصيل'), findsOneWidget);
     expect(find.text('3 غرف'), findsOneWidget);
   });
@@ -315,6 +325,11 @@ void main() {
 
     expect(find.text('الأجهزة الكهربائية'), findsOneWidget);
     expect(find.text('الديكور والأثاث'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('تقسيط بدون فوائد'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('تقسيط بدون فوائد'), findsOneWidget);
   });
 
@@ -323,8 +338,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('الأقسام والخدمات'), findsOneWidget);
-    expect(find.text('الخدمات الأكثر طلباً'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('شركة الصفا المعتمدة'), 300);
+    await tester.scrollUntilVisible(
+      find.text('شركة الصفا المعتمدة'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('شركة الصفا المعتمدة'), findsOneWidget);
   });
 
@@ -334,6 +352,11 @@ void main() {
 
     expect(find.text('مواد البناء'), findsOneWidget);
     expect(find.text('الكهرباء والتأسيس'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('الخامات الأكثر طلباً'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('الخامات الأكثر طلباً'), findsOneWidget);
   });
 
@@ -342,8 +365,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('معاينات حية'), findsOneWidget);
-    expect(find.text('السيارات وقطع الغيار'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('عطلان من البنزين؟'), 300);
+    await tester.scrollUntilVisible(
+      find.text('عطلان من البنزين؟'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('عطلان من البنزين؟'), findsOneWidget);
   });
 
@@ -352,7 +378,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('الأقسام والفئات'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('الأكثر مبيعاً من أشهر الماركات'), 300);
+    await tester.scrollUntilVisible(
+      find.text('الأكثر مبيعاً من أشهر الماركات'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('الأكثر مبيعاً من أشهر الماركات'), findsOneWidget);
   });
 }

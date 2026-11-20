@@ -67,9 +67,9 @@ class MainHubController extends StateNotifier<MainHubState> {
     _cancelToken = CancelToken();
 
     if (!forceRefresh) {
-      final cached = await _repository.readCachedMainHub(
-        governorateId: _governorateId,
-        cityId: _cityId,
+      final cached = await repository.readCachedMainHub(
+        governorateId: governorateId,
+        cityId: cityId,
       );
       if (cached != null && mounted) {
         state = state.copyWith(
@@ -84,9 +84,9 @@ class MainHubController extends StateNotifier<MainHubState> {
     }
 
     try {
-      final fresh = await _repository.fetchMainHub(
-        governorateId: _governorateId,
-        cityId: _cityId,
+      final fresh = await repository.fetchMainHub(
+        governorateId: governorateId,
+        cityId: cityId,
         limit: 10,
         cancelToken: _cancelToken,
       );
@@ -99,7 +99,7 @@ class MainHubController extends StateNotifier<MainHubState> {
         clearError: true,
       );
       unawaited(
-        _livePrices.refreshBatch(
+        livePrices.refreshBatch(
           fresh.allListingIds,
           freshnessTtl: Duration(seconds: fresh.priceFreshnessTtlSeconds),
         ),

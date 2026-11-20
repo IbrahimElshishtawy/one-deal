@@ -180,10 +180,10 @@ class SectionHomeController extends StateNotifier<SectionHomeState> {
 
     // 1. Stale-While-Revalidate: emit cached feed immediately with zero flicker
     if (!forceRefresh) {
-      final cached = await _repository.readCachedSectionHome(
+      final cached = await repository.readCachedSectionHome(
         sectionSlug,
-        governorateId: _governorateId,
-        cityId: _cityId,
+        governorateId: governorateId,
+        cityId: cityId,
       );
       if (cached != null && mounted) {
         state = state.copyWith(
@@ -200,10 +200,10 @@ class SectionHomeController extends StateNotifier<SectionHomeState> {
 
     // 2. Revalidate from Backend in background
     try {
-      final fresh = await _repository.fetchSectionHome(
+      final fresh = await repository.fetchSectionHome(
         sectionSlug,
-        governorateId: _governorateId,
-        cityId: _cityId,
+        governorateId: governorateId,
+        cityId: cityId,
         limit: 12,
         cancelToken: _feedCancelToken,
       );
@@ -227,7 +227,7 @@ class SectionHomeController extends StateNotifier<SectionHomeState> {
 
       // Trigger authoritative batch price refresh for visible items
       unawaited(
-        _livePrices.refreshBatch(
+        livePrices.refreshBatch(
           fresh.allListingIds,
           freshnessTtl: Duration(seconds: fresh.priceFreshnessTtlSeconds),
         ),
@@ -269,13 +269,13 @@ class SectionHomeController extends StateNotifier<SectionHomeState> {
     }
 
     try {
-      final result = await _repository.fetchFilteredSectionListings(
+      final result = await repository.fetchFilteredSectionListings(
         sectionSlug: sectionSlug,
         subcategorySlug: newFilters.subcategorySlug,
         query: newFilters.searchQuery,
         sort: newFilters.sort,
-        governorateId: _governorateId,
-        cityId: _cityId,
+        governorateId: governorateId,
+        cityId: cityId,
         minPrice: newFilters.minPrice,
         maxPrice: newFilters.maxPrice,
         listingKind: newFilters.listingKind,
@@ -293,7 +293,7 @@ class SectionHomeController extends StateNotifier<SectionHomeState> {
         isFiltering: false,
         clearListingsError: true,
       );
-      unawaited(_livePrices.refreshBatch(result.items.map((e) => e.id)));
+      unawaited(livePrices.refreshBatch(result.items.map((e) => e.id)));
     } catch (err) {
       if (!mounted || token.isCancelled) return;
       if (err is DioException && err.type == DioExceptionType.cancel) return;
@@ -316,13 +316,13 @@ class SectionHomeController extends StateNotifier<SectionHomeState> {
     state = state.copyWith(isLoadingMore: true, clearListingsError: true);
     try {
       final f = state.filters;
-      final result = await _repository.fetchFilteredSectionListings(
+      final result = await repository.fetchFilteredSectionListings(
         sectionSlug: sectionSlug,
         subcategorySlug: f.subcategorySlug,
         query: f.searchQuery,
         sort: f.sort,
-        governorateId: _governorateId,
-        cityId: _cityId,
+        governorateId: governorateId,
+        cityId: cityId,
         minPrice: f.minPrice,
         maxPrice: f.maxPrice,
         listingKind: f.listingKind,
@@ -344,7 +344,7 @@ class SectionHomeController extends StateNotifier<SectionHomeState> {
         hasMore: result.hasMore,
         isLoadingMore: false,
       );
-      unawaited(_livePrices.refreshBatch(result.items.map((e) => e.id)));
+      unawaited(livePrices.refreshBatch(result.items.map((e) => e.id)));
     } catch (err) {
       if (!mounted) return;
       state = state.copyWith(isLoadingMore: false, listingsError: err);
