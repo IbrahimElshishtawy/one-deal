@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:market_space/core/errors/error_presenter.dart';
 import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
 import 'package:market_space/features/categories/domain/entities/category_entity.dart';
 import 'package:market_space/features/categories/presentation/providers/categories_providers.dart';
 import 'package:market_space/features/listings/presentation/widgets/deal_one_listing_card.dart';
@@ -492,31 +494,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         children: [
           // Root Categories bar
           categoriesAsync.when(
-            data: (categories) => SizedBox(
-              height: 46,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                scrollDirection: Axis.horizontal,
-                itemCount: categories.length + 1,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
+            data: (categories) {
+              final barH =
+                  46.0 +
+                  ((context.effectiveTextScale - 1.0).clamp(0.0, 1.2) * 24.0);
+              return SizedBox(
+                height: barH,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: categories.length + 1,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return ChoiceChip(
+                        label: Text(isArabic ? 'الكل' : 'All'),
+                        selected: activeDto.categorySlug == null,
+                        onSelected: (_) => _selectCategory(null),
+                      );
+                    }
+                    final cat = categories[index - 1];
+                    final selected = activeRootCategory?.slug == cat.slug;
                     return ChoiceChip(
-                      label: Text(isArabic ? 'الكل' : 'All'),
-                      selected: activeDto.categorySlug == null,
-                      onSelected: (_) => _selectCategory(null),
+                      label: Text(isArabic ? cat.nameAr : cat.nameEn),
+                      selected: selected,
+                      onSelected: (_) => _selectCategory(cat.slug),
                     );
-                  }
-                  final cat = categories[index - 1];
-                  final selected = activeRootCategory?.slug == cat.slug;
-                  return ChoiceChip(
-                    label: Text(isArabic ? cat.nameAr : cat.nameEn),
-                    selected: selected,
-                    onSelected: (_) => _selectCategory(cat.slug),
-                  );
-                },
-              ),
-            ),
+                  },
+                ),
+              );
+            },
             loading: () => const SizedBox(height: 46),
             error: (_, _) => const SizedBox.shrink(),
           ),
@@ -525,7 +532,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           if (activeRootCategory != null &&
               activeRootCategory!.subcategories.isNotEmpty)
             SizedBox(
-              height: 42,
+              height:
+                  42.0 +
+                  ((context.effectiveTextScale - 1.0).clamp(0.0, 1.2) * 22.0),
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
@@ -567,44 +576,60 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                searchAsync.maybeWhen(
-                  data: (res) => Text(
-                    isArabic
-                        ? '${res.totalCount} نتيجة'
-                        : '${res.totalCount} results',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textMutedOf(context),
+                Flexible(
+                  child: searchAsync.maybeWhen(
+                    data: (res) => Text(
+                      isArabic
+                          ? '${res.totalCount} نتيجة'
+                          : '${res.totalCount} results',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textMutedOf(context),
+                      ),
                     ),
+                    orElse: () => const SizedBox.shrink(),
                   ),
-                  orElse: () => const SizedBox.shrink(),
                 ),
-                DropdownButton<String>(
-                  value: activeDto.sort,
-                  underline: const SizedBox.shrink(),
-                  isDense: true,
-                  items: [
-                    DropdownMenuItem(
-                      value: 'newest',
-                      child: Text(isArabic ? 'الأحدث' : 'Newest'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'price_asc',
-                      child: Text(
-                        isArabic ? 'السعر: من الأقل' : 'Price: Low to High',
+                const SizedBox(width: 8),
+                Flexible(
+                  child: DropdownButton<String>(
+                    value: activeDto.sort,
+                    underline: const SizedBox.shrink(),
+                    isDense: true,
+                    isExpanded: true,
+                    items: [
+                      DropdownMenuItem(
+                        value: 'newest',
+                        child: Text(
+                          isArabic ? 'الأحدث' : 'Newest',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'price_desc',
-                      child: Text(
-                        isArabic ? 'السعر: من الأعلى' : 'Price: High to Low',
+                      DropdownMenuItem(
+                        value: 'price_asc',
+                        child: Text(
+                          isArabic ? 'السعر: من الأقل' : 'Price: Low to High',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) _changeSort(val);
-                  },
+                      DropdownMenuItem(
+                        value: 'price_desc',
+                        child: Text(
+                          isArabic ? 'السعر: من الأعلى' : 'Price: High to Low',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) _changeSort(val);
+                    },
+                  ),
                 ),
               ],
             ),
@@ -640,13 +665,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   children: [
                     Expanded(
                       child: GridView.builder(
-                        padding: const EdgeInsets.all(12),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.72,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
+                        padding: EdgeInsets.all(context.horizontalScreenPadding),
+                        gridDelegate: context.responsiveProductGridDelegate(
+                          baseMainAxisExtent: 256,
                         ),
                         itemCount: result.items.length,
                         itemBuilder: (context, index) =>
@@ -664,25 +685,42 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              OutlinedButton(
-                                onPressed: result.currentPage > 1
-                                    ? () => _changePage(result.currentPage - 1)
-                                    : null,
-                                child: Text(isArabic ? 'السابق' : 'Previous'),
-                              ),
-                              Text(
-                                '${result.currentPage} / ${result.totalPages}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                              Flexible(
+                                child: OutlinedButton(
+                                  onPressed: result.currentPage > 1
+                                      ? () => _changePage(result.currentPage - 1)
+                                      : null,
+                                  child: Text(
+                                    isArabic ? 'السابق' : 'Previous',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ),
-                              OutlinedButton(
-                                onPressed:
-                                    result.currentPage < result.totalPages
-                                        ? () =>
-                                            _changePage(result.currentPage + 1)
-                                        : null,
-                                child: Text(isArabic ? 'التالي' : 'Next'),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                child: Text(
+                                  '${result.currentPage} / ${result.totalPages}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Flexible(
+                                child: OutlinedButton(
+                                  onPressed:
+                                      result.currentPage < result.totalPages
+                                          ? () =>
+                                              _changePage(result.currentPage + 1)
+                                          : null,
+                                  child: Text(
+                                    isArabic ? 'التالي' : 'Next',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -694,25 +732,44 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               loading: () => const Center(
                 child: CircularProgressIndicator.adaptive(),
               ),
-              error: (err, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: AppColors.errorOf(context),
+              error: (err, _) {
+                final presented = ErrorPresenter.present(
+                  err,
+                  isArabic: isArabic,
+                );
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: AppColors.errorOf(context),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          presented.title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          presented.message,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.textMutedOf(context)),
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () => ref.invalidate(searchResultsProvider),
+                          child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(isArabic ? 'خطأ في البحث: $err' : 'Search error: $err'),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(searchResultsProvider),
-                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
           ),
         ],

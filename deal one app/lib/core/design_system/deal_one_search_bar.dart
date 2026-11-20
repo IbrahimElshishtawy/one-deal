@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
 
-/// Shared Search Bar matching all 7 Home designs.
-/// Includes search icon, section-tailored placeholder, and filter funnel button
-/// with active filter count badge. Responsive across 320dp..1024dp and 2.0x text scale.
+/// Shared Search Bar matching all 7 Home reference PNGs:
+/// - Sparkle + magnifying glass icon on start (right in RTL).
+/// - Section-specific Arabic placeholder text in the center.
+/// - Solid dark navy funnel icon (`Icons.filter_alt_rounded`) on end (left in RTL).
 class DealOneSearchBar extends StatelessWidget {
   final String hintText;
   final VoidCallback onSearchTap;
@@ -24,9 +25,10 @@ class DealOneSearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hPad = context.horizontalScreenPadding;
+    final iconColor = isDark ? Colors.white : DealOneDesignColors.navy;
 
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(hPad, 10, hPad, 12),
+      padding: EdgeInsetsDirectional.fromSTEB(hPad, 8, hPad, 12),
       child: Material(
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -41,7 +43,7 @@ class DealOneSearchBar extends StatelessWidget {
               border: Border.all(
                 color: isDark
                     ? AppColors.darkBorder
-                    : Colors.black.withValues(alpha: 0.07),
+                    : Colors.black.withValues(alpha: 0.06),
               ),
               boxShadow: isDark
                   ? null
@@ -55,10 +57,29 @@ class DealOneSearchBar extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.search_rounded,
-                  color: isDark ? Colors.white70 : DealOneDesignColors.navy,
-                  size: 22,
+                // Magnifying glass with sparkle accent matching reference PNGs
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(
+                        Icons.search_rounded,
+                        color: iconColor,
+                        size: 23,
+                      ),
+                      PositionedDirectional(
+                        top: 1,
+                        start: 1,
+                        child: Icon(
+                          Icons.auto_awesome,
+                          color: iconColor,
+                          size: 9,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -82,10 +103,8 @@ class DealOneSearchBar extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.filter_alt_rounded,
-                          color: isDark
-                              ? Colors.white
-                              : DealOneDesignColors.navy,
-                          size: 21,
+                          color: iconColor,
+                          size: 22,
                         ),
                         if (activeFilterCount > 0)
                           PositionedDirectional(

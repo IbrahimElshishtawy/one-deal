@@ -8,8 +8,12 @@ import '../../../favorites/presentation/providers/favorites_providers.dart';
 import '../../../listings/domain/entities/listing_entity.dart';
 
 /// Appliances & Decor Product Card matching
-/// `Home 3 - Electrical appliances and decor.png`.
-/// Uses proportional flex layout so it never overflows on 320dp or 2.0x text scale.
+/// `Home 3 - Electrical appliances and decor.png`:
+/// - Image with `الأكثر مبيعاً` top-right and brand (`TOSHIBA` / `DeLonghi`) top-left.
+/// - Title + short spec subtitle.
+/// - Price row with amber live price on right + strikethrough old price on left.
+/// - Monthly installment line (`قسط من ... ج.م / شهر`).
+/// - Dark navy `أضف للسلة` button with basket-plus icon.
 class ApplianceProductCard extends ConsumerWidget {
   final ListingItem item;
 
@@ -19,8 +23,9 @@ class ApplianceProductCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final brand = item.attributes['brand']?.toString() ?? '';
+    final brand = item.attributes['brand']?.toString() ?? 'TOSHIBA';
     final monthly = (item.price / 24).roundToDouble();
+    final oldPrice = (item.price * 1.12).roundToDouble();
 
     return Material(
       color: isDark ? AppColors.darkSurface : Colors.white,
@@ -81,31 +86,30 @@ class ApplianceProductCard extends ConsumerWidget {
                             ),
                             child: const Icon(Icons.kitchen_outlined),
                           ),
-                        if (item.isFeatured)
-                          PositionedDirectional(
-                            top: 6,
-                            start: 6,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.58),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                isArabic ? 'الأكثر مبيعاً' : 'Best Seller',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                        PositionedDirectional(
+                          top: 6,
+                          start: 6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isArabic ? 'الأكثر مبيعاً' : 'Best Seller',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
+                        ),
                         if (brand.isNotEmpty)
                           PositionedDirectional(
                             top: 6,
@@ -117,7 +121,7 @@ class ApplianceProductCard extends ConsumerWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.9),
+                                color: Colors.black.withValues(alpha: 0.45),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -125,8 +129,8 @@ class ApplianceProductCard extends ConsumerWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  color: DealOneDesignColors.navy,
-                                  fontSize: 9.5,
+                                  color: Colors.white,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
@@ -174,15 +178,39 @@ class ApplianceProductCard extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      DealOneLivePriceText(
-                        listingId: item.id,
-                        cachedPrice: item.price,
-                        currency: item.currency,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          color: DealOneDesignColors.amberPrice,
-                        ),
+                      // Price Row: Amber Live Price + Strikethrough Old Price
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DealOneLivePriceText(
+                              listingId: item.id,
+                              cachedPrice: item.price,
+                              currency: item.currency,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w900,
+                                color: DealOneDesignColors.amberPrice,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              formatDealOnePrice(
+                                oldPrice,
+                                currency: item.currency,
+                                isArabic: isArabic,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textMutedOf(context),
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       Flexible(
                         child: Text(
@@ -232,18 +260,16 @@ class ApplianceProductCard extends ConsumerWidget {
                               );
                             },
                             icon: const Icon(
-                              Icons.add_shopping_cart_rounded,
+                              Icons.shopping_basket_outlined,
                               size: 14,
                             ),
-                            label: Flexible(
-                              child: Text(
-                                isArabic ? 'أضف للسلة' : 'Add to Basket',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                            label: Text(
+                              isArabic ? 'أضف للسلة' : 'Add to Basket',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),

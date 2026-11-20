@@ -4,9 +4,9 @@ import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/utils/responsive_utils.dart';
 
-/// Floating dark-navy pill navigation bar matching `Home 1 - Main Hub.png`.
-/// Adapts across 320dp small phones, standard phones, tablets (max 560dp centered pill),
-/// and up to 2.0x text scaling without overflow.
+/// Floating dark-navy pill navigation bar matching all 7 Home reference PNGs:
+/// - Active pill on start (right in RTL) with home icon + `الرئيسية`.
+/// - Three icons on end (left in RTL): Sparkles, 3D Package Cube, and User-Gear.
 class DealOneFloatingBottomNav extends StatelessWidget {
   final int activeIndex;
 
@@ -33,12 +33,12 @@ class DealOneFloatingBottomNav extends StatelessWidget {
         route: RouteNames.search,
       ),
       (
-        icon: Icons.favorite_border_rounded,
+        icon: Icons.view_in_ar_outlined,
         label: isArabic ? 'المفضلة' : 'Saved',
         route: RouteNames.favorites,
       ),
       (
-        icon: Icons.person_outline_rounded,
+        icon: Icons.manage_accounts_outlined,
         label: isArabic ? 'حسابي' : 'Profile',
         route: RouteNames.profile,
       ),
@@ -54,11 +54,11 @@ class DealOneFloatingBottomNav extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(
               maxWidth: 560,
-              minHeight: 60,
+              minHeight: 62,
             ),
             child: Container(
               padding: EdgeInsets.symmetric(
-                horizontal: isSmall ? 6 : 10,
+                horizontal: isSmall ? 8 : 12,
                 vertical: 8,
               ),
               decoration: BoxDecoration(
@@ -92,28 +92,20 @@ class DealOneFloatingBottomNav extends StatelessWidget {
                       duration: const Duration(milliseconds: 220),
                       padding: EdgeInsets.symmetric(
                         horizontal: isSelected
-                            ? (isSmall ? 12 : 16)
+                            ? (isSmall ? 14 : 20)
                             : (isSmall ? 10 : 14),
                         vertical: 9,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? Colors.white.withValues(alpha: 0.16)
+                            ? Colors.white.withValues(alpha: 0.17)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(28),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            item.icon,
-                            color: isSelected
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.68),
-                            size: isSmall ? 20 : 22,
-                          ),
                           if (isSelected) ...[
-                            SizedBox(width: isSmall ? 5 : 8),
                             Flexible(
                               child: Text(
                                 item.label,
@@ -121,12 +113,20 @@ class DealOneFloatingBottomNav extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: isSmall ? 12 : 13,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: isSmall ? 12.5 : 13.5,
                                 ),
                               ),
                             ),
+                            SizedBox(width: isSmall ? 6 : 8),
                           ],
+                          Icon(
+                            item.icon,
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.72),
+                            size: isSmall ? 20 : 22,
+                          ),
                         ],
                       ),
                     ),

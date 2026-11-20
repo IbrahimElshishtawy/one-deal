@@ -179,17 +179,19 @@ class DealOneListingCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        item.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          height: 1.25,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : DealOneDesignColors.navy,
+                      Flexible(
+                        child: Text(
+                          item.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : DealOneDesignColors.navy,
+                          ),
                         ),
                       ),
                       if (locationLabel.isNotEmpty)

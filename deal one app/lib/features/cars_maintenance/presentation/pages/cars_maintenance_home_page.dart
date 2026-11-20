@@ -11,6 +11,7 @@ import '../../../../core/marketplace/section_home_controller.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/routing/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../listings/presentation/widgets/floating_bottom_nav.dart';
 import '../../../search/data/dto/search_dto.dart';
 import '../../../search/presentation/providers/search_providers.dart';
@@ -88,6 +89,7 @@ class _CarsMaintenanceHomePageState
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final state = ref.watch(
       sectionHomeControllerProvider(CarsMaintenanceHomePage.sectionSlug),
     );
@@ -191,7 +193,9 @@ class _CarsMaintenanceHomePageState
                             .firstOrNull;
                         if (partsSub != null) {
                           controller.applyFilters(
-                            state.filters.copyWith(subcategorySlug: partsSub.slug),
+                            state.filters.copyWith(
+                              subcategorySlug: partsSub.slug,
+                            ),
                           );
                         }
                       } else {
@@ -203,17 +207,14 @@ class _CarsMaintenanceHomePageState
                   ),
                 ),
 
-                // 2-Column Subcategories Grid from Backend
+                // Responsive Subcategories Grid from Backend
                 if (subs.isNotEmpty)
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 10,
-                        childAspectRatio: 3.3,
+                      gridDelegate: context.responsiveCategoryGridDelegate(
+                        baseMainAxisExtent: 48,
+                        extraExtentPerTextScaleUnit: 28,
                       ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final sub = subs[index];
@@ -290,7 +291,12 @@ class _CarsMaintenanceHomePageState
                 // 2-Column Emergency Roadside Cards matching PNG
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                    padding: EdgeInsetsDirectional.fromSTEB(
+                      hPad,
+                      14,
+                      hPad,
+                      6,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
@@ -463,25 +469,32 @@ class _RoadsideActionCard extends StatelessWidget {
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
-            height: 32,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: DealOneDesignColors.navy,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 34),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: DealOneDesignColors.navy,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 6,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-              ),
-              onPressed: onTap,
-              child: Text(
-                ctaLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                onPressed: onTap,
+                child: Text(
+                  ctaLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),

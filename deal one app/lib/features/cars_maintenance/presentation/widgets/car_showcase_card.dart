@@ -3,9 +3,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/design_system/deal_one_section_chrome.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../listings/domain/entities/listing_entity.dart';
 
 /// Full-width Car Showcase Card matching `Home 6 - Cars and their maintenance.png`.
+/// Adapts across 320dp..1024dp viewports, RTL/LTR, and up to 2.0x text scale.
 class CarShowcaseCard extends StatelessWidget {
   final ListingItem item;
 
@@ -15,11 +17,13 @@ class CarShowcaseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final attrs = item.attributes;
     final year = attrs['year']?.toString() ?? '';
     final transmission = attrs['transmission']?.toString() ?? '';
     final mileage = attrs['mileage_km'] ?? attrs['mileage'];
-    final fuelType = attrs['fuel_type']?.toString() ?? attrs['fuelType']?.toString() ?? '';
+    final fuelType =
+        attrs['fuel_type']?.toString() ?? attrs['fuelType']?.toString() ?? '';
     final isNew = item.condition.toUpperCase() == 'NEW';
 
     final badge = year.isNotEmpty
@@ -42,7 +46,7 @@ class CarShowcaseCard extends StatelessWidget {
     ];
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: hPad, vertical: 8),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -182,23 +186,28 @@ class CarShowcaseCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 DealOneLivePriceText(
                   listingId: item.id,
                   cachedPrice: item.price,
                   currency: item.currency,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15.5,
                     fontWeight: FontWeight.w900,
                     color: DealOneDesignColors.amberPrice,
                   ),
                 ),
-                const Spacer(),
                 Text(
                   isArabic
                       ? 'تقسيط ${formatDealOnePrice(monthly, currency: item.currency)}/شهرياً'
                       : '${formatDealOnePrice(monthly, currency: item.currency, isArabic: false)}/mo',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 11,
                     color: AppColors.textMutedOf(context),
@@ -208,53 +217,52 @@ class CarShowcaseCard extends StatelessWidget {
             ),
             if (specs.isNotEmpty) ...[
               const SizedBox(height: 10),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: specs.take(3).map((spec) {
-                  return Expanded(
-                    child: Container(
-                      margin: const EdgeInsetsDirectional.only(end: 6),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceElevated
+                          : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
                         color: isDark
-                            ? AppColors.darkSurfaceElevated
-                            : const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.darkBorder
-                              : Colors.black.withValues(alpha: 0.08),
-                        ),
+                            ? AppColors.darkBorder
+                            : Colors.black.withValues(alpha: 0.08),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            spec.$1,
-                            size: 14,
-                            color: isDark
-                                ? Colors.white70
-                                : DealOneDesignColors.navy,
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              spec.$2,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? AppColors.darkTextPrimary
-                                    : DealOneDesignColors.navy,
-                              ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          spec.$1,
+                          size: 14,
+                          color: isDark
+                              ? Colors.white70
+                              : DealOneDesignColors.navy,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            spec.$2,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : DealOneDesignColors.navy,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   );
                 }).toList(),
@@ -263,23 +271,56 @@ class CarShowcaseCard extends StatelessWidget {
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              height: 44,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: DealOneDesignColors.navy,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 44),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: DealOneDesignColors.navy,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => context.push('/listings/${item.id}'),
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  label: Text(
+                    isArabic ? 'عرض التفاصيل الكاملة' : 'View Full Details',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Center(
+              child: TextButton(
                 onPressed: () => context.push('/listings/${item.id}'),
-                icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                label: Text(
-                  isArabic ? 'عرض التفاصيل الكاملة' : 'View Full Details',
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  isArabic
+                      ? 'عرض كل السيارات المتاحة'
+                      : 'View All Available Cars',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textMutedOf(context),
+                    decoration: TextDecoration.underline,
                   ),
                 ),
               ),

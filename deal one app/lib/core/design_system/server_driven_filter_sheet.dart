@@ -134,53 +134,74 @@ class _ServerDrivenFilterSheetBodyState
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final cfg = widget.filterConfig;
+    final viewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
+    final screenH = MediaQuery.sizeOf(context).height;
+    final availH = (screenH - viewInsetsBottom).clamp(180.0, screenH);
+    final initialFraction = viewInsetsBottom > 0
+        ? (300.0 / availH).clamp(0.75, 0.96)
+        : 0.72;
+    final minFraction = viewInsetsBottom > 0
+        ? (220.0 / availH).clamp(0.55, initialFraction)
+        : 0.45;
 
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: viewInsetsBottom),
       child: DraggableScrollableSheet(
         expand: false,
-        initialChildSize: 0.72,
-        minChildSize: 0.45,
-        maxChildSize: 0.92,
+        initialChildSize: initialFraction,
+        minChildSize: minFraction,
+        maxChildSize: 0.96,
         builder: (context, scrollController) {
-          return Column(
-            children: [
-              const SizedBox(height: 10),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      isArabic ? 'تصفية النتائج' : 'Filter Results',
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+          return LayoutBuilder(
+            builder: (context, sheetConstraints) {
+              final isUltraShort = sheetConstraints.maxHeight < 190;
+              return Column(
+                children: [
+                  if (!isUltraShort) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    TextButton(
-                      onPressed: _resetAll,
-                      child: Text(isArabic ? 'مسح الكل' : 'Reset All'),
-                    ),
                   ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(16),
-                  children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      isUltraShort ? 4 : 10,
+                      16,
+                      isUltraShort ? 4 : 6,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            isArabic ? 'تصفية النتائج' : 'Filter Results',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _resetAll,
+                          child: Text(isArabic ? 'مسح الكل' : 'Reset All'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(16),
+                      children: [
                     // 1. Sort Options (Server-Driven)
                     if (cfg.sortOptions.isNotEmpty) ...[
                       _FilterLabel(isArabic ? 'الترتيب حسب' : 'Sort By'),
@@ -313,31 +334,40 @@ class _ServerDrivenFilterSheetBodyState
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: DealOneDesignColors.navy,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      isUltraShort ? 4 : 8,
+                      16,
+                      isUltraShort ? 6 : 16,
                     ),
-                    onPressed: _apply,
-                    child: Text(
-                      isArabic ? 'تطبيق الفلاتر' : 'Apply Filters',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: isUltraShort ? 40 : 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: DealOneDesignColors.navy,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: _apply,
+                        child: Text(
+                          isArabic ? 'تطبيق الفلاتر' : 'Apply Filters',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           );
         },
       ),

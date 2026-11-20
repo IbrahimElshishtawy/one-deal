@@ -9,6 +9,7 @@ import '../../../listings/domain/entities/listing_entity.dart';
 
 /// Fashion Brand Product Card matching `الأكثر مبيعاً من أشهر الماركات`
 /// in `Home 7 - Fashion and Accessories.png`.
+/// Uses proportional flex layout so it never overflows on 320dp or 2.0x text scale.
 class FashionBrandCard extends ConsumerWidget {
   final ListingItem item;
 
@@ -50,112 +51,117 @@ class FashionBrandCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                child: SizedBox(
-                  height: 118,
-                  width: double.infinity,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (item.primaryImageUrl != null &&
-                          item.primaryImageUrl!.isNotEmpty)
-                        Image.network(
-                          item.primaryImageUrl!,
-                          fit: BoxFit.cover,
-                          cacheWidth: 420,
-                          errorBuilder: (_, _, _) => Container(
+              Expanded(
+                flex: 10,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (item.primaryImageUrl != null &&
+                            item.primaryImageUrl!.isNotEmpty)
+                          Image.network(
+                            item.primaryImageUrl!,
+                            fit: BoxFit.cover,
+                            cacheWidth: 420,
+                            errorBuilder: (_, _, _) => Container(
+                              color: DealOneDesignColors.navy.withValues(
+                                alpha: 0.1,
+                              ),
+                              child: const Icon(Icons.checkroom_rounded),
+                            ),
+                          )
+                        else
+                          Container(
                             color: DealOneDesignColors.navy.withValues(
                               alpha: 0.1,
                             ),
                             child: const Icon(Icons.checkroom_rounded),
                           ),
-                        )
-                      else
-                        Container(
-                          color: DealOneDesignColors.navy.withValues(
-                            alpha: 0.1,
-                          ),
-                          child: const Icon(Icons.checkroom_rounded),
-                        ),
-                      // Favorite heart top-start
-                      PositionedDirectional(
-                        top: 8,
-                        start: 8,
-                        child: GestureDetector(
-                          onTap: () => ref
-                              .read(favoritesControllerProvider.notifier)
-                              .toggleFavorite(item.id),
-                          child: Container(
-                            width: 30,
-                            height: 30,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              isFav
-                                  ? Icons.favorite_rounded
-                                  : Icons.favorite_border_rounded,
-                              size: 17,
-                              color: isFav
-                                  ? Colors.redAccent
-                                  : DealOneDesignColors.navy,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (brand.isNotEmpty)
                         PositionedDirectional(
                           top: 8,
-                          end: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.92),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              brand,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: DealOneDesignColors.navy,
+                          start: 8,
+                          child: GestureDetector(
+                            onTap: () => ref
+                                .read(favoritesControllerProvider.notifier)
+                                .toggleFavorite(item.id),
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isFav
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                size: 17,
+                                color: isFav
+                                    ? Colors.redAccent
+                                    : DealOneDesignColors.navy,
                               ),
                             ),
                           ),
                         ),
-                    ],
+                        if (brand.isNotEmpty)
+                          PositionedDirectional(
+                            top: 8,
+                            end: 8,
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 92),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.92),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                brand,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  color: DealOneDesignColors.navy,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
               Expanded(
+                flex: 11,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        item.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          height: 1.25,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : DealOneDesignColors.navy,
+                      Flexible(
+                        child: Text(
+                          item.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            height: 1.2,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : DealOneDesignColors.navy,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 4),
                       Row(
                         children: [
                           const Icon(
@@ -172,28 +178,51 @@ class FashionBrandCard extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 3),
-                          Text(
-                            '(${item.viewsCount})',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppColors.textMutedOf(context),
+                          Flexible(
+                            child: Text(
+                              '(${item.viewsCount})',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textMutedOf(context),
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const Spacer(),
                       Row(
                         children: [
                           Expanded(
-                            child: DealOneLivePriceText(
-                              listingId: item.id,
-                              cachedPrice: item.price,
-                              currency: item.currency,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                color: DealOneDesignColors.amberPrice,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                DealOneLivePriceText(
+                                  listingId: item.id,
+                                  cachedPrice: item.price,
+                                  currency: item.currency,
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: DealOneDesignColors.amberPrice,
+                                  ),
+                                ),
+                                Text(
+                                  formatDealOnePrice(
+                                    (item.price * 1.25).roundToDouble(),
+                                    currency: item.currency,
+                                    isArabic: isArabic,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.textMutedOf(context),
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           GestureDetector(

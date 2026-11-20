@@ -10,9 +10,10 @@ import '../routing/route_names.dart';
 import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
 
-/// Shared Deal One Marketplace Header matching the 7 Home designs.
-/// Adapts smoothly across 320dp small phones, standard phones, tablets,
-/// RTL/LTR, and up to 2.0x text scaling without overflow.
+/// Shared Deal One Marketplace Header matching all 7 Home reference PNGs:
+/// - Warm circular portrait avatar with bottom overlapping Deal One handshake logo badge (`assets/image/logo.png`).
+/// - User Name (`مصطفي هيكل` or authenticated user) + Location pin (`الغربية - طنطا` or selected location).
+/// - Two white rounded-square (`12dp`) icon buttons on the opposite side (Basket & Menu/Back).
 class DealOneHomeHeader extends ConsumerWidget {
   final bool showBackToHub;
   final String? sectionBadge;
@@ -32,7 +33,7 @@ class DealOneHomeHeader extends ConsumerWidget {
     final isSmall = context.isSmallPhone;
     final hPad = context.horizontalScreenPadding;
     final userName = ref.watch(activeUserDisplayNameProvider) ??
-        (isArabic ? 'مصطفى هيكل' : 'Deal One User');
+        (isArabic ? 'مصطفي هيكل' : 'Mostafa Heikal');
     final selectedGov = ref.watch(selectedGovernorateProvider);
     final selectedCity = ref.watch(selectedCityProvider);
 
@@ -40,66 +41,87 @@ class DealOneHomeHeader extends ConsumerWidget {
         ? '${isArabic ? selectedGov?.nameAr ?? '' : selectedGov?.nameEn ?? ''} - ${isArabic ? selectedCity.nameAr : selectedCity.nameEn}'
         : selectedGov != null
             ? (isArabic ? selectedGov.nameAr : selectedGov.nameEn)
-            : (isArabic ? 'الغربية - طنطا' : 'All Egypt');
+            : (isArabic ? 'الغربية - طنطا' : 'Gharbia - Tanta');
 
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(hPad, 12, hPad, 4),
+      padding: EdgeInsetsDirectional.fromSTEB(hPad, 12, hPad, 6),
       child: Row(
         children: [
-          // User Avatar + Deal One mini badge
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              CircleAvatar(
-                radius: isSmall ? 20 : 24,
-                backgroundColor: DealOneDesignColors.navy,
-                child: Text(
-                  userName.isNotEmpty ? userName.characters.first : 'D',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: isSmall ? 15 : 18,
-                  ),
-                ),
-              ),
-              PositionedDirectional(
-                bottom: -4,
-                start: 2,
-                end: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 3,
-                    vertical: 1.5,
-                  ),
+          // Circular Portrait Avatar + Overlapping Deal One Logo Badge
+          SizedBox(
+            width: isSmall ? 46 : 54,
+            height: isSmall ? 50 : 58,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.topCenter,
+              children: [
+                Container(
+                  width: isSmall ? 44 : 52,
+                  height: isSmall ? 44 : 52,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFE7D2B8), Color(0xFFD2B48C)],
+                    ),
+                    border: Border.all(color: Colors.white, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 4,
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: const Text(
-                    'ديل ون',
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.clip,
-                    style: TextStyle(
-                      fontSize: 7,
-                      fontWeight: FontWeight.w900,
-                      color: DealOneDesignColors.navy,
-                      height: 1.1,
+                  child: Icon(
+                    Icons.person_rounded,
+                    size: isSmall ? 26 : 30,
+                    color: DealOneDesignColors.navy,
+                  ),
+                ),
+                Positioned(
+                  bottom: -2,
+                  child: Container(
+                    width: isSmall ? 26 : 30,
+                    height: isSmall ? 20 : 22,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 3,
+                      vertical: 1.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/image/logo.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const Center(
+                        child: Text(
+                          'ديل ون',
+                          style: TextStyle(
+                            fontSize: 6.5,
+                            fontWeight: FontWeight.w900,
+                            color: DealOneDesignColors.navy,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          SizedBox(width: isSmall ? 8 : 12),
+          SizedBox(width: isSmall ? 8 : 10),
 
-          // Name + Location Selector (and optional section badge)
+          // User Name + Location Selector
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,7 +136,7 @@ class DealOneHomeHeader extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: isSmall ? 14 : 15.5,
+                          fontSize: isSmall ? 14.5 : 16.5,
                           fontWeight: FontWeight.w800,
                           color: isDark
                               ? AppColors.darkTextPrimary
@@ -133,7 +155,7 @@ class DealOneHomeHeader extends ConsumerWidget {
                           ),
                           decoration: BoxDecoration(
                             color: DealOneDesignColors.navy.withValues(
-                              alpha: isDark ? 0.45 : 0.1,
+                              alpha: isDark ? 0.45 : 0.08,
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -162,29 +184,24 @@ class DealOneHomeHeader extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.location_on_rounded,
-                        size: 14,
+                        Icons.pin_drop_rounded,
+                        size: 15,
                         color: isDark
                             ? Colors.white70
                             : DealOneDesignColors.navy,
                       ),
-                      const SizedBox(width: 3),
+                      const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           locationDisplay,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 12.5,
                             color: AppColors.textMutedOf(context),
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 15,
-                        color: AppColors.textMutedOf(context),
                       ),
                     ],
                   ),
@@ -195,19 +212,19 @@ class DealOneHomeHeader extends ConsumerWidget {
 
           SizedBox(width: isSmall ? 6 : 8),
 
-          // Favorites / Basket button
+          // Left button 1: Shopping Basket
           _DealOneSquareIconButton(
-            icon: Icons.shopping_basket_outlined,
+            icon: Icons.shopping_basket_rounded,
             tooltip: isArabic ? 'المفضلة والسلة' : 'Favorites & Basket',
             size: isSmall ? 38 : 42,
             onTap: () => context.push(RouteNames.favorites),
           ),
           SizedBox(width: isSmall ? 6 : 8),
 
-          // Back to Main Hub (on Section Homes) OR Language/Menu toggle (on Main Hub)
+          // Left button 2: Menu / Back to Main Hub
           if (showBackToHub)
             _DealOneSquareIconButton(
-              icon: Icons.arrow_back_rounded,
+              icon: Icons.menu_rounded,
               tooltip: isArabic ? 'العودة للرئيسية' : 'Back to Main Hub',
               size: isSmall ? 38 : 42,
               onTap: onBackPressed ??
@@ -271,7 +288,7 @@ class _DealOneSquareIconButton extends StatelessWidget {
               border: Border.all(
                 color: isDark
                     ? AppColors.darkBorder
-                    : Colors.black.withValues(alpha: 0.06),
+                    : Colors.black.withValues(alpha: 0.05),
               ),
               boxShadow: isDark
                   ? null
@@ -285,7 +302,7 @@ class _DealOneSquareIconButton extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              size: 20,
+              size: 21,
               color: isDark ? Colors.white : DealOneDesignColors.navy,
             ),
           ),

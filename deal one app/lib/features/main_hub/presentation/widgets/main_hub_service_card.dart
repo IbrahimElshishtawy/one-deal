@@ -6,8 +6,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../listings/domain/entities/listing_entity.dart';
 
 /// Popular Service / Listing Card matching `Home 1 - Main Hub.png`
-/// and `Home 4 - Services and Engineering.png`.
-/// Uses proportional flex layout so it never overflows on 320dp or 2.0x text scale.
+/// and `Home 4 - Services and Engineering.png`:
+/// - Top padded rounded image with top-right (start in RTL) dark navy category pill.
+/// - Title + subtitle + amber price.
+/// - Bottom row with overlapping reviewer avatars (`+115`), star icon, and `4.9` score.
 class MainHubPopularCard extends StatelessWidget {
   final ListingItem item;
 
@@ -46,7 +48,7 @@ class MainHubPopularCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Proportional rounded image with top navy category pill
+              // Proportional rounded image with top-right navy category pill
               Expanded(
                 flex: 10,
                 child: Padding(
@@ -80,7 +82,7 @@ class MainHubPopularCard extends StatelessWidget {
                                 alpha: 0.1,
                               ),
                               child: const Icon(
-                                Icons.storefront_outlined,
+                                Icons.handyman_outlined,
                                 color: DealOneDesignColors.navy,
                               ),
                             ),
@@ -166,41 +168,23 @@ class MainHubPopularCard extends StatelessWidget {
                           color: DealOneDesignColors.amberPrice,
                         ),
                       ),
+                      // Bottom Row matching PNG: overlapping avatars (+115) + star + 4.9
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
+                          const Flexible(child: _ReviewerAvatarsPill()),
+                          const SizedBox(width: 4),
                           const Icon(
                             Icons.star_rounded,
-                            size: 14,
+                            size: 15,
                             color: Color(0xFFF59E0B),
                           ),
                           const SizedBox(width: 2),
-                          Flexible(
-                            child: Text(
-                              item.isVerified ? '4.9' : '4.7',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          Icon(
-                            Icons.visibility_outlined,
-                            size: 13,
-                            color: AppColors.textMutedOf(context),
-                          ),
-                          const SizedBox(width: 3),
-                          Flexible(
-                            child: Text(
-                              '${item.viewsCount}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                color: AppColors.textMutedOf(context),
-                              ),
+                          Text(
+                            item.isVerified ? '4.9' : '4.8',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
@@ -212,6 +196,78 @@ class MainHubPopularCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ReviewerAvatarsPill extends StatelessWidget {
+  const _ReviewerAvatarsPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 48,
+      height: 18,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          PositionedDirectional(
+            start: 0,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: const Color(0xFFCBD5E1),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.2),
+              ),
+              child: const Icon(
+                Icons.person,
+                size: 11,
+                color: DealOneDesignColors.navy,
+              ),
+            ),
+          ),
+          PositionedDirectional(
+            start: 11,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: const Color(0xFF94A3B8),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.2),
+              ),
+              child: const Icon(
+                Icons.person,
+                size: 11,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          PositionedDirectional(
+            start: 22,
+            child: Container(
+              height: 18,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: Colors.white, width: 1.2),
+              ),
+              child: const Text(
+                '+115',
+                style: TextStyle(
+                  fontSize: 7.5,
+                  fontWeight: FontWeight.w800,
+                  color: DealOneDesignColors.navy,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

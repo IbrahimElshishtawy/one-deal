@@ -46,23 +46,52 @@ String sectionRouteForSlug(String slug) {
 IconData iconForSectionSlug(String slug) {
   final s = slug.toLowerCase();
   if (s.contains('real')) return Icons.home_work_rounded;
-  if (s.contains('appliance') || s.contains('decor')) return Icons.chair_rounded;
+  if (s.contains('appliance') || s.contains('decor')) {
+    return Icons.weekend_rounded;
+  }
   if (s.contains('service') || s.contains('engineering')) {
     return Icons.handyman_rounded;
   }
-  if (s.contains('building') || s.contains('material') || s.contains('construct')) {
+  if (s.contains('building') ||
+      s.contains('material') ||
+      s.contains('construct')) {
     return Icons.engineering_rounded;
   }
-  if (s.contains('car') || s.contains('auto')) return Icons.directions_car_rounded;
+  if (s.contains('car') || s.contains('auto')) {
+    return Icons.directions_car_filled_rounded;
+  }
   if (s.contains('fashion') || s.contains('cloth')) {
     return Icons.shopping_bag_rounded;
   }
   return Icons.category_rounded;
 }
 
-/// Responsive Main Categories Grid matching `Home 1 - Main Hub.png`.
-/// Adapts column count (1–4 columns) and tile height to available width
-/// and system text scale up to 2.0x without overflow.
+/// Returns the exact design label from `Home 1 - Main Hub.png` for each canonical section slug.
+String designLabelArForSlug(String slug, String fallbackAr) {
+  final s = slug.toLowerCase();
+  if (s.contains('real')) return 'عقارات وأراضٍ';
+  if (s.contains('appliance') || s.contains('decor')) return 'أجهزة وديكور';
+  if (s.contains('service')) return 'خدمات وهندسة';
+  if (s.contains('building') || s.contains('material')) {
+    return 'مواد بناء وكهرباء';
+  }
+  if (s.contains('car')) return 'سيارات وصيانة';
+  if (s.contains('fashion')) return 'أزياء وإكسسوارات';
+  return fallbackAr;
+}
+
+int _designOrderForSlug(String slug) {
+  final s = slug.toLowerCase();
+  if (s.contains('real')) return 0; // Row 1 Right
+  if (s.contains('appliance') || s.contains('decor')) return 1; // Row 1 Left
+  if (s.contains('service')) return 2; // Row 2 Right
+  if (s.contains('building') || s.contains('material')) return 3; // Row 2 Left
+  if (s.contains('car')) return 4; // Row 3 Right
+  if (s.contains('fashion')) return 5; // Row 3 Left
+  return 99;
+}
+
+/// Responsive Main Categories Grid matching `Home 1 - Main Hub.png` 2x3 visual order.
 class MainHubCategoriesGrid extends StatelessWidget {
   final List<CategoryItem> categories;
   final ValueChanged<CategoryItem> onCategoryTap;
@@ -78,7 +107,12 @@ class MainHubCategoriesGrid extends StatelessWidget {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hPad = context.horizontalScreenPadding;
-    final display = categories.take(6).toList();
+    final sorted = List<CategoryItem>.from(categories)
+      ..sort(
+        (a, b) =>
+            _designOrderForSlug(a.slug).compareTo(_designOrderForSlug(b.slug)),
+      );
+    final display = sorted.take(6).toList();
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: hPad),
@@ -95,6 +129,10 @@ class MainHubCategoriesGrid extends StatelessWidget {
             itemCount: display.length,
             itemBuilder: (context, index) {
               final cat = display[index];
+              final label = isArabic
+                  ? designLabelArForSlug(cat.slug, cat.nameAr)
+                  : cat.nameEn;
+
               return Material(
                 color: isDark ? AppColors.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(14),
@@ -138,7 +176,7 @@ class MainHubCategoriesGrid extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            isArabic ? cat.nameAr : cat.nameEn,
+                            label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(

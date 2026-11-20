@@ -398,7 +398,6 @@ class _InstallmentPromoCard extends StatelessWidget {
     final hPad = context.horizontalScreenPadding;
     return Container(
       margin: EdgeInsetsDirectional.fromSTEB(hPad, 14, hPad, 4),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -407,111 +406,184 @@ class _InstallmentPromoCard extends StatelessWidget {
               ? AppColors.darkBorder
               : Colors.black.withValues(alpha: 0.06),
         ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: DealOneDesignColors.navy,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Text(
-                  isArabic ? 'تقسيط بدون فوائد' : '0% Installments',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
+          // Top Image Header matching Home 3 PNG
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(18),
+            ),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 118),
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF475569), Color(0xFF1E293B)],
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(
-                    Icons.bolt_rounded,
-                    size: 16,
-                    color: DealOneDesignColors.amberPrice,
-                  ),
-                  Flexible(
-                    child: Text(
-                      isArabic ? 'موافقة خلال دقائق' : 'Instant approval',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textMutedOf(context),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0284C7),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'أمان',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'valu*',
+                            style: TextStyle(
+                              color: Color(0xFF2DD4BF),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: DealOneDesignColors.navy,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          isArabic ? 'تقسيط بدون فوائد' : '0% Installments',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.bolt_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          isArabic ? 'موافقة خلال دقائق' : 'Instant approval',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            isArabic
-                ? 'قسط أجهزتك على 12 أو 24 شهر'
-                : 'Pay over 12 or 24 months',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : DealOneDesignColors.navy,
             ),
           ),
-          const SizedBox(height: 3),
-          Text(
-            isArabic
-                ? 'أسهل إجراءات تقسيط مع شركاء التمويل المعتمدين'
-                : 'Easy installment plans with certified partners',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textMutedOf(context),
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 40),
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: DealOneDesignColors.navy,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: onTap,
-                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                label: Text(
-                  isArabic ? 'تصفية حسب السعر والتقسيط' : 'Filter by Price',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isArabic
+                      ? 'قسط أجهزتك على 12 أو 24 شهر'
+                      : 'Pay over 12 or 24 months',
+                  style: TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : DealOneDesignColors.navy,
                   ),
                 ),
-              ),
+                const SizedBox(height: 3),
+                Text(
+                  isArabic
+                      ? 'أسهل إجراءات بالتعاون مع Valu وأمان'
+                      : 'Easy installment plans with Valu & Aman',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textMutedOf(context),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 40),
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: DealOneDesignColors.navy,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: onTap,
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                      label: Text(
+                        isArabic ? 'احسب تقسيطك' : 'Calculate Installment',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

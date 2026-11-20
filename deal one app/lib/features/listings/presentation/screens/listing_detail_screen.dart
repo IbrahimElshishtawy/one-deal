@@ -480,11 +480,15 @@ class _DetailViewState extends ConsumerState<_DetailView> {
                                 color: DealOneDesignColors.navy,
                               ),
                               const SizedBox(width: 6),
-                              Text(
-                                '${meta.label}: ${_formatSpecValue(entry.value, isArabic)}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                              Flexible(
+                                child: Text(
+                                  '${meta.label}: ${_formatSpecValue(entry.value, isArabic)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],
@@ -667,27 +671,31 @@ class _DetailViewState extends ConsumerState<_DetailView> {
               heightFactor: 1.5,
               child: CircularProgressIndicator.adaptive(),
             ),
-            error: (err, _) => Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    isArabic
-                        ? 'تعذر إظهار الرقم: $err'
-                        : 'Could not reveal contact: $err',
-                    style: TextStyle(
-                      color: AppColors.errorOf(context),
-                      fontSize: 12,
+            error: (err, _) {
+              final presented = ErrorPresenter.present(
+                err,
+                isArabic: isArabic,
+              );
+              return Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      presented.message,
+                      style: TextStyle(
+                        color: AppColors.errorOf(context),
+                        fontSize: 12,
+                      ),
                     ),
                   ),
-                ),
-                TextButton(
-                  onPressed: () => ref
-                      .read(contactRevealProvider(item.id).notifier)
-                      .reveal(item.id),
-                  child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
-                ),
-              ],
-            ),
+                  TextButton(
+                    onPressed: () => ref
+                        .read(contactRevealProvider(item.id).notifier)
+                        .reveal(item.id),
+                    child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -709,9 +717,10 @@ class _DetailViewState extends ConsumerState<_DetailView> {
           builder: (context, setState) {
             return AlertDialog(
               title: const Text('إبلاغ عن هذا الإعلان'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   DropdownButton<String>(
                     value: selectedReason,
                     isExpanded: true,
@@ -756,6 +765,7 @@ class _DetailViewState extends ConsumerState<_DetailView> {
                     ),
                   ),
                 ],
+              ),
               ),
               actions: [
                 TextButton(

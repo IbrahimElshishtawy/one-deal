@@ -11,6 +11,7 @@ import '../../../../core/marketplace/section_home_controller.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/routing/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../listings/domain/entities/listing_entity.dart';
 import '../../../listings/presentation/widgets/floating_bottom_nav.dart';
 import '../../../search/data/dto/search_dto.dart';
@@ -102,6 +103,7 @@ class _FashionAccessoriesHomePageState
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final state = ref.watch(
       sectionHomeControllerProvider(FashionAccessoriesHomePage.sectionSlug),
     );
@@ -178,7 +180,7 @@ class _FashionAccessoriesHomePageState
                   ),
                 ),
 
-                // 2. Fashion Categories 2-Column Rich Grid (`الأقسام والفئات`)
+                // 2. Fashion Categories Responsive Rich Grid (`الأقسام والفئات`)
                 SliverToBoxAdapter(
                   child: DealOneSectionHeader(
                     title: isArabic ? 'الأقسام والفئات' : 'Categories',
@@ -188,14 +190,11 @@ class _FashionAccessoriesHomePageState
                 ),
                 if (subs.isNotEmpty)
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 10,
-                        crossAxisSpacing: 10,
-                        childAspectRatio: 2.6,
+                      gridDelegate: context.responsiveCategoryGridDelegate(
+                        baseMainAxisExtent: 64,
+                        extraExtentPerTextScaleUnit: 46,
                       ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final sub = subs[index];
@@ -219,7 +218,7 @@ class _FashionAccessoriesHomePageState
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
-                                vertical: 8,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(14),
@@ -237,7 +236,7 @@ class _FashionAccessoriesHomePageState
                                 children: [
                                   Icon(
                                     _iconForFashionSlug(sub.slug),
-                                    size: 22,
+                                    size: 20,
                                     color: selected
                                         ? Colors.white
                                         : (isDark
@@ -252,35 +251,39 @@ class _FashionAccessoriesHomePageState
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          isArabic ? sub.nameAr : sub.nameEn,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: selected
-                                                ? Colors.white
-                                                : (isDark
-                                                      ? AppColors
-                                                          .darkTextPrimary
-                                                      : DealOneDesignColors
-                                                          .navy),
+                                        Flexible(
+                                          child: Text(
+                                            isArabic ? sub.nameAr : sub.nameEn,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: selected
+                                                  ? Colors.white
+                                                  : (isDark
+                                                        ? AppColors
+                                                            .darkTextPrimary
+                                                        : DealOneDesignColors
+                                                            .navy),
+                                            ),
                                           ),
                                         ),
-                                        Text(
-                                          isArabic
-                                              ? '${sub.listingsCount} منتج'
-                                              : '${sub.listingsCount} items',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 10.5,
-                                            color: selected
-                                                ? Colors.white70
-                                                : AppColors.textMutedOf(
-                                                    context,
-                                                  ),
+                                        Flexible(
+                                          child: Text(
+                                            isArabic
+                                                ? '${sub.listingsCount} منتج'
+                                                : '${sub.listingsCount} items',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              color: selected
+                                                  ? Colors.white70
+                                                  : AppColors.textMutedOf(
+                                                      context,
+                                                    ),
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -337,14 +340,10 @@ class _FashionAccessoriesHomePageState
                   )
                 else ...[
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.72,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
+                      gridDelegate: context.responsiveProductGridDelegate(
+                        baseMainAxisExtent: 254,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) =>
@@ -391,11 +390,12 @@ class _FeaturedLookCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final brand = item.attributes['brand']?.toString() ??
         (isArabic ? item.categoryNameAr : item.categoryNameEn);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      margin: EdgeInsetsDirectional.fromSTEB(hPad, 16, hPad, 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
@@ -453,6 +453,75 @@ class _FeaturedLookCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  PositionedDirectional(
+                    top: 10,
+                    start: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.timer_outlined,
+                            size: 13,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isArabic ? '03 س : 14 د : 38 ث' : '03h : 14m : 38s',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Outfit piece thumbnails strip along bottom of image matching Home 7 PNG
+                  PositionedDirectional(
+                    bottom: 8,
+                    start: 8,
+                    end: 8,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (final icon in [
+                          Icons.checkroom_rounded,
+                          Icons.dry_cleaning_rounded,
+                          Icons.hiking_rounded,
+                          Icons.watch_outlined,
+                        ])
+                          Container(
+                            width: 34,
+                            height: 34,
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: DealOneDesignColors.navy.withValues(
+                                  alpha: 0.25,
+                                ),
+                              ),
+                            ),
+                            child: Icon(
+                              icon,
+                              size: 17,
+                              color: DealOneDesignColors.navy,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -483,36 +552,62 @@ class _FeaturedLookCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          DealOneLivePriceText(
-            listingId: item.id,
-            cachedPrice: item.price,
-            currency: item.currency,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: DealOneDesignColors.amberPrice,
-            ),
+          Wrap(
+            spacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              DealOneLivePriceText(
+                listingId: item.id,
+                cachedPrice: item.price,
+                currency: item.currency,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: DealOneDesignColors.amberPrice,
+                ),
+              ),
+              Text(
+                formatDealOnePrice(
+                  (item.price * 1.18).roundToDouble(),
+                  currency: item.currency,
+                  isArabic: isArabic,
+                ),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textMutedOf(context),
+                  decoration: TextDecoration.lineThrough,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            height: 42,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: DealOneDesignColors.navy,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 42),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: DealOneDesignColors.navy,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-              ),
-              onPressed: () => context.push('/listings/${item.id}'),
-              icon: const Icon(Icons.shopping_basket_outlined, size: 17),
-              label: Text(
-                isArabic ? 'عرض الإطلالة والتفاصيل' : 'Shop This Look',
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w800,
+                onPressed: () => context.push('/listings/${item.id}'),
+                icon: const Icon(Icons.shopping_basket_outlined, size: 17),
+                label: Text(
+                  isArabic ? 'أضف الطقم للسلة' : 'Add Outfit to Basket',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),

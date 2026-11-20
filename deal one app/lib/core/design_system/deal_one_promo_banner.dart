@@ -4,8 +4,11 @@ import '../../features/listings/domain/entities/listing_entity.dart';
 import '../theme/app_colors.dart';
 import '../utils/responsive_utils.dart';
 
-/// Hero Promotional Banner Carousel driven by backend promotions payload.
-/// Adapts height to system text scaling (up to 2.0x) and supports RTL/LTR cleanly.
+/// Hero Promotional Banner Carousel matching Homes 1, 3, 4, 5, 6, 7 reference PNGs:
+/// - Top-left (end in RTL) dark navy pill badge + optional top-right countdown timer.
+/// - Right-aligned bold white headline + subtitle.
+/// - Bottom-right white CTA pill button (`تصفح المواد →`) + bottom-left pagination dots
+///   (active dark navy stadium pill with white border + 3 white circles).
 class DealOnePromoBannerCarousel extends StatefulWidget {
   final List<HomePromotion> promotions;
   final ValueChanged<HomePromotion> onActionTap;
@@ -39,6 +42,7 @@ class _DealOnePromoBannerCarouselState
     if (widget.promotions.isEmpty) return const SizedBox.shrink();
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final hPad = context.horizontalScreenPadding;
+    final dotCount = widget.promotions.length < 4 ? 4 : widget.promotions.length;
 
     return SizedBox(
       height: context.responsivePromoBannerHeight,
@@ -51,7 +55,7 @@ class _DealOnePromoBannerCarouselState
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: hPad),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -65,15 +69,23 @@ class _DealOnePromoBannerCarouselState
                       ),
                     )
                   else
-                    Container(color: DealOneDesignColors.navy),
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topRight,
+                          end: Alignment.bottomLeft,
+                          colors: [Color(0xFF283B5B), Color(0xFF131F33)],
+                        ),
+                      ),
+                    ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withValues(alpha: 0.25),
-                          Colors.black.withValues(alpha: 0.82),
+                          Colors.black.withValues(alpha: 0.22),
+                          Colors.black.withValues(alpha: 0.78),
                         ],
                       ),
                     ),
@@ -84,6 +96,7 @@ class _DealOnePromoBannerCarouselState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // Top Row: Countdown (start/right) & Navy Pill Badge (end/left)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -95,7 +108,7 @@ class _DealOnePromoBannerCarouselState
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.55),
+                                    color: Colors.black.withValues(alpha: 0.52),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Text(
@@ -116,12 +129,12 @@ class _DealOnePromoBannerCarouselState
                             Flexible(
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 11,
+                                  horizontal: 12,
                                   vertical: 5,
                                 ),
                                 decoration: BoxDecoration(
                                   color: DealOneDesignColors.navy.withValues(
-                                    alpha: 0.88,
+                                    alpha: 0.9,
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
@@ -139,6 +152,8 @@ class _DealOnePromoBannerCarouselState
                             ),
                           ],
                         ),
+
+                        // Middle Title & Subtitle
                         Flexible(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -163,7 +178,7 @@ class _DealOnePromoBannerCarouselState
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.9),
+                                    color: Colors.white.withValues(alpha: 0.92),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -171,6 +186,8 @@ class _DealOnePromoBannerCarouselState
                             ],
                           ),
                         ),
+
+                        // Bottom Row: White CTA Button (start/right) & Carousel Dots (end/left)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -207,31 +224,34 @@ class _DealOnePromoBannerCarouselState
                                 ),
                               ),
                             ),
-                            if (widget.promotions.length > 1) ...[
-                              const SizedBox(width: 8),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: List.generate(
-                                  widget.promotions.length,
-                                  (dotIdx) => AnimatedContainer(
-                                    duration: const Duration(milliseconds: 220),
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 3,
-                                    ),
-                                    width: _currentIndex == dotIdx ? 18 : 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: _currentIndex == dotIdx
-                                          ? Colors.white
-                                          : Colors.white.withValues(
-                                              alpha: 0.45,
-                                            ),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
+                            const SizedBox(width: 8),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(dotCount, (dotIdx) {
+                                final isActive =
+                                    (_currentIndex % dotCount) == dotIdx;
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 220),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 2.5,
                                   ),
-                                ),
-                              ),
-                            ],
+                                  width: isActive ? 18 : 7,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    color: isActive
+                                        ? DealOneDesignColors.navy
+                                        : Colors.white.withValues(alpha: 0.78),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: isActive
+                                        ? Border.all(
+                                            color: Colors.white,
+                                            width: 1,
+                                          )
+                                        : null,
+                                  ),
+                                );
+                              }),
+                            ),
                           ],
                         ),
                       ],

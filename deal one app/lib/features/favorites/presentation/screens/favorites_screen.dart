@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:market_space/core/errors/error_presenter.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
 
@@ -108,26 +109,42 @@ class FavoritesScreen extends ConsumerWidget {
           },
           loading: () =>
               const Center(child: CircularProgressIndicator.adaptive()),
-          error: (err, _) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: AppColors.errorOf(context),
+          error: (err, _) {
+            final isArabic = Directionality.of(context) == TextDirection.rtl;
+            final presented = ErrorPresenter.present(err, isArabic: isArabic);
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: AppColors.errorOf(context),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      presented.title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      presented.message,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () =>
+                          ref.read(favoritesProvider.notifier).loadFavorites(),
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                Text('تعذر تحميل المفضلة: $err'),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () =>
-                      ref.read(favoritesProvider.notifier).loadFavorites(),
-                  child: const Text('إعادة المحاولة'),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
