@@ -7,8 +7,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../favorites/presentation/providers/favorites_providers.dart';
 import '../../../listings/domain/entities/listing_entity.dart';
 
-/// 2-column Appliances & Decor Product Card matching
+/// Appliances & Decor Product Card matching
 /// `Home 3 - Electrical appliances and decor.png`.
+/// Uses proportional flex layout so it never overflows on 320dp or 2.0x text scale.
 class ApplianceProductCard extends ConsumerWidget {
   final ListingItem item;
 
@@ -48,182 +49,202 @@ class ApplianceProductCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Image with Brand / Best Seller Overlay
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                child: SizedBox(
-                  height: 112,
-                  width: double.infinity,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (item.primaryImageUrl != null &&
-                          item.primaryImageUrl!.isNotEmpty)
-                        Image.network(
-                          item.primaryImageUrl!,
-                          fit: BoxFit.cover,
-                          cacheWidth: 420,
-                          errorBuilder: (_, _, _) => Container(
+              // Proportional Product Image with Brand / Best Seller Overlay
+              Expanded(
+                flex: 9,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (item.primaryImageUrl != null &&
+                            item.primaryImageUrl!.isNotEmpty)
+                          Image.network(
+                            item.primaryImageUrl!,
+                            fit: BoxFit.cover,
+                            cacheWidth: 420,
+                            errorBuilder: (_, _, _) => Container(
+                              color: DealOneDesignColors.navy.withValues(
+                                alpha: 0.1,
+                              ),
+                              child: const Icon(Icons.kitchen_outlined),
+                            ),
+                          )
+                        else
+                          Container(
                             color: DealOneDesignColors.navy.withValues(
                               alpha: 0.1,
                             ),
                             child: const Icon(Icons.kitchen_outlined),
                           ),
-                        )
-                      else
-                        Container(
-                          color: DealOneDesignColors.navy.withValues(
-                            alpha: 0.1,
-                          ),
-                          child: const Icon(Icons.kitchen_outlined),
-                        ),
-                      if (item.isFeatured)
-                        PositionedDirectional(
-                          top: 6,
-                          start: 6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.58),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              isArabic ? 'الأكثر مبيعاً' : 'Best Seller',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
+                        if (item.isFeatured)
+                          PositionedDirectional(
+                            top: 6,
+                            start: 6,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.58),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                isArabic ? 'الأكثر مبيعاً' : 'Best Seller',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      if (brand.isNotEmpty)
-                        PositionedDirectional(
-                          top: 6,
-                          end: 6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              brand,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: DealOneDesignColors.navy,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w900,
+                        if (brand.isNotEmpty)
+                          PositionedDirectional(
+                            top: 6,
+                            end: 6,
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 88),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                brand,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: DealOneDesignColors.navy,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
               Expanded(
+                flex: 12,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        item.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : DealOneDesignColors.navy,
+                      Flexible(
+                        child: Text(
+                          item.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : DealOneDesignColors.navy,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.description.isNotEmpty
-                            ? item.description
-                            : (isArabic
-                                  ? item.categoryNameAr
-                                  : item.categoryNameEn),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textMutedOf(context),
+                      Flexible(
+                        child: Text(
+                          item.description.isNotEmpty
+                              ? item.description
+                              : (isArabic
+                                    ? item.categoryNameAr
+                                    : item.categoryNameEn),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textMutedOf(context),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 6),
                       DealOneLivePriceText(
                         listingId: item.id,
                         cachedPrice: item.price,
                         currency: item.currency,
                         style: const TextStyle(
-                          fontSize: 13.5,
+                          fontSize: 13,
                           fontWeight: FontWeight.w900,
                           color: DealOneDesignColors.amberPrice,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        isArabic
-                            ? 'قسط من ${formatDealOnePrice(monthly, currency: item.currency)} / شهر'
-                            : 'From ${formatDealOnePrice(monthly, currency: item.currency, isArabic: false)} / mo',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textMutedOf(context),
+                      Flexible(
+                        child: Text(
+                          isArabic
+                              ? 'قسط من ${formatDealOnePrice(monthly, currency: item.currency)} / شهر'
+                              : 'From ${formatDealOnePrice(monthly, currency: item.currency, isArabic: false)} / mo',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textMutedOf(context),
+                          ),
                         ),
                       ),
-                      const Spacer(),
                       SizedBox(
                         width: double.infinity,
-                        height: 34,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: DealOneDesignColors.navy,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onPressed: () {
-                            ref
-                                .read(favoritesControllerProvider.notifier)
-                                .toggleFavorite(item.id);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isArabic
-                                      ? 'تم تحديث قائمة المحفوظات والسلة'
-                                      : 'Updated saved basket',
-                                ),
-                                duration: const Duration(seconds: 2),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 32),
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: DealOneDesignColors.navy,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 4,
                               ),
-                            );
-                          },
-                          icon: const Icon(
-                            Icons.add_shopping_cart_rounded,
-                            size: 15,
-                          ),
-                          label: Text(
-                            isArabic ? 'أضف للسلة' : 'Add to Basket',
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () {
+                              ref
+                                  .read(favoritesControllerProvider.notifier)
+                                  .toggleFavorite(item.id);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isArabic
+                                        ? 'تم تحديث قائمة المحفوظات والسلة'
+                                        : 'Updated saved basket',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.add_shopping_cart_rounded,
+                              size: 14,
+                            ),
+                            label: Flexible(
+                              child: Text(
+                                isArabic ? 'أضف للسلة' : 'Add to Basket',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                             ),
                           ),
                         ),

@@ -335,7 +335,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       this.inMemoryFallback.delete(key);
       return null;
     }
-    return JSON.parse(entry.value) as T;
+    try {
+      return JSON.parse(entry.value) as T;
+    } catch {
+      return entry.value as unknown as T;
+    }
   }
 
   async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
@@ -604,6 +608,19 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     if (!this.isCacheHealthy || !this.cacheClient) {
       return null;
     }
-    return this.cacheClient.duplicate();
+    try {
+      const subscriber = this.cacheClient.duplicate();
+      subscriber.on('error', (err) => {
+        this.logger.warn(
+          `Redis Pub/Sub subscriber error: ${err?.message || err}`,
+        );
+      });
+      return subscriber;
+    } catch (err: any) {
+      this.logger.warn(
+        `Failed to create Redis Pub/Sub subscriber: ${err?.message || err}`,
+      );
+      return null;
+    }
   }
 }

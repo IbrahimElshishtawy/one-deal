@@ -11,6 +11,7 @@ import '../../../../core/marketplace/section_home_controller.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/routing/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../listings/presentation/widgets/floating_bottom_nav.dart';
 import '../../../search/data/dto/search_dto.dart';
 import '../../../search/presentation/providers/search_providers.dart';
@@ -88,6 +89,7 @@ class _AppliancesDecorHomePageState
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final state = ref.watch(
       sectionHomeControllerProvider(AppliancesDecorHomePage.sectionSlug),
     );
@@ -100,8 +102,17 @@ class _AppliancesDecorHomePageState
 
     final allSubs = feed?.section.subcategories ?? const [];
     final segmentSubs = _activeSegment == 0
-        ? allSubs.where((c) => !c.slug.contains('decor') && !c.slug.contains('furniture')).toList()
-        : allSubs.where((c) => c.slug.contains('decor') || c.slug.contains('furniture')).toList();
+        ? allSubs
+            .where(
+              (c) =>
+                  !c.slug.contains('decor') && !c.slug.contains('furniture'),
+            )
+            .toList()
+        : allSubs
+            .where(
+              (c) => c.slug.contains('decor') || c.slug.contains('furniture'),
+            )
+            .toList();
     final visibleSubs = segmentSubs.isNotEmpty ? segmentSubs : allSubs;
 
     return Scaffold(
@@ -173,8 +184,9 @@ class _AppliancesDecorHomePageState
                 // 2. Segmented Toggle (`الأجهزة الكهربائية` | `الديكور والأثاث`)
                 SliverToBoxAdapter(
                   child: DealOneSegmentedToggle(
-                    firstLabel:
-                        isArabic ? 'الأجهزة الكهربائية' : 'Electrical Appliances',
+                    firstLabel: isArabic
+                        ? 'الأجهزة الكهربائية'
+                        : 'Electrical Appliances',
                     secondLabel:
                         isArabic ? 'الديكور والأثاث' : 'Decor & Furniture',
                     selectedIndex: _activeSegment,
@@ -182,11 +194,17 @@ class _AppliancesDecorHomePageState
                       setState(() => _activeSegment = idx);
                       if (idx == 1) {
                         final decorSub = allSubs
-                            .where((s) => s.slug.contains('decor') || s.slug.contains('furniture'))
+                            .where(
+                              (s) =>
+                                  s.slug.contains('decor') ||
+                                  s.slug.contains('furniture'),
+                            )
                             .firstOrNull;
                         if (decorSub != null) {
                           controller.applyFilters(
-                            state.filters.copyWith(subcategorySlug: decorSub.slug),
+                            state.filters.copyWith(
+                              subcategorySlug: decorSub.slug,
+                            ),
                           );
                         }
                       } else {
@@ -198,17 +216,14 @@ class _AppliancesDecorHomePageState
                   ),
                 ),
 
-                // 3. 2-Column Subcategories Grid from Backend
+                // 3. Responsive Subcategories Grid from Backend
                 if (visibleSubs.isNotEmpty)
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 10,
-                        childAspectRatio: 3.3,
+                      gridDelegate: context.responsiveCategoryGridDelegate(
+                        baseMainAxisExtent: 48,
+                        extraExtentPerTextScaleUnit: 28,
                       ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final sub = visibleSubs[index];
@@ -290,7 +305,7 @@ class _AppliancesDecorHomePageState
                   ),
                 ),
 
-                // 5. Most Requested Products 2-Column Grid
+                // 5. Most Requested Products Responsive Grid
                 SliverToBoxAdapter(
                   child: DealOneSectionHeader(
                     title: isArabic
@@ -330,14 +345,10 @@ class _AppliancesDecorHomePageState
                   )
                 else ...[
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.65,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
+                      gridDelegate: context.responsiveProductGridDelegate(
+                        baseMainAxisExtent: 266,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) =>
@@ -384,8 +395,9 @@ class _InstallmentPromoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      margin: EdgeInsetsDirectional.fromSTEB(hPad, 14, hPad, 4),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
@@ -399,7 +411,11 @@ class _InstallmentPromoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -419,19 +435,27 @@ class _InstallmentPromoCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Spacer(),
-              const Icon(
-                Icons.bolt_rounded,
-                size: 16,
-                color: DealOneDesignColors.amberPrice,
-              ),
-              Text(
-                isArabic ? 'موافقة خلال دقائق' : 'Instant approval',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textMutedOf(context),
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.bolt_rounded,
+                    size: 16,
+                    color: DealOneDesignColors.amberPrice,
+                  ),
+                  Flexible(
+                    child: Text(
+                      isArabic ? 'موافقة خلال دقائق' : 'Instant approval',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textMutedOf(context),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -461,23 +485,31 @@ class _InstallmentPromoCard extends StatelessWidget {
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            height: 40,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: DealOneDesignColors.navy,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 40),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: DealOneDesignColors.navy,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
-              onPressed: onTap,
-              icon: const Icon(Icons.arrow_back_rounded, size: 16),
-              label: Text(
-                isArabic ? 'تصفية حسب السعر والتقسيط' : 'Filter by Price',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                onPressed: onTap,
+                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                label: Text(
+                  isArabic ? 'تصفية حسب السعر والتقسيط' : 'Filter by Price',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),

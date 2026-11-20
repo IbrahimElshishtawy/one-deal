@@ -9,6 +9,7 @@ import '../../../../core/design_system/deal_one_section_chrome.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/routing/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../listings/presentation/providers/listings_providers.dart';
 import '../../../listings/presentation/widgets/deal_one_listing_card.dart';
 import '../../../listings/presentation/widgets/floating_bottom_nav.dart';
@@ -90,6 +91,7 @@ class _MainHubPageState extends ConsumerState<MainHubPage> {
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final hubState = ref.watch(mainHubControllerProvider);
     final latestState = ref.watch(paginatedLatestListingsProvider);
     final isOffline = ref.watch(isOfflineProvider).valueOrNull ?? false;
@@ -188,7 +190,7 @@ class _MainHubPageState extends ConsumerState<MainHubPage> {
                     ),
                   ),
 
-                // 7. Most Requested / Recommended (2-Column Grid matching PNG)
+                // 7. Most Requested / Recommended (Responsive Grid matching PNG)
                 SliverToBoxAdapter(
                   child: DealOneSectionHeader(
                     title: isArabic
@@ -208,14 +210,10 @@ class _MainHubPageState extends ConsumerState<MainHubPage> {
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.78,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
+                      gridDelegate: context.responsiveProductGridDelegate(
+                        baseMainAxisExtent: 238,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) =>
@@ -236,14 +234,14 @@ class _MainHubPageState extends ConsumerState<MainHubPage> {
                   ),
                   SliverToBoxAdapter(
                     child: SizedBox(
-                      height: 256,
+                      height: context.responsiveFeaturedCarouselHeight,
                       child: ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: EdgeInsets.symmetric(horizontal: hPad),
                         scrollDirection: Axis.horizontal,
                         itemCount: feed.featured.length,
                         separatorBuilder: (_, _) => const SizedBox(width: 12),
                         itemBuilder: (context, index) => SizedBox(
-                          width: 186,
+                          width: context.isSmallPhone ? 168 : 192,
                           child: DealOneListingCard(
                             item: feed.featured[index],
                             compact: true,
@@ -286,14 +284,10 @@ class _MainHubPageState extends ConsumerState<MainHubPage> {
                 )
               else ...[
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(horizontal: hPad),
                   sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.72,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                    gridDelegate: context.responsiveProductGridDelegate(
+                      baseMainAxisExtent: 256,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) =>

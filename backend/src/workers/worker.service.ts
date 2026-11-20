@@ -86,17 +86,24 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
     this.maintenanceWorker = new Worker(
       WORKER_QUEUE_NAME,
       async (job) => {
-        switch (job.name) {
-          case 'listing-expiry':
-            return this.listingExpiry.processExpiredListings();
-          case 'payment-reconciliation':
-            return this.paymentReconciliation.processStaleTransactions();
-          case 'media-cleanup':
-            return this.mediaCleanup.processAbandonedMedia();
-          case 'outbox-publisher':
-            return this.outboxPublisher?.publishPendingEvents();
-          default:
-            return null;
+        try {
+          switch (job.name) {
+            case 'listing-expiry':
+              return await this.listingExpiry.processExpiredListings();
+            case 'payment-reconciliation':
+              return await this.paymentReconciliation.processStaleTransactions();
+            case 'media-cleanup':
+              return await this.mediaCleanup.processAbandonedMedia();
+            case 'outbox-publisher':
+              return await this.outboxPublisher?.publishPendingEvents();
+            default:
+              return null;
+          }
+        } catch (err: any) {
+          this.logger.error(
+            `[BullMQ Job Error] job=${job.name}: ${err?.message || err}`,
+          );
+          return null;
         }
       },
       { connection, concurrency: 2 },
@@ -163,64 +170,53 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
       }
     };
 
+    const registerInterval = (fn: () => void, intervalMs: number) => {
+      const timer = setInterval(fn, intervalMs);
+      timer.unref?.();
+      this.intervals.push(timer);
+    };
+
     // Expiry check every 30 minutes
-    this.intervals.push(
-      setInterval(
-        () => {
-          runWithLock('worker:listing-expiry', 300, () =>
-            this.listingExpiry.processExpiredListings(),
-          ).catch((err) => {
-            this.logger.error(
-              `Error in listing expiry background job: ${err.message}`,
-            );
-          });
-        },
-        30 * 60 * 1000,
-      ),
-    );
+    registerInterval(() => {
+      runWithLock('worker:listing-expiry', 300, () =>
+        this.listingExpiry.processExpiredListings(),
+      ).catch((err) => {
+        this.logger.error(
+          `Error in listing expiry background job: ${err.message}`,
+        );
+      });
+    }, 30 * 60 * 1000);
 
     // Payment reconciliation every 15 minutes
-    this.intervals.push(
-      setInterval(
-        () => {
-          runWithLock('worker:payment-reconciliation', 300, () =>
-            this.paymentReconciliation.processStaleTransactions(),
-          ).catch((err) => {
-            this.logger.error(
-              `Error in payment reconciliation job: ${err.message}`,
-            );
-          });
-        },
-        15 * 60 * 1000,
-      ),
-    );
+    registerInterval(() => {
+      runWithLock('worker:payment-reconciliation', 300, () =>
+        this.paymentReconciliation.processStaleTransactions(),
+      ).catch((err) => {
+        this.logger.error(
+          `Error in payment reconciliation job: ${err.message}`,
+        );
+      });
+    }, 15 * 60 * 1000);
 
     // Media cleanup every 6 hours
-    this.intervals.push(
-      setInterval(
-        () => {
-          runWithLock('worker:media-cleanup', 600, () =>
-            this.mediaCleanup.processAbandonedMedia(),
-          ).catch((err) => {
-            this.logger.error(`Error in media cleanup job: ${err.message}`);
-          });
-        },
-        6 * 60 * 60 * 1000,
-      ),
-    );
+    registerInterval(() => {
+      runWithLock('worker:media-cleanup', 600, () =>
+        this.mediaCleanup.processAbandonedMedia(),
+      ).catch((err) => {
+        this.logger.error(`Error in media cleanup job: ${err.message}`);
+      });
+    }, 6 * 60 * 60 * 1000);
 
     // Outbox publisher every 10 seconds
-    this.intervals.push(
-      setInterval(() => {
-        runWithLock('worker:outbox-publisher', 30, () =>
-          this.outboxPublisher
-            ? this.outboxPublisher.publishPendingEvents()
-            : Promise.resolve(),
-        ).catch((err) => {
-          this.logger.error(`Error in outbox publisher job: ${err.message}`);
-        });
-      }, 10 * 1000),
-    );
+    registerInterval(() => {
+      runWithLock('worker:outbox-publisher', 30, () =>
+        this.outboxPublisher
+          ? this.outboxPublisher.publishPendingEvents()
+          : Promise.resolve(),
+      ).catch((err) => {
+        this.logger.error(`Error in outbox publisher job: ${err.message}`);
+      });
+    }, 10 * 1000);
   }
 
   async onModuleDestroy() {

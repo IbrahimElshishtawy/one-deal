@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/routing/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../categories/domain/entities/category_entity.dart';
 
 /// Maps a backend category slug to its dedicated Section Home route.
@@ -59,9 +60,9 @@ IconData iconForSectionSlug(String slug) {
   return Icons.category_rounded;
 }
 
-/// 2-column × 3-row Main Categories Grid matching `Home 1 - Main Hub.png`.
-/// Categories are rendered strictly from Backend data; tapping opens the
-/// corresponding independent Section Home.
+/// Responsive Main Categories Grid matching `Home 1 - Main Hub.png`.
+/// Adapts column count (1–4 columns) and tile height to available width
+/// and system text scale up to 2.0x without overflow.
 class MainHubCategoriesGrid extends StatelessWidget {
   final List<CategoryItem> categories;
   final ValueChanged<CategoryItem> onCategoryTap;
@@ -76,81 +77,85 @@ class MainHubCategoriesGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final display = categories.take(6).toList();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 3.05,
-        ),
-        itemCount: display.length,
-        itemBuilder: (context, index) {
-          final cat = display[index];
-          return Material(
-            color: isDark ? AppColors.darkSurface : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            child: InkWell(
-              onTap: () => onCategoryTap(cat),
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkBorder
-                        : Colors.black.withValues(alpha: 0.06),
-                  ),
-                  boxShadow: isDark
-                      ? null
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: DealOneDesignColors.navy,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        iconForSectionSlug(cat.slug),
-                        size: 19,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        isArabic ? cat.nameAr : cat.nameEn,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : DealOneDesignColors.navy,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+      padding: EdgeInsets.symmetric(horizontal: hPad),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: context.responsiveCategoryGridDelegate(
+              baseMainAxisExtent: 54,
+              extraExtentPerTextScaleUnit: 32,
+              availableWidth: constraints.maxWidth,
             ),
+            itemCount: display.length,
+            itemBuilder: (context, index) {
+              final cat = display[index];
+              return Material(
+                color: isDark ? AppColors.darkSurface : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  onTap: () => onCategoryTap(cat),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.darkBorder
+                            : Colors.black.withValues(alpha: 0.06),
+                      ),
+                      boxShadow: isDark
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: DealOneDesignColors.navy,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            iconForSectionSlug(cat.slug),
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isArabic ? cat.nameAr : cat.nameEn,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : DealOneDesignColors.navy,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),

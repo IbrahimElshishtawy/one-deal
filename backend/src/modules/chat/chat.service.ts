@@ -4,14 +4,16 @@ import {
   ForbiddenException,
   BadRequestException,
   Optional,
+  Logger,
   MessageEvent,
 } from '@nestjs/common';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { PrismaService } from '../../core/database/prisma.service';
 import { RedisService } from '../../core/redis/redis.service';
 
 @Injectable()
 export class ChatService {
+  private readonly logger = new Logger(ChatService.name);
   private readonly localStreams = new Map<string, Subject<MessageEvent>>();
 
   constructor(
@@ -237,6 +239,15 @@ export class ChatService {
     return message;
   }
 
+  private getOrCreateLocalStream(userId: string): Subject<MessageEvent> {
+    let subject = this.localStreams.get(userId);
+    if (!subject) {
+      subject = new Subject<MessageEvent>();
+      this.localStreams.set(userId, subject);
+    }
+    return subject;
+  }
+
   /**
    * Real-time Server-Sent Events (SSE) stream for incoming messages across all replicas via Redis Pub/Sub.
    */
@@ -246,28 +257,41 @@ export class ChatService {
 
     if (subscriber) {
       return new Observable<MessageEvent>((observer) => {
+        let localSub: Subscription | null = null;
         const onMessage = (incomingChannel: string, rawPayload: string) => {
-          if (incomingChannel === channel) {
+          if (incomingChannel === channel && !observer.closed) {
             observer.next({ data: rawPayload });
           }
         };
+        const onError = (err: Error) => {
+          this.logger.warn(
+            `Chat SSE Redis subscriber error for user ${userId}: ${err?.message || err}`,
+          );
+        };
         subscriber.on('message', onMessage);
-        subscriber.subscribe(channel).catch((err) => observer.error(err));
+        subscriber.on('error', onError);
+        subscriber.subscribe(channel).catch((err) => {
+          this.logger.warn(
+            `Chat SSE Redis subscribe failed for user ${userId}, falling back to local stream: ${err?.message || err}`,
+          );
+          if (!observer.closed) {
+            localSub = this.getOrCreateLocalStream(userId).subscribe({
+              next: (evt) => observer.next(evt),
+            });
+          }
+        });
 
         return () => {
+          localSub?.unsubscribe();
           subscriber.off('message', onMessage);
+          subscriber.off('error', onError);
           subscriber.unsubscribe(channel).catch(() => undefined);
           subscriber.quit().catch(() => undefined);
         };
       });
     }
 
-    let subject = this.localStreams.get(userId);
-    if (!subject) {
-      subject = new Subject<MessageEvent>();
-      this.localStreams.set(userId, subject);
-    }
-    return subject.asObservable();
+    return this.getOrCreateLocalStream(userId).asObservable();
   }
 
   private async publishChatEvent(

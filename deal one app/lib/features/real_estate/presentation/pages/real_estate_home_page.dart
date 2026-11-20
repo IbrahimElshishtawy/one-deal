@@ -10,6 +10,7 @@ import '../../../../core/marketplace/section_home_controller.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/routing/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../listings/presentation/widgets/floating_bottom_nav.dart';
 import '../../../search/data/dto/search_dto.dart';
 import '../../../search/presentation/providers/search_providers.dart';
@@ -80,6 +81,9 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
+    final chipRowHeight =
+        44.0 + ((context.effectiveTextScale - 1.0).clamp(0.0, 1.2) * 20.0);
     final state = ref.watch(
       sectionHomeControllerProvider(RealEstateHomePage.sectionSlug),
     );
@@ -137,10 +141,10 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
               if (feed != null)
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: 44,
+                    height: chipRowHeight,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: hPad),
                       children: [
                         _RealEstateChip(
                           label: isArabic ? 'الكل' : 'All',
@@ -174,7 +178,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
                             width: 40,
-                            height: 40,
+                            height: chipRowHeight,
                             decoration: BoxDecoration(
                               color: isDark
                                   ? AppColors.darkSurface
@@ -323,7 +327,7 @@ class _RealEstateChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: Container(
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
@@ -336,6 +340,8 @@ class _RealEstateChip extends StatelessWidget {
           ),
           child: Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 13,
               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../utils/responsive_utils.dart';
 
 /// Shared Search Bar matching all 7 Home designs.
 /// Includes search icon, section-tailored placeholder, and filter funnel button
-/// with active filter count badge.
+/// with active filter count badge. Responsive across 320dp..1024dp and 2.0x text scale.
 class DealOneSearchBar extends StatelessWidget {
   final String hintText;
   final VoidCallback onSearchTap;
@@ -22,8 +23,10 @@ class DealOneSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      padding: EdgeInsetsDirectional.fromSTEB(hPad, 10, hPad, 12),
       child: Material(
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -31,8 +34,8 @@ class DealOneSearchBar extends StatelessWidget {
           onTap: onSearchTap,
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            constraints: const BoxConstraints(minHeight: 50),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(

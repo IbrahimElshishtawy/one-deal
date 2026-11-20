@@ -22,22 +22,29 @@ export class PaymentReconciliationProcessor {
     );
 
     let count = 0;
-    if ((this.prisma as any).payment?.updateMany) {
-      const result = await (this.prisma as any).payment.updateMany({
-        where: {
-          status: 'pending',
-          createdAt: { lte: oneHourAgo },
-        },
-        data: {
-          status: 'failed',
-        },
-      });
-      count = result.count;
-    }
+    try {
+      if ((this.prisma as any).payment?.updateMany) {
+        const result = await (this.prisma as any).payment.updateMany({
+          where: {
+            status: 'pending',
+            createdAt: { lte: oneHourAgo },
+          },
+          data: {
+            status: 'failed',
+          },
+        });
+        count = result.count;
+      }
 
-    this.logger.log(
-      `✅ [Worker: PaymentReconciliation] Reconciled ${count} stale pending transactions to FAILED.`,
-    );
-    return { reconciledCount: count };
+      this.logger.log(
+        `✅ [Worker: PaymentReconciliation] Reconciled ${count} stale pending transactions to FAILED.`,
+      );
+      return { reconciledCount: count };
+    } catch (err: any) {
+      this.logger.error(
+        `❌ [Worker: PaymentReconciliation] Reconciliation failed: ${err?.message || err}`,
+      );
+      return { reconciledCount: 0 };
+    }
   }
 }

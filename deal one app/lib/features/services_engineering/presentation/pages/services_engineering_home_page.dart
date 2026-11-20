@@ -11,6 +11,7 @@ import '../../../../core/marketplace/section_home_controller.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/routing/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../listings/presentation/widgets/floating_bottom_nav.dart';
 import '../../../main_hub/presentation/widgets/main_hub_service_card.dart';
 import '../../../search/data/dto/search_dto.dart';
@@ -105,6 +106,7 @@ class _ServicesEngineeringHomePageState
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final state = ref.watch(
       sectionHomeControllerProvider(ServicesEngineeringHomePage.sectionSlug),
     );
@@ -179,7 +181,7 @@ class _ServicesEngineeringHomePageState
                   ),
                 ),
 
-                // 2. Service Categories 2-Column Rich Grid (`الأقسام والخدمات`)
+                // 2. Service Categories Responsive Rich Grid (`الأقسام والخدمات`)
                 SliverToBoxAdapter(
                   child: DealOneSectionHeader(
                     title: isArabic
@@ -191,14 +193,11 @@ class _ServicesEngineeringHomePageState
                 ),
                 if (subs.isNotEmpty)
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 10,
-                        crossAxisSpacing: 10,
-                        childAspectRatio: 2.55,
+                      gridDelegate: context.responsiveCategoryGridDelegate(
+                        baseMainAxisExtent: 64,
+                        extraExtentPerTextScaleUnit: 46,
                       ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final sub = subs[index];
@@ -222,7 +221,7 @@ class _ServicesEngineeringHomePageState
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
-                                vertical: 8,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(14),
@@ -240,7 +239,7 @@ class _ServicesEngineeringHomePageState
                                 children: [
                                   Icon(
                                     _iconForServiceSlug(sub.slug),
-                                    size: 22,
+                                    size: 20,
                                     color: selected
                                         ? Colors.white
                                         : (isDark
@@ -255,35 +254,39 @@ class _ServicesEngineeringHomePageState
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          isArabic ? sub.nameAr : sub.nameEn,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: selected
-                                                ? Colors.white
-                                                : (isDark
-                                                      ? AppColors
-                                                          .darkTextPrimary
-                                                      : DealOneDesignColors
-                                                          .navy),
+                                        Flexible(
+                                          child: Text(
+                                            isArabic ? sub.nameAr : sub.nameEn,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: selected
+                                                  ? Colors.white
+                                                  : (isDark
+                                                        ? AppColors
+                                                            .darkTextPrimary
+                                                        : DealOneDesignColors
+                                                            .navy),
+                                            ),
                                           ),
                                         ),
-                                        Text(
-                                          isArabic
-                                              ? '${sub.listingsCount} خدمة متاحة'
-                                              : '${sub.listingsCount} available',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 10.5,
-                                            color: selected
-                                                ? Colors.white70
-                                                : AppColors.textMutedOf(
-                                                    context,
-                                                  ),
+                                        Flexible(
+                                          child: Text(
+                                            isArabic
+                                                ? '${sub.listingsCount} خدمة متاحة'
+                                                : '${sub.listingsCount} available',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              color: selected
+                                                  ? Colors.white70
+                                                  : AppColors.textMutedOf(
+                                                      context,
+                                                    ),
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -298,7 +301,7 @@ class _ServicesEngineeringHomePageState
                     ),
                   ),
 
-                // 3. Most Requested Services 2-Column Grid
+                // 3. Most Requested Services Responsive Grid
                 SliverToBoxAdapter(
                   child: DealOneSectionHeader(
                     title: isArabic
@@ -331,14 +334,10 @@ class _ServicesEngineeringHomePageState
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.78,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
+                      gridDelegate: context.responsiveProductGridDelegate(
+                        baseMainAxisExtent: 238,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) =>

@@ -20,16 +20,23 @@ export class MediaCleanupProcessor {
       `🧹 [Worker: MediaCleanup] Scanning for unattached media older than ${twentyFourHoursAgo.toISOString()}...`,
     );
 
-    const result = await this.prisma.listingMedia.deleteMany({
-      where: {
-        processingStatus: 'pending',
-        createdAt: { lte: twentyFourHoursAgo },
-      },
-    });
+    try {
+      const result = await this.prisma.listingMedia.deleteMany({
+        where: {
+          processingStatus: 'pending',
+          createdAt: { lte: twentyFourHoursAgo },
+        },
+      });
 
-    this.logger.log(
-      `✅ [Worker: MediaCleanup] Removed ${result.count} orphaned media records.`,
-    );
-    return { purgedCount: result.count };
+      this.logger.log(
+        `✅ [Worker: MediaCleanup] Removed ${result.count} orphaned media records.`,
+      );
+      return { purgedCount: result.count };
+    } catch (err: any) {
+      this.logger.error(
+        `❌ [Worker: MediaCleanup] Cleanup failed: ${err?.message || err}`,
+      );
+      return { purgedCount: 0 };
+    }
   }
 }

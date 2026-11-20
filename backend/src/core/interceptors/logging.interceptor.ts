@@ -27,8 +27,8 @@ export class LoggingInterceptor implements NestInterceptor {
       rawReq?.requestId ||
       uuidv4();
 
-    // Ensure trace headers in response
-    if (res.header) {
+    // Ensure trace headers in response (guard against already-sent headers)
+    if (res.header && !res.sent && !(res.raw as any)?.headersSent) {
       res.header('x-trace-id', traceId);
       res.header('x-request-id', traceId);
     }

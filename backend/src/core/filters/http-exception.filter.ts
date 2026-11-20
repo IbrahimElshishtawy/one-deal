@@ -115,6 +115,24 @@ export class HttpExceptionFilter implements ExceptionFilter {
     } else if (
       typeof exception === 'object' &&
       exception !== null &&
+      (((exception as any).name &&
+        ['PrismaClientInitializationError', 'PrismaClientRustPanicError'].includes(
+          String((exception as any).name),
+        )) ||
+        (typeof (exception as any).code === 'string' &&
+          (exception as any).code.startsWith('P1')))
+    ) {
+      // Safe 503 Service Unavailable for database connectivity/initialization errors (never leaks host/credentials)
+      const prismaCode = (exception as any).code || (exception as any).name;
+      this.logger.error(
+        `[${traceId}] Database availability error (${prismaCode}): ${(exception as any)?.message}`,
+      );
+      status = HttpStatus.SERVICE_UNAVAILABLE;
+      code = 'SERVICE_UNAVAILABLE';
+      message = 'Database service temporarily unavailable. Please retry shortly.';
+    } else if (
+      typeof exception === 'object' &&
+      exception !== null &&
       typeof (exception as any).statusCode === 'number' &&
       (exception as any).statusCode >= 400 &&
       (exception as any).statusCode < 500
@@ -139,22 +157,28 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return;
     }
 
-    // Ensure trace headers on response
-    if (response.header) {
-      response.header('x-trace-id', traceId);
-      response.header('x-request-id', traceId);
+    // Ensure trace headers and send reply safely even if client socket closed mid-flight
+    try {
+      if (response.header) {
+        response.header('x-trace-id', traceId);
+        response.header('x-request-id', traceId);
+      }
+
+      const payload: StandardApiErrorResponse = {
+        success: false,
+        error: {
+          code,
+          message,
+          details: details ?? null,
+          trace_id: traceId,
+        },
+      };
+
+      response.status(status).send(payload);
+    } catch (sendErr: any) {
+      this.logger.warn(
+        `[${traceId}] Failed to send error response (client socket may have closed): ${sendErr?.message || sendErr}`,
+      );
     }
-
-    const payload: StandardApiErrorResponse = {
-      success: false,
-      error: {
-        code,
-        message,
-        details: details ?? null,
-        trace_id: traceId,
-      },
-    };
-
-    response.status(status).send(payload);
   }
 }

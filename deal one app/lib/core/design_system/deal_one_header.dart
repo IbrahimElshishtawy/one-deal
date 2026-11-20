@@ -8,10 +8,11 @@ import '../providers/app_settings_providers.dart';
 import '../providers/core_providers.dart';
 import '../routing/route_names.dart';
 import '../theme/app_colors.dart';
+import '../utils/responsive_utils.dart';
 
 /// Shared Deal One Marketplace Header matching the 7 Home designs.
-/// Shows user avatar + Deal One badge, name, interactive location selector,
-/// and quick action buttons (back to Main Hub when inside a section, favorites, language).
+/// Adapts smoothly across 320dp small phones, standard phones, tablets,
+/// RTL/LTR, and up to 2.0x text scaling without overflow.
 class DealOneHomeHeader extends ConsumerWidget {
   final bool showBackToHub;
   final String? sectionBadge;
@@ -28,6 +29,8 @@ class DealOneHomeHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isSmall = context.isSmallPhone;
+    final hPad = context.horizontalScreenPadding;
     final userName = ref.watch(activeUserDisplayNameProvider) ??
         (isArabic ? 'مصطفى هيكل' : 'Deal One User');
     final selectedGov = ref.watch(selectedGovernorateProvider);
@@ -40,7 +43,7 @@ class DealOneHomeHeader extends ConsumerWidget {
             : (isArabic ? 'الغربية - طنطا' : 'All Egypt');
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: EdgeInsetsDirectional.fromSTEB(hPad, 12, hPad, 4),
       child: Row(
         children: [
           // User Avatar + Deal One mini badge
@@ -48,24 +51,24 @@ class DealOneHomeHeader extends ConsumerWidget {
             clipBehavior: Clip.none,
             children: [
               CircleAvatar(
-                radius: 24,
+                radius: isSmall ? 20 : 24,
                 backgroundColor: DealOneDesignColors.navy,
                 child: Text(
                   userName.isNotEmpty ? userName.characters.first : 'D',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                    fontSize: isSmall ? 15 : 18,
                   ),
                 ),
               ),
               PositionedDirectional(
                 bottom: -4,
-                start: 4,
-                end: 4,
+                start: 2,
+                end: 2,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
+                    horizontal: 3,
                     vertical: 1.5,
                   ),
                   decoration: BoxDecoration(
@@ -81,8 +84,10 @@ class DealOneHomeHeader extends ConsumerWidget {
                   child: const Text(
                     'ديل ون',
                     textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.clip,
                     style: TextStyle(
-                      fontSize: 7.5,
+                      fontSize: 7,
                       fontWeight: FontWeight.w900,
                       color: DealOneDesignColors.navy,
                       height: 1.1,
@@ -92,22 +97,24 @@ class DealOneHomeHeader extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: isSmall ? 8 : 12),
 
           // Name + Location Selector (and optional section badge)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
                     Flexible(
+                      flex: 3,
                       child: Text(
                         userName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 15.5,
+                          fontSize: isSmall ? 14 : 15.5,
                           fontWeight: FontWeight.w800,
                           color: isDark
                               ? AppColors.darkTextPrimary
@@ -117,27 +124,30 @@ class DealOneHomeHeader extends ConsumerWidget {
                     ),
                     if (sectionBadge != null && sectionBadge!.isNotEmpty) ...[
                       const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: DealOneDesignColors.navy.withValues(
-                            alpha: isDark ? 0.45 : 0.1,
+                      Flexible(
+                        flex: 2,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
                           ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          sectionBadge!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? Colors.white
-                                : DealOneDesignColors.navy,
+                          decoration: BoxDecoration(
+                            color: DealOneDesignColors.navy.withValues(
+                              alpha: isDark ? 0.45 : 0.1,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            sectionBadge!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? Colors.white
+                                  : DealOneDesignColors.navy,
+                            ),
                           ),
                         ),
                       ),
@@ -183,21 +193,23 @@ class DealOneHomeHeader extends ConsumerWidget {
             ),
           ),
 
-          const SizedBox(width: 8),
+          SizedBox(width: isSmall ? 6 : 8),
 
           // Favorites / Basket button
           _DealOneSquareIconButton(
             icon: Icons.shopping_basket_outlined,
             tooltip: isArabic ? 'المفضلة والسلة' : 'Favorites & Basket',
+            size: isSmall ? 38 : 42,
             onTap: () => context.push(RouteNames.favorites),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: isSmall ? 6 : 8),
 
           // Back to Main Hub (on Section Homes) OR Language/Menu toggle (on Main Hub)
           if (showBackToHub)
             _DealOneSquareIconButton(
-              icon: Icons.arrow_forward_rounded,
+              icon: Icons.arrow_back_rounded,
               tooltip: isArabic ? 'العودة للرئيسية' : 'Back to Main Hub',
+              size: isSmall ? 38 : 42,
               onTap: onBackPressed ??
                   () {
                     if (context.canPop()) {
@@ -211,6 +223,7 @@ class DealOneHomeHeader extends ConsumerWidget {
             _DealOneSquareIconButton(
               icon: Icons.menu_rounded,
               tooltip: isArabic ? 'تغيير اللغة' : 'Switch Language',
+              size: isSmall ? 38 : 42,
               onTap: () {
                 final current = ref.read(appLocaleProvider);
                 ref.read(appLocaleProvider.notifier).setLocale(
@@ -230,11 +243,13 @@ class _DealOneSquareIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
   final VoidCallback onTap;
+  final double size;
 
   const _DealOneSquareIconButton({
     required this.icon,
     required this.tooltip,
     required this.onTap,
+    this.size = 42,
   });
 
   @override
@@ -249,8 +264,8 @@ class _DealOneSquareIconButton extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            width: 42,
-            height: 42,
+            width: size,
+            height: size,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(

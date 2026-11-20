@@ -4,13 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/design_system/deal_one_section_chrome.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../favorites/presentation/providers/favorites_providers.dart';
 import '../../../listings/domain/entities/listing_entity.dart';
 
 /// Full-width Property Card matching `Home 2 - Real Estate and Land.png`.
-/// Displays sale/rent badge, photo counter, favorite toggle, title, location,
-/// authoritative live price, bordered specs pills (rooms, finishing, floor,
-/// area, bathrooms), and full-width dark navy `التفاصيل` CTA.
+/// Adapts across 320dp..1024dp viewports, RTL/LTR, and up to 2.0x text scale.
 class RealEstatePropertyCard extends ConsumerWidget {
   final ListingItem item;
 
@@ -20,6 +19,7 @@ class RealEstatePropertyCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final favIds = ref.watch(favoriteIdsProvider);
     final isFav = favIds.contains(item.id);
 
@@ -53,7 +53,7 @@ class RealEstatePropertyCard extends ConsumerWidget {
     final mediaCount = item.media.isEmpty ? 1 : item.media.length;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: hPad, vertical: 8),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -116,7 +116,6 @@ class RealEstatePropertyCard extends ConsumerWidget {
                             color: DealOneDesignColors.navy,
                           ),
                         ),
-                      // Favorite Heart top-start (in RTL: top-right)
                       PositionedDirectional(
                         top: 10,
                         start: 10,
@@ -141,7 +140,6 @@ class RealEstatePropertyCard extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      // Sale / Rent badge top-end (in RTL: top-left)
                       PositionedDirectional(
                         top: 10,
                         end: 10,
@@ -166,7 +164,6 @@ class RealEstatePropertyCard extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      // Media count badge bottom-start
                       PositionedDirectional(
                         bottom: 10,
                         start: 10,
@@ -280,14 +277,18 @@ class RealEstatePropertyCard extends ConsumerWidget {
                               : DealOneDesignColors.navy,
                         ),
                         const SizedBox(width: 5),
-                        Text(
-                          spec.$2,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? AppColors.darkTextPrimary
-                                : DealOneDesignColors.navy,
+                        Flexible(
+                          child: Text(
+                            spec.$2,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : DealOneDesignColors.navy,
+                            ),
                           ),
                         ),
                       ],
@@ -302,23 +303,31 @@ class RealEstatePropertyCard extends ConsumerWidget {
             // Full-width Details CTA Button
             SizedBox(
               width: double.infinity,
-              height: 44,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: DealOneDesignColors.navy,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 44),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: DealOneDesignColors.navy,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                onPressed: () => context.push('/listings/${item.id}'),
-                icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                label: Text(
-                  isArabic ? 'التفاصيل' : 'View Details',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
+                  onPressed: () => context.push('/listings/${item.id}'),
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  label: Text(
+                    isArabic ? 'التفاصيل' : 'View Details',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),

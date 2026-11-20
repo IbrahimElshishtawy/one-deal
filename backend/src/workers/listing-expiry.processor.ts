@@ -24,19 +24,26 @@ export class ListingExpiryProcessor {
       `🔍 [Worker: ListingExpiry] Scanning for listings expired before ${now.toISOString()}...`,
     );
 
-    const result = await this.prisma.listing.updateMany({
-      where: {
-        publicationStatus: 'published',
-        expiresAt: { lte: now },
-      },
-      data: {
-        publicationStatus: 'expired',
-      },
-    });
+    try {
+      const result = await this.prisma.listing.updateMany({
+        where: {
+          publicationStatus: 'published',
+          expiresAt: { lte: now },
+        },
+        data: {
+          publicationStatus: 'expired',
+        },
+      });
 
-    this.logger.log(
-      `✅ [Worker: ListingExpiry] Marked ${result.count} listings as EXPIRED.`,
-    );
-    return { expiredCount: result.count };
+      this.logger.log(
+        `✅ [Worker: ListingExpiry] Marked ${result.count} listings as EXPIRED.`,
+      );
+      return { expiredCount: result.count };
+    } catch (err: any) {
+      this.logger.error(
+        `❌ [Worker: ListingExpiry] Sweep failed: ${err?.message || err}`,
+      );
+      return { expiredCount: 0 };
+    }
   }
 }

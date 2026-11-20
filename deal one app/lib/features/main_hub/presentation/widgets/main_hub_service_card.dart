@@ -5,8 +5,9 @@ import '../../../../core/design_system/deal_one_section_chrome.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../listings/domain/entities/listing_entity.dart';
 
-/// 2-column Popular Service / Listing Card matching `Home 1 - Main Hub.png`
+/// Popular Service / Listing Card matching `Home 1 - Main Hub.png`
 /// and `Home 4 - Services and Engineering.png`.
+/// Uses proportional flex layout so it never overflows on 320dp or 2.0x text scale.
 class MainHubPopularCard extends StatelessWidget {
   final ListingItem item;
 
@@ -45,117 +46,126 @@ class MainHubPopularCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Rounded image with top navy category pill
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    height: 104,
-                    width: double.infinity,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (item.primaryImageUrl != null &&
-                            item.primaryImageUrl!.isNotEmpty)
-                          Image.network(
-                            item.primaryImageUrl!,
-                            fit: BoxFit.cover,
-                            cacheWidth: 420,
-                            errorBuilder: (_, _, _) => Container(
+              // Proportional rounded image with top navy category pill
+              Expanded(
+                flex: 10,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (item.primaryImageUrl != null &&
+                              item.primaryImageUrl!.isNotEmpty)
+                            Image.network(
+                              item.primaryImageUrl!,
+                              fit: BoxFit.cover,
+                              cacheWidth: 420,
+                              errorBuilder: (_, _, _) => Container(
+                                color: DealOneDesignColors.navy.withValues(
+                                  alpha: 0.1,
+                                ),
+                                child: const Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: DealOneDesignColors.navy,
+                                ),
+                              ),
+                            )
+                          else
+                            Container(
                               color: DealOneDesignColors.navy.withValues(
                                 alpha: 0.1,
                               ),
                               child: const Icon(
-                                Icons.image_not_supported_outlined,
+                                Icons.storefront_outlined,
                                 color: DealOneDesignColors.navy,
                               ),
                             ),
-                          )
-                        else
-                          Container(
-                            color: DealOneDesignColors.navy.withValues(
-                              alpha: 0.1,
-                            ),
-                            child: const Icon(
-                              Icons.storefront_outlined,
-                              color: DealOneDesignColors.navy,
-                            ),
-                          ),
-                        if (badgeText.isNotEmpty)
-                          PositionedDirectional(
-                            top: 6,
-                            start: 6,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: DealOneDesignColors.navy.withValues(
-                                  alpha: 0.9,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                badgeText,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
+                          if (badgeText.isNotEmpty)
+                            PositionedDirectional(
+                              top: 6,
+                              start: 6,
+                              end: 6,
+                              child: Align(
+                                alignment: AlignmentDirectional.topStart,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: DealOneDesignColors.navy.withValues(
+                                      alpha: 0.9,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    badgeText,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
               Expanded(
+                flex: 11,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        item.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : DealOneDesignColors.navy,
+                      Flexible(
+                        child: Text(
+                          item.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : DealOneDesignColors.navy,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.description.isNotEmpty
-                            ? item.description
-                            : item.localizedLocation(isArabic ? 'ar' : 'en'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textMutedOf(context),
+                      Flexible(
+                        child: Text(
+                          item.description.isNotEmpty
+                              ? item.description
+                              : item.localizedLocation(isArabic ? 'ar' : 'en'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textMutedOf(context),
+                          ),
                         ),
                       ),
-                      const Spacer(),
                       DealOneLivePriceText(
                         listingId: item.id,
                         cachedPrice: item.price,
                         currency: item.currency,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w900,
                           color: DealOneDesignColors.amberPrice,
                         ),
                       ),
-                      const SizedBox(height: 4),
                       Row(
                         children: [
                           const Icon(
@@ -164,11 +174,15 @@ class MainHubPopularCard extends StatelessWidget {
                             color: Color(0xFFF59E0B),
                           ),
                           const SizedBox(width: 2),
-                          Text(
-                            item.isVerified ? '4.9' : '4.7',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                          Flexible(
+                            child: Text(
+                              item.isVerified ? '4.9' : '4.7',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                           const Spacer(),
@@ -178,11 +192,15 @@ class MainHubPopularCard extends StatelessWidget {
                             color: AppColors.textMutedOf(context),
                           ),
                           const SizedBox(width: 3),
-                          Text(
-                            '${item.viewsCount}',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: AppColors.textMutedOf(context),
+                          Flexible(
+                            child: Text(
+                              '${item.viewsCount}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: AppColors.textMutedOf(context),
+                              ),
                             ),
                           ),
                         ],

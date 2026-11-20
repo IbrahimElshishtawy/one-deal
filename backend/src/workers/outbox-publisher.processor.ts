@@ -28,69 +28,76 @@ export class OutboxPublisherProcessor {
       return { publishedCount: 0, failedCount: 0 };
     }
 
-    const pendingEvents = await this.prisma.outboxEvent.findMany({
-      where: { status: 'PENDING' },
-      orderBy: { createdAt: 'asc' },
-      take: batchSize,
-    });
-
-    if (pendingEvents.length === 0) {
-      return { publishedCount: 0, failedCount: 0 };
-    }
-
-    let publishedCount = 0;
-    let failedCount = 0;
-
-    for (const evt of pendingEvents) {
-      // Atomic claim to prevent double delivery across concurrent workers
-      const claim = await this.prisma.outboxEvent.updateMany({
-        where: { id: evt.id, status: 'PENDING' },
-        data: { status: 'PROCESSING' },
+    try {
+      const pendingEvents = await this.prisma.outboxEvent.findMany({
+        where: { status: 'PENDING' },
+        orderBy: { createdAt: 'asc' },
+        take: batchSize,
       });
 
-      if (claim.count === 0) {
-        continue;
+      if (pendingEvents.length === 0) {
+        return { publishedCount: 0, failedCount: 0 };
       }
 
-      try {
-        await this.dispatchEvent(
-          evt.eventType,
-          evt.payload as Record<string, any>,
-        );
-        await this.prisma.outboxEvent.update({
-          where: { id: evt.id },
-          data: {
-            status: 'PUBLISHED',
-            processedAt: new Date(),
-            error: null,
-          },
+      let publishedCount = 0;
+      let failedCount = 0;
+
+      for (const evt of pendingEvents) {
+        // Atomic claim to prevent double delivery across concurrent workers
+        const claim = await this.prisma.outboxEvent.updateMany({
+          where: { id: evt.id, status: 'PENDING' },
+          data: { status: 'PROCESSING' },
         });
-        publishedCount += 1;
-      } catch (err: any) {
-        failedCount += 1;
-        await this.prisma.outboxEvent.update({
-          where: { id: evt.id },
-          data: {
-            status: 'FAILED',
-            error: String(
-              err?.message || 'Unknown outbox dispatch error',
-            ).slice(0, 1000),
-            processedAt: new Date(),
-          },
-        });
-        this.logger.error(
-          `❌ [Outbox] Failed to publish event ${evt.id} (${evt.eventType}): ${err?.message}`,
+
+        if (claim.count === 0) {
+          continue;
+        }
+
+        try {
+          await this.dispatchEvent(
+            evt.eventType,
+            evt.payload as Record<string, any>,
+          );
+          await this.prisma.outboxEvent.update({
+            where: { id: evt.id },
+            data: {
+              status: 'PUBLISHED',
+              processedAt: new Date(),
+              error: null,
+            },
+          });
+          publishedCount += 1;
+        } catch (err: any) {
+          failedCount += 1;
+          await this.prisma.outboxEvent
+            .update({
+              where: { id: evt.id },
+              data: {
+                status: 'FAILED',
+                error: String(
+                  err?.message || 'Unknown outbox dispatch error',
+                ).slice(0, 1000),
+                processedAt: new Date(),
+              },
+            })
+            .catch(() => undefined);
+          this.logger.error(
+            `❌ [Outbox] Failed to publish event ${evt.id} (${evt.eventType}): ${err?.message}`,
+          );
+        }
+      }
+
+      if (publishedCount > 0 || failedCount > 0) {
+        this.logger.log(
+          `📤 [Worker: Outbox] Published=${publishedCount}, Failed=${failedCount}`,
         );
       }
-    }
 
-    if (publishedCount > 0 || failedCount > 0) {
-      this.logger.log(
-        `📤 [Worker: Outbox] Published=${publishedCount}, Failed=${failedCount}`,
-      );
+      return { publishedCount, failedCount };
+    } catch (err: any) {
+      this.logger.error(`[Outbox] Cycle error: ${err?.message || err}`);
+      return { publishedCount: 0, failedCount: 0 };
     }
-
-    return { publishedCount, failedCount };
   }
 
   private async dispatchEvent(

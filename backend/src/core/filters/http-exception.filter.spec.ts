@@ -119,4 +119,58 @@ describe('HttpExceptionFilter', () => {
       }),
     );
   });
+
+  it('should map Prisma P1001 availability error to 503 SERVICE_UNAVAILABLE safely', () => {
+    const mockSend = jest.fn();
+    const mockStatus = jest.fn().mockReturnValue({ send: mockSend });
+    const mockHeader = jest.fn();
+
+    const mockHost: any = {
+      switchToHttp: () => ({
+        getResponse: () => ({ status: mockStatus, header: mockHeader }),
+        getRequest: () => ({ headers: { 'x-trace-id': 'db-down-1' }, raw: {} }),
+      }),
+    };
+
+    filter.catch({ code: 'P1001', message: 'Can not reach db at secret-host' }, mockHost);
+
+    expect(mockStatus).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({
+          code: 'SERVICE_UNAVAILABLE',
+          message: 'Database service temporarily unavailable. Please retry shortly.',
+          trace_id: 'db-down-1',
+        }),
+      }),
+    );
+  });
+
+  it('should skip reply when headers were already sent and absorb socket-closed send errors', () => {
+    const mockSendAlreadySent = jest.fn();
+    const hostSent: any = {
+      switchToHttp: () => ({
+        getResponse: () => ({ sent: true, status: jest.fn().mockReturnValue({ send: mockSendAlreadySent }) }),
+        getRequest: () => ({ headers: {}, raw: {} }),
+      }),
+    };
+    expect(() => filter.catch(new Error('late error'), hostSent)).not.toThrow();
+    expect(mockSendAlreadySent).not.toHaveBeenCalled();
+
+    const hostClosedSocket: any = {
+      switchToHttp: () => ({
+        getResponse: () => ({
+          header: jest.fn(),
+          status: jest.fn().mockReturnValue({
+            send: jest.fn(() => {
+              throw new Error('EPIPE');
+            }),
+          }),
+        }),
+        getRequest: () => ({ headers: {}, raw: {} }),
+      }),
+    };
+    expect(() => filter.catch(new Error('socket dropped'), hostClosedSocket)).not.toThrow();
+  });
 });

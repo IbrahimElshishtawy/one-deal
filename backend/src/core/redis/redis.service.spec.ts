@@ -173,4 +173,26 @@ describe('RedisService', () => {
     expect(first).toBe(true);
     expect(second).toBe(false);
   });
+
+  it('should attach error listener on duplicated Pub/Sub subscriber and handle non-JSON fallback safely', async () => {
+    const { EventEmitter } = await import('events');
+    const fakeSubscriber = new EventEmitter();
+    (service as any).cacheClient = {
+      duplicate: jest.fn().mockReturnValue(fakeSubscriber),
+      quit: jest.fn().mockResolvedValue('OK'),
+      disconnect: jest.fn(),
+    };
+    (service as any).isCacheHealthy = true;
+
+    const sub = service.createSubscriber();
+    expect(sub).toBe(fakeSubscriber);
+    expect(fakeSubscriber.listenerCount('error')).toBeGreaterThan(0);
+    // Emitting error must NOT crash the process with unhandled error event
+    expect(() => fakeSubscriber.emit('error', new Error('Redis reset'))).not.toThrow();
+
+    // Non-JSON raw fallback entry must not throw SyntaxError
+    (service as any).inMemoryFallback.set('raw_lock_key', { value: 'raw-uuid-token' });
+    const rawVal = await service.get<string>('raw_lock_key');
+    expect(rawVal).toBe('raw-uuid-token');
+  });
 });

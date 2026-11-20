@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/marketplace/section_home_models.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 /// Verified Service Provider Card matching `الشركاء والتوكيلات المعتمدة`
 /// in `Home 4 - Services and Engineering.png`.
@@ -19,10 +20,12 @@ class ServicesProviderTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isSmall = context.isSmallPhone;
+    final hPad = context.horizontalScreenPadding;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.symmetric(horizontal: hPad, vertical: 5),
+      padding: EdgeInsets.all(isSmall ? 10 : 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -44,7 +47,7 @@ class ServicesProviderTile extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(
-            radius: 24,
+            radius: isSmall ? 20 : 24,
             backgroundColor: DealOneDesignColors.navy,
             backgroundImage: (provider.logoUrl != null &&
                     provider.logoUrl!.isNotEmpty)
@@ -62,7 +65,7 @@ class ServicesProviderTile extends StatelessWidget {
                   )
                 : null,
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: isSmall ? 8 : 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,7 +78,7 @@ class ServicesProviderTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.5,
+                          fontSize: isSmall ? 12.5 : 13.5,
                           fontWeight: FontWeight.w800,
                           color: isDark
                               ? AppColors.darkTextPrimary
@@ -115,8 +118,8 @@ class ServicesProviderTile extends StatelessWidget {
                   backgroundColor: DealOneDesignColors.navy,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmall ? 8 : 10,
                     vertical: 6,
                   ),
                   minimumSize: Size.zero,
@@ -126,11 +129,13 @@ class ServicesProviderTile extends StatelessWidget {
                   ),
                 ),
                 onPressed: onBookTap,
-                icon: const Icon(Icons.calendar_today_outlined, size: 13),
+                icon: const Icon(Icons.calendar_today_outlined, size: 12),
                 label: Text(
                   isArabic ? 'احجز الآن' : 'Book Now',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

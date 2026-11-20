@@ -11,6 +11,7 @@ import '../../../../core/marketplace/section_home_controller.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/routing/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../listings/presentation/widgets/floating_bottom_nav.dart';
 import '../../../search/data/dto/search_dto.dart';
 import '../../../search/presentation/providers/search_providers.dart';
@@ -88,6 +89,7 @@ class _ConstructionElectricalHomePageState
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final state = ref.watch(
       sectionHomeControllerProvider(ConstructionElectricalHomePage.sectionSlug),
     );
@@ -101,7 +103,9 @@ class _ConstructionElectricalHomePageState
     final allSubs = feed?.section.subcategories ?? const [];
     final segmentSubs = _activeSegment == 0
         ? allSubs
-            .where((c) => !c.slug.contains('electr') && !c.slug.contains('plumb'))
+            .where(
+              (c) => !c.slug.contains('electr') && !c.slug.contains('plumb'),
+            )
             .toList()
         : allSubs
             .where((c) => c.slug.contains('electr') || c.slug.contains('plumb'))
@@ -185,7 +189,9 @@ class _ConstructionElectricalHomePageState
                             .firstOrNull;
                         if (elecSub != null) {
                           controller.applyFilters(
-                            state.filters.copyWith(subcategorySlug: elecSub.slug),
+                            state.filters.copyWith(
+                              subcategorySlug: elecSub.slug,
+                            ),
                           );
                         }
                       } else {
@@ -197,17 +203,14 @@ class _ConstructionElectricalHomePageState
                   ),
                 ),
 
-                // 2-Column Subcategories Grid
+                // Responsive Subcategories Grid
                 if (visibleSubs.isNotEmpty)
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 10,
-                        childAspectRatio: 3.3,
+                      gridDelegate: context.responsiveCategoryGridDelegate(
+                        baseMainAxisExtent: 48,
+                        extraExtentPerTextScaleUnit: 28,
                       ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final sub = visibleSubs[index];
@@ -314,14 +317,10 @@ class _ConstructionElectricalHomePageState
                   )
                 else ...[
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.71,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
+                      gridDelegate: context.responsiveProductGridDelegate(
+                        baseMainAxisExtent: 254,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) => ConstructionMaterialCard(
@@ -354,7 +353,7 @@ class _ConstructionElectricalHomePageState
                 // Bottom Contractor Bulk Order RFQ Banner (matching PNG)
                 SliverToBoxAdapter(
                   child: Container(
-                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    margin: EdgeInsetsDirectional.fromSTEB(hPad, 8, hPad, 8),
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       color: DealOneDesignColors.navy,
@@ -387,24 +386,35 @@ class _ConstructionElectricalHomePageState
                         const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
-                          height: 42,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: DealOneDesignColors.navy,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 42),
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: DealOneDesignColors.navy,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
-                            ),
-                            onPressed: _openSearch,
-                            icon: const Icon(Icons.description_outlined, size: 18),
-                            label: Text(
-                              isArabic
-                                  ? 'اطلب مقايسة مخصصة'
-                                  : 'Request Custom Quote',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13.5,
+                              onPressed: _openSearch,
+                              icon: const Icon(
+                                Icons.description_outlined,
+                                size: 18,
+                              ),
+                              label: Text(
+                                isArabic
+                                    ? 'اطلب مقايسة مخصصة'
+                                    : 'Request Custom Quote',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13.5,
+                                ),
                               ),
                             ),
                           ),

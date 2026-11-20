@@ -6,6 +6,7 @@ import '../errors/error_presenter.dart';
 import '../marketplace/section_home_models.dart';
 import '../providers/core_providers.dart';
 import '../theme/app_colors.dart';
+import '../utils/responsive_utils.dart';
 
 /// Formats an EGP price cleanly with thousands separators (e.g. `3,200,000 ج.م`).
 String formatDealOnePrice(
@@ -79,8 +80,9 @@ class DealOneOfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
+    final hPad = context.horizontalScreenPadding;
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      margin: EdgeInsetsDirectional.fromSTEB(hPad, 4, hPad, 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: DealOneDesignColors.amberPrice.withValues(alpha: 0.14),
@@ -131,6 +133,7 @@ class DealOneOfflineBanner extends StatelessWidget {
 }
 
 /// Section title + optional leading icon + `عرض الكل` action link.
+/// Uses Expanded/Flexible so long titles never overflow on 320dp or 2.0x text scale.
 class DealOneSectionHeader extends StatelessWidget {
   final String title;
   final String? actionLabel;
@@ -148,35 +151,41 @@ class DealOneSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
+      padding: EdgeInsetsDirectional.fromSTEB(hPad, 18, hPad, 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (trailingIcon != null) ...[
-                Icon(
-                  trailingIcon,
-                  size: 20,
-                  color: isDark ? Colors.white : DealOneDesignColors.navy,
+          Expanded(
+            child: Row(
+              children: [
+                if (trailingIcon != null) ...[
+                  Icon(
+                    trailingIcon,
+                    size: 20,
+                    color: isDark ? Colors.white : DealOneDesignColors.navy,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : DealOneDesignColors.navy,
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 6),
               ],
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16.5,
-                  fontWeight: FontWeight.w800,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : DealOneDesignColors.navy,
-                ),
-              ),
-            ],
+            ),
           ),
-          if (actionLabel != null && onActionTap != null)
+          if (actionLabel != null && onActionTap != null) ...[
+            const SizedBox(width: 8),
             TextButton(
               onPressed: onActionTap,
               style: TextButton.styleFrom(
@@ -186,6 +195,8 @@ class DealOneSectionHeader extends StatelessWidget {
               ),
               child: Text(
                 actionLabel!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
@@ -193,6 +204,7 @@ class DealOneSectionHeader extends StatelessWidget {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -218,8 +230,9 @@ class DealOneSegmentedToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: EdgeInsets.symmetric(horizontal: hPad, vertical: 10),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
@@ -262,7 +275,7 @@ class DealOneSegmentedToggle extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12.5,
               fontWeight: active ? FontWeight.w800 : FontWeight.w600,
               color: active
                   ? Colors.white
@@ -285,11 +298,13 @@ class DealOneLivePreviewsStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
     final isArabic = Directionality.of(context) == TextDirection.rtl;
+    final hPad = context.horizontalScreenPadding;
+    final cardWidth = context.isSmallPhone ? 142.0 : 156.0;
 
     return SizedBox(
-      height: 224,
+      height: context.responsiveLivePreviewHeight,
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: hPad),
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
         separatorBuilder: (_, _) => const SizedBox(width: 10),
@@ -300,7 +315,7 @@ class DealOneLivePreviewsStrip extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: SizedBox(
-                width: 152,
+                width: cardWidth,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -333,6 +348,7 @@ class DealOneLivePreviewsStrip extends StatelessWidget {
                       padding: const EdgeInsets.all(10),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
                             children: [
@@ -367,63 +383,76 @@ class DealOneLivePreviewsStrip extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.55),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
+                          Flexible(
+                            child: Column(
                               mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(
-                                  Icons.photo_camera_outlined,
-                                  size: 12,
-                                  color: Colors.white,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.55),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.photo_camera_outlined,
+                                        size: 12,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          isArabic
+                                              ? '${item.mediaCount} صور'
+                                              : '${item.mediaCount} photos',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(height: 6),
+                                Flexible(
+                                  child: Text(
+                                    item.title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.25,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
                                 Text(
-                                  isArabic
-                                      ? '${item.mediaCount} صور'
-                                      : '${item.mediaCount} photos',
+                                  formatDealOnePrice(
+                                    item.price,
+                                    currency: item.currency,
+                                    isArabic: isArabic,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w900,
                                   ),
                                 ),
                               ],
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            item.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              height: 1.25,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            formatDealOnePrice(
-                              item.price,
-                              currency: item.currency,
-                              isArabic: isArabic,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w900,
                             ),
                           ),
                         ],
@@ -448,9 +477,10 @@ class DealOneSectionSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     return Container(
       height: height,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: EdgeInsets.symmetric(horizontal: hPad, vertical: 6),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.darkSurfaceElevated
@@ -476,8 +506,9 @@ class DealOneSectionEmptyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: hPad, vertical: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
@@ -531,10 +562,11 @@ class DealOneSectionErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hPad = context.horizontalScreenPadding;
     final presented = ErrorPresenter.present(error, isArabic: isArabic);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: hPad, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
