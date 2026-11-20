@@ -16,6 +16,10 @@ import {
 import { PrismaService } from '../../core/database/prisma.service';
 import { RedisService } from '../../core/redis/redis.service';
 import { SecurityAuditService } from '../../core/security/security-audit.service';
+import {
+  sanitizeAvatarUrl,
+  sanitizeMediaList,
+} from '../../core/utils/media-url.util';
 import { normalizeArabicText } from '../search/arabic-normalizer';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
@@ -550,6 +554,10 @@ export class ListingsService {
     const now = new Date();
     const mappedData = results.map((item) => {
       const attrs = (item.attributes as any) || {};
+      const catSlug = item.category?.slug ?? null;
+      const cleanMedia = sanitizeMediaList(item.media, catSlug);
+      const primaryUrl = cleanMedia[0]?.publicUrl ?? null;
+      const thumbUrl = cleanMedia[0]?.thumbnailUrl ?? primaryUrl;
       return {
         id: item.id,
         title: item.title,
@@ -570,10 +578,10 @@ export class ListingsService {
         cityName: item.area.city.nameAr,
         areaName: item.area.nameAr,
         location: `${item.area.city.nameAr}، ${item.area.city.governorate.nameAr}`,
-        primaryImageUrl: item.media[0]?.publicUrl ?? null,
-        imageUrl: item.media[0]?.publicUrl ?? null,
-        thumbnail: item.media[0]?.thumbnailUrl ?? item.media[0]?.publicUrl ?? null,
-        media: item.media,
+        primaryImageUrl: primaryUrl,
+        imageUrl: primaryUrl,
+        thumbnail: thumbUrl,
+        media: cleanMedia,
         attributes: attrs,
         viewsCount: item.viewsCount,
         favoritesCount: (item as any)._count?.favorites ?? 0,
@@ -583,7 +591,7 @@ export class ListingsService {
           displayName: item.account.displayName,
           slug: item.account.slug,
           accountType: item.account.accountType,
-          logoUrl: item.account.logoUrl,
+          logoUrl: sanitizeAvatarUrl(item.account.logoUrl, catSlug),
           verificationStatus: item.account.verificationStatus,
         },
         sellerName: item.account.displayName,
@@ -658,8 +666,11 @@ export class ListingsService {
       .catch(() => {});
 
     const attrs = (listing.attributes as any) || {};
+    const catSlug = listing.category?.slug ?? null;
+    const cleanMedia = sanitizeMediaList(listing.media, catSlug);
     return {
       ...listing,
+      media: cleanMedia,
       price: Number(listing.price),
       condition: attrs.condition || 'USED',
       isFeatured: Boolean(
@@ -675,7 +686,7 @@ export class ListingsService {
       sellerName: listing.account?.displayName ?? '',
       sellerType: listing.account?.accountType ?? 'individual',
       isVerified: listing.account?.verificationStatus === 'approved',
-      primaryImageUrl: listing.media?.[0]?.publicUrl ?? null,
+      primaryImageUrl: cleanMedia[0]?.publicUrl ?? null,
     };
   }
 

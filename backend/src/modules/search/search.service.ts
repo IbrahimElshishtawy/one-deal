@@ -1,5 +1,9 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
+import {
+  sanitizeAvatarUrl,
+  sanitizeMediaList,
+} from '../../core/utils/media-url.util';
 import { SearchQueryDto } from './dto/search-query.dto';
 import {
   generateArabicSearchVariants,
@@ -319,45 +323,51 @@ export class SearchService {
 
     const now = new Date();
     return {
-      data: items.map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        price: Number(item.price),
-        currency: item.currency || 'EGP',
-        condition: (item.attributes as any)?.condition || 'USED',
-        listingKind: item.listingKind,
-        categoryId: item.categoryId,
-        category: item.category,
-        governorateName: item.area?.city?.governorate?.nameAr ?? '',
-        cityName: item.area?.city?.nameAr ?? '',
-        areaName: item.area?.nameAr ?? '',
-        location: item.area?.city
-          ? `${item.area.city.nameAr}، ${item.area.city.governorate.nameAr}`
-          : '',
-        primaryImageUrl: item.media?.[0]?.publicUrl ?? null,
-        imageUrl: item.media?.[0]?.publicUrl ?? null,
-        media: item.media ?? [],
-        attributes: (item.attributes as any) || {},
-        viewsCount: item.viewsCount,
-        isFeatured: Boolean(item.promotedUntil && item.promotedUntil > now),
-        account: item.account
-          ? {
-              id: item.account.id,
-              displayName: item.account.displayName,
-              accountType: item.account.accountType,
-              logoUrl: item.account.logoUrl,
-              verificationStatus: item.account.verificationStatus,
-            }
-          : null,
-        sellerName: item.account?.displayName ?? '',
-        sellerPhone: null,
-        sellerType: item.account?.accountType ?? 'individual',
-        isVerified: item.account?.verificationStatus === 'approved',
-        isDemo: item.isDemo,
-        refreshedAt: item.refreshedAt,
-        createdAt: item.createdAt,
-      })),
+      data: items.map((item) => {
+        const catSlug = item.category?.slug ?? null;
+        const cleanMedia = sanitizeMediaList(item.media, catSlug);
+        const primaryUrl = cleanMedia[0]?.publicUrl ?? null;
+        return {
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          price: Number(item.price),
+          currency: item.currency || 'EGP',
+          condition: (item.attributes as any)?.condition || 'USED',
+          listingKind: item.listingKind,
+          categoryId: item.categoryId,
+          category: item.category,
+          governorateName: item.area?.city?.governorate?.nameAr ?? '',
+          cityName: item.area?.city?.nameAr ?? '',
+          areaName: item.area?.nameAr ?? '',
+          location: item.area?.city
+            ? `${item.area.city.nameAr}، ${item.area.city.governorate.nameAr}`
+            : '',
+          primaryImageUrl: primaryUrl,
+          imageUrl: primaryUrl,
+          thumbnail: cleanMedia[0]?.thumbnailUrl ?? primaryUrl,
+          media: cleanMedia,
+          attributes: (item.attributes as any) || {},
+          viewsCount: item.viewsCount,
+          isFeatured: Boolean(item.promotedUntil && item.promotedUntil > now),
+          account: item.account
+            ? {
+                id: item.account.id,
+                displayName: item.account.displayName,
+                accountType: item.account.accountType,
+                logoUrl: sanitizeAvatarUrl(item.account.logoUrl, catSlug),
+                verificationStatus: item.account.verificationStatus,
+              }
+            : null,
+          sellerName: item.account?.displayName ?? '',
+          sellerPhone: null,
+          sellerType: item.account?.accountType ?? 'individual',
+          isVerified: item.account?.verificationStatus === 'approved',
+          isDemo: item.isDemo,
+          refreshedAt: item.refreshedAt,
+          createdAt: item.createdAt,
+        };
+      }),
       meta: {
         total,
         page,

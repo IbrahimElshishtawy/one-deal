@@ -254,77 +254,79 @@ class _MainHubPageState extends ConsumerState<MainHubPage> {
               ],
 
               // 9. Latest Listings with Cursor Pagination (Independent Provider)
-              SliverToBoxAdapter(
-                child: DealOneSectionHeader(
-                  title: isArabic ? 'أحدث الإعلانات' : 'Latest Listings',
-                  actionLabel: isArabic ? 'تصفية' : 'Filter',
-                  onActionTap: () => _openSearch(openFilters: true),
-                ),
-              ),
-              if (latestState.isLoadingInitial)
-                const SliverToBoxAdapter(
-                  child: DealOneSectionSkeleton(height: 240),
-                )
-              else if (latestState.error != null && latestState.items.isEmpty)
+              if (feed != null || hubState.error == null) ...[
                 SliverToBoxAdapter(
-                  child: DealOneSectionErrorCard(
-                    error: latestState.error!,
-                    onRetry: () => ref
-                        .read(paginatedLatestListingsProvider.notifier)
-                        .loadInitial(),
-                  ),
-                )
-              else if (latestState.items.isEmpty)
-                SliverToBoxAdapter(
-                  child: DealOneSectionEmptyCard(
-                    message: isArabic
-                        ? 'لا توجد إعلانات في هذا الموقع حالياً'
-                        : 'No listings available in this location',
-                  ),
-                )
-              else ...[
-                SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: hPad),
-                  sliver: SliverGrid(
-                    gridDelegate: context.responsiveProductGridDelegate(
-                      baseMainAxisExtent: 256,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) =>
-                          DealOneListingCard(item: latestState.items[index]),
-                      childCount: latestState.items.length,
-                    ),
+                  child: DealOneSectionHeader(
+                    title: isArabic ? 'أحدث الإعلانات' : 'Latest Listings',
+                    actionLabel: isArabic ? 'تصفية' : 'Filter',
+                    onActionTap: () => _openSearch(openFilters: true),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Center(
-                      child: latestState.isLoadingMore
-                          ? const CircularProgressIndicator.adaptive()
-                          : latestState.hasMore
-                              ? OutlinedButton.icon(
-                                  onPressed: () => ref
-                                      .read(paginatedLatestListingsProvider
-                                          .notifier)
-                                      .loadMore(),
-                                  icon: const Icon(Icons.expand_more_rounded),
-                                  label: Text(
-                                    isArabic ? 'عرض المزيد' : 'Load More',
+                if (latestState.isLoadingInitial)
+                  const SliverToBoxAdapter(
+                    child: DealOneSectionSkeleton(height: 240),
+                  )
+                else if (latestState.error != null && latestState.items.isEmpty)
+                  SliverToBoxAdapter(
+                    child: DealOneSectionErrorCard(
+                      error: latestState.error!,
+                      onRetry: () => ref
+                          .read(paginatedLatestListingsProvider.notifier)
+                          .loadInitial(),
+                    ),
+                  )
+                else if (latestState.items.isEmpty)
+                  SliverToBoxAdapter(
+                    child: DealOneSectionEmptyCard(
+                      message: isArabic
+                          ? 'لا توجد إعلانات في هذا الموقع حالياً'
+                          : 'No listings available in this location',
+                    ),
+                  )
+                else ...[
+                  SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
+                    sliver: SliverGrid(
+                      gridDelegate: context.responsiveProductGridDelegate(
+                        baseMainAxisExtent: 256,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) =>
+                            DealOneListingCard(item: latestState.items[index]),
+                        childCount: latestState.items.length,
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Center(
+                        child: latestState.isLoadingMore
+                            ? const CircularProgressIndicator.adaptive()
+                            : latestState.hasMore
+                                ? OutlinedButton.icon(
+                                    onPressed: () => ref
+                                        .read(paginatedLatestListingsProvider
+                                            .notifier)
+                                        .loadMore(),
+                                    icon: const Icon(Icons.expand_more_rounded),
+                                    label: Text(
+                                      isArabic ? 'عرض المزيد' : 'Load More',
+                                    ),
+                                  )
+                                : Text(
+                                    isArabic
+                                        ? 'تم عرض جميع الإعلانات المتاحة'
+                                        : 'You have reached the end',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textMutedOf(context),
+                                    ),
                                   ),
-                                )
-                              : Text(
-                                  isArabic
-                                      ? 'تم عرض جميع الإعلانات المتاحة'
-                                      : 'You have reached the end',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textMutedOf(context),
-                                  ),
-                                ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
 
               const SliverToBoxAdapter(child: SizedBox(height: 96)),

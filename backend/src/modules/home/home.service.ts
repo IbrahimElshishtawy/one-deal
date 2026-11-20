@@ -3,6 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../core/database/prisma.service';
 import { RedisService } from '../../core/redis/redis.service';
+import {
+  sanitizeAvatarUrl,
+  sanitizeMediaList,
+} from '../../core/utils/media-url.util';
 import { HomeQueryDto } from './dto/home-query.dto';
 
 const SECTION_SLUG_ALIASES: Record<string, string> = {
@@ -124,6 +128,10 @@ export class HomeService {
 
   private mapListing(item: any, now: Date) {
     const attrs = (item.attributes as any) || {};
+    const catSlug = item.category?.slug ?? null;
+    const cleanMedia = sanitizeMediaList(item.media, catSlug);
+    const primaryUrl = cleanMedia[0]?.publicUrl ?? null;
+    const thumbUrl = cleanMedia[0]?.thumbnailUrl ?? primaryUrl;
     return {
       id: item.id,
       title: item.title,
@@ -142,16 +150,16 @@ export class HomeService {
       location: item.area?.city
         ? `${item.area.city.nameAr}، ${item.area.city.governorate?.nameAr ?? ''}`
         : '',
-      primaryImageUrl: item.media?.[0]?.publicUrl ?? null,
-      imageUrl: item.media?.[0]?.publicUrl ?? null,
-      thumbnail:
-        item.media?.[0]?.thumbnailUrl ?? item.media?.[0]?.publicUrl ?? null,
-      media: item.media || [],
+      primaryImageUrl: primaryUrl,
+      imageUrl: primaryUrl,
+      thumbnail: thumbUrl,
+      media: cleanMedia,
       attributes: attrs,
       viewsCount: item.viewsCount,
       favoritesCount: item._count?.favorites ?? 0,
       sellerName: item.account?.displayName ?? '',
       sellerType: item.account?.accountType ?? 'individual',
+      sellerAvatarUrl: sanitizeAvatarUrl(item.account?.logoUrl, catSlug),
       isVerified: item.account?.verificationStatus === 'approved',
       refreshedAt: item.refreshedAt,
       createdAt: item.createdAt,
@@ -445,7 +453,7 @@ export class HomeService {
           displayName: acc.displayName,
           slug: acc.slug,
           accountType: acc.accountType,
-          logoUrl: acc.logoUrl,
+          logoUrl: sanitizeAvatarUrl(acc.logoUrl, canonicalSlug),
           isVerified: acc.verificationStatus === 'approved',
           specialtyAr: row.category?.nameAr ?? rootCategory.nameAr,
           specialtyEn: row.category?.nameEn ?? rootCategory.nameEn,
