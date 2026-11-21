@@ -20,6 +20,10 @@ import { ModerationModule } from './modules/moderation/moderation.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
+import { BookingsModule } from './modules/bookings/bookings.module';
+import { RfqModule } from './modules/rfq/rfq.module';
+import { CartModule } from './modules/cart/cart.module';
+import { ActivityHubModule } from './modules/activity-hub/activity-hub.module';
 import { QuotasModule } from './modules/quotas/quotas.module';
 import { PlatformSettingsModule } from './modules/platform-settings/platform-settings.module';
 import { StaffModule } from './modules/staff/staff.module';
@@ -58,6 +62,10 @@ const isPaymentsEnabled = process.env.ENABLE_V2_PAYMENTS === 'true';
     NotificationsModule,
     LocationsModule,
     FavoritesModule,
+    BookingsModule,
+    RfqModule,
+    CartModule,
+    ActivityHubModule,
     QuotasModule,
     PlatformSettingsModule,
     StaffModule,

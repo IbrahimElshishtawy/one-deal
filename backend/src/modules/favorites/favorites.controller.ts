@@ -40,7 +40,10 @@ export class FavoritesController {
     description:
       'Supports pagination, category filtering (by ID or slug), keyword search, and optional unavailable listing inclusion.',
   })
-  @ApiResponse({ status: 200, description: 'Paginated favorite listings returned' })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated favorite listings returned',
+  })
   async getMyFavorites(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: GetFavoritesQueryDto,

@@ -76,7 +76,9 @@ export class FavoritesService {
     const searchFilter = trimmedSearch
       ? {
           OR: [
-            { title: { contains: trimmedSearch, mode: 'insensitive' as const } },
+            {
+              title: { contains: trimmedSearch, mode: 'insensitive' as const },
+            },
             {
               description: {
                 contains: trimmedSearch,
@@ -239,9 +241,9 @@ export class FavoritesService {
     const isFavorite = Boolean(favorite);
     const isListingAvailable = Boolean(
       favorite?.listing &&
-        favorite.listing.deletedAt === null &&
-        favorite.listing.publicationStatus === 'published' &&
-        favorite.listing.availabilityStatus === 'available',
+      favorite.listing.deletedAt === null &&
+      favorite.listing.publicationStatus === 'published' &&
+      favorite.listing.availabilityStatus === 'available',
     );
 
     return {

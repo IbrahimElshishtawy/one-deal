@@ -76,7 +76,10 @@ describe('FavoritesService', () => {
     mockPrisma.favorite.count.mockResolvedValue(1);
     mockPrisma.favorite.findMany.mockResolvedValue(mockDbFavs);
 
-    const result = await service.getMyFavorites('user-1', { page: 1, limit: 20 });
+    const result = await service.getMyFavorites('user-1', {
+      page: 1,
+      limit: 20,
+    });
     expect(result.data).toHaveLength(1);
     expect(result.data[0].listing.title).toBe('شقة للبيع');
     expect(result.data[0].listing.isFavorite).toBe(true);
