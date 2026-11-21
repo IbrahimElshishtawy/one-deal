@@ -35,7 +35,7 @@ class AppConfig {
   factory AppConfig.development() {
     return const AppConfig(
       environment: AppEnvironment.development,
-      apiBaseUrl: 'http://localhost:3000/api/v1',
+      apiBaseUrl: defaultProductionApiBaseUrl,
       connectTimeout: Duration(seconds: 15),
       receiveTimeout: Duration(seconds: 15),
       enableLogging: true,
