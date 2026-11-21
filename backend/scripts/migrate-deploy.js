@@ -15,10 +15,12 @@ const MIGRATION_LOCK_ID = 84920173;
  */
 function sanitizeMessage(value) {
   const text = value instanceof Error ? value.message : String(value ?? '');
-  return text.replace(
-    /(postgres(?:ql)?:\/\/)([^:@\s]+):([^@\s]+)@/gi,
-    '$1***:***@',
-  );
+  return text
+    .replace(
+      /(postgres(?:ql)?:\/\/)([^:@\s]+):([^@\s]+)@/gi,
+      '$1***:***@',
+    )
+    .replace(/(rediss?:\/\/)([^:@\s]*):([^@\s]+)@/gi, '$1***:***@');
 }
 
 /**
@@ -90,6 +92,70 @@ function resolvePrismaCliPath(appRoot) {
     );
   }
   return cliPath;
+}
+
+/**
+ * Resolves the compiled database seed entrypoint produced by Nest/tsc build.
+ * @param {string} appRoot
+ * @returns {string}
+ */
+function resolveCompiledSeedPath(appRoot) {
+  const seedPath = path.join(
+    appRoot,
+    'dist',
+    'prisma',
+    'seeds',
+    'seed.js',
+  );
+  if (!fs.existsSync(seedPath)) {
+    throw new Error(
+      `Compiled seed script not found at ${seedPath}. Run npm run build first.`,
+    );
+  }
+  return seedPath;
+}
+
+/**
+ * Invalidates public catalog and feed cache keys in Redis after seeding.
+ * Never throws so deployment does not fail on transient Redis cache issues.
+ * @param {Record<string, string | undefined>} env
+ * @returns {Promise<boolean>}
+ */
+async function invalidateCatalogRedisCache(env) {
+  const redisUrl = (
+    (env && (env.REDIS_CACHE_URL || env.REDIS_URL)) ||
+    ''
+  ).trim();
+  if (!redisUrl) {
+    return false;
+  }
+
+  const Redis = require('ioredis');
+  const client = new Redis(redisUrl, {
+    maxRetriesPerRequest: 1,
+    connectTimeout: 5000,
+    enableReadyCheck: false,
+    lazyConnect: true,
+  });
+  client.on('error', () => {});
+
+  try {
+    await client.connect();
+    await Promise.all([
+      client.del('categories:tree', 'locations:governorates'),
+      client.incr('home:feed:ver'),
+      client.incr('listings:feed:ver'),
+    ]);
+    await client.quit();
+    return true;
+  } catch (err) {
+    console.log(
+      `[migrate-deploy] Warning: Redis cache invalidation skipped: ${sanitizeMessage(err)}`,
+    );
+    return false;
+  } finally {
+    client.disconnect();
+  }
 }
 
 async function run() {
@@ -253,6 +319,24 @@ async function run() {
     console.log(
       `[migrate-deploy] All ${postApplied.length} migration(s) verified successfully.`,
     );
+
+    if (process.env.RUN_SEED_ON_DEPLOY === 'true') {
+      const seedPath = resolveCompiledSeedPath(appRoot);
+      const isCleanDemo = process.env.RUN_CLEAN_DEMO_ON_DEPLOY === 'true';
+      const seedArgs = isCleanDemo ? [seedPath, '--clean-demo'] : [seedPath];
+      console.log(
+        `[migrate-deploy] RUN_SEED_ON_DEPLOY=true detected — executing ${isCleanDemo ? 'demo cleanup' : 'idempotent database seed'}...`,
+      );
+      execFileSync(process.execPath, seedArgs, {
+        cwd: appRoot,
+        stdio: 'inherit',
+        env: process.env,
+      });
+      const invalidated = await invalidateCatalogRedisCache(process.env);
+      if (invalidated) {
+        console.log('[migrate-deploy] Catalog Redis cache invalidated.');
+      }
+    }
   } finally {
     if (lockHeld) {
       try {
@@ -283,5 +367,7 @@ module.exports = {
   buildSingleConnectionUrl,
   listLocalMigrations,
   resolvePrismaCliPath,
+  resolveCompiledSeedPath,
+  invalidateCatalogRedisCache,
   run,
 };

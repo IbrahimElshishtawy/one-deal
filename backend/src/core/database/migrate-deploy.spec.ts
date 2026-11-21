@@ -54,8 +54,32 @@ describe('migrate-deploy script helpers', () => {
     );
   });
 
+  it('redacts Redis credentials from error messages', () => {
+    const raw =
+      'Connection failed to redis://:RedisPass123@redis.internal:6379 and rediss://default:TlsPass456@upstash.io:6379';
+    const sanitized = migrateDeploy.sanitizeMessage(raw);
+    expect(sanitized).not.toContain('RedisPass123');
+    expect(sanitized).not.toContain('TlsPass456');
+    expect(sanitized).toContain('redis://***:***@redis.internal:6379');
+    expect(sanitized).toContain('rediss://***:***@upstash.io:6379');
+  });
+
   it('resolves the local Prisma CLI binary without npx', () => {
     const cliPath = migrateDeploy.resolvePrismaCliPath(backendRoot);
     expect(cliPath).toMatch(/node_modules[\\/]prisma[\\/]build[\\/]index\.js$/);
+  });
+
+  it('resolves the compiled seed script path and throws when missing', () => {
+    const seedPath = migrateDeploy.resolveCompiledSeedPath(backendRoot);
+    expect(seedPath).toMatch(/dist[\\/]prisma[\\/]seeds[\\/]seed\.js$/);
+    expect(() =>
+      migrateDeploy.resolveCompiledSeedPath(path.join(backendRoot, 'nonexistent-dir')),
+    ).toThrow(/Compiled seed script not found/i);
+  });
+
+  it('returns false safely from invalidateCatalogRedisCache when no Redis URL is configured', async () => {
+    await expect(migrateDeploy.invalidateCatalogRedisCache({})).resolves.toBe(
+      false,
+    );
   });
 });
