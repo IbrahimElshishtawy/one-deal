@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_colors.dart';
-import '../../../theme/app_radii.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/theme/app_radii.dart';
 
 class NavigationLayout {
   static const double borderRadiusValue = 24.0;

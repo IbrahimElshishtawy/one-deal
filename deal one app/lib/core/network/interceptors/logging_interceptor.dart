@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
-import '../../logging/app_logger.dart';
-import '../../logging/log_sanitizer.dart';
+import 'package:market_space/core/logging/app_logger.dart';
+import 'package:market_space/core/logging/log_sanitizer.dart';
 
 class NetworkLoggingInterceptor extends Interceptor {
   final AppLogger logger;

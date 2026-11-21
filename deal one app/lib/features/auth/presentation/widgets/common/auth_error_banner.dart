@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Soft pink/red banner matching `لو المستخدم دخل الرمز غلط.png`.
 class AuthErrorBanner extends StatelessWidget {

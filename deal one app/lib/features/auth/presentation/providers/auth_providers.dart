@@ -1,17 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/errors/app_failure.dart';
-import '../../../../core/errors/error_mapper.dart';
-import '../../../../core/providers/core_providers.dart';
-import '../../application/controllers/login_controller.dart';
-import '../../application/controllers/onboarding_controller.dart';
-import '../../application/controllers/otp_verification_controller.dart';
-import '../../application/controllers/sign_up_controller.dart';
-import '../../application/state/auth_states.dart';
-import '../../data/repositories/auth_repository_impl.dart';
-import '../../domain/entities/auth_session.dart';
-import '../../domain/repositories/auth_repository.dart';
-import '../../domain/usecases/auth_usecases.dart';
+import 'package:market_space/core/errors/app_failure.dart';
+import 'package:market_space/core/errors/error_mapper.dart';
+import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/features/auth/application/controllers/login_controller.dart';
+import 'package:market_space/features/auth/application/controllers/onboarding_controller.dart';
+import 'package:market_space/features/auth/application/controllers/otp_verification_controller.dart';
+import 'package:market_space/features/auth/application/controllers/sign_up_controller.dart';
+import 'package:market_space/features/auth/application/state/auth_states.dart';
+import 'package:market_space/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/domain/repositories/auth_repository.dart';
+import 'package:market_space/features/auth/domain/usecases/auth_usecases.dart';
 
 /// Controls whether the OTP verification periodic countdown timer runs automatically.
 final otpAutoTimerEnabledProvider = Provider<bool>((ref) => true);

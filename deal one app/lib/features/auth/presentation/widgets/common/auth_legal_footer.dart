@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import '../../l10n/auth_l10n_extension.dart';
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Standard localized legal footer shown at the bottom of Deal One auth screens.
 class AuthLegalFooter extends StatefulWidget {

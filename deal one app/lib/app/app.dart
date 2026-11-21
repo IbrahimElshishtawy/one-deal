@@ -3,14 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/providers/app_settings_providers.dart';
-import '../core/providers/core_providers.dart';
-import '../core/routing/route_guards.dart';
-import '../core/routing/route_names.dart';
-import '../core/theme/app_theme_data.dart';
-import 'app_dependencies.dart';
-import 'app_localization.dart';
-import 'app_router.dart';
+import 'package:market_space/core/providers/app_settings_providers.dart';
+import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/core/routing/route_guards.dart';
+import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/core/theme/app_theme_data.dart';
+import 'package:market_space/app/app_dependencies.dart';
+import 'package:market_space/app/app_localization.dart';
+import 'package:market_space/app/app_router.dart';
 
 class MarketSpaceApp extends ConsumerStatefulWidget {
   final AppDependencies dependencies;

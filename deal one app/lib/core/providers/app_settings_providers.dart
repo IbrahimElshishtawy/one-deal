@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../storage/storage_keys.dart';
-import 'core_providers.dart';
+import 'package:market_space/core/storage/storage_keys.dart';
+import 'package:market_space/core/providers/core_providers.dart';
 
 class LocaleNotifier extends Notifier<Locale> {
   bool _userUpdated = false;

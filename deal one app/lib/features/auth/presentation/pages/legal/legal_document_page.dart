@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../domain/entities/auth_session.dart';
-import '../../l10n/auth_l10n_extension.dart';
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Displays Deal One Terms of Service or Privacy Policy inside the auth flow.
 class LegalDocumentPage extends StatelessWidget {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/marketplace/section_home_models.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/responsive_utils.dart';
+import 'package:market_space/core/marketplace/section_home_models.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
 
 /// Verified Service Provider Card matching `الشركاء والتوكيلات المعتمدة`
 /// in `Home 4 - Services and Engineering.png`.

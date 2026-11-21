@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import 'package:market_space/core/theme/app_colors.dart';
 
 /// Centralized Typography Scale for Market Space.
 /// WCAG 2.2 AA compliant contrast, legible Arabic & English typography scale.

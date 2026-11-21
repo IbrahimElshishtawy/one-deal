@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_spacing.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/theme/app_spacing.dart';
 
 class AppLoadingIndicator extends StatelessWidget {
   final String? message;

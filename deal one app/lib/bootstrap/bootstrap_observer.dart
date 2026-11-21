@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../core/logging/app_logger.dart';
+import 'package:market_space/core/logging/app_logger.dart';
 
 class BootstrapObserver {
   final AppLogger logger;

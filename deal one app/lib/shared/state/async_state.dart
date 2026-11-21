@@ -1,4 +1,4 @@
-import '../../core/errors/app_failure.dart';
+import 'package:market_space/core/errors/app_failure.dart';
 
 sealed class AsyncState<T> {
   const AsyncState();

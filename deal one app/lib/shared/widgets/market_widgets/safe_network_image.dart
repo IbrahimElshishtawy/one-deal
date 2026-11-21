@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../app_network_image.dart';
+import 'package:market_space/shared/widgets/app_network_image.dart';
 
 /// Legacy SafeNetworkImage component, now fully powered by the unified
 /// professional [AppNetworkImage] system.

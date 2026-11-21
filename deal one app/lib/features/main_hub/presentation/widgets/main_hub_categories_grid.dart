@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/routing/route_names.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/responsive_utils.dart';
-import '../../../categories/domain/entities/category_entity.dart';
+import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
+import 'package:market_space/features/categories/domain/entities/category_entity.dart';
 
 /// Maps a backend category slug to its dedicated Section Home route.
 String sectionRouteForSlug(String slug) {

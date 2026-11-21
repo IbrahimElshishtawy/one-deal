@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Displays both the OTP expiry indicator and interactive resend cooldown action.
 class OtpCountdownTimer extends StatelessWidget {

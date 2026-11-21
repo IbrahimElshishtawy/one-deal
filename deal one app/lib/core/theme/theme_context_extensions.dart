@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import 'package:market_space/core/theme/app_colors.dart';
 
 /// Ergonomic Theme and Design System extensions on BuildContext.
 /// Allows clean, concise, and reactive access to theme tokens across all widgets.

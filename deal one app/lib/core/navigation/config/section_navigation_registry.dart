@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'floating_action_config.dart';
-import 'navigation_item_config.dart';
-import 'section_navigation_config.dart';
+import 'package:market_space/core/navigation/config/floating_action_config.dart';
+import 'package:market_space/core/navigation/config/navigation_item_config.dart';
+import 'package:market_space/core/navigation/config/section_navigation_config.dart';
 
 class SectionNavigationRegistry {
   static const SectionNavigationConfig defaultConfig = SectionNavigationConfig(

@@ -1,7 +1,7 @@
 import 'package:intl/intl.dart';
 
-import '../../core/network/api_client.dart';
-import '../models/home_feed_models.dart';
+import 'package:market_space/core/network/api_client.dart';
+import 'package:market_space/shared/models/home_feed_models.dart';
 
 abstract class MarketRepository {
   Future<List<RealEstateItem>> getRealEstateListings();

@@ -4,17 +4,17 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
-import '../config/app_config.dart';
-import '../errors/app_exception.dart';
-import '../errors/error_mapper.dart';
-import '../logging/app_logger.dart';
-import '../security/token_provider.dart';
-import 'api_headers.dart';
-import 'interceptors/auth_interceptor.dart';
-import 'interceptors/logging_interceptor.dart';
-import 'interceptors/request_id_interceptor.dart';
-import 'interceptors/retry_interceptor.dart';
-import 'network_info.dart';
+import 'package:market_space/core/config/app_config.dart';
+import 'package:market_space/core/errors/app_exception.dart';
+import 'package:market_space/core/errors/error_mapper.dart';
+import 'package:market_space/core/logging/app_logger.dart';
+import 'package:market_space/core/security/token_provider.dart';
+import 'package:market_space/core/network/api_headers.dart';
+import 'package:market_space/core/network/interceptors/auth_interceptor.dart';
+import 'package:market_space/core/network/interceptors/logging_interceptor.dart';
+import 'package:market_space/core/network/interceptors/request_id_interceptor.dart';
+import 'package:market_space/core/network/interceptors/retry_interceptor.dart';
+import 'package:market_space/core/network/network_info.dart';
 
 abstract class ApiClient {
   Future<Response<T>> get<T>(

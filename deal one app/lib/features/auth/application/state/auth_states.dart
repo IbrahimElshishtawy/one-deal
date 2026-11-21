@@ -1,6 +1,6 @@
-import '../../data/mappers/auth_error_mapper.dart';
-import '../../domain/entities/auth_session.dart';
-import '../../domain/validators/auth_validators.dart';
+import 'package:market_space/features/auth/data/mappers/auth_error_mapper.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/domain/validators/auth_validators.dart';
 
 /// State for the 3-page onboarding carousel.
 class OnboardingState {

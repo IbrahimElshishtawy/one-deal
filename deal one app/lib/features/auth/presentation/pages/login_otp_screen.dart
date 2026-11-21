@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'login/login_page.dart';
+import 'package:market_space/features/auth/presentation/pages/login/login_page.dart';
 
 /// Backward-compatible wrapper preserving the legacy `LoginOtpScreen` symbol
 /// while delegating to the modular [LoginPage].

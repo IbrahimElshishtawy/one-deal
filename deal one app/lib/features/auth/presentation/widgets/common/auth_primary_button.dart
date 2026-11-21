@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Full-width Dark Navy primary action CTA matching the Deal One auth screens.
 class AuthPrimaryButton extends StatelessWidget {

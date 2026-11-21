@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../l10n/auth_l10n_extension.dart';
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Floating timeout alert card matching `Verification via OTP code _Timeout State_.png`.
 class OtpExpiredAlertCard extends StatelessWidget {

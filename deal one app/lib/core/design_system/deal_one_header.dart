@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/listings/presentation/widgets/location_selector_sheet.dart';
-import '../../features/locations/presentation/providers/locations_providers.dart';
-import '../providers/app_settings_providers.dart';
-import '../providers/core_providers.dart';
-import '../routing/route_names.dart';
-import '../theme/app_colors.dart';
-import '../utils/responsive_utils.dart';
+import 'package:market_space/features/listings/presentation/widgets/location_selector_sheet.dart';
+import 'package:market_space/features/locations/presentation/providers/locations_providers.dart';
+import 'package:market_space/core/providers/app_settings_providers.dart';
+import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
 
 /// Shared Deal One Marketplace Header matching all 7 Home reference PNGs:
 /// - Warm circular portrait avatar with bottom overlapping Deal One handshake logo badge (`assets/image/logo.png`).

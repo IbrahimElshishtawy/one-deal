@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../storage/preferences_service.dart';
-import '../storage/storage_keys.dart';
-import 'supported_locales.dart';
+import 'package:market_space/core/storage/preferences_service.dart';
+import 'package:market_space/core/storage/storage_keys.dart';
+import 'package:market_space/core/localization/supported_locales.dart';
 
 class LocaleController extends ValueNotifier<Locale> {
   final PreferencesService preferencesService;

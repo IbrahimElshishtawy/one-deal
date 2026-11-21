@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/mappers/auth_error_mapper.dart';
-import '../../domain/entities/auth_session.dart';
-import '../../domain/usecases/auth_usecases.dart';
-import '../../domain/validators/auth_validators.dart';
-import '../../presentation/providers/auth_providers.dart';
-import '../state/auth_states.dart';
+import 'package:market_space/features/auth/data/mappers/auth_error_mapper.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/domain/usecases/auth_usecases.dart';
+import 'package:market_space/features/auth/domain/validators/auth_validators.dart';
+import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
+import 'package:market_space/features/auth/application/state/auth_states.dart';
 
 /// Handles Login phone validation, normalization, and OTP dispatch.
 class LoginController extends AutoDisposeNotifier<LoginState> {

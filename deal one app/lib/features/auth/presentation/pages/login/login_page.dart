@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/routing/route_names.dart';
-import '../../l10n/auth_l10n_extension.dart';
-import '../../providers/auth_providers.dart';
-import '../../theme/auth_design_tokens.dart';
-import '../../widgets/bottom_sheets/email_fallback_sheet.dart';
-import '../../widgets/bottom_sheets/support_contact_sheet.dart';
-import '../../widgets/bottom_sheets/whatsapp_delivery_failure_sheet.dart';
-import '../../widgets/common/auth_legal_footer.dart';
-import '../../widgets/common/auth_logo_header.dart';
-import '../../widgets/common/auth_scaffold_shell.dart';
-import '../../widgets/common/auth_social_button.dart';
-import '../../widgets/dialogs/unavailable_provider_dialog.dart';
-import '../../widgets/login/login_form_card.dart';
+import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/bottom_sheets/email_fallback_sheet.dart';
+import 'package:market_space/features/auth/presentation/widgets/bottom_sheets/support_contact_sheet.dart';
+import 'package:market_space/features/auth/presentation/widgets/bottom_sheets/whatsapp_delivery_failure_sheet.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_legal_footer.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_logo_header.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_scaffold_shell.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_social_button.dart';
+import 'package:market_space/features/auth/presentation/widgets/dialogs/unavailable_provider_dialog.dart';
+import 'package:market_space/features/auth/presentation/widgets/login/login_form_card.dart';
 
 /// Deal One Login page matching `Log-in.png`.
 class LoginPage extends ConsumerStatefulWidget {

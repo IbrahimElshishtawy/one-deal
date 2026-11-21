@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Concentric dashed-ring success emblem matching `Success State Screen.png`.
 class SuccessBadgeWidget extends StatelessWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Displays the official Deal One emblem (`assets/image/logo.png`) cleanly without
 /// an enclosing box, paired with localized heading and subtitle copy.

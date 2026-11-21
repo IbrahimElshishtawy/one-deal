@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/cache/price_freshness_service.dart';
-import '../../../../core/errors/app_failure.dart';
-import '../../../../core/marketplace/section_home_models.dart';
-import '../../../../core/marketplace/section_home_repository.dart';
-import '../../../../core/providers/core_providers.dart';
-import '../../../locations/presentation/providers/locations_providers.dart';
+import 'package:market_space/core/cache/price_freshness_service.dart';
+import 'package:market_space/core/errors/app_failure.dart';
+import 'package:market_space/core/marketplace/section_home_models.dart';
+import 'package:market_space/core/marketplace/section_home_repository.dart';
+import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/features/locations/presentation/providers/locations_providers.dart';
 
 class MainHubState {
   final MainHubFeed? feed;

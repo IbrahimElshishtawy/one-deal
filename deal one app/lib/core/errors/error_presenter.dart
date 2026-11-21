@@ -1,6 +1,6 @@
-import 'app_exception.dart';
-import 'app_failure.dart';
-import 'error_mapper.dart';
+import 'package:market_space/core/errors/app_exception.dart';
+import 'package:market_space/core/errors/app_failure.dart';
+import 'package:market_space/core/errors/error_mapper.dart';
 
 /// Categorized UI feature state for structured error rendering.
 enum FeatureErrorKind {

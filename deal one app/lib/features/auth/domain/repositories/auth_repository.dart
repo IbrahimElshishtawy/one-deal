@@ -1,4 +1,4 @@
-import '../entities/auth_session.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
 
 /// Contract for authentication and profile hydration operations.
 abstract class AuthRepository {

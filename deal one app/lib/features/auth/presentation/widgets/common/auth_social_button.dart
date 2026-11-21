@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/entities/auth_session.dart';
-import '../../l10n/auth_l10n_extension.dart';
-import '../../theme/auth_design_tokens.dart';
-import 'auth_brand_icons.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_brand_icons.dart';
 
 /// Social authentication divider and Email / Apple pill action buttons
 /// matching `Log-in.png` and `Sign-Up.png`.

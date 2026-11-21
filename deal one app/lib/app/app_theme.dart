@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../core/storage/preferences_service.dart';
-import '../core/storage/storage_keys.dart';
+import 'package:market_space/core/storage/preferences_service.dart';
+import 'package:market_space/core/storage/storage_keys.dart';
 
 class ThemeController extends ValueNotifier<ThemeMode> {
   final PreferencesService preferencesService;

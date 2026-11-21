@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import '../l10n/generated/app_localizations.dart';
+import 'package:market_space/l10n/generated/app_localizations.dart';
 
 class AppLocalization {
   static AppLocalizations of(BuildContext context) {

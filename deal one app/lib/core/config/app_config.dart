@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'environment.dart';
+import 'package:market_space/core/config/environment.dart';
 
 class AppConfig {
   static const String defaultProductionApiBaseUrl =

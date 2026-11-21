@@ -1,9 +1,9 @@
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/category_entity.dart';
-import '../../domain/repositories/categories_repository.dart';
-import '../dto/category_dto.dart';
-import '../mappers/category_mapper.dart';
+import 'package:market_space/core/network/api_client.dart';
+import 'package:market_space/core/network/api_endpoints.dart';
+import 'package:market_space/features/categories/domain/entities/category_entity.dart';
+import 'package:market_space/features/categories/domain/repositories/categories_repository.dart';
+import 'package:market_space/features/categories/data/dto/category_dto.dart';
+import 'package:market_space/features/categories/data/mappers/category_mapper.dart';
 
 class CategoriesRepositoryImpl implements CategoriesRepository {
   final ApiClient apiClient;

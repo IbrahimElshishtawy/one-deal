@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/routing/route_names.dart';
-import '../../../domain/entities/auth_session.dart';
-import '../../l10n/auth_l10n_extension.dart';
-import '../../providers/auth_providers.dart';
-import '../../theme/auth_design_tokens.dart';
-import '../../widgets/common/auth_primary_button.dart';
-import '../../widgets/common/auth_scaffold_shell.dart';
-import '../../widgets/success/success_badge_widget.dart';
+import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_primary_button.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_scaffold_shell.dart';
+import 'package:market_space/features/auth/presentation/widgets/success/success_badge_widget.dart';
 
 /// Navigation payload for [VerificationSuccessPage].
 class VerificationSuccessArgs {

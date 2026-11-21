@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/entities/auth_session.dart';
-import '../../l10n/auth_l10n_extension.dart';
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Informative modal dialog shown when tapping Google or Apple social buttons,
 /// transparently explaining that authentication currently runs over Egyptian SMS OTP.

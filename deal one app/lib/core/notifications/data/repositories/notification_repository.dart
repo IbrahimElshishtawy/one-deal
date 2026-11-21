@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../models/app_notification.dart';
+import 'package:market_space/core/notifications/data/models/app_notification.dart';
 
 abstract class NotificationRepository {
   List<AppNotification> getNotificationsForSection(String sectionId);

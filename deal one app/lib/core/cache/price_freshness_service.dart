@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../network/api_client.dart';
-import '../network/api_endpoints.dart';
-import 'hybrid_cache_manager.dart';
+import 'package:market_space/core/network/api_client.dart';
+import 'package:market_space/core/network/api_endpoints.dart';
+import 'package:market_space/core/cache/hybrid_cache_manager.dart';
 
 class LivePriceSnapshot {
   final String listingId;

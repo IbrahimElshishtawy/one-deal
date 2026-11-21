@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 
-import '../../../../l10n/generated/app_localizations.dart';
-import '../../../../l10n/generated/app_localizations_ar.dart';
-import '../../data/mappers/auth_error_mapper.dart';
-import '../../domain/validators/auth_validators.dart';
+import 'package:market_space/l10n/generated/app_localizations.dart';
+import 'package:market_space/l10n/generated/app_localizations_ar.dart';
+import 'package:market_space/features/auth/data/mappers/auth_error_mapper.dart';
+import 'package:market_space/features/auth/domain/validators/auth_validators.dart';
 
 /// Convenience localization helpers for the Authentication & Account module.
 extension AuthL10nContext on BuildContext {

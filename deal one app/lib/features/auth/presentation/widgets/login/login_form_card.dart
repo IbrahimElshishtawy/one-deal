@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../l10n/auth_l10n_extension.dart';
-import '../../theme/auth_design_tokens.dart';
-import '../common/auth_brand_icons.dart';
-import '../common/auth_country_prefix.dart';
-import '../common/auth_error_banner.dart';
-import '../common/auth_primary_button.dart';
-import '../common/auth_text_field.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_brand_icons.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_country_prefix.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_error_banner.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_primary_button.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_text_field.dart';
 
 /// Modular Login form matching `Log-in.png` with Egyptian mobile validation,
 /// WhatsApp icon, default `+20` prefix indicator, and dark navy CTA.

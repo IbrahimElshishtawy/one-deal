@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import '../../data/models/app_notification.dart';
-import '../../data/repositories/notification_repository.dart';
+import 'package:market_space/core/notifications/data/models/app_notification.dart';
+import 'package:market_space/core/notifications/data/repositories/notification_repository.dart';
 
 class NotificationController extends ChangeNotifier {
   final NotificationRepository repository;

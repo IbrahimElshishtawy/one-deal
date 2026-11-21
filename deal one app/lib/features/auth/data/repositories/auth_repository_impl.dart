@@ -1,11 +1,11 @@
-import '../../../../core/errors/app_exception.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/security/token_provider.dart';
-import '../../domain/entities/auth_session.dart';
-import '../../domain/repositories/auth_repository.dart';
-import '../datasources/auth_remote_datasource.dart';
-import '../dto/auth_dto.dart';
-import '../mappers/auth_mapper.dart';
+import 'package:market_space/core/errors/app_exception.dart';
+import 'package:market_space/core/network/api_client.dart';
+import 'package:market_space/core/security/token_provider.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/domain/repositories/auth_repository.dart';
+import 'package:market_space/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:market_space/features/auth/data/dto/auth_dto.dart';
+import 'package:market_space/features/auth/data/mappers/auth_mapper.dart';
 
 /// Production implementation of [AuthRepository] backed by [AuthRemoteDataSource]
 /// and hardware-backed [TokenProvider] storage.

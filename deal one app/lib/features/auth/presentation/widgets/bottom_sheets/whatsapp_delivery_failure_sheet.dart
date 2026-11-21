@@ -2,10 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../l10n/auth_l10n_extension.dart';
-import '../../theme/auth_design_tokens.dart';
-import '../common/auth_brand_icons.dart';
-import '../common/auth_secondary_button.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_brand_icons.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_secondary_button.dart';
 
 /// Modal bottom sheet matching `Verification via OTP code _Unable to send to WhatsApp State_.png`,
 /// surfaced with a blurred backdrop when OTP delivery fails or when troubleshooting delivery.

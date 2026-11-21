@@ -1,5 +1,5 @@
-import '../../domain/entities/auth_session.dart';
-import '../dto/auth_dto.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/data/dto/auth_dto.dart';
 
 /// Maps authentication DTO payloads into domain entities.
 class AuthMapper {

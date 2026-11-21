@@ -1,6 +1,6 @@
-import '../storage/secure_storage_service.dart';
-import '../storage/storage_keys.dart';
-import 'token_provider.dart';
+import 'package:market_space/core/storage/secure_storage_service.dart';
+import 'package:market_space/core/storage/storage_keys.dart';
+import 'package:market_space/core/security/token_provider.dart';
 
 class SecureTokenProvider implements TokenProvider {
   final SecureStorageService secureStorageService;

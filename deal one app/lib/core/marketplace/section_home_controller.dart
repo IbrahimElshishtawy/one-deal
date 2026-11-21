@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/listings/domain/entities/listing_entity.dart';
-import '../../features/locations/presentation/providers/locations_providers.dart';
-import '../cache/price_freshness_service.dart';
-import '../errors/app_failure.dart';
-import '../providers/core_providers.dart';
-import 'section_home_models.dart';
-import 'section_home_repository.dart';
+import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
+import 'package:market_space/features/locations/presentation/providers/locations_providers.dart';
+import 'package:market_space/core/cache/price_freshness_service.dart';
+import 'package:market_space/core/errors/app_failure.dart';
+import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/core/marketplace/section_home_models.dart';
+import 'package:market_space/core/marketplace/section_home_repository.dart';
 
 /// Immutable active filter state for an individual Section Home.
 class SectionFilterState {

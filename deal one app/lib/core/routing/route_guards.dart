@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
-import '../security/token_provider.dart';
-import 'route_names.dart';
+import 'package:market_space/core/security/token_provider.dart';
+import 'package:market_space/core/routing/route_names.dart';
 
 abstract class RouteGuard {
   Future<String?> evaluateRedirect(BuildContext context, String currentRoute);

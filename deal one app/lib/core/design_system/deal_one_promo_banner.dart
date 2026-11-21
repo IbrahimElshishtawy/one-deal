@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../features/listings/domain/entities/listing_entity.dart';
-import '../theme/app_colors.dart';
-import '../utils/responsive_utils.dart';
+import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
 
 /// Hero Promotional Banner Carousel matching Homes 1, 3, 4, 5, 6, 7 reference PNGs:
 /// - Top-left (end in RTL) dark navy pill badge + optional top-right countdown timer.

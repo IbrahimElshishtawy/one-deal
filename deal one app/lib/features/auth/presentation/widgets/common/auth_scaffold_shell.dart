@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Compact, standardized 44px top utility bar shared across auth screens so
 /// the Deal One logo header stays vertically aligned across transitions.

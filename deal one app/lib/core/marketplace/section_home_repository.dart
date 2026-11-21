@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 
-import '../../features/listings/data/dto/listing_dto.dart';
-import '../../features/listings/data/mappers/listing_mapper.dart';
-import '../../features/listings/domain/entities/listing_entity.dart';
-import '../cache/hybrid_cache_manager.dart';
-import '../network/api_client.dart';
-import '../network/api_endpoints.dart';
-import 'section_home_models.dart';
+import 'package:market_space/features/listings/data/dto/listing_dto.dart';
+import 'package:market_space/features/listings/data/mappers/listing_mapper.dart';
+import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
+import 'package:market_space/core/cache/hybrid_cache_manager.dart';
+import 'package:market_space/core/network/api_client.dart';
+import 'package:market_space/core/network/api_endpoints.dart';
+import 'package:market_space/core/marketplace/section_home_models.dart';
 
 /// Server-driven Home & Section Feed repository backed by Hybrid Local Cache
 /// (Stale-While-Revalidate + Offline fallback).

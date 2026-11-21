@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import '../storage/preferences_service.dart';
+import 'package:market_space/core/storage/preferences_service.dart';
 
 /// Cache TTL presets per domain entity type.
 class CacheTtlPolicy {

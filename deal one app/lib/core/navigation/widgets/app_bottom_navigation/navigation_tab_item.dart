@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../config/navigation_item_config.dart';
-import 'navigation_badge.dart';
-import 'navigation_layout.dart';
+import 'package:market_space/core/navigation/config/navigation_item_config.dart';
+import 'package:market_space/core/navigation/widgets/app_bottom_navigation/navigation_badge.dart';
+import 'package:market_space/core/navigation/widgets/app_bottom_navigation/navigation_layout.dart';
 
 class NavigationTabItem extends StatelessWidget {
   final NavigationItemConfig item;

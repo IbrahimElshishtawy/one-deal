@@ -1,9 +1,9 @@
-import '../../features/categories/data/dto/category_dto.dart';
-import '../../features/categories/data/mappers/category_mapper.dart';
-import '../../features/categories/domain/entities/category_entity.dart';
-import '../../features/listings/data/dto/listing_dto.dart';
-import '../../features/listings/data/mappers/listing_mapper.dart';
-import '../../features/listings/domain/entities/listing_entity.dart';
+import 'package:market_space/features/categories/data/dto/category_dto.dart';
+import 'package:market_space/features/categories/data/mappers/category_mapper.dart';
+import 'package:market_space/features/categories/domain/entities/category_entity.dart';
+import 'package:market_space/features/listings/data/dto/listing_dto.dart';
+import 'package:market_space/features/listings/data/mappers/listing_mapper.dart';
+import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
 
 class SectionFilterOption {
   final String value;

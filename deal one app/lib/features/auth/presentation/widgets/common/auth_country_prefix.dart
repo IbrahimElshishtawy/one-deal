@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Compact Egyptian `+20` country prefix pill shown inside phone inputs.
 class AuthCountryPrefixBadge extends StatelessWidget {

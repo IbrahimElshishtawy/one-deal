@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'app_colors.dart';
-import 'app_radii.dart';
-import 'app_spacing.dart';
-import 'app_text_styles.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/theme/app_radii.dart';
+import 'package:market_space/core/theme/app_spacing.dart';
+import 'package:market_space/core/theme/app_text_styles.dart';
 
 /// Centralized Theme Architecture for Market Space.
 /// Strict Monochrome Light & Dark themes with WCAG 2.2 AA compliant contrast

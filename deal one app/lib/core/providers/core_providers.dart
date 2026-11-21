@@ -2,22 +2,22 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../cache/hybrid_cache_manager.dart';
-import '../cache/price_freshness_service.dart';
-import '../config/app_config.dart';
-import '../errors/app_failure.dart';
-import '../errors/error_mapper.dart';
-import '../logging/app_logger.dart';
-import '../marketplace/section_home_repository.dart';
-import '../network/api_client.dart';
-import '../network/api_endpoints.dart';
-import '../network/network_info.dart';
-import '../security/secure_token_provider.dart';
-import '../security/session_state.dart';
-import '../security/token_provider.dart';
-import '../storage/preferences_service.dart';
-import '../storage/secure_storage_service.dart';
-import '../storage/storage_keys.dart';
+import 'package:market_space/core/cache/hybrid_cache_manager.dart';
+import 'package:market_space/core/cache/price_freshness_service.dart';
+import 'package:market_space/core/config/app_config.dart';
+import 'package:market_space/core/errors/app_failure.dart';
+import 'package:market_space/core/errors/error_mapper.dart';
+import 'package:market_space/core/logging/app_logger.dart';
+import 'package:market_space/core/marketplace/section_home_repository.dart';
+import 'package:market_space/core/network/api_client.dart';
+import 'package:market_space/core/network/api_endpoints.dart';
+import 'package:market_space/core/network/network_info.dart';
+import 'package:market_space/core/security/secure_token_provider.dart';
+import 'package:market_space/core/security/session_state.dart';
+import 'package:market_space/core/security/token_provider.dart';
+import 'package:market_space/core/storage/preferences_service.dart';
+import 'package:market_space/core/storage/secure_storage_service.dart';
+import 'package:market_space/core/storage/storage_keys.dart';
 
 /// Provides the active runtime application configuration.
 final appConfigProvider = Provider<AppConfig>((ref) {

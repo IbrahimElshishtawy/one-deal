@@ -4,25 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/routing/route_names.dart';
-import '../../../application/state/auth_states.dart';
-import '../../../domain/entities/auth_session.dart';
-import '../../../domain/validators/auth_validators.dart';
-import '../../l10n/auth_l10n_extension.dart';
-import '../../providers/auth_providers.dart';
-import '../../theme/auth_design_tokens.dart';
-import '../../widgets/bottom_sheets/email_fallback_sheet.dart';
-import '../../widgets/bottom_sheets/support_contact_sheet.dart';
-import '../../widgets/bottom_sheets/whatsapp_delivery_failure_sheet.dart';
-import '../../widgets/common/auth_error_banner.dart';
-import '../../widgets/common/auth_legal_footer.dart';
-import '../../widgets/common/auth_logo_header.dart';
-import '../../widgets/common/auth_primary_button.dart';
-import '../../widgets/common/auth_scaffold_shell.dart';
-import '../../widgets/otp/otp_attempts_pill.dart';
-import '../../widgets/otp/otp_expired_alert_card.dart';
-import '../../widgets/otp/otp_pin_boxes.dart';
-import '../verification_success/verification_success_page.dart';
+import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/features/auth/application/state/auth_states.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/domain/validators/auth_validators.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/bottom_sheets/email_fallback_sheet.dart';
+import 'package:market_space/features/auth/presentation/widgets/bottom_sheets/support_contact_sheet.dart';
+import 'package:market_space/features/auth/presentation/widgets/bottom_sheets/whatsapp_delivery_failure_sheet.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_error_banner.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_legal_footer.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_logo_header.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_primary_button.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_scaffold_shell.dart';
+import 'package:market_space/features/auth/presentation/widgets/otp/otp_attempts_pill.dart';
+import 'package:market_space/features/auth/presentation/widgets/otp/otp_expired_alert_card.dart';
+import 'package:market_space/features/auth/presentation/widgets/otp/otp_pin_boxes.dart';
+import 'package:market_space/features/auth/presentation/pages/verification_success/verification_success_page.dart';
 
 /// Deal One OTP Verification page reproducing all 4 Figma OTP states:
 /// - `Verification via OTP code.png` (normal state)

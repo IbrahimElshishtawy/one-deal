@@ -1,5 +1,5 @@
-import '../entities/auth_session.dart';
-import '../repositories/auth_repository.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/domain/repositories/auth_repository.dart';
 
 /// Sends a one-time verification code to an Egyptian mobile number.
 class SendOtpUseCase {

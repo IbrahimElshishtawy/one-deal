@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Full-width outlined secondary action button used across auth & modal sheets.
 class AuthSecondaryButton extends StatelessWidget {

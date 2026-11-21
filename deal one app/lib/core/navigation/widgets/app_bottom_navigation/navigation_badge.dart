@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_colors.dart';
+import 'package:market_space/core/theme/app_colors.dart';
 
 class NavigationBadge extends StatelessWidget {
   final int count;

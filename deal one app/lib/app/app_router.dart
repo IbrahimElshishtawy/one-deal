@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/routing/app_page_transitions.dart';
-import '../core/routing/route_guards.dart';
-import '../core/routing/route_names.dart';
-import '../features/accounts/presentation/screens/profile_screen.dart';
-import '../features/appliances_decor/presentation/pages/appliances_decor_home_page.dart';
-import '../features/auth/domain/entities/auth_session.dart';
-import '../features/auth/presentation/pages/legal/legal_document_page.dart';
-import '../features/auth/presentation/pages/login/login_page.dart';
-import '../features/auth/presentation/pages/onboarding/onboarding_page.dart';
-import '../features/auth/presentation/pages/otp_verification/otp_verification_page.dart';
-import '../features/auth/presentation/pages/sign_up/sign_up_page.dart';
-import '../features/auth/presentation/pages/verification_success/verification_success_page.dart';
-import '../features/cars_maintenance/presentation/pages/cars_maintenance_home_page.dart';
-import '../features/construction_electrical/presentation/pages/construction_electrical_home_page.dart';
-import '../features/fashion_accessories/presentation/pages/fashion_accessories_home_page.dart';
-import '../features/favorites/presentation/screens/favorites_screen.dart';
-import '../features/listings/presentation/screens/listing_detail_screen.dart';
-import '../features/main_hub/presentation/pages/main_hub_page.dart';
-import '../features/real_estate/presentation/pages/real_estate_home_page.dart';
-import '../features/search/presentation/screens/search_screen.dart';
-import '../features/services_engineering/presentation/pages/services_engineering_home_page.dart';
+import 'package:market_space/core/routing/app_page_transitions.dart';
+import 'package:market_space/core/routing/route_guards.dart';
+import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/features/accounts/presentation/screens/profile_screen.dart';
+import 'package:market_space/features/appliances_decor/presentation/pages/appliances_decor_home_page.dart';
+import 'package:market_space/features/auth/domain/entities/auth_session.dart';
+import 'package:market_space/features/auth/presentation/pages/legal/legal_document_page.dart';
+import 'package:market_space/features/auth/presentation/pages/login/login_page.dart';
+import 'package:market_space/features/auth/presentation/pages/onboarding/onboarding_page.dart';
+import 'package:market_space/features/auth/presentation/pages/otp_verification/otp_verification_page.dart';
+import 'package:market_space/features/auth/presentation/pages/sign_up/sign_up_page.dart';
+import 'package:market_space/features/auth/presentation/pages/verification_success/verification_success_page.dart';
+import 'package:market_space/features/cars_maintenance/presentation/pages/cars_maintenance_home_page.dart';
+import 'package:market_space/features/construction_electrical/presentation/pages/construction_electrical_home_page.dart';
+import 'package:market_space/features/fashion_accessories/presentation/pages/fashion_accessories_home_page.dart';
+import 'package:market_space/features/favorites/presentation/screens/favorites_screen.dart';
+import 'package:market_space/features/listings/presentation/screens/listing_detail_screen.dart';
+import 'package:market_space/features/main_hub/presentation/pages/main_hub_page.dart';
+import 'package:market_space/features/real_estate/presentation/pages/real_estate_home_page.dart';
+import 'package:market_space/features/search/presentation/screens/search_screen.dart';
+import 'package:market_space/features/services_engineering/presentation/pages/services_engineering_home_page.dart';
 
 class AppRouter {
   static GoRouter createRouter({

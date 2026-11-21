@@ -1,4 +1,4 @@
-import '../../../../core/utils/input_normalizers.dart';
+import 'package:market_space/core/utils/input_normalizers.dart';
 
 /// Typed validation errors for full-name input so UI layers can render
 /// localized messages in Arabic or English dynamically.

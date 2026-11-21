@@ -1,5 +1,5 @@
-import '../../domain/entities/category_entity.dart';
-import '../dto/category_dto.dart';
+import 'package:market_space/features/categories/domain/entities/category_entity.dart';
+import 'package:market_space/features/categories/data/dto/category_dto.dart';
 
 class CategoryMapper {
   static CategoryFieldType parseFieldType(String type) {

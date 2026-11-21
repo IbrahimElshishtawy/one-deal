@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// Help links shown below OTP verification for delivery troubleshooting and support.
 class OtpDeliveryHelpRow extends StatelessWidget {

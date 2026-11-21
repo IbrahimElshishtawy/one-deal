@@ -1,4 +1,4 @@
-import 'app_config.dart';
+import 'package:market_space/core/config/app_config.dart';
 
 class ConfigValidator {
   static void validate(AppConfig config) {

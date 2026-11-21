@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/design_system/deal_one_header.dart';
-import '../../../../core/design_system/deal_one_promo_banner.dart';
-import '../../../../core/design_system/deal_one_search_bar.dart';
-import '../../../../core/design_system/deal_one_section_chrome.dart';
-import '../../../../core/design_system/server_driven_filter_sheet.dart';
-import '../../../../core/marketplace/section_home_controller.dart';
-import '../../../../core/providers/core_providers.dart';
-import '../../../../core/routing/route_names.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/responsive_utils.dart';
-import '../../../listings/presentation/widgets/floating_bottom_nav.dart';
-import '../../../search/data/dto/search_dto.dart';
-import '../../../search/presentation/providers/search_providers.dart';
-import '../widgets/appliance_product_card.dart';
+import 'package:market_space/core/design_system/deal_one_header.dart';
+import 'package:market_space/core/design_system/deal_one_promo_banner.dart';
+import 'package:market_space/core/design_system/deal_one_search_bar.dart';
+import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
+import 'package:market_space/core/design_system/server_driven_filter_sheet.dart';
+import 'package:market_space/core/marketplace/section_home_controller.dart';
+import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
+import 'package:market_space/features/listings/presentation/widgets/floating_bottom_nav.dart';
+import 'package:market_space/features/search/data/dto/search_dto.dart';
+import 'package:market_space/features/search/presentation/providers/search_providers.dart';
+import 'package:market_space/features/appliances_decor/presentation/widgets/appliance_product_card.dart';
 
 /// Home 3 — Electrical Appliances & Decor.
 /// Independent section home matching `Home 3 - Electrical appliances and decor.png`.

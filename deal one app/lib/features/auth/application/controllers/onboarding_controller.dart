@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/providers/core_providers.dart';
-import '../../../../core/storage/storage_keys.dart';
-import '../state/auth_states.dart';
+import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/core/storage/storage_keys.dart';
+import 'package:market_space/features/auth/application/state/auth_states.dart';
 
 /// Manages the 3-screen onboarding flow and persists completion locally.
 class OnboardingController extends AutoDisposeNotifier<OnboardingState> {

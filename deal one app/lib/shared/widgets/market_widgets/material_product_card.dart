@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radii.dart';
-import '../../../core/utils/responsive_utils.dart';
-import '../../models/home_feed_models.dart';
-import 'safe_network_image.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/theme/app_radii.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
+import 'package:market_space/shared/models/home_feed_models.dart';
+import 'package:market_space/shared/widgets/market_widgets/safe_network_image.dart';
 
 class MaterialProductCard extends StatelessWidget {
   final BuildingMaterialItem item;

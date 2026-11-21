@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/design_system/deal_one_section_chrome.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/responsive_utils.dart';
-import '../../../listings/domain/entities/listing_entity.dart';
+import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
+import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
 
 /// Full-width Car Showcase Card matching `Home 6 - Cars and their maintenance.png`.
 /// Adapts across 320dp..1024dp viewports, RTL/LTR, and up to 2.0x text scale.

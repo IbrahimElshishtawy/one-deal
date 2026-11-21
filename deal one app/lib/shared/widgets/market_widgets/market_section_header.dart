@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radii.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/utils/responsive_utils.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/theme/app_radii.dart';
+import 'package:market_space/core/theme/app_spacing.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
 
 class MarketSectionHeader extends StatelessWidget {
   final String title;

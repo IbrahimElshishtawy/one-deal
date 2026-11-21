@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
-import '../utils/responsive_utils.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
 
 /// Shared Search Bar matching all 7 Home reference PNGs:
 /// - Sparkle + magnifying glass icon on start (right in RTL).

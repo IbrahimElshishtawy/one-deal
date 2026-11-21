@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radii.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/utils/responsive_utils.dart';
-import '../../models/market_sector.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/theme/app_radii.dart';
+import 'package:market_space/core/theme/app_spacing.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
+import 'package:market_space/shared/models/market_sector.dart';
 
 class MarketSectorFilterBar extends StatelessWidget {
   final MarketSector activeSector;

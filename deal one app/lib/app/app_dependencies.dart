@@ -1,16 +1,16 @@
 import 'package:flutter/widgets.dart';
 
-import '../core/config/app_config.dart';
-import '../core/localization/locale_controller.dart';
-import '../core/logging/app_logger.dart';
-import '../core/network/api_client.dart';
-import '../core/network/network_info.dart';
-import '../core/platform/platform_info.dart';
-import '../core/security/token_provider.dart';
-import '../core/storage/preferences_service.dart';
-import '../core/storage/secure_storage_service.dart';
-import '../shared/state/sector_controller.dart';
-import 'app_theme.dart';
+import 'package:market_space/core/config/app_config.dart';
+import 'package:market_space/core/localization/locale_controller.dart';
+import 'package:market_space/core/logging/app_logger.dart';
+import 'package:market_space/core/network/api_client.dart';
+import 'package:market_space/core/network/network_info.dart';
+import 'package:market_space/core/platform/platform_info.dart';
+import 'package:market_space/core/security/token_provider.dart';
+import 'package:market_space/core/storage/preferences_service.dart';
+import 'package:market_space/core/storage/secure_storage_service.dart';
+import 'package:market_space/shared/state/sector_controller.dart';
+import 'package:market_space/app/app_theme.dart';
 
 class AppDependencies {
   final AppConfig appConfig;

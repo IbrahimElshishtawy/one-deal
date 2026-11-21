@@ -1,5 +1,5 @@
-import '../../../../core/errors/app_failure.dart';
-import '../../../../core/errors/error_mapper.dart';
+import 'package:market_space/core/errors/app_failure.dart';
+import 'package:market_space/core/errors/error_mapper.dart';
 
 /// Semantic classification of authentication and OTP backend errors.
 enum AuthErrorKind {

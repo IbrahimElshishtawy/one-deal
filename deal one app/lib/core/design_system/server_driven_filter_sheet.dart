@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../marketplace/section_home_controller.dart';
-import '../marketplace/section_home_models.dart';
-import '../theme/app_colors.dart';
+import 'package:market_space/core/marketplace/section_home_controller.dart';
+import 'package:market_space/core/marketplace/section_home_models.dart';
+import 'package:market_space/core/theme/app_colors.dart';
 
 /// Server-driven Section Filter Bottom Sheet.
 /// Renders ONLY the filter fields declared by Backend `SectionFilterConfig` for

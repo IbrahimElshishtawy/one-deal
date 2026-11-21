@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
-import 'onboarding_page_indicator.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/onboarding/onboarding_page_indicator.dart';
 
 /// Bottom navigation overlay for the Deal One onboarding screens:
 /// 3-bar progress indicator + Figma-faithful blue bordered CTA button.

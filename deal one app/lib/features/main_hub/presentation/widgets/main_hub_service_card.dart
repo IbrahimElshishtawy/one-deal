@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/design_system/deal_one_section_chrome.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../listings/domain/entities/listing_entity.dart';
+import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
 
 /// Popular Service / Listing Card matching `Home 1 - Main Hub.png`
 /// and `Home 4 - Services and Engineering.png`:

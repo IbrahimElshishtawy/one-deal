@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 
-import '../../security/token_provider.dart';
-import '../api_endpoints.dart';
-import '../api_headers.dart';
+import 'package:market_space/core/security/token_provider.dart';
+import 'package:market_space/core/network/api_endpoints.dart';
+import 'package:market_space/core/network/api_headers.dart';
 
 /// Concurrency-safe authentication interceptor with single-flight token refresh,
 /// trusted-origin token scoping, and automated session expiry triggers.

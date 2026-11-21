@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
-import 'app_exception.dart';
-import 'app_failure.dart';
+import 'package:market_space/core/errors/app_exception.dart';
+import 'package:market_space/core/errors/app_failure.dart';
 
 class ErrorMapper {
   static AppFailure map(Object error) {

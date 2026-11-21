@@ -1,6 +1,6 @@
 import 'dart:developer' as developer;
 
-import 'log_sanitizer.dart';
+import 'package:market_space/core/logging/log_sanitizer.dart';
 
 abstract class AppLogger {
   void debug(String message, {dynamic data});

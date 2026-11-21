@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/validators/auth_validators.dart';
-import '../../l10n/auth_l10n_extension.dart';
-import '../../theme/auth_design_tokens.dart';
-import '../common/auth_error_banner.dart';
-import '../common/auth_primary_button.dart';
-import '../common/auth_text_field.dart';
+import 'package:market_space/features/auth/domain/validators/auth_validators.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_error_banner.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_primary_button.dart';
+import 'package:market_space/features/auth/presentation/widgets/common/auth_text_field.dart';
 
 /// Email fallback modal with full validation and transparent backend status
 /// communication (never fabricates unsupported email OTP delivery).

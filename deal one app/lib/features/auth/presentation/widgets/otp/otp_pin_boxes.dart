@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../domain/validators/auth_validators.dart';
-import '../../l10n/auth_l10n_extension.dart';
-import '../../theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/domain/validators/auth_validators.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
 /// 6-digit left-to-right OTP entry strip matching `Verification via OTP code.png`
 /// and `Verification via OTP code _Faild State_.png` with amber focus border,

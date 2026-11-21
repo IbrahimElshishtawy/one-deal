@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/routing/route_names.dart';
-import '../../l10n/auth_l10n_extension.dart';
-import '../../providers/auth_providers.dart';
-import '../../theme/auth_design_tokens.dart';
-import '../../widgets/onboarding/onboarding_bottom_controls.dart';
-import '../../widgets/onboarding/onboarding_illustration.dart';
-import '../../widgets/onboarding/onboarding_slide_data.dart';
+import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
+import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/onboarding/onboarding_bottom_controls.dart';
+import 'package:market_space/features/auth/presentation/widgets/onboarding/onboarding_illustration.dart';
+import 'package:market_space/features/auth/presentation/widgets/onboarding/onboarding_slide_data.dart';
 
 /// 3-screen Deal One Onboarding carousel reproducing the 3 Figma exports:
 /// - Onboarding 1: Real Estate and Cars

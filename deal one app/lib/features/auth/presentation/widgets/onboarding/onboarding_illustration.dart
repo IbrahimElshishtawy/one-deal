@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/auth_design_tokens.dart';
-import 'onboarding_slide_data.dart';
+import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/features/auth/presentation/widgets/onboarding/onboarding_slide_data.dart';
 
 /// Full-bleed illustrated backdrop for the 3 Deal One onboarding screens,
 /// depicting Real Estate & Cars, Home Services & Construction/Electrical,

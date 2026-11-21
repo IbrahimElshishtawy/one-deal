@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../errors/error_presenter.dart';
-import '../marketplace/section_home_models.dart';
-import '../providers/core_providers.dart';
-import '../theme/app_colors.dart';
-import '../utils/responsive_utils.dart';
+import 'package:market_space/core/errors/error_presenter.dart';
+import 'package:market_space/core/marketplace/section_home_models.dart';
+import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
 
 /// Formats an EGP price cleanly with thousands separators (e.g. `3,200,000 ج.م`).
 String formatDealOnePrice(

@@ -1,6 +1,6 @@
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../dto/auth_dto.dart';
+import 'package:market_space/core/network/api_client.dart';
+import 'package:market_space/core/network/api_endpoints.dart';
+import 'package:market_space/features/auth/data/dto/auth_dto.dart';
 
 /// Remote API datasource executing HTTP requests for authentication & user profile.
 abstract class AuthRemoteDataSource {

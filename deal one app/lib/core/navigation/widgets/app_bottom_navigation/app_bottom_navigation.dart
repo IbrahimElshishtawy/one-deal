@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/responsive_utils.dart';
-import '../../../notifications/presentation/state/notification_controller.dart';
-import '../../config/section_navigation_config.dart';
-import 'navigation_layout.dart';
-import 'navigation_tab_item.dart';
+import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
+import 'package:market_space/core/notifications/presentation/state/notification_controller.dart';
+import 'package:market_space/core/navigation/config/section_navigation_config.dart';
+import 'package:market_space/core/navigation/widgets/app_bottom_navigation/navigation_layout.dart';
+import 'package:market_space/core/navigation/widgets/app_bottom_navigation/navigation_tab_item.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   final SectionNavigationConfig config;

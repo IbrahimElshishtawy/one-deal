@@ -1,4 +1,4 @@
-import '../../../../../l10n/generated/app_localizations.dart';
+import 'package:market_space/l10n/generated/app_localizations.dart';
 
 enum OnboardingIllustrationType {
   realEstateAndCars,

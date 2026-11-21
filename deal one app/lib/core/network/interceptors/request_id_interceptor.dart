@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:dio/dio.dart';
 
-import '../api_headers.dart';
+import 'package:market_space/core/network/api_headers.dart';
 
 class RequestIdInterceptor extends Interceptor {
   final Random _randomGenerator = Random();

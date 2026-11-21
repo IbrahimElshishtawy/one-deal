@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/storage/preferences_service.dart';
-import '../../core/storage/storage_keys.dart';
-import '../models/market_sector.dart';
+import 'package:market_space/core/storage/preferences_service.dart';
+import 'package:market_space/core/storage/storage_keys.dart';
+import 'package:market_space/shared/models/market_sector.dart';
 
 /// Manages and persists the active market sector in Bazar Jo.
 class SectorController extends ValueNotifier<MarketSector> {
