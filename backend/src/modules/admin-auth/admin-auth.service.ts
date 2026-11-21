@@ -81,7 +81,14 @@ export class AdminAuthService {
     });
 
     if (recentFailures >= LOCKOUT_MAX_FAILURES) {
-      await this.recordAttempt(email, staff?.id ?? null, ip, ua, false, 'ACCOUNT_LOCKED');
+      await this.recordAttempt(
+        email,
+        staff?.id ?? null,
+        ip,
+        ua,
+        false,
+        'ACCOUNT_LOCKED',
+      );
       await this.securityAudit.logEvent({
         action: 'ADMIN_LOGIN_LOCKED',
         actorType: 'staff',
@@ -287,7 +294,9 @@ export class AdminAuthService {
         300,
       );
       if (!firstUse) {
-        throw new UnauthorizedException('MFA challenge token was already used.');
+        throw new UnauthorizedException(
+          'MFA challenge token was already used.',
+        );
       }
     }
 
@@ -549,7 +558,12 @@ export class AdminAuthService {
         'If an active admin account exists for this email, reset instructions have been issued.',
     };
 
-    if (!staff || !staff.isActive || staff.status !== 'active' || staff.deletedAt) {
+    if (
+      !staff ||
+      !staff.isActive ||
+      staff.status !== 'active' ||
+      staff.deletedAt
+    ) {
       return genericResponse;
     }
 
@@ -663,7 +677,12 @@ export class AdminAuthService {
     isActive?: boolean;
     mfaEnabled: boolean;
     lastLoginAt?: Date | null;
-    role: { id: number; name: string; description?: string | null; permissions: unknown };
+    role: {
+      id: number;
+      name: string;
+      description?: string | null;
+      permissions: unknown;
+    };
   }) {
     const permissions = Array.isArray(staff.role?.permissions)
       ? (staff.role.permissions as string[])

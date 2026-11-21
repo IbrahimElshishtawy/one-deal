@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
+import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/features/activity_hub/presentation/widgets/cart/cart_variant_picker_sheet.dart';
 import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
 import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
 
@@ -226,20 +228,29 @@ class FashionBrandCard extends ConsumerWidget {
                             ),
                           ),
                           GestureDetector(
-                            onTap: () {
-                              ref
-                                  .read(favoritesControllerProvider.notifier)
-                                  .toggleFavorite(item.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    isArabic
-                                        ? 'تمت الإضافة للسلة والمفضلة'
-                                        : 'Added to bag & favorites',
-                                  ),
-                                  duration: const Duration(seconds: 2),
-                                ),
+                            onTap: () async {
+                              final added = await CartVariantPickerSheet.show(
+                                context,
+                                listing: item,
+                                requireSizeAndColor: true,
                               );
+                              if (added == true && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      isArabic
+                                          ? 'تمت الإضافة إلى سلة التسوق'
+                                          : 'Added to shopping cart',
+                                    ),
+                                    action: SnackBarAction(
+                                      label: isArabic ? 'عرض' : 'View',
+                                      onPressed: () =>
+                                          context.push(RouteNames.activityHub),
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
                             },
                             child: Container(
                               width: 28,

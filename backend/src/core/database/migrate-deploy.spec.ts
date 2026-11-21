@@ -49,9 +49,7 @@ describe('migrate-deploy script helpers', () => {
     expect(migrations[7]).toBe(
       '20261117000002_add_trgm_jsonb_indexes_and_pg_stat_statements',
     );
-    expect(migrations[8]).toBe(
-      '20261120000001_add_enterprise_admin_platform',
-    );
+    expect(migrations[8]).toBe('20261120000001_add_enterprise_admin_platform');
   });
 
   it('redacts Redis credentials from error messages', () => {
@@ -73,7 +71,9 @@ describe('migrate-deploy script helpers', () => {
     const seedPath = migrateDeploy.resolveCompiledSeedPath(backendRoot);
     expect(seedPath).toMatch(/dist[\\/]prisma[\\/]seeds[\\/]seed\.js$/);
     expect(() =>
-      migrateDeploy.resolveCompiledSeedPath(path.join(backendRoot, 'nonexistent-dir')),
+      migrateDeploy.resolveCompiledSeedPath(
+        path.join(backendRoot, 'nonexistent-dir'),
+      ),
     ).toThrow(/Compiled seed script not found/i);
   });
 

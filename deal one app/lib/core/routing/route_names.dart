@@ -47,6 +47,7 @@ class RouteNames {
 
   static const String explore = '/explore';
   static const String myActivity = '/my-activity';
+  static const String activityHub = '/activity-hub';
   static const String favorites = '/favorites';
   static const String profile = '/profile';
   static const String search = '/search';
@@ -119,6 +120,7 @@ class RouteNames {
   static const String fashionCategoriesName = 'fashion_categories';
   static const String exploreName = 'explore';
   static const String myActivityName = 'my_activity';
+  static const String activityHubName = 'activity_hub';
   static const String favoritesName = 'favorites';
   static const String profileName = 'profile';
   static const String globalNotificationsName = 'global_notifications';

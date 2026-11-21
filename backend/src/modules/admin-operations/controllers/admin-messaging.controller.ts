@@ -35,7 +35,8 @@ export class AdminMessagingController {
   @Get('complaints')
   @Permissions('messaging.complaints.read')
   @ApiOperation({
-    summary: 'List conversation reports and technical delivery summaries (no message bodies)',
+    summary:
+      'List conversation reports and technical delivery summaries (no message bodies)',
   })
   listComplaints(@Query() query: AdminPaginationDto) {
     return this.service.listMessagingComplaints(query);
@@ -44,7 +45,8 @@ export class AdminMessagingController {
   @Get('conversations/:id/messages')
   @Permissions('chat.oversight.read')
   @ApiOperation({
-    summary: 'Audited limited access to conversation messages (requires reason)',
+    summary:
+      'Audited limited access to conversation messages (requires reason)',
   })
   getConversationMessages(
     @Param('id', ParseUUIDPipe) id: string,

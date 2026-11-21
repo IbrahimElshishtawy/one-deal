@@ -37,16 +37,18 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
   let devGuestToken = '';
   let devGuestUserId = '';
   let devGuestAccountId = '';
-  let otherUserToken = '';
+  const otherUserToken = '';
   let createdCategoryId: string | null = null;
   let createdSubcategoryId: string | null = null;
   let createdListingId: string | null = null;
-  let otherUserId: string | null = null;
-  let otherAccountId: string | null = null;
+  const otherUserId: string | null = null;
+  const otherAccountId: string | null = null;
 
   beforeAll(async () => {
     // Safety Guard: strictly refuse to run write tests against any non-local DB
-    const dbUrl = new URL(process.env.DATABASE_URL || 'postgresql://localhost/test');
+    const dbUrl = new URL(
+      process.env.DATABASE_URL || 'postgresql://localhost/test',
+    );
     if (
       process.env.NODE_ENV === 'production' ||
       !['localhost', '127.0.0.1'].includes(dbUrl.hostname)
@@ -70,8 +72,12 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
   afterAll(async () => {
     // Clean ONLY records created during this TEST_RUN_ID
     if (createdListingId) {
-      await prisma.favorite.deleteMany({ where: { listingId: createdListingId } });
-      await prisma.listingMedia.deleteMany({ where: { listingId: createdListingId } });
+      await prisma.favorite.deleteMany({
+        where: { listingId: createdListingId },
+      });
+      await prisma.listingMedia.deleteMany({
+        where: { listingId: createdListingId },
+      });
       await prisma.listing.deleteMany({ where: { id: createdListingId } });
     }
     if (createdSubcategoryId) {
@@ -81,7 +87,9 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
       await prisma.category.deleteMany({ where: { id: createdCategoryId } });
     }
     if (otherAccountId) {
-      await prisma.accountMember.deleteMany({ where: { accountId: otherAccountId } });
+      await prisma.accountMember.deleteMany({
+        where: { accountId: otherAccountId },
+      });
       await prisma.account.deleteMany({ where: { id: otherAccountId } });
     }
     if (otherUserId) {
@@ -134,7 +142,9 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
 
     const homeCatsRes = await api('GET', '/home/categories');
     expect(homeCatsRes.status).toBe(200);
-    expect(homeCatsRes.json.data.some((c: any) => c.slug === rootSlug)).toBe(true);
+    expect(homeCatsRes.json.data.some((c: any) => c.slug === rootSlug)).toBe(
+      true,
+    );
   });
 
   // =========================================================================
@@ -217,7 +227,9 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
     expect(mainHome.status).toBe(200);
     expect(mainHome.json.data.categories.length).toBeGreaterThanOrEqual(6);
     expect(mainHome.json.data.featured.length).toBeGreaterThan(0);
-    expect(mainHome.json.data.featured.every((x: any) => x.isFeatured === true)).toBe(true);
+    expect(
+      mainHome.json.data.featured.every((x: any) => x.isFeatured === true),
+    ).toBe(true);
     expect(mainHome.json.data.latest.length).toBeGreaterThan(0);
 
     const sections = [
@@ -234,9 +246,15 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
         where: { slug },
         include: { children: { select: { id: true } } },
       });
-      const validIds = new Set([rootCat!.id, ...rootCat!.children.map((c) => c.id)]);
+      const validIds = new Set([
+        rootCat!.id,
+        ...rootCat!.children.map((c) => c.id),
+      ]);
 
-      const feedRes = await api('GET', `/listings?categorySlug=${slug}&limit=10`);
+      const feedRes = await api(
+        'GET',
+        `/listings?categorySlug=${slug}&limit=10`,
+      );
       expect(feedRes.status).toBe(200);
       expect(feedRes.json.data.length).toBeGreaterThan(0);
       for (const item of feedRes.json.data) {
@@ -249,15 +267,24 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
   // TEST 4: Search Flow (Arabic, English, Partial, Special Chars, No Results)
   // =========================================================================
   it('TEST 4 — Search Flow (Arabic, English, Partial, Empty, Special chars, No results)', async () => {
-    const arRes = await api('GET', `/search?q=${encodeURIComponent('شقة')}&limit=10`);
+    const arRes = await api(
+      'GET',
+      `/search?q=${encodeURIComponent('شقة')}&limit=10`,
+    );
     expect(arRes.status).toBe(200);
     expect(arRes.json.data.length).toBeGreaterThan(0);
 
-    const enRes = await api('GET', `/search?q=${encodeURIComponent('Casio')}&limit=10`);
+    const enRes = await api(
+      'GET',
+      `/search?q=${encodeURIComponent('Casio')}&limit=10`,
+    );
     expect(enRes.status).toBe(200);
     expect(enRes.json.data.length).toBeGreaterThan(0);
 
-    const partialRes = await api('GET', `/search?q=${encodeURIComponent('تويو')}&limit=10`);
+    const partialRes = await api(
+      'GET',
+      `/search?q=${encodeURIComponent('تويو')}&limit=10`,
+    );
     expect(partialRes.status).toBe(200);
     expect(partialRes.json.data.length).toBeGreaterThan(0);
 
@@ -265,11 +292,17 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
     expect(emptyRes.status).toBe(200);
     expect(emptyRes.json.data.length).toBe(5);
 
-    const noRes = await api('GET', `/search?q=${encodeURIComponent('xyz_nonexistent_999999')}`);
+    const noRes = await api(
+      'GET',
+      `/search?q=${encodeURIComponent('xyz_nonexistent_999999')}`,
+    );
     expect(noRes.status).toBe(200);
     expect(noRes.json.data).toHaveLength(0);
 
-    const sqliRes = await api('GET', `/search?q=${encodeURIComponent("'; DROP TABLE listings; --")}`);
+    const sqliRes = await api(
+      'GET',
+      `/search?q=${encodeURIComponent("'; DROP TABLE listings; --")}`,
+    );
     expect(sqliRes.status).toBe(200);
     expect(sqliRes.json.data).toHaveLength(0);
   });
@@ -304,7 +337,10 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
     }
 
     // Appliances: condition=NEW
-    const appRes = await api('GET', '/search?categorySlug=home-appliances&condition=NEW&limit=10');
+    const appRes = await api(
+      'GET',
+      '/search?categorySlug=home-appliances&condition=NEW&limit=10',
+    );
     expect(appRes.status).toBe(200);
     expect(appRes.json.data.length).toBeGreaterThan(0);
     for (const item of appRes.json.data) {
@@ -316,7 +352,10 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
   // TEST 6: Sorting Flow
   // =========================================================================
   it('TEST 6 — Sorting Flow (price_asc, price_desc, newest, oldest, most_viewed, featured_first)', async () => {
-    const asc = await api('GET', '/search?categorySlug=real-estate&sort=price_asc&limit=10');
+    const asc = await api(
+      'GET',
+      '/search?categorySlug=real-estate&sort=price_asc&limit=10',
+    );
     expect(asc.status).toBe(200);
     for (let i = 1; i < asc.json.data.length; i++) {
       expect(Number(asc.json.data[i].price)).toBeGreaterThanOrEqual(
@@ -324,7 +363,10 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
       );
     }
 
-    const desc = await api('GET', '/search?categorySlug=real-estate&sort=price_desc&limit=10');
+    const desc = await api(
+      'GET',
+      '/search?categorySlug=real-estate&sort=price_desc&limit=10',
+    );
     expect(desc.status).toBe(200);
     for (let i = 1; i < desc.json.data.length; i++) {
       expect(Number(desc.json.data[i].price)).toBeLessThanOrEqual(
@@ -344,7 +386,10 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
     expect(oldest.status).toBe(200);
     expect(oldest.json.data.length).toBe(5);
 
-    const featuredFirst = await api('GET', '/listings?sort=featured_first&limit=10');
+    const featuredFirst = await api(
+      'GET',
+      '/listings?sort=featured_first&limit=10',
+    );
     expect(featuredFirst.status).toBe(200);
     expect(featuredFirst.json.data[0].isFeatured).toBe(true);
   });
@@ -353,8 +398,14 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
   // TEST 7: Pagination Flow (No duplicates, empty page, invalid page)
   // =========================================================================
   it('TEST 7 — Pagination Flow (No duplicates across pages, empty page, invalid page)', async () => {
-    const p1 = await api('GET', '/search?categorySlug=cars&sort=newest&page=1&limit=10');
-    const p2 = await api('GET', '/search?categorySlug=cars&sort=newest&page=2&limit=10');
+    const p1 = await api(
+      'GET',
+      '/search?categorySlug=cars&sort=newest&page=1&limit=10',
+    );
+    const p2 = await api(
+      'GET',
+      '/search?categorySlug=cars&sort=newest&page=2&limit=10',
+    );
     expect(p1.status).toBe(200);
     expect(p2.status).toBe(200);
 
@@ -364,7 +415,10 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
       expect(ids1.has(id)).toBe(false);
     }
 
-    const emptyPage = await api('GET', '/search?categorySlug=cars&page=999&limit=10');
+    const emptyPage = await api(
+      'GET',
+      '/search?categorySlug=cars&page=999&limit=10',
+    );
     expect(emptyPage.status).toBe(200);
     expect(emptyPage.json.data).toHaveLength(0);
 
@@ -411,9 +465,17 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
     expect(detailAfter.json.data.title).toBe(updatedTitle);
     expect(Number(detailAfter.json.data.price)).toBe(updatedPrice);
 
-    const searchAfter = await api('GET', `/search?q=${encodeURIComponent(TEST_RUN_ID)}`);
+    const searchAfter = await api(
+      'GET',
+      `/search?q=${encodeURIComponent(TEST_RUN_ID)}`,
+    );
     expect(searchAfter.status).toBe(200);
-    expect(searchAfter.json.data.some((x: any) => x.id === createdListingId && Number(x.price) === updatedPrice)).toBe(true);
+    expect(
+      searchAfter.json.data.some(
+        (x: any) =>
+          x.id === createdListingId && Number(x.price) === updatedPrice,
+      ),
+    ).toBe(true);
   });
 
   // =========================================================================
@@ -462,9 +524,14 @@ describe(`Deal One End-to-End Data Flow, Cache & Security Suite [${TEST_RUN_ID}]
     const detailAfter = await api('GET', `/listings/${createdListingId}`);
     expect(detailAfter.status).toBe(404);
 
-    const searchAfter = await api('GET', `/search?q=${encodeURIComponent(TEST_RUN_ID)}`);
+    const searchAfter = await api(
+      'GET',
+      `/search?q=${encodeURIComponent(TEST_RUN_ID)}`,
+    );
     expect(searchAfter.status).toBe(200);
-    expect(searchAfter.json.data.some((x: any) => x.id === createdListingId)).toBe(false);
+    expect(
+      searchAfter.json.data.some((x: any) => x.id === createdListingId),
+    ).toBe(false);
   });
 
   // =========================================================================

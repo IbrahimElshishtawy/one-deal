@@ -42,7 +42,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'users',
     labelEn: 'Update Users & Add Notes',
     labelAr: 'تعديل المستخدمين وإضافة الملاحظات',
-    descriptionEn: 'Edit user metadata, seller account status, and add internal notes',
+    descriptionEn:
+      'Edit user metadata, seller account status, and add internal notes',
     descriptionAr: 'تعديل بيانات المستخدم وحالة الحساب وإضافة ملاحظات داخلية',
   },
   {
@@ -50,7 +51,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'users',
     labelEn: 'Suspend / Unsuspend Users',
     labelAr: 'تعليق ورفع تعليق المستخدمين',
-    descriptionEn: 'Temporarily suspend or unsuspend marketplace users and revoke sessions',
+    descriptionEn:
+      'Temporarily suspend or unsuspend marketplace users and revoke sessions',
     descriptionAr: 'تعليق حساب المستخدم مؤقتاً أو رفع التعليق وإبطال الجلسات',
     isSensitive: true,
   },
@@ -70,7 +72,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'listings',
     labelEn: 'Read Listings',
     labelAr: 'عرض الإعلانات',
-    descriptionEn: 'View all listings regardless of moderation or publication status',
+    descriptionEn:
+      'View all listings regardless of moderation or publication status',
     descriptionAr: 'استعراض كافة الإعلانات بجميع حالاتها',
   },
   {
@@ -78,7 +81,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'listings',
     labelEn: 'Approve & Restore Listings',
     labelAr: 'اعتماد واستعادة الإعلانات',
-    descriptionEn: 'Approve pending listings and restore hidden/archived listings',
+    descriptionEn:
+      'Approve pending listings and restore hidden/archived listings',
     descriptionAr: 'الموافقة على الإعلانات قيد المراجعة واستعادة المخفية',
   },
   {
@@ -86,7 +90,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'listings',
     labelEn: 'Reject & Request Listing Changes',
     labelAr: 'رفض الإعلانات وطلب التعديل',
-    descriptionEn: 'Reject non-compliant listings or request modifications from owners',
+    descriptionEn:
+      'Reject non-compliant listings or request modifications from owners',
     descriptionAr: 'رفض الإعلانات المخالفة أو طلب تعديلات من الناشر',
   },
   {
@@ -113,7 +118,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'categories',
     labelEn: 'Read Categories & Attributes',
     labelAr: 'عرض الأقسام والخصائص',
-    descriptionEn: 'View active and inactive categories, subcategories, and dynamic fields',
+    descriptionEn:
+      'View active and inactive categories, subcategories, and dynamic fields',
     descriptionAr: 'عرض الأقسام الرئيسية والفرعية والحقول الديناميكية',
   },
   {
@@ -129,7 +135,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'categories',
     labelEn: 'Update Categories & Fields',
     labelAr: 'تعديل الأقسام والخصائص',
-    descriptionEn: 'Edit categories, reorder display order, and configure dynamic attributes',
+    descriptionEn:
+      'Edit categories, reorder display order, and configure dynamic attributes',
     descriptionAr: 'تعديل الأقسام وإعادة الترتيب وضبط الحقول الديناميكية',
   },
   {
@@ -182,7 +189,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'verification',
     labelEn: 'View Sensitive Verification Documents',
     labelAr: 'الاطلاع على مستندات التوثيق الحساسة',
-    descriptionEn: 'Audited access to view identity and commercial registration files',
+    descriptionEn:
+      'Audited access to view identity and commercial registration files',
     descriptionAr: 'صلاحية مسجلة للاطلاع على ملفات الهوية والسجل التجاري',
     isSensitive: true,
   },
@@ -199,7 +207,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'verification',
     labelEn: 'Reject / Request Verification Resubmission',
     labelAr: 'رفض أو طلب إعادة تقديم التوثيق',
-    descriptionEn: 'Reject verification requests or request document resubmission',
+    descriptionEn:
+      'Reject verification requests or request document resubmission',
     descriptionAr: 'رفض طلبات التوثيق أو طلب استكمال المستندات',
   },
 
@@ -209,7 +218,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'messaging',
     labelEn: 'Read Messaging Complaints',
     labelAr: 'عرض شكاوى المحادثات',
-    descriptionEn: 'View conversation complaints and technical delivery summaries',
+    descriptionEn:
+      'View conversation complaints and technical delivery summaries',
     descriptionAr: 'عرض شكاوى المحادثات وحالة التسليم التقنية',
   },
   {
@@ -217,7 +227,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'messaging',
     labelEn: 'Audited Conversation Inspection',
     labelAr: 'فحص محتوى المحادثات المبلغ عنها',
-    descriptionEn: 'Audited limited access to messages in complained conversations',
+    descriptionEn:
+      'Audited limited access to messages in complained conversations',
     descriptionAr: 'وصول مقيد ومسجل لرسائل المحادثات المرتبطة بشكاوى',
     isSensitive: true,
   },
@@ -226,7 +237,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'messaging',
     labelEn: 'Resolve & Escalate Messaging Cases',
     labelAr: 'حل وتصعيد شكاوى المحادثات',
-    descriptionEn: 'Update conversation status or escalate messaging support cases',
+    descriptionEn:
+      'Update conversation status or escalate messaging support cases',
     descriptionAr: 'تحديث حالة المحادثة أو تصعيد تذكرة الدعم',
   },
 
@@ -236,7 +248,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'notifications',
     labelEn: 'Read Notification Campaigns',
     labelAr: 'عرض حملات الإشعارات',
-    descriptionEn: 'View campaigns, audience estimates, and delivery statistics',
+    descriptionEn:
+      'View campaigns, audience estimates, and delivery statistics',
     descriptionAr: 'عرض حملات الإشعارات وإحصائيات التسليم',
   },
   {
@@ -272,14 +285,16 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     labelEn: 'Read CMS Content',
     labelAr: 'عرض محتوى CMS',
     descriptionEn: 'View banners, static pages, FAQs, and revision history',
-    descriptionAr: 'عرض البنرات والصفحات الثابتة والأسئلة الشائعة وسجل التعديلات',
+    descriptionAr:
+      'عرض البنرات والصفحات الثابتة والأسئلة الشائعة وسجل التعديلات',
   },
   {
     key: 'cms.manage',
     module: 'cms',
     labelEn: 'Manage & Publish CMS Content',
     labelAr: 'إدارة ونشر محتوى CMS',
-    descriptionEn: 'Create, edit, schedule, publish, unpublish, and archive CMS content',
+    descriptionEn:
+      'Create, edit, schedule, publish, unpublish, and archive CMS content',
     descriptionAr: 'إنشاء وتعديل وجدولة ونشر وأرشفة محتوى التطبيق',
   },
 
@@ -306,7 +321,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'admins',
     labelEn: 'Manage Admin Accounts & Sessions',
     labelAr: 'تعديل حسابات الإدارة والجلسات',
-    descriptionEn: 'Suspend, disable, activate admins, assign roles, revoke sessions, reset MFA',
+    descriptionEn:
+      'Suspend, disable, activate admins, assign roles, revoke sessions, reset MFA',
     descriptionAr: 'تعليق وتفعيل وتعديل الموظفين وإبطال الجلسات وإعادة ضبط MFA',
     isSensitive: true,
   },
@@ -317,7 +333,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'roles',
     labelEn: 'Read Roles & Permissions',
     labelAr: 'عرض الأدوار والصلاحيات',
-    descriptionEn: 'View staff roles, permission catalog, and effective permissions',
+    descriptionEn:
+      'View staff roles, permission catalog, and effective permissions',
     descriptionAr: 'استعراض الأدوار ودليل الصلاحيات والصلاحيات الفعلية',
   },
   {
@@ -371,7 +388,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'system_health',
     labelEn: 'Read System Health',
     labelAr: 'مراقبة صحة النظام',
-    descriptionEn: 'View PostgreSQL, PostGIS, Redis, storage, and outbox health telemetry',
+    descriptionEn:
+      'View PostgreSQL, PostGIS, Redis, storage, and outbox health telemetry',
     descriptionAr: 'عرض حالة قواعد البيانات وRedis والتخزين والطوابير',
   },
   {
@@ -387,7 +405,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'feature_flags',
     labelEn: 'Manage Feature Flags',
     labelAr: 'إدارة أعلام الميزات',
-    descriptionEn: 'Create, toggle, update environment, and delete feature flags',
+    descriptionEn:
+      'Create, toggle, update environment, and delete feature flags',
     descriptionAr: 'إنشاء وتفعيل وتعطيل وتعديل Feature Flags',
     isSensitive: true,
   },
@@ -396,7 +415,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'settings',
     labelEn: 'Read Platform Settings',
     labelAr: 'عرض إعدادات المنصة',
-    descriptionEn: 'View operational platform settings (no infrastructure secrets)',
+    descriptionEn:
+      'View operational platform settings (no infrastructure secrets)',
     descriptionAr: 'عرض إعدادات التشغيل العامة للمنصة',
   },
   {
@@ -404,7 +424,8 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     module: 'settings',
     labelEn: 'Update Platform Settings',
     labelAr: 'تعديل إعدادات المنصة',
-    descriptionEn: 'Modify listing limits, moderation rules, maintenance, and language settings',
+    descriptionEn:
+      'Modify listing limits, moderation rules, maintenance, and language settings',
     descriptionAr: 'تعديل حدود الإعلانات وقواعد المراجعة والصيانة واللغات',
     isSensitive: true,
   },

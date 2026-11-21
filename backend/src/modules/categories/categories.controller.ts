@@ -103,7 +103,9 @@ export class AdminCategoriesController {
 
   @Patch(':id')
   @Permissions('categories.update')
-  @ApiOperation({ summary: 'Update category metadata, parent, or active status' })
+  @ApiOperation({
+    summary: 'Update category metadata, parent, or active status',
+  })
   async updateCategory(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateCategoryDto,
@@ -115,7 +117,8 @@ export class AdminCategoriesController {
   @Delete(':id')
   @Permissions('categories.delete')
   @ApiOperation({
-    summary: 'Delete unused category or safely deactivate if listings/children exist',
+    summary:
+      'Delete unused category or safely deactivate if listings/children exist',
   })
   async deleteOrDeactivateCategory(
     @Param('id', ParseUUIDPipe) id: string,
@@ -126,7 +129,9 @@ export class AdminCategoriesController {
 
   @Get(':id/fields')
   @Permissions('categories.read')
-  @ApiOperation({ summary: 'List all dynamic fields (active and inactive) for a category' })
+  @ApiOperation({
+    summary: 'List all dynamic fields (active and inactive) for a category',
+  })
   async listCategoryFields(@Param('id', ParseUUIDPipe) categoryId: string) {
     return this.categoriesService.listAdminCategoryFields(categoryId);
   }

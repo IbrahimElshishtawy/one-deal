@@ -95,7 +95,9 @@ export class FilterListingsDto {
   @IsString()
   listingKind?: string;
 
-  @ApiPropertyOptional({ description: 'Return only featured/promoted listings' })
+  @ApiPropertyOptional({
+    description: 'Return only featured/promoted listings',
+  })
   @IsOptional()
   @Type(() => Boolean)
   @IsBoolean()

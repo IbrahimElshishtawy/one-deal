@@ -125,7 +125,9 @@ export class ModerationService {
         data: {
           moderationStatus: newModerationStatus,
           publicationStatus: newPublicationStatus,
-          ...(isApprove ? { approvedAt: listing.approvedAt ?? new Date() } : {}),
+          ...(isApprove
+            ? { approvedAt: listing.approvedAt ?? new Date() }
+            : {}),
         },
       });
 
@@ -168,7 +170,11 @@ export class ModerationService {
       this.redis?.incr?.('home:feed:ver').catch(() => undefined),
     ]);
 
-    if (this.emailService && (this.prisma as any).account?.findUnique && !isRequestChanges) {
+    if (
+      this.emailService &&
+      (this.prisma as any).account?.findUnique &&
+      !isRequestChanges
+    ) {
       this.notifyListingModerationDecision(
         listing.accountId,
         listingId,
@@ -254,9 +260,7 @@ export class ModerationService {
     const statusFilter = filters?.status;
 
     const where: any = {
-      ...(statusFilter === 'all'
-        ? {}
-        : { status: statusFilter || 'open' }),
+      ...(statusFilter === 'all' ? {} : { status: statusFilter || 'open' }),
       ...(filters?.reason ? { reason: filters.reason } : {}),
       ...(filters?.priority ? { priority: filters.priority } : {}),
       ...(filters?.assignedToStaffId
@@ -382,7 +386,9 @@ export class ModerationService {
         select: { id: true, isActive: true },
       });
       if (!targetStaff || !targetStaff.isActive) {
-        throw new NotFoundException('Assigned staff user not found or inactive');
+        throw new NotFoundException(
+          'Assigned staff user not found or inactive',
+        );
       }
     }
 

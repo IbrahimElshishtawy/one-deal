@@ -734,10 +734,13 @@ export class AuthService {
     correlationId?: string,
   ) {
     const nodeEnv =
-      this.configService?.get<string>('NODE_ENV', process.env.NODE_ENV || 'production') ||
-      'production';
+      this.configService?.get<string>(
+        'NODE_ENV',
+        process.env.NODE_ENV || 'production',
+      ) || 'production';
     const bypassEnabled =
-      this.configService?.get<boolean>('ENABLE_DEV_AUTH_BYPASS', false) === true;
+      this.configService?.get<boolean>('ENABLE_DEV_AUTH_BYPASS', false) ===
+      true;
 
     if (nodeEnv === 'production' || !bypassEnabled) {
       throw new ForbiddenException(

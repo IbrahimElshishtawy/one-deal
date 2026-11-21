@@ -5,6 +5,8 @@ import 'package:market_space/core/routing/app_page_transitions.dart';
 import 'package:market_space/core/routing/route_guards.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/features/accounts/presentation/screens/profile_screen.dart';
+import 'package:market_space/features/activity_hub/domain/entities/activity_hub_tab.dart';
+import 'package:market_space/features/activity_hub/presentation/pages/activity_hub_page.dart';
 import 'package:market_space/features/appliances_decor/presentation/pages/appliances_decor_home_page.dart';
 import 'package:market_space/features/auth/domain/entities/auth_session.dart';
 import 'package:market_space/features/auth/presentation/pages/legal/legal_document_page.dart';
@@ -16,7 +18,6 @@ import 'package:market_space/features/auth/presentation/pages/verification_succe
 import 'package:market_space/features/cars_maintenance/presentation/pages/cars_maintenance_home_page.dart';
 import 'package:market_space/features/construction_electrical/presentation/pages/construction_electrical_home_page.dart';
 import 'package:market_space/features/fashion_accessories/presentation/pages/fashion_accessories_home_page.dart';
-import 'package:market_space/features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:market_space/features/listings/presentation/screens/listing_detail_screen.dart';
 import 'package:market_space/features/main_hub/presentation/pages/main_hub_page.dart';
 import 'package:market_space/features/real_estate/presentation/pages/real_estate_home_page.dart';
@@ -131,13 +132,29 @@ class AppRouter {
           },
         ),
         GoRoute(
+          path: RouteNames.activityHub,
+          name: RouteNames.activityHubName,
+          pageBuilder: (context, state) {
+            final tab = ActivityHubTab.fromQuery(
+              state.uri.queryParameters['tab'],
+            );
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              child: ActivityHubPage(initialTab: tab),
+            );
+          },
+        ),
+        GoRoute(
           path: RouteNames.favorites,
           name: RouteNames.favoritesName,
           pageBuilder: (context, state) =>
               AppPageTransitions.buildCinematicPage(
                 context: context,
                 state: state,
-                child: const FavoritesScreen(),
+                child: const ActivityHubPage(
+                  initialTab: ActivityHubTab.favorites,
+                ),
               ),
         ),
         GoRoute(

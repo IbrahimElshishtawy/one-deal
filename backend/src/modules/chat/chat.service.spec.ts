@@ -71,7 +71,9 @@ describe('ChatService (Milestone 5)', () => {
   describe('subscribeToUserStream resilience', () => {
     it('absorbs Redis subscriber errors and subscribe rejection without throwing unhandled RxJS error', async () => {
       const fakeSubscriber: any = new EventEmitter();
-      fakeSubscriber.subscribe = jest.fn().mockRejectedValue(new Error('Redis down'));
+      fakeSubscriber.subscribe = jest
+        .fn()
+        .mockRejectedValue(new Error('Redis down'));
       fakeSubscriber.unsubscribe = jest.fn().mockResolvedValue(1);
       fakeSubscriber.quit = jest.fn().mockResolvedValue('OK');
 
@@ -96,7 +98,9 @@ describe('ChatService (Milestone 5)', () => {
       });
 
       await new Promise((r) => setTimeout(r, 20));
-      expect(() => fakeSubscriber.emit('error', new Error('ECONNRESET'))).not.toThrow();
+      expect(() =>
+        fakeSubscriber.emit('error', new Error('ECONNRESET')),
+      ).not.toThrow();
       expect(errReceived).toBeNull();
       sub.unsubscribe();
     });

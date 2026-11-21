@@ -98,7 +98,9 @@ export class StaffService {
       where: { name: normalizedName },
     });
     if (existing) {
-      throw new ConflictException(`Staff role '${normalizedName}' already exists`);
+      throw new ConflictException(
+        `Staff role '${normalizedName}' already exists`,
+      );
     }
 
     const permissions = this.validateAndCheckEscalation(
@@ -695,9 +697,7 @@ export class StaffService {
 
     if (actorContext) {
       const invalid = unique.filter(
-        (p) =>
-          !ADMIN_PERMISSION_SET.has(p) &&
-          !/^[a-z_]+:[a-z_]+$/i.test(p),
+        (p) => !ADMIN_PERMISSION_SET.has(p) && !/^[a-z_]+:[a-z_]+$/i.test(p),
       );
       if (invalid.length > 0) {
         throw new BadRequestException(

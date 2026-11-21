@@ -84,11 +84,15 @@ describe('Deal One Complete Backend Modules, RBAC & Error-Handling Audit (Live E
     expect(profile.status).toBe(200);
     expect(profile.json.data.fullName).toBeTruthy();
 
-    const accounts = await req('GET', `${BASE_URL}/accounts/my-accounts`, { token });
+    const accounts = await req('GET', `${BASE_URL}/accounts/my-accounts`, {
+      token,
+    });
     expect(accounts.status).toBe(200);
     expect(accounts.json.data.length).toBeGreaterThan(0);
 
-    const accDetail = await req('GET', `${BASE_URL}/accounts/${accountId}`, { token });
+    const accDetail = await req('GET', `${BASE_URL}/accounts/${accountId}`, {
+      token,
+    });
     expect(accDetail.status).toBe(200);
 
     const govs = await req('GET', `${BASE_URL}/locations/governorates`);
@@ -96,7 +100,10 @@ describe('Deal One Complete Backend Modules, RBAC & Error-Handling Audit (Live E
     expect(govs.json.data.length).toBeGreaterThanOrEqual(10);
     const firstCityId = govs.json.data[0]?.cities?.[0]?.id;
     if (firstCityId) {
-      const areas = await req('GET', `${BASE_URL}/locations/cities/${firstCityId}/areas`);
+      const areas = await req(
+        'GET',
+        `${BASE_URL}/locations/cities/${firstCityId}/areas`,
+      );
       expect(areas.status).toBe(200);
     }
   });
@@ -106,11 +113,17 @@ describe('Deal One Complete Backend Modules, RBAC & Error-Handling Audit (Live E
     expect(cats.status).toBe(200);
     expect(cats.json.data.length).toBeGreaterThanOrEqual(6);
 
-    const fields = await req('GET', `${BASE_URL}/categories/apartments-for-sale/fields`);
+    const fields = await req(
+      'GET',
+      `${BASE_URL}/categories/apartments-for-sale/fields`,
+    );
     expect(fields.status).toBe(200);
     expect(fields.json.data.length).toBeGreaterThan(0);
 
-    const sectionHome = await req('GET', `${BASE_URL}/home/sections/real-estate`);
+    const sectionHome = await req(
+      'GET',
+      `${BASE_URL}/home/sections/real-estate`,
+    );
     expect(sectionHome.status).toBe(200);
 
     const listings = await req('GET', `${BASE_URL}/listings?limit=5`);
@@ -135,10 +148,18 @@ describe('Deal One Complete Backend Modules, RBAC & Error-Handling Audit (Live E
     const favs = await req('GET', `${BASE_URL}/favorites`, { token });
     expect(favs.status).toBe(200);
 
-    const addFav = await req('POST', `${BASE_URL}/favorites/${sampleListingId}`, { token });
+    const addFav = await req(
+      'POST',
+      `${BASE_URL}/favorites/${sampleListingId}`,
+      { token },
+    );
     expect([200, 201]).toContain(addFav.status);
 
-    const delFav = await req('DELETE', `${BASE_URL}/favorites/${sampleListingId}`, { token });
+    const delFav = await req(
+      'DELETE',
+      `${BASE_URL}/favorites/${sampleListingId}`,
+      { token },
+    );
     expect(delFav.status).toBe(200);
 
     const convs = await req('GET', `${BASE_URL}/conversations`, { token });
@@ -155,7 +176,11 @@ describe('Deal One Complete Backend Modules, RBAC & Error-Handling Audit (Live E
   });
 
   it('6. RBAC Admin Protection blocks standard USER token (403 Forbidden)', async () => {
-    const modListings = await req('GET', `${BASE_URL}/admin/moderation/listings`, { token });
+    const modListings = await req(
+      'GET',
+      `${BASE_URL}/admin/moderation/listings`,
+      { token },
+    );
     expect(modListings.status).toBe(403);
 
     const settings = await req('GET', `${BASE_URL}/admin/settings`, { token });
@@ -172,7 +197,10 @@ describe('Deal One Complete Backend Modules, RBAC & Error-Handling Audit (Live E
     expect(badUuid.json.error.code).toBe('INVALID_IDENTIFIER');
     expect(badUuid.json.error.trace_id).toBeTruthy();
 
-    const badAttrs = await req('GET', `${BASE_URL}/search?attributes={malformed_json`);
+    const badAttrs = await req(
+      'GET',
+      `${BASE_URL}/search?attributes={malformed_json`,
+    );
     expect(badAttrs.status).toBe(400);
     expect(badAttrs.json.success).toBe(false);
 

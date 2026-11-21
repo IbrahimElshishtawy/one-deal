@@ -39,14 +39,19 @@ export class AdminUsersController {
 
   @Get('users')
   @Permissions('users.read')
-  @ApiOperation({ summary: 'List marketplace users with search, filters, and pagination' })
+  @ApiOperation({
+    summary: 'List marketplace users with search, filters, and pagination',
+  })
   listUsers(@Query() query: AdminUsersQueryDto) {
     return this.service.listUsers(query);
   }
 
   @Get('users/:id')
   @Permissions('users.read')
-  @ApiOperation({ summary: 'Get detailed marketplace user profile, listings, reports, and history' })
+  @ApiOperation({
+    summary:
+      'Get detailed marketplace user profile, listings, reports, and history',
+  })
   getUserDetail(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getUserDetail(id);
   }
@@ -65,7 +70,9 @@ export class AdminUsersController {
   @Post('users/:id/suspend')
   @Permissions('users.suspend')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Suspend a marketplace user and revoke active sessions' })
+  @ApiOperation({
+    summary: 'Suspend a marketplace user and revoke active sessions',
+  })
   suspendUser(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: SuspendUserDto,
@@ -89,7 +96,9 @@ export class AdminUsersController {
   @Post('users/:id/ban')
   @Permissions('users.ban')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Permanently ban user, hide active listings, and revoke sessions' })
+  @ApiOperation({
+    summary: 'Permanently ban user, hide active listings, and revoke sessions',
+  })
   banUser(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: BanUserDto,
@@ -135,7 +144,9 @@ export class AdminUsersController {
 
   @Get('accounts')
   @Permissions('users.read')
-  @ApiOperation({ summary: 'List seller accounts with filtering and pagination' })
+  @ApiOperation({
+    summary: 'List seller accounts with filtering and pagination',
+  })
   listAccounts(
     @Query()
     query: AdminPaginationDto & {

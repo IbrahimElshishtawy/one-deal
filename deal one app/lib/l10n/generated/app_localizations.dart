@@ -1105,6 +1105,894 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get settingsLanguageEnglish;
+
+  /// No description provided for @activityHubTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity & Commerce Hub'**
+  String get activityHubTitle;
+
+  /// No description provided for @activityHubSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your cart, bookings, quotations, and favorites'**
+  String get activityHubSubtitle;
+
+  /// No description provided for @activityHubHeaderTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity & Commerce Hub'**
+  String get activityHubHeaderTooltip;
+
+  /// No description provided for @activityTabCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart'**
+  String get activityTabCart;
+
+  /// No description provided for @activityTabBookings.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookings'**
+  String get activityTabBookings;
+
+  /// No description provided for @activityTabRfq.
+  ///
+  /// In en, this message translates to:
+  /// **'RFQ'**
+  String get activityTabRfq;
+
+  /// No description provided for @activityTabFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get activityTabFavorites;
+
+  /// No description provided for @activitySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search your activity...'**
+  String get activitySearchHint;
+
+  /// No description provided for @activityFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get activityFilterAll;
+
+  /// No description provided for @activitySummaryCartItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} in cart'**
+  String activitySummaryCartItems(int count);
+
+  /// No description provided for @activitySummaryBookings.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} bookings'**
+  String activitySummaryBookings(int count);
+
+  /// No description provided for @activitySummaryRfqs.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} RFQs'**
+  String activitySummaryRfqs(int count);
+
+  /// No description provided for @activitySummaryFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} saved'**
+  String activitySummaryFavorites(int count);
+
+  /// No description provided for @activityBackendPendingNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Live server sync for this section is awaiting backend support.'**
+  String get activityBackendPendingNotice;
+
+  /// No description provided for @activityAuthRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to sync your activity'**
+  String get activityAuthRequiredTitle;
+
+  /// No description provided for @activityAuthRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to access your server-synced favorites and account activity.'**
+  String get activityAuthRequiredMessage;
+
+  /// No description provided for @activitySignInAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get activitySignInAction;
+
+  /// No description provided for @cartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping Cart'**
+  String get cartTitle;
+
+  /// No description provided for @cartEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shopping cart is empty'**
+  String get cartEmptyTitle;
+
+  /// No description provided for @cartEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add building materials, appliances, or fashion items to your cart to manage quantities and contact sellers.'**
+  String get cartEmptyMessage;
+
+  /// No description provided for @cartExploreProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore Marketplace'**
+  String get cartExploreProducts;
+
+  /// No description provided for @cartSellerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Seller: {seller}'**
+  String cartSellerLabel(String seller);
+
+  /// No description provided for @cartUnitPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit Price'**
+  String get cartUnitPriceLabel;
+
+  /// No description provided for @cartQuantityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get cartQuantityLabel;
+
+  /// No description provided for @cartSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Size: {size}'**
+  String cartSizeLabel(String size);
+
+  /// No description provided for @cartColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color: {color}'**
+  String cartColorLabel(String color);
+
+  /// No description provided for @cartRemoveItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get cartRemoveItem;
+
+  /// No description provided for @cartSaveForLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Save for Later'**
+  String get cartSaveForLater;
+
+  /// No description provided for @cartSavedForLaterSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to your favorites list'**
+  String get cartSavedForLaterSuccess;
+
+  /// No description provided for @cartRemovedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Item removed from cart'**
+  String get cartRemovedSuccess;
+
+  /// No description provided for @cartAddedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to shopping cart'**
+  String get cartAddedSuccess;
+
+  /// No description provided for @cartRemoveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Item'**
+  String get cartRemoveConfirmTitle;
+
+  /// No description provided for @cartRemoveConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove \"{title}\" from your cart?'**
+  String cartRemoveConfirmMessage(String title);
+
+  /// No description provided for @cartClearConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Cart'**
+  String get cartClearConfirmTitle;
+
+  /// No description provided for @cartClearConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove all items from your shopping cart?'**
+  String get cartClearConfirmMessage;
+
+  /// No description provided for @cartClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All'**
+  String get cartClearAction;
+
+  /// No description provided for @cartSubtotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get cartSubtotalLabel;
+
+  /// No description provided for @cartTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated Total'**
+  String get cartTotalLabel;
+
+  /// No description provided for @cartItemsCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items'**
+  String cartItemsCountLabel(int count);
+
+  /// No description provided for @cartCheckoutAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Proceed / Contact Sellers'**
+  String get cartCheckoutAction;
+
+  /// No description provided for @cartV1CommerceNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Deal One V1 operates on direct seller contact without in-app payment. Use Contact Seller on each item to finalize your deal.'**
+  String get cartV1CommerceNotice;
+
+  /// No description provided for @cartSelectVariantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Options'**
+  String get cartSelectVariantTitle;
+
+  /// No description provided for @cartSelectSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Size'**
+  String get cartSelectSize;
+
+  /// No description provided for @cartSelectColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Color'**
+  String get cartSelectColor;
+
+  /// No description provided for @cartAddToCartAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Cart'**
+  String get cartAddToCartAction;
+
+  /// No description provided for @cartQuantityMinError.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity must be at least 1'**
+  String get cartQuantityMinError;
+
+  /// No description provided for @bookingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookings & Appointments'**
+  String get bookingsTitle;
+
+  /// No description provided for @bookingsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings or appointments yet'**
+  String get bookingsEmptyTitle;
+
+  /// No description provided for @bookingsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Property viewings, vehicle inspections, and service appointments will appear here once scheduled.'**
+  String get bookingsEmptyMessage;
+
+  /// No description provided for @bookingsFilterRealEstate.
+  ///
+  /// In en, this message translates to:
+  /// **'Real Estate'**
+  String get bookingsFilterRealEstate;
+
+  /// No description provided for @bookingsFilterCars.
+  ///
+  /// In en, this message translates to:
+  /// **'Cars & Maintenance'**
+  String get bookingsFilterCars;
+
+  /// No description provided for @bookingsFilterServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Services & Engineering'**
+  String get bookingsFilterServices;
+
+  /// No description provided for @bookingsTypePropertyViewing.
+  ///
+  /// In en, this message translates to:
+  /// **'Property Viewing'**
+  String get bookingsTypePropertyViewing;
+
+  /// No description provided for @bookingsTypePropertyInspection.
+  ///
+  /// In en, this message translates to:
+  /// **'Property Inspection'**
+  String get bookingsTypePropertyInspection;
+
+  /// No description provided for @bookingsTypeAgentContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent Contact Request'**
+  String get bookingsTypeAgentContact;
+
+  /// No description provided for @bookingsTypeVehicleInspection.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle Inspection'**
+  String get bookingsTypeVehicleInspection;
+
+  /// No description provided for @bookingsTypeMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance Booking'**
+  String get bookingsTypeMaintenance;
+
+  /// No description provided for @bookingsTypeServiceCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Center'**
+  String get bookingsTypeServiceCenter;
+
+  /// No description provided for @bookingsTypePlumbing.
+  ///
+  /// In en, this message translates to:
+  /// **'Plumbing Service'**
+  String get bookingsTypePlumbing;
+
+  /// No description provided for @bookingsTypeElectricity.
+  ///
+  /// In en, this message translates to:
+  /// **'Electrical Service'**
+  String get bookingsTypeElectricity;
+
+  /// No description provided for @bookingsTypeAc.
+  ///
+  /// In en, this message translates to:
+  /// **'AC Service'**
+  String get bookingsTypeAc;
+
+  /// No description provided for @bookingsTypeConstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Construction Service'**
+  String get bookingsTypeConstruction;
+
+  /// No description provided for @bookingsTypeEngineering.
+  ///
+  /// In en, this message translates to:
+  /// **'Engineering Service'**
+  String get bookingsTypeEngineering;
+
+  /// No description provided for @bookingsProviderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider'**
+  String get bookingsProviderLabel;
+
+  /// No description provided for @bookingsDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get bookingsDateLabel;
+
+  /// No description provided for @bookingsTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get bookingsTimeLabel;
+
+  /// No description provided for @bookingsAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get bookingsAddressLabel;
+
+  /// No description provided for @bookingsReferenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ref #{reference}'**
+  String bookingsReferenceLabel(String reference);
+
+  /// No description provided for @bookingsStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get bookingsStatusPending;
+
+  /// No description provided for @bookingsStatusConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get bookingsStatusConfirmed;
+
+  /// No description provided for @bookingsStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get bookingsStatusRejected;
+
+  /// No description provided for @bookingsStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get bookingsStatusCancelled;
+
+  /// No description provided for @bookingsStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get bookingsStatusCompleted;
+
+  /// No description provided for @bookingsStatusUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get bookingsStatusUnknown;
+
+  /// No description provided for @bookingsCancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Booking'**
+  String get bookingsCancelAction;
+
+  /// No description provided for @bookingsCancelConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Booking'**
+  String get bookingsCancelConfirmTitle;
+
+  /// No description provided for @bookingsCancelConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel this booking?'**
+  String get bookingsCancelConfirmMessage;
+
+  /// No description provided for @bookingsContactProviderAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Provider'**
+  String get bookingsContactProviderAction;
+
+  /// No description provided for @bookingsViewListingAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View Listing'**
+  String get bookingsViewListingAction;
+
+  /// No description provided for @bookingsCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule Appointment'**
+  String get bookingsCreateTitle;
+
+  /// No description provided for @bookingsSelectDateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select appointment date'**
+  String get bookingsSelectDateHint;
+
+  /// No description provided for @bookingsSelectTimeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select available time'**
+  String get bookingsSelectTimeHint;
+
+  /// No description provided for @bookingsAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter service or meeting address'**
+  String get bookingsAddressHint;
+
+  /// No description provided for @bookingsNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe your request or notes'**
+  String get bookingsNotesHint;
+
+  /// No description provided for @bookingsSubmitAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Request'**
+  String get bookingsSubmitAction;
+
+  /// No description provided for @bookingsValidationDateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a date'**
+  String get bookingsValidationDateRequired;
+
+  /// No description provided for @bookingsValidationTimeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a time'**
+  String get bookingsValidationTimeRequired;
+
+  /// No description provided for @bookingsValidationAddressRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an address'**
+  String get bookingsValidationAddressRequired;
+
+  /// No description provided for @bookingsBackendUnavailableNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Online booking submission requires backend endpoint support. You can contact the seller directly from the listing.'**
+  String get bookingsBackendUnavailableNotice;
+
+  /// No description provided for @rfqTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request for Quotation'**
+  String get rfqTitle;
+
+  /// No description provided for @rfqEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No quotation requests yet'**
+  String get rfqEmptyTitle;
+
+  /// No description provided for @rfqEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit bulk material requirements and compare supplier quotations here.'**
+  String get rfqEmptyMessage;
+
+  /// No description provided for @rfqCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New RFQ'**
+  String get rfqCreateAction;
+
+  /// No description provided for @rfqCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Quotation Request'**
+  String get rfqCreateTitle;
+
+  /// No description provided for @rfqRequestTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Project / Request Title'**
+  String get rfqRequestTitleLabel;
+
+  /// No description provided for @rfqRequestTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Villa Electrical & Cement Supply'**
+  String get rfqRequestTitleHint;
+
+  /// No description provided for @rfqMaterialsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Products / Materials'**
+  String get rfqMaterialsLabel;
+
+  /// No description provided for @rfqMaterialsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Portland Cement, Steel Rebar 12mm'**
+  String get rfqMaterialsHint;
+
+  /// No description provided for @rfqQuantityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity & Unit'**
+  String get rfqQuantityLabel;
+
+  /// No description provided for @rfqQuantityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 50 Tons / 200 Units'**
+  String get rfqQuantityHint;
+
+  /// No description provided for @rfqDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Description'**
+  String get rfqDescriptionLabel;
+
+  /// No description provided for @rfqDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Specify technical requirements and timeline'**
+  String get rfqDescriptionHint;
+
+  /// No description provided for @rfqDeliveryLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Location'**
+  String get rfqDeliveryLocationLabel;
+
+  /// No description provided for @rfqDeliveryLocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Governorate, City, Site Address'**
+  String get rfqDeliveryLocationHint;
+
+  /// No description provided for @rfqAttachmentsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Image attachments are supported once backend media upload for RFQs is enabled.'**
+  String get rfqAttachmentsNote;
+
+  /// No description provided for @rfqSubmitAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Quotation Request'**
+  String get rfqSubmitAction;
+
+  /// No description provided for @rfqReferenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'RFQ #{reference}'**
+  String rfqReferenceLabel(String reference);
+
+  /// No description provided for @rfqSubmittedDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted: {date}'**
+  String rfqSubmittedDateLabel(String date);
+
+  /// No description provided for @rfqItemsCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items requested'**
+  String rfqItemsCountLabel(int count);
+
+  /// No description provided for @rfqQuotationsCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} quotations received'**
+  String rfqQuotationsCountLabel(int count);
+
+  /// No description provided for @rfqLastUpdatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated: {date}'**
+  String rfqLastUpdatedLabel(String date);
+
+  /// No description provided for @rfqStatusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get rfqStatusDraft;
+
+  /// No description provided for @rfqStatusSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted'**
+  String get rfqStatusSubmitted;
+
+  /// No description provided for @rfqStatusUnderReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Under Review'**
+  String get rfqStatusUnderReview;
+
+  /// No description provided for @rfqStatusQuoted.
+  ///
+  /// In en, this message translates to:
+  /// **'Quoted'**
+  String get rfqStatusQuoted;
+
+  /// No description provided for @rfqStatusAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get rfqStatusAccepted;
+
+  /// No description provided for @rfqStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get rfqStatusRejected;
+
+  /// No description provided for @rfqStatusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get rfqStatusClosed;
+
+  /// No description provided for @rfqViewQuotationsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare Quotations'**
+  String get rfqViewQuotationsAction;
+
+  /// No description provided for @rfqNoQuotationsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No supplier quotations received yet.'**
+  String get rfqNoQuotationsYet;
+
+  /// No description provided for @rfqAcceptQuotationAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get rfqAcceptQuotationAction;
+
+  /// No description provided for @rfqRejectQuotationAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get rfqRejectQuotationAction;
+
+  /// No description provided for @rfqValidationTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a request title'**
+  String get rfqValidationTitleRequired;
+
+  /// No description provided for @rfqValidationMaterialsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please specify products or materials'**
+  String get rfqValidationMaterialsRequired;
+
+  /// No description provided for @rfqValidationQuantityRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please specify quantities'**
+  String get rfqValidationQuantityRequired;
+
+  /// No description provided for @rfqValidationLocationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please specify delivery location'**
+  String get rfqValidationLocationRequired;
+
+  /// No description provided for @rfqBackendUnavailableNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'RFQ submission and quotation comparison are awaiting backend API support.'**
+  String get rfqBackendUnavailableNotice;
+
+  /// No description provided for @favoritesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get favoritesTitle;
+
+  /// No description provided for @favoritesEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved listings yet'**
+  String get favoritesEmptyTitle;
+
+  /// No description provided for @favoritesEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the heart icon on any listing across Deal One to save it here.'**
+  String get favoritesEmptyMessage;
+
+  /// No description provided for @favoritesSearchEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching favorites'**
+  String get favoritesSearchEmptyTitle;
+
+  /// No description provided for @favoritesSearchEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Try clearing your search or selecting a different category.'**
+  String get favoritesSearchEmptyMessage;
+
+  /// No description provided for @favoritesExploreAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse Listings'**
+  String get favoritesExploreAction;
+
+  /// No description provided for @favoritesRemoveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Favorites'**
+  String get favoritesRemoveAction;
+
+  /// No description provided for @favoritesOpenListingAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get favoritesOpenListingAction;
+
+  /// No description provided for @favoritesGoToSectionAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Section'**
+  String get favoritesGoToSectionAction;
+
+  /// No description provided for @favoritesRemovedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from favorites'**
+  String get favoritesRemovedSuccess;
+
+  /// No description provided for @favoritesSectorRealEstate.
+  ///
+  /// In en, this message translates to:
+  /// **'Real Estate & Land'**
+  String get favoritesSectorRealEstate;
+
+  /// No description provided for @favoritesSectorCars.
+  ///
+  /// In en, this message translates to:
+  /// **'Cars & Maintenance'**
+  String get favoritesSectorCars;
+
+  /// No description provided for @favoritesSectorServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Services & Engineering'**
+  String get favoritesSectorServices;
+
+  /// No description provided for @favoritesSectorBuildingMaterials.
+  ///
+  /// In en, this message translates to:
+  /// **'Building Materials'**
+  String get favoritesSectorBuildingMaterials;
+
+  /// No description provided for @favoritesSectorAppliances.
+  ///
+  /// In en, this message translates to:
+  /// **'Home Appliances & Decor'**
+  String get favoritesSectorAppliances;
+
+  /// No description provided for @favoritesSectorFashion.
+  ///
+  /// In en, this message translates to:
+  /// **'Fashion & Accessories'**
+  String get favoritesSectorFashion;
+
+  /// No description provided for @actionRequestViewing.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Viewing'**
+  String get actionRequestViewing;
+
+  /// No description provided for @actionBookInspection.
+  ///
+  /// In en, this message translates to:
+  /// **'Book Inspection'**
+  String get actionBookInspection;
+
+  /// No description provided for @actionBookService.
+  ///
+  /// In en, this message translates to:
+  /// **'Book Service'**
+  String get actionBookService;
+
+  /// No description provided for @actionRequestQuotation.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Quotation'**
+  String get actionRequestQuotation;
+
+  /// No description provided for @actionContactSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Seller'**
+  String get actionContactSeller;
 }
 
 class _AppLocalizationsDelegate

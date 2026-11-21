@@ -1,7 +1,10 @@
 /**
  * Known dead or removed external image IDs mapped to verified 200 OK replacements.
  */
-const BROKEN_IMAGE_REPLACEMENTS: Array<{ pattern: string; replacement: string }> = [
+const BROKEN_IMAGE_REPLACEMENTS: Array<{
+  pattern: string;
+  replacement: string;
+}> = [
   {
     pattern: 'photo-1486006920555-c77dce18193b',
     replacement: 'photo-1492144534655-ae79c964c9d7',
@@ -37,8 +40,7 @@ const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
     'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80',
   'building-materials':
     'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80',
-  cars:
-    'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
+  cars: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
   fashion:
     'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
   default:
@@ -48,7 +50,9 @@ const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
 const DEFAULT_AVATAR_URL =
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
 
-export function resolveFallbackImageForCategory(categorySlug?: string | null): string {
+export function resolveFallbackImageForCategory(
+  categorySlug?: string | null,
+): string {
   if (!categorySlug) return CATEGORY_FALLBACK_IMAGES.default;
   const slug = categorySlug.toLowerCase();
   if (

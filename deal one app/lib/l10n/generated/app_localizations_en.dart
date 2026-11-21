@@ -593,4 +593,495 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get activityHubTitle => 'Activity & Commerce Hub';
+
+  @override
+  String get activityHubSubtitle =>
+      'Manage your cart, bookings, quotations, and favorites';
+
+  @override
+  String get activityHubHeaderTooltip => 'Activity & Commerce Hub';
+
+  @override
+  String get activityTabCart => 'Cart';
+
+  @override
+  String get activityTabBookings => 'Bookings';
+
+  @override
+  String get activityTabRfq => 'RFQ';
+
+  @override
+  String get activityTabFavorites => 'Favorites';
+
+  @override
+  String get activitySearchHint => 'Search your activity...';
+
+  @override
+  String get activityFilterAll => 'All';
+
+  @override
+  String activitySummaryCartItems(int count) {
+    return '$count in cart';
+  }
+
+  @override
+  String activitySummaryBookings(int count) {
+    return '$count bookings';
+  }
+
+  @override
+  String activitySummaryRfqs(int count) {
+    return '$count RFQs';
+  }
+
+  @override
+  String activitySummaryFavorites(int count) {
+    return '$count saved';
+  }
+
+  @override
+  String get activityBackendPendingNotice =>
+      'Live server sync for this section is awaiting backend support.';
+
+  @override
+  String get activityAuthRequiredTitle => 'Sign in to sync your activity';
+
+  @override
+  String get activityAuthRequiredMessage =>
+      'Log in to access your server-synced favorites and account activity.';
+
+  @override
+  String get activitySignInAction => 'Sign In';
+
+  @override
+  String get cartTitle => 'Shopping Cart';
+
+  @override
+  String get cartEmptyTitle => 'Your shopping cart is empty';
+
+  @override
+  String get cartEmptyMessage =>
+      'Add building materials, appliances, or fashion items to your cart to manage quantities and contact sellers.';
+
+  @override
+  String get cartExploreProducts => 'Explore Marketplace';
+
+  @override
+  String cartSellerLabel(String seller) {
+    return 'Seller: $seller';
+  }
+
+  @override
+  String get cartUnitPriceLabel => 'Unit Price';
+
+  @override
+  String get cartQuantityLabel => 'Quantity';
+
+  @override
+  String cartSizeLabel(String size) {
+    return 'Size: $size';
+  }
+
+  @override
+  String cartColorLabel(String color) {
+    return 'Color: $color';
+  }
+
+  @override
+  String get cartRemoveItem => 'Remove';
+
+  @override
+  String get cartSaveForLater => 'Save for Later';
+
+  @override
+  String get cartSavedForLaterSuccess => 'Saved to your favorites list';
+
+  @override
+  String get cartRemovedSuccess => 'Item removed from cart';
+
+  @override
+  String get cartAddedSuccess => 'Added to shopping cart';
+
+  @override
+  String get cartRemoveConfirmTitle => 'Remove Item';
+
+  @override
+  String cartRemoveConfirmMessage(String title) {
+    return 'Are you sure you want to remove \"$title\" from your cart?';
+  }
+
+  @override
+  String get cartClearConfirmTitle => 'Clear Cart';
+
+  @override
+  String get cartClearConfirmMessage =>
+      'Remove all items from your shopping cart?';
+
+  @override
+  String get cartClearAction => 'Clear All';
+
+  @override
+  String get cartSubtotalLabel => 'Subtotal';
+
+  @override
+  String get cartTotalLabel => 'Estimated Total';
+
+  @override
+  String cartItemsCountLabel(int count) {
+    return '$count items';
+  }
+
+  @override
+  String get cartCheckoutAction => 'Proceed / Contact Sellers';
+
+  @override
+  String get cartV1CommerceNotice =>
+      'Deal One V1 operates on direct seller contact without in-app payment. Use Contact Seller on each item to finalize your deal.';
+
+  @override
+  String get cartSelectVariantTitle => 'Select Options';
+
+  @override
+  String get cartSelectSize => 'Select Size';
+
+  @override
+  String get cartSelectColor => 'Select Color';
+
+  @override
+  String get cartAddToCartAction => 'Add to Cart';
+
+  @override
+  String get cartQuantityMinError => 'Quantity must be at least 1';
+
+  @override
+  String get bookingsTitle => 'Bookings & Appointments';
+
+  @override
+  String get bookingsEmptyTitle => 'No bookings or appointments yet';
+
+  @override
+  String get bookingsEmptyMessage =>
+      'Property viewings, vehicle inspections, and service appointments will appear here once scheduled.';
+
+  @override
+  String get bookingsFilterRealEstate => 'Real Estate';
+
+  @override
+  String get bookingsFilterCars => 'Cars & Maintenance';
+
+  @override
+  String get bookingsFilterServices => 'Services & Engineering';
+
+  @override
+  String get bookingsTypePropertyViewing => 'Property Viewing';
+
+  @override
+  String get bookingsTypePropertyInspection => 'Property Inspection';
+
+  @override
+  String get bookingsTypeAgentContact => 'Agent Contact Request';
+
+  @override
+  String get bookingsTypeVehicleInspection => 'Vehicle Inspection';
+
+  @override
+  String get bookingsTypeMaintenance => 'Maintenance Booking';
+
+  @override
+  String get bookingsTypeServiceCenter => 'Service Center';
+
+  @override
+  String get bookingsTypePlumbing => 'Plumbing Service';
+
+  @override
+  String get bookingsTypeElectricity => 'Electrical Service';
+
+  @override
+  String get bookingsTypeAc => 'AC Service';
+
+  @override
+  String get bookingsTypeConstruction => 'Construction Service';
+
+  @override
+  String get bookingsTypeEngineering => 'Engineering Service';
+
+  @override
+  String get bookingsProviderLabel => 'Provider';
+
+  @override
+  String get bookingsDateLabel => 'Date';
+
+  @override
+  String get bookingsTimeLabel => 'Time';
+
+  @override
+  String get bookingsAddressLabel => 'Address';
+
+  @override
+  String bookingsReferenceLabel(String reference) {
+    return 'Ref #$reference';
+  }
+
+  @override
+  String get bookingsStatusPending => 'Pending';
+
+  @override
+  String get bookingsStatusConfirmed => 'Confirmed';
+
+  @override
+  String get bookingsStatusRejected => 'Rejected';
+
+  @override
+  String get bookingsStatusCancelled => 'Cancelled';
+
+  @override
+  String get bookingsStatusCompleted => 'Completed';
+
+  @override
+  String get bookingsStatusUnknown => 'Unknown';
+
+  @override
+  String get bookingsCancelAction => 'Cancel Booking';
+
+  @override
+  String get bookingsCancelConfirmTitle => 'Cancel Booking';
+
+  @override
+  String get bookingsCancelConfirmMessage =>
+      'Are you sure you want to cancel this booking?';
+
+  @override
+  String get bookingsContactProviderAction => 'Contact Provider';
+
+  @override
+  String get bookingsViewListingAction => 'View Listing';
+
+  @override
+  String get bookingsCreateTitle => 'Schedule Appointment';
+
+  @override
+  String get bookingsSelectDateHint => 'Select appointment date';
+
+  @override
+  String get bookingsSelectTimeHint => 'Select available time';
+
+  @override
+  String get bookingsAddressHint => 'Enter service or meeting address';
+
+  @override
+  String get bookingsNotesHint => 'Describe your request or notes';
+
+  @override
+  String get bookingsSubmitAction => 'Submit Request';
+
+  @override
+  String get bookingsValidationDateRequired => 'Please select a date';
+
+  @override
+  String get bookingsValidationTimeRequired => 'Please select a time';
+
+  @override
+  String get bookingsValidationAddressRequired => 'Please enter an address';
+
+  @override
+  String get bookingsBackendUnavailableNotice =>
+      'Online booking submission requires backend endpoint support. You can contact the seller directly from the listing.';
+
+  @override
+  String get rfqTitle => 'Request for Quotation';
+
+  @override
+  String get rfqEmptyTitle => 'No quotation requests yet';
+
+  @override
+  String get rfqEmptyMessage =>
+      'Submit bulk material requirements and compare supplier quotations here.';
+
+  @override
+  String get rfqCreateAction => 'New RFQ';
+
+  @override
+  String get rfqCreateTitle => 'Create Quotation Request';
+
+  @override
+  String get rfqRequestTitleLabel => 'Project / Request Title';
+
+  @override
+  String get rfqRequestTitleHint => 'e.g., Villa Electrical & Cement Supply';
+
+  @override
+  String get rfqMaterialsLabel => 'Products / Materials';
+
+  @override
+  String get rfqMaterialsHint => 'e.g., Portland Cement, Steel Rebar 12mm';
+
+  @override
+  String get rfqQuantityLabel => 'Quantity & Unit';
+
+  @override
+  String get rfqQuantityHint => 'e.g., 50 Tons / 200 Units';
+
+  @override
+  String get rfqDescriptionLabel => 'Project Description';
+
+  @override
+  String get rfqDescriptionHint =>
+      'Specify technical requirements and timeline';
+
+  @override
+  String get rfqDeliveryLocationLabel => 'Delivery Location';
+
+  @override
+  String get rfqDeliveryLocationHint => 'Governorate, City, Site Address';
+
+  @override
+  String get rfqAttachmentsNote =>
+      'Image attachments are supported once backend media upload for RFQs is enabled.';
+
+  @override
+  String get rfqSubmitAction => 'Submit Quotation Request';
+
+  @override
+  String rfqReferenceLabel(String reference) {
+    return 'RFQ #$reference';
+  }
+
+  @override
+  String rfqSubmittedDateLabel(String date) {
+    return 'Submitted: $date';
+  }
+
+  @override
+  String rfqItemsCountLabel(int count) {
+    return '$count items requested';
+  }
+
+  @override
+  String rfqQuotationsCountLabel(int count) {
+    return '$count quotations received';
+  }
+
+  @override
+  String rfqLastUpdatedLabel(String date) {
+    return 'Updated: $date';
+  }
+
+  @override
+  String get rfqStatusDraft => 'Draft';
+
+  @override
+  String get rfqStatusSubmitted => 'Submitted';
+
+  @override
+  String get rfqStatusUnderReview => 'Under Review';
+
+  @override
+  String get rfqStatusQuoted => 'Quoted';
+
+  @override
+  String get rfqStatusAccepted => 'Accepted';
+
+  @override
+  String get rfqStatusRejected => 'Rejected';
+
+  @override
+  String get rfqStatusClosed => 'Closed';
+
+  @override
+  String get rfqViewQuotationsAction => 'Compare Quotations';
+
+  @override
+  String get rfqNoQuotationsYet => 'No supplier quotations received yet.';
+
+  @override
+  String get rfqAcceptQuotationAction => 'Accept';
+
+  @override
+  String get rfqRejectQuotationAction => 'Reject';
+
+  @override
+  String get rfqValidationTitleRequired => 'Please enter a request title';
+
+  @override
+  String get rfqValidationMaterialsRequired =>
+      'Please specify products or materials';
+
+  @override
+  String get rfqValidationQuantityRequired => 'Please specify quantities';
+
+  @override
+  String get rfqValidationLocationRequired =>
+      'Please specify delivery location';
+
+  @override
+  String get rfqBackendUnavailableNotice =>
+      'RFQ submission and quotation comparison are awaiting backend API support.';
+
+  @override
+  String get favoritesTitle => 'Favorites';
+
+  @override
+  String get favoritesEmptyTitle => 'No saved listings yet';
+
+  @override
+  String get favoritesEmptyMessage =>
+      'Tap the heart icon on any listing across Deal One to save it here.';
+
+  @override
+  String get favoritesSearchEmptyTitle => 'No matching favorites';
+
+  @override
+  String get favoritesSearchEmptyMessage =>
+      'Try clearing your search or selecting a different category.';
+
+  @override
+  String get favoritesExploreAction => 'Browse Listings';
+
+  @override
+  String get favoritesRemoveAction => 'Remove from Favorites';
+
+  @override
+  String get favoritesOpenListingAction => 'View Details';
+
+  @override
+  String get favoritesGoToSectionAction => 'Open Section';
+
+  @override
+  String get favoritesRemovedSuccess => 'Removed from favorites';
+
+  @override
+  String get favoritesSectorRealEstate => 'Real Estate & Land';
+
+  @override
+  String get favoritesSectorCars => 'Cars & Maintenance';
+
+  @override
+  String get favoritesSectorServices => 'Services & Engineering';
+
+  @override
+  String get favoritesSectorBuildingMaterials => 'Building Materials';
+
+  @override
+  String get favoritesSectorAppliances => 'Home Appliances & Decor';
+
+  @override
+  String get favoritesSectorFashion => 'Fashion & Accessories';
+
+  @override
+  String get actionRequestViewing => 'Request Viewing';
+
+  @override
+  String get actionBookInspection => 'Book Inspection';
+
+  @override
+  String get actionBookService => 'Book Service';
+
+  @override
+  String get actionRequestQuotation => 'Request Quotation';
+
+  @override
+  String get actionContactSeller => 'Contact Seller';
 }

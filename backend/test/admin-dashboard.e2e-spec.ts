@@ -31,9 +31,14 @@ describe('Deal One Enterprise Admin Dashboard — Complete Workflows & Security 
   let superAdminCookie = '';
   let superAdminId = '';
 
-  function extractCookie(setCookieHeader: string | string[] | undefined, name: string) {
+  function extractCookie(
+    setCookieHeader: string | string[] | undefined,
+    name: string,
+  ) {
     if (!setCookieHeader) return '';
-    const arr = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader];
+    const arr = Array.isArray(setCookieHeader)
+      ? setCookieHeader
+      : [setCookieHeader];
     for (const c of arr) {
       if (c.startsWith(`${name}=`)) {
         return c.split(';')[0];
@@ -62,7 +67,12 @@ describe('Deal One Enterprise Admin Dashboard — Complete Workflows & Security 
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalInterceptors(new TransformInterceptor());
     app.setGlobalPrefix('api/v1', {
-      exclude: ['health/live', 'health/ready', 'health/liveness', 'health/readiness'],
+      exclude: [
+        'health/live',
+        'health/ready',
+        'health/liveness',
+        'health/readiness',
+      ],
     });
 
     await app.init();
@@ -372,7 +382,9 @@ describe('Deal One Enterprise Admin Dashboard — Complete Workflows & Security 
       payload: { notes: 'Approved by QA moderator' },
     });
     expect(approveListing.statusCode).toBe(200);
-    expect(JSON.parse(approveListing.body).data.publicationStatus).toBe('published');
+    expect(JSON.parse(approveListing.body).data.publicationStatus).toBe(
+      'published',
+    );
     expect(JSON.parse(approveListing.body).data.approvedAt).toBeTruthy();
 
     // Flutter public GET /api/v1/listings/:id sees approved published listing
@@ -450,7 +462,10 @@ describe('Deal One Enterprise Admin Dashboard — Complete Workflows & Security 
     const verOfficerLogin = await app.inject({
       method: 'POST',
       url: '/api/v1/admin/auth/login',
-      payload: { email: 'verification@dealone.eg', password: 'AdminStaff!2026' },
+      payload: {
+        email: 'verification@dealone.eg',
+        password: 'AdminStaff!2026',
+      },
     });
     const verToken = JSON.parse(verOfficerLogin.body).data.accessToken;
 
@@ -493,7 +508,9 @@ describe('Deal One Enterprise Admin Dashboard — Complete Workflows & Security 
       payload: { reason: 'Repeated policy violations in QA test' },
     });
     expect(suspendUser.statusCode).toBe(200);
-    expect(JSON.parse(suspendUser.body).data.moderationStatus).toBe('suspended');
+    expect(JSON.parse(suspendUser.body).data.moderationStatus).toBe(
+      'suspended',
+    );
     expect(JSON.parse(suspendUser.body).data.isActive).toBe(false);
 
     const unsuspendUser = await app.inject({
@@ -612,7 +629,9 @@ describe('Deal One Enterprise Admin Dashboard — Complete Workflows & Security 
       headers: { authorization: `Bearer ${superAdminToken}` },
     });
     expect(overview.statusCode).toBe(200);
-    expect(JSON.parse(overview.body).data.kpis.users.total).toBeGreaterThanOrEqual(1);
+    expect(
+      JSON.parse(overview.body).data.kpis.users.total,
+    ).toBeGreaterThanOrEqual(1);
 
     const analytics = await app.inject({
       method: 'GET',

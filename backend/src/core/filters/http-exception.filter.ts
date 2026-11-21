@@ -116,9 +116,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       typeof exception === 'object' &&
       exception !== null &&
       (((exception as any).name &&
-        ['PrismaClientInitializationError', 'PrismaClientRustPanicError'].includes(
-          String((exception as any).name),
-        )) ||
+        [
+          'PrismaClientInitializationError',
+          'PrismaClientRustPanicError',
+        ].includes(String((exception as any).name))) ||
         (typeof (exception as any).code === 'string' &&
           (exception as any).code.startsWith('P1')))
     ) {
@@ -129,7 +130,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       );
       status = HttpStatus.SERVICE_UNAVAILABLE;
       code = 'SERVICE_UNAVAILABLE';
-      message = 'Database service temporarily unavailable. Please retry shortly.';
+      message =
+        'Database service temporarily unavailable. Please retry shortly.';
     } else if (
       typeof exception === 'object' &&
       exception !== null &&

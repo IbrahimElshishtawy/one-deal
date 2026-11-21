@@ -215,11 +215,7 @@ export class AdminMarketplaceService {
     };
   }
 
-  async updateUser(
-    userId: string,
-    dto: UpdateAdminUserDto,
-    actorId: string,
-  ) {
+  async updateUser(userId: string, dto: UpdateAdminUserDto, actorId: string) {
     const existing = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -634,7 +630,12 @@ export class AdminMarketplaceService {
     return { success: true, revokedCount: result.count };
   }
 
-  async listAccounts(query: AdminPaginationDto & { verificationStatus?: string; accountType?: string }) {
+  async listAccounts(
+    query: AdminPaginationDto & {
+      verificationStatus?: string;
+      accountType?: string;
+    },
+  ) {
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = Math.min(Math.max(Number(query.limit) || 20, 1), 100);
     const skip = (page - 1) * limit;
@@ -648,7 +649,9 @@ export class AdminMarketplaceService {
       ...(query.q
         ? {
             OR: [
-              { displayName: { contains: query.q.trim(), mode: 'insensitive' } },
+              {
+                displayName: { contains: query.q.trim(), mode: 'insensitive' },
+              },
               { slug: { contains: query.q.trim(), mode: 'insensitive' } },
             ],
           }
@@ -972,7 +975,11 @@ export class AdminMarketplaceService {
         { reasonCode: dto.reasonCode, notes: dto.notes },
         staffId,
       );
-      results.push({ id: res.id, moderationStatus: res.moderationStatus, publicationStatus: res.publicationStatus });
+      results.push({
+        id: res.id,
+        moderationStatus: res.moderationStatus,
+        publicationStatus: res.publicationStatus,
+      });
     }
     return { updatedCount: results.length, items: results };
   }

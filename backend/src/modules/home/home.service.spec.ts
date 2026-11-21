@@ -11,7 +11,12 @@ describe('HomeService', () => {
           nameAr: 'عقارات',
           nameEn: 'Real Estate',
           children: [
-            { id: 'sub-apt', slug: 'apartments-for-sale', nameAr: 'شقق للبيع', nameEn: 'Apartments' },
+            {
+              id: 'sub-apt',
+              slug: 'apartments-for-sale',
+              nameAr: 'شقق للبيع',
+              nameEn: 'Apartments',
+            },
           ],
         },
       ]),
@@ -21,9 +26,9 @@ describe('HomeService', () => {
       }),
     },
     listing: {
-      groupBy: jest.fn().mockResolvedValue([
-        { categoryId: 'sub-apt', _count: { _all: 15 } },
-      ]),
+      groupBy: jest
+        .fn()
+        .mockResolvedValue([{ categoryId: 'sub-apt', _count: { _all: 15 } }]),
       findMany: jest.fn().mockResolvedValue([
         {
           id: 'listing-1',
@@ -35,10 +40,37 @@ describe('HomeService', () => {
           isDemo: true,
           promotedUntil: new Date(Date.now() + 86400000),
           categoryId: 'sub-apt',
-          category: { id: 'sub-apt', slug: 'apartments-for-sale', nameAr: 'شقق للبيع', nameEn: 'Apartments', parentId: 'cat-re' },
-          media: [{ id: 'm1', mediaType: 'image', publicUrl: 'https://images.unsplash.com/photo-1', thumbnailUrl: 'https://images.unsplash.com/photo-1', sortOrder: 0 }],
-          area: { nameAr: 'التجمع الخامس', city: { nameAr: 'القاهرة الجديدة', governorate: { nameAr: 'القاهرة' } } },
-          account: { id: 'acc-1', displayName: 'الأهرام العقارية', slug: 'ahram', accountType: 'company', logoUrl: null, verificationStatus: 'approved' },
+          category: {
+            id: 'sub-apt',
+            slug: 'apartments-for-sale',
+            nameAr: 'شقق للبيع',
+            nameEn: 'Apartments',
+            parentId: 'cat-re',
+          },
+          media: [
+            {
+              id: 'm1',
+              mediaType: 'image',
+              publicUrl: 'https://images.unsplash.com/photo-1',
+              thumbnailUrl: 'https://images.unsplash.com/photo-1',
+              sortOrder: 0,
+            },
+          ],
+          area: {
+            nameAr: 'التجمع الخامس',
+            city: {
+              nameAr: 'القاهرة الجديدة',
+              governorate: { nameAr: 'القاهرة' },
+            },
+          },
+          account: {
+            id: 'acc-1',
+            displayName: 'الأهرام العقارية',
+            slug: 'ahram',
+            accountType: 'company',
+            logoUrl: null,
+            verificationStatus: 'approved',
+          },
           attributes: { rooms: 3, baths: 2, area_sqm: 180 },
           viewsCount: 120,
           _count: { favorites: 4 },
@@ -58,7 +90,10 @@ describe('HomeService', () => {
 
   it('aggregates categories with counts, featured, latest, recommended, and promotions without N+1', async () => {
     const prisma = createMockPrisma();
-    const service = new HomeService(prisma as any, createConfig({ NODE_ENV: 'development', ENABLE_DEMO_DATA: true }));
+    const service = new HomeService(
+      prisma as any,
+      createConfig({ NODE_ENV: 'development', ENABLE_DEMO_DATA: true }),
+    );
 
     const feed = await service.getHomeFeed({ limit: 6 });
 

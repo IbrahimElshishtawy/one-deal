@@ -30,7 +30,10 @@ async function bootstrap() {
     process.on('unhandledRejection', (reason: unknown) => {
       const msg = reason instanceof Error ? reason.message : String(reason);
       const stack = reason instanceof Error ? reason.stack : undefined;
-      logger.error(`[Process] Unhandled Promise Rejection prevented crash: ${msg}`, stack);
+      logger.error(
+        `[Process] Unhandled Promise Rejection prevented crash: ${msg}`,
+        stack,
+      );
     });
   }
   if (process.listenerCount('uncaughtException') === 0) {

@@ -103,7 +103,8 @@ export class ModerationController {
   @AnyPermissions('listings.approve', 'listings.reject')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Approve, reject, or request changes on pending listing with audit logging',
+    summary:
+      'Approve, reject, or request changes on pending listing with audit logging',
   })
   @ApiResponse({ status: 200, description: 'Moderation decision recorded' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
@@ -159,7 +160,9 @@ export class ModerationController {
   @UseGuards(AdminJwtAuthGuard, PermissionsGuard)
   @Permissions('reports.assign')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Assign report to a staff reviewer and/or set priority' })
+  @ApiOperation({
+    summary: 'Assign report to a staff reviewer and/or set priority',
+  })
   async assignReport(
     @Param('id', ParseUUIDPipe) reportId: string,
     @CurrentStaff() staff: AuthenticatedStaff,
@@ -236,7 +239,9 @@ export class ModerationController {
   @ApiBearerAuth('BearerAuth')
   @UseGuards(AdminJwtAuthGuard, PermissionsGuard)
   @Permissions('audit_logs.read')
-  @ApiOperation({ summary: 'Retrieve immutable platform audit logs with filtering' })
+  @ApiOperation({
+    summary: 'Retrieve immutable platform audit logs with filtering',
+  })
   @ApiResponse({ status: 200, description: 'Audit logs returned' })
   async getAuditLogs(@Query() query: AuditLogQueryDto) {
     const pagination = this.normalizePagination(query.page, query.limit, 50);
@@ -251,7 +256,9 @@ export class ModerationController {
   @ApiBearerAuth('BearerAuth')
   @UseGuards(AdminJwtAuthGuard, PermissionsGuard)
   @Permissions('audit_logs.export')
-  @ApiOperation({ summary: 'Export audit logs (CSV/JSON) with mandatory audit record' })
+  @ApiOperation({
+    summary: 'Export audit logs (CSV/JSON) with mandatory audit record',
+  })
   async exportAuditLogs(
     @Query() query: AuditLogQueryDto,
     @CurrentStaff() staff: AuthenticatedStaff,
@@ -264,7 +271,9 @@ export class ModerationController {
   @ApiBearerAuth('BearerAuth')
   @UseGuards(AdminJwtAuthGuard, PermissionsGuard)
   @Permissions('audit_logs.read')
-  @ApiOperation({ summary: 'Get detailed audit log entry including diffPayload' })
+  @ApiOperation({
+    summary: 'Get detailed audit log entry including diffPayload',
+  })
   async getAuditLogById(@Param('id', ParseUUIDPipe) id: string) {
     return this.moderationService.getAuditLogById(id);
   }
@@ -353,7 +362,8 @@ export class ModerationController {
   @AnyPermissions('verification.approve', 'verification.reject')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Approve, reject, or request resubmission for account verification',
+    summary:
+      'Approve, reject, or request resubmission for account verification',
   })
   @ApiResponse({ status: 200, description: 'Verification decision recorded' })
   async adjudicateVerification(
@@ -363,9 +373,7 @@ export class ModerationController {
     @Req() req: FastifyRequest,
   ) {
     const required =
-      dto.action === 'approve'
-        ? 'verification.approve'
-        : 'verification.reject';
+      dto.action === 'approve' ? 'verification.approve' : 'verification.reject';
     if (!staff.permissions.includes(required)) {
       throw new ForbiddenException(
         `Access denied. Missing required permission: [${required}]`,

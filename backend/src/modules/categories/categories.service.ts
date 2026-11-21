@@ -194,11 +194,7 @@ export class CategoriesService {
     return created;
   }
 
-  async updateCategory(
-    id: string,
-    dto: UpdateCategoryDto,
-    actorId: string,
-  ) {
+  async updateCategory(id: string, dto: UpdateCategoryDto, actorId: string) {
     const existing = await this.prisma.category.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException('Category not found');

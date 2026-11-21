@@ -74,7 +74,9 @@ describe('OutboxPublisherProcessor', () => {
   });
 
   it('should absorb transient DB errors gracefully without throwing unhandled rejections', async () => {
-    mockPrisma.outboxEvent.findMany.mockRejectedValue(new Error('P1001 connection lost'));
+    mockPrisma.outboxEvent.findMany.mockRejectedValue(
+      new Error('P1001 connection lost'),
+    );
 
     const res = await processor.publishPendingEvents();
 

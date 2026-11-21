@@ -21,7 +21,10 @@ import {
 } from '../../admin-auth/decorators/permissions.decorator';
 import { AuthenticatedStaff } from '../../admin-auth/types/authenticated-staff.type';
 import { AdminGrowthPlatformService } from '../services/admin-growth-platform.service';
-import { CreateCmsItemDto, UpdateCmsItemDto } from '../dto/admin-operations.dto';
+import {
+  CreateCmsItemDto,
+  UpdateCmsItemDto,
+} from '../dto/admin-operations.dto';
 
 @ApiTags('Admin / CMS')
 @ApiBearerAuth('BearerAuth')

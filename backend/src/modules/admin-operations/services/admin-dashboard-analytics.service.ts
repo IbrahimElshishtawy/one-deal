@@ -107,8 +107,12 @@ export class AdminDashboardAnalyticsService {
         take: 10,
       }),
       this.prisma.ping().catch(() => false),
-      this.redis ? this.redis.pingCache().catch(() => false) : Promise.resolve(false),
-      this.redis ? this.redis.pingQueue().catch(() => false) : Promise.resolve(false),
+      this.redis
+        ? this.redis.pingCache().catch(() => false)
+        : Promise.resolve(false),
+      this.redis
+        ? this.redis.pingQueue().catch(() => false)
+        : Promise.resolve(false),
     ]);
 
     return {
@@ -384,9 +388,7 @@ export class AdminDashboardAnalyticsService {
       ['users', 'suspended', summary.users.suspended]
         .map(sanitizeCsvCell)
         .join(','),
-      ['users', 'banned', summary.users.banned]
-        .map(sanitizeCsvCell)
-        .join(','),
+      ['users', 'banned', summary.users.banned].map(sanitizeCsvCell).join(','),
     ];
 
     for (const item of summary.listings.byModerationStatus) {
@@ -483,7 +485,8 @@ export class AdminDashboardAnalyticsService {
     const serverErrors5xx = prometheusSample
       .split('\n')
       .filter(
-        (l) => l.startsWith('http_requests_total{') && l.includes('status_code="5'),
+        (l) =>
+          l.startsWith('http_requests_total{') && l.includes('status_code="5'),
       )
       .reduce((sum, line) => {
         const val = Number(line.split(' ').pop() || 0);

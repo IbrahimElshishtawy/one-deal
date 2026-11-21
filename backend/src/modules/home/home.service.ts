@@ -377,7 +377,10 @@ export class HomeService {
       await Promise.all([
         this.prisma.listing.groupBy({
           by: ['categoryId'],
-          where: { ...this.buildBaseWhere(query), categoryId: { in: allCategoryIds } },
+          where: {
+            ...this.buildBaseWhere(query),
+            categoryId: { in: allCategoryIds },
+          },
           _count: { _all: true },
         }),
         this.prisma.listing.findMany({
@@ -575,7 +578,8 @@ export class HomeService {
             titleAr: 'خصم يصل إلى 30% على الأجهزة الكهربائية',
             titleEn: 'Up to 30% Off Home Appliances',
             subtitleAr: 'أحدث الموديلات السمارت بضمان الوكيل وتوصيل سريع',
-            subtitleEn: 'Latest smart models with official warranty & fast delivery',
+            subtitleEn:
+              'Latest smart models with official warranty & fast delivery',
             ctaAr: 'تسوق الآن',
             ctaEn: 'Shop Now',
             categorySlug: 'home-appliances',
@@ -626,7 +630,8 @@ export class HomeService {
             titleAr: 'عربية أحلامك بسعر مفيش زيه',
             titleEn: 'Drive Your Dream Car Today',
             subtitleAr: 'أفضل السيارات المستعملة والجديدة مع أنظمة تقسيط مرنة',
-            subtitleEn: 'New & certified pre-owned vehicles with easy installments',
+            subtitleEn:
+              'New & certified pre-owned vehicles with easy installments',
             ctaAr: 'تصفح السيارات',
             ctaEn: 'Browse Cars',
             categorySlug: 'cars',
@@ -643,7 +648,8 @@ export class HomeService {
             titleAr: 'تشكيلة الموسم الجديد وصلت!',
             titleEn: 'New Season Collection Has Arrived!',
             subtitleAr: 'أحدث صيحات الموضة والأناقة من أشهر الماركات',
-            subtitleEn: 'Latest fashion trends, footwear, watches & accessories',
+            subtitleEn:
+              'Latest fashion trends, footwear, watches & accessories',
             ctaAr: 'تسوق التشكيلة',
             ctaEn: 'Shop Collection',
             categorySlug: 'fashion',

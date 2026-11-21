@@ -1,13 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FavoritesService } from './favorites.service';
 import { PrismaService } from '../../core/database/prisma.service';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('FavoritesService', () => {
   let service: FavoritesService;
 
   const mockPrisma = {
     favorite: {
+      count: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       upsert: jest.fn(),
@@ -34,7 +35,7 @@ describe('FavoritesService', () => {
     jest.clearAllMocks();
   });
 
-  it('should return mapped user favorites', async () => {
+  it('should return paginated mapped user favorites', async () => {
     const mockDbFavs = [
       {
         id: 'fav-1',
@@ -46,11 +47,15 @@ describe('FavoritesService', () => {
           price: 1500000,
           currency: 'EGP',
           listingKind: 'sale',
+          publicationStatus: 'published',
+          availabilityStatus: 'available',
+          deletedAt: null,
           category: {
             id: 'c-1',
             slug: 'real-estate',
             nameAr: 'عقارات',
             nameEn: 'Real Estate',
+            parentId: null,
           },
           area: {
             nameAr: 'مدينة نصر',
@@ -68,16 +73,29 @@ describe('FavoritesService', () => {
       },
     ];
 
+    mockPrisma.favorite.count.mockResolvedValue(1);
     mockPrisma.favorite.findMany.mockResolvedValue(mockDbFavs);
 
-    const result = await service.getMyFavorites('user-1');
-    expect(result).toHaveLength(1);
-    expect(result[0].listing.title).toBe('شقة للبيع');
-    expect(result[0].listing.isFavorite).toBe(true);
+    const result = await service.getMyFavorites('user-1', { page: 1, limit: 20 });
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].listing.title).toBe('شقة للبيع');
+    expect(result.data[0].listing.isFavorite).toBe(true);
+    expect(result.meta).toEqual({
+      total: 1,
+      page: 1,
+      limit: 20,
+      totalPages: 1,
+    });
   });
 
-  it('should add a favorite successfully', async () => {
-    mockPrisma.listing.findUnique.mockResolvedValue({ id: 'list-1' });
+  it('should add a favorite successfully when listing is published & approved', async () => {
+    mockPrisma.listing.findUnique.mockResolvedValue({
+      id: 'list-1',
+      deletedAt: null,
+      publicationStatus: 'published',
+      moderationStatus: 'approved',
+      availabilityStatus: 'available',
+    });
     mockPrisma.favorite.upsert.mockResolvedValue({ id: 'fav-1' });
 
     const result = await service.addFavorite('user-1', 'list-1');
@@ -91,6 +109,35 @@ describe('FavoritesService', () => {
     await expect(service.addFavorite('user-1', 'non-existent')).rejects.toThrow(
       NotFoundException,
     );
+  });
+
+  it('should throw BadRequestException when listing is not published', async () => {
+    mockPrisma.listing.findUnique.mockResolvedValue({
+      id: 'list-1',
+      deletedAt: null,
+      publicationStatus: 'unpublished',
+      moderationStatus: 'pending',
+    });
+
+    await expect(service.addFavorite('user-1', 'list-1')).rejects.toThrow(
+      BadRequestException,
+    );
+  });
+
+  it('should return favorite status accurately', async () => {
+    mockPrisma.favorite.findUnique.mockResolvedValue({
+      id: 'fav-1',
+      createdAt: new Date(),
+      listing: {
+        deletedAt: null,
+        publicationStatus: 'published',
+        availabilityStatus: 'available',
+      },
+    });
+
+    const status = await service.getFavoriteStatus('user-1', 'list-1');
+    expect(status.isFavorite).toBe(true);
+    expect(status.isListingAvailable).toBe(true);
   });
 
   it('should toggle favorite off if already exists', async () => {

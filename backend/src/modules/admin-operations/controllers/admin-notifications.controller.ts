@@ -33,7 +33,9 @@ export class AdminNotificationsController {
 
   @Get('campaigns')
   @Permissions('notifications.read')
-  @ApiOperation({ summary: 'List notification campaigns and delivery statistics' })
+  @ApiOperation({
+    summary: 'List notification campaigns and delivery statistics',
+  })
   listCampaigns(
     @Query('page') page = 1,
     @Query('limit') limit = 20,
@@ -45,7 +47,9 @@ export class AdminNotificationsController {
   @Post('audience-preview')
   @Permissions('notifications.read')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Preview recipient count for a target audience segment' })
+  @ApiOperation({
+    summary: 'Preview recipient count for a target audience segment',
+  })
   previewAudience(@Body() dto: AudiencePreviewDto) {
     return this.service.previewAudience(dto);
   }

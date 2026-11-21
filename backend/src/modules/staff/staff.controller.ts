@@ -46,7 +46,9 @@ export class StaffController {
 
   @Get('permissions')
   @Permissions('roles.read')
-  @ApiOperation({ summary: 'List authoritative granular admin permissions catalog' })
+  @ApiOperation({
+    summary: 'List authoritative granular admin permissions catalog',
+  })
   getPermissionCatalog() {
     return this.staffService.getPermissionCatalog();
   }
@@ -76,7 +78,9 @@ export class StaffController {
 
   @Patch('roles/:roleId')
   @Permissions('roles.update')
-  @ApiOperation({ summary: 'Update a staff role name, description, or permissions' })
+  @ApiOperation({
+    summary: 'Update a staff role name, description, or permissions',
+  })
   async updateRole(
     @Param('roleId', ParseIntPipe) roleId: number,
     @Body() dto: UpdateStaffRoleDto,
@@ -105,7 +109,9 @@ export class StaffController {
 
   @Delete('roles/:roleId')
   @Permissions('roles.delete')
-  @ApiOperation({ summary: 'Delete a custom non-system role with zero assignees' })
+  @ApiOperation({
+    summary: 'Delete a custom non-system role with zero assignees',
+  })
   async deleteRole(
     @Param('roleId', ParseIntPipe) roleId: number,
     @CurrentStaff() staff: AuthenticatedStaff,
@@ -115,7 +121,9 @@ export class StaffController {
 
   @Get()
   @Permissions('admins.read')
-  @ApiOperation({ summary: 'List administrative staff users with filtering & pagination' })
+  @ApiOperation({
+    summary: 'List administrative staff users with filtering & pagination',
+  })
   @ApiResponse({ status: 200, description: 'Staff users returned' })
   async listStaffUsers(@Query() query: StaffListQueryDto) {
     return this.staffService.listStaffUsers(query);
@@ -123,7 +131,10 @@ export class StaffController {
 
   @Get(':id')
   @Permissions('admins.read')
-  @ApiOperation({ summary: 'Get staff user profile, active sessions, and recent audit activity' })
+  @ApiOperation({
+    summary:
+      'Get staff user profile, active sessions, and recent audit activity',
+  })
   async getStaffUserDetail(@Param('id', ParseUUIDPipe) staffId: string) {
     return this.staffService.getStaffUserDetail(staffId);
   }
@@ -159,7 +170,9 @@ export class StaffController {
 
   @Patch(':id')
   @Permissions('admins.update')
-  @ApiOperation({ summary: 'Update staff user status, role, or profile metadata' })
+  @ApiOperation({
+    summary: 'Update staff user status, role, or profile metadata',
+  })
   @ApiResponse({ status: 200, description: 'Staff user updated' })
   async updateStaffUser(
     @Param('id', ParseUUIDPipe) staffId: string,

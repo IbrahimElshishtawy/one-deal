@@ -177,35 +177,44 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
     };
 
     // Expiry check every 30 minutes
-    registerInterval(() => {
-      runWithLock('worker:listing-expiry', 300, () =>
-        this.listingExpiry.processExpiredListings(),
-      ).catch((err) => {
-        this.logger.error(
-          `Error in listing expiry background job: ${err.message}`,
-        );
-      });
-    }, 30 * 60 * 1000);
+    registerInterval(
+      () => {
+        runWithLock('worker:listing-expiry', 300, () =>
+          this.listingExpiry.processExpiredListings(),
+        ).catch((err) => {
+          this.logger.error(
+            `Error in listing expiry background job: ${err.message}`,
+          );
+        });
+      },
+      30 * 60 * 1000,
+    );
 
     // Payment reconciliation every 15 minutes
-    registerInterval(() => {
-      runWithLock('worker:payment-reconciliation', 300, () =>
-        this.paymentReconciliation.processStaleTransactions(),
-      ).catch((err) => {
-        this.logger.error(
-          `Error in payment reconciliation job: ${err.message}`,
-        );
-      });
-    }, 15 * 60 * 1000);
+    registerInterval(
+      () => {
+        runWithLock('worker:payment-reconciliation', 300, () =>
+          this.paymentReconciliation.processStaleTransactions(),
+        ).catch((err) => {
+          this.logger.error(
+            `Error in payment reconciliation job: ${err.message}`,
+          );
+        });
+      },
+      15 * 60 * 1000,
+    );
 
     // Media cleanup every 6 hours
-    registerInterval(() => {
-      runWithLock('worker:media-cleanup', 600, () =>
-        this.mediaCleanup.processAbandonedMedia(),
-      ).catch((err) => {
-        this.logger.error(`Error in media cleanup job: ${err.message}`);
-      });
-    }, 6 * 60 * 60 * 1000);
+    registerInterval(
+      () => {
+        runWithLock('worker:media-cleanup', 600, () =>
+          this.mediaCleanup.processAbandonedMedia(),
+        ).catch((err) => {
+          this.logger.error(`Error in media cleanup job: ${err.message}`);
+        });
+      },
+      6 * 60 * 60 * 1000,
+    );
 
     // Outbox publisher every 10 seconds
     registerInterval(() => {

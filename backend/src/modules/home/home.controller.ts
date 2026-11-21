@@ -41,7 +41,8 @@ export class HomeController {
 
   @Get('categories')
   @ApiOperation({
-    summary: 'Get popular root categories with subcategories and listing counts',
+    summary:
+      'Get popular root categories with subcategories and listing counts',
   })
   @ApiResponse({ status: 200, description: 'Popular categories returned' })
   async getPopularCategories() {

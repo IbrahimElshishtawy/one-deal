@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
+import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
-import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
+import 'package:market_space/features/activity_hub/application/providers/cart_provider.dart';
 import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
 
 /// Appliances & Decor Product Card matching
@@ -244,20 +245,27 @@ class ApplianceProductCard extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            onPressed: () {
-                              ref
-                                  .read(favoritesControllerProvider.notifier)
-                                  .toggleFavorite(item.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    isArabic
-                                        ? 'تم تحديث قائمة المحفوظات والسلة'
-                                        : 'Updated saved basket',
+                            onPressed: () async {
+                              final added = await ref
+                                  .read(cartProvider.notifier)
+                                  .addListingToCart(item);
+                              if (added && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      isArabic
+                                          ? 'تمت الإضافة إلى سلة التسوق'
+                                          : 'Added to shopping cart',
+                                    ),
+                                    action: SnackBarAction(
+                                      label: isArabic ? 'عرض' : 'View',
+                                      onPressed: () =>
+                                          context.push(RouteNames.activityHub),
+                                    ),
+                                    duration: const Duration(seconds: 2),
                                   ),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
+                                );
+                              }
                             },
                             icon: const Icon(
                               Icons.shopping_basket_outlined,

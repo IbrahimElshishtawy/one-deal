@@ -141,7 +141,10 @@ export class AdminGrowthPlatformService {
           action: 'NOTIFICATION_CAMPAIGN_APPROVED',
           targetEntity: 'notification_campaign',
           targetId: campaignId,
-          diffPayload: { previousStatus: existing.status, newStatus: 'approved' },
+          diffPayload: {
+            previousStatus: existing.status,
+            newStatus: 'approved',
+          },
         },
       });
       return updated;
@@ -306,7 +309,9 @@ export class AdminGrowthPlatformService {
     const slug = dto.slug.trim().toLowerCase();
     const existing = await this.prisma.cmsItem.findUnique({ where: { slug } });
     if (existing) {
-      throw new ConflictException(`CMS item with slug '${slug}' already exists`);
+      throw new ConflictException(
+        `CMS item with slug '${slug}' already exists`,
+      );
     }
 
     const created = await this.prisma.$transaction(async (tx) => {
@@ -339,7 +344,11 @@ export class AdminGrowthPlatformService {
           action: 'CMS_ITEM_CREATED',
           targetEntity: 'cms_item',
           targetId: item.id,
-          diffPayload: { slug: item.slug, type: item.type, status: item.status },
+          diffPayload: {
+            slug: item.slug,
+            type: item.type,
+            status: item.status,
+          },
         },
       });
 
@@ -440,7 +449,11 @@ export class AdminGrowthPlatformService {
           action: `CMS_ITEM_${status.toUpperCase()}`,
           targetEntity: 'cms_item',
           targetId: id,
-          diffPayload: { slug: existing.slug, previousStatus: existing.status, status },
+          diffPayload: {
+            slug: existing.slug,
+            previousStatus: existing.status,
+            status,
+          },
         },
       });
       return item;
@@ -588,7 +601,11 @@ export class AdminGrowthPlatformService {
           actorId,
           action: 'FEATURE_FLAG_CREATED',
           targetEntity: 'feature_flag',
-          diffPayload: { key, isEnabled: flag.isEnabled, environment: flag.environment },
+          diffPayload: {
+            key,
+            isEnabled: flag.isEnabled,
+            environment: flag.environment,
+          },
         },
       });
 
@@ -607,7 +624,8 @@ export class AdminGrowthPlatformService {
     const existing = await this.prisma.featureFlag.findUnique({
       where: { key },
     });
-    if (!existing) throw new NotFoundException(`Feature flag '${key}' not found`);
+    if (!existing)
+      throw new NotFoundException(`Feature flag '${key}' not found`);
 
     const existingRules =
       (existing.rules as { history?: Array<Record<string, unknown>> }) || {};
@@ -674,7 +692,8 @@ export class AdminGrowthPlatformService {
     const existing = await this.prisma.featureFlag.findUnique({
       where: { key },
     });
-    if (!existing) throw new NotFoundException(`Feature flag '${key}' not found`);
+    if (!existing)
+      throw new NotFoundException(`Feature flag '${key}' not found`);
     if (existing.isSystem) {
       throw new ForbiddenException('System feature flags cannot be deleted.');
     }

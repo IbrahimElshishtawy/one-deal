@@ -583,4 +583,491 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get activityHubTitle => 'مركز النشاط والتجارة';
+
+  @override
+  String get activityHubSubtitle =>
+      'أدر سلة التسوق، الحجوزات، طلبات الأسعار، والمفضلة';
+
+  @override
+  String get activityHubHeaderTooltip => 'مركز النشاط والتجارة';
+
+  @override
+  String get activityTabCart => 'السلة';
+
+  @override
+  String get activityTabBookings => 'الحجوزات';
+
+  @override
+  String get activityTabRfq => 'عروض الأسعار';
+
+  @override
+  String get activityTabFavorites => 'المفضلة';
+
+  @override
+  String get activitySearchHint => 'ابحث في نشاطك...';
+
+  @override
+  String get activityFilterAll => 'الكل';
+
+  @override
+  String activitySummaryCartItems(int count) {
+    return '$count في السلة';
+  }
+
+  @override
+  String activitySummaryBookings(int count) {
+    return '$count حجوزات';
+  }
+
+  @override
+  String activitySummaryRfqs(int count) {
+    return '$count طلبات أسعار';
+  }
+
+  @override
+  String activitySummaryFavorites(int count) {
+    return '$count محفوظات';
+  }
+
+  @override
+  String get activityBackendPendingNotice =>
+      'المزامنة الحية مع الخادم لهذا القسم بانتظار دعم الواجهة الخلفية.';
+
+  @override
+  String get activityAuthRequiredTitle => 'سجّل الدخول لمزامنة نشاطك';
+
+  @override
+  String get activityAuthRequiredMessage =>
+      'سجّل الدخول للوصول إلى مفضلتك المتزامنة مع الخادم ونشاط حسابك.';
+
+  @override
+  String get activitySignInAction => 'تسجيل الدخول';
+
+  @override
+  String get cartTitle => 'سلة التسوق';
+
+  @override
+  String get cartEmptyTitle => 'سلة التسوق فارغة';
+
+  @override
+  String get cartEmptyMessage =>
+      'أضف مواد البناء أو الأجهزة المنزلية أو الأزياء إلى سلتك لإدارة الكميات والتواصل مع البائعين.';
+
+  @override
+  String get cartExploreProducts => 'استكشف السوق';
+
+  @override
+  String cartSellerLabel(String seller) {
+    return 'البائع: $seller';
+  }
+
+  @override
+  String get cartUnitPriceLabel => 'سعر الوحدة';
+
+  @override
+  String get cartQuantityLabel => 'الكمية';
+
+  @override
+  String cartSizeLabel(String size) {
+    return 'المقاس: $size';
+  }
+
+  @override
+  String cartColorLabel(String color) {
+    return 'اللون: $color';
+  }
+
+  @override
+  String get cartRemoveItem => 'حذف';
+
+  @override
+  String get cartSaveForLater => 'حفظ للاحقاً';
+
+  @override
+  String get cartSavedForLaterSuccess => 'تم الحفظ في قائمة المفضلة';
+
+  @override
+  String get cartRemovedSuccess => 'تم حذف المنتج من السلة';
+
+  @override
+  String get cartAddedSuccess => 'تمت الإضافة إلى سلة التسوق';
+
+  @override
+  String get cartRemoveConfirmTitle => 'حذف المنتج';
+
+  @override
+  String cartRemoveConfirmMessage(String title) {
+    return 'هل أنت متأكد من حذف \"$title\" من سلة التسوق؟';
+  }
+
+  @override
+  String get cartClearConfirmTitle => 'إفراغ السلة';
+
+  @override
+  String get cartClearConfirmMessage =>
+      'هل تريد إزالة جميع المنتجات من سلة التسوق؟';
+
+  @override
+  String get cartClearAction => 'إفراغ السلة';
+
+  @override
+  String get cartSubtotalLabel => 'المجموع الفرعي';
+
+  @override
+  String get cartTotalLabel => 'الإجمالي التقديري';
+
+  @override
+  String cartItemsCountLabel(int count) {
+    return '$count منتجات';
+  }
+
+  @override
+  String get cartCheckoutAction => 'متابعة / التواصل مع البائعين';
+
+  @override
+  String get cartV1CommerceNotice =>
+      'تعمل النسخة الحالية بنظام الإعلانات المجانية والتواصل المباشر بدون دفع إلكتروني داخل التطبيق. تواصل مع البائع لإتمام الصفقة.';
+
+  @override
+  String get cartSelectVariantTitle => 'اختر المواصفات';
+
+  @override
+  String get cartSelectSize => 'اختر المقاس';
+
+  @override
+  String get cartSelectColor => 'اختر اللون';
+
+  @override
+  String get cartAddToCartAction => 'أضف إلى السلة';
+
+  @override
+  String get cartQuantityMinError => 'يجب أن تكون الكمية 1 على الأقل';
+
+  @override
+  String get bookingsTitle => 'الحجوزات والمواعيد';
+
+  @override
+  String get bookingsEmptyTitle => 'لا توجد حجوزات أو مواعيد بعد';
+
+  @override
+  String get bookingsEmptyMessage =>
+      'ستظهر هنا معاينات العقارات، فحوصات السيارات، وحجوزات الخدمات عند جدولتها.';
+
+  @override
+  String get bookingsFilterRealEstate => 'العقارات';
+
+  @override
+  String get bookingsFilterCars => 'السيارات والصيانة';
+
+  @override
+  String get bookingsFilterServices => 'الخدمات والهندسة';
+
+  @override
+  String get bookingsTypePropertyViewing => 'معاينة عقار';
+
+  @override
+  String get bookingsTypePropertyInspection => 'فحص عقار';
+
+  @override
+  String get bookingsTypeAgentContact => 'طلب تواصل مع وكيل';
+
+  @override
+  String get bookingsTypeVehicleInspection => 'فحص سيارة';
+
+  @override
+  String get bookingsTypeMaintenance => 'حجز صيانة';
+
+  @override
+  String get bookingsTypeServiceCenter => 'مركز خدمة';
+
+  @override
+  String get bookingsTypePlumbing => 'خدمة سباكة';
+
+  @override
+  String get bookingsTypeElectricity => 'خدمة كهرباء';
+
+  @override
+  String get bookingsTypeAc => 'خدمة تكييف';
+
+  @override
+  String get bookingsTypeConstruction => 'خدمة مقاولات';
+
+  @override
+  String get bookingsTypeEngineering => 'استشارة هندسية';
+
+  @override
+  String get bookingsProviderLabel => 'مقدم الخدمة';
+
+  @override
+  String get bookingsDateLabel => 'التاريخ';
+
+  @override
+  String get bookingsTimeLabel => 'الوقت';
+
+  @override
+  String get bookingsAddressLabel => 'العنوان';
+
+  @override
+  String bookingsReferenceLabel(String reference) {
+    return 'مرجع #$reference';
+  }
+
+  @override
+  String get bookingsStatusPending => 'قيد الانتظار';
+
+  @override
+  String get bookingsStatusConfirmed => 'مؤكد';
+
+  @override
+  String get bookingsStatusRejected => 'مرفوض';
+
+  @override
+  String get bookingsStatusCancelled => 'ملغي';
+
+  @override
+  String get bookingsStatusCompleted => 'مكتمل';
+
+  @override
+  String get bookingsStatusUnknown => 'غير معروف';
+
+  @override
+  String get bookingsCancelAction => 'إلغاء الحجز';
+
+  @override
+  String get bookingsCancelConfirmTitle => 'إلغاء الحجز';
+
+  @override
+  String get bookingsCancelConfirmMessage =>
+      'هل أنت متأكد من رغبتك في إلغاء هذا الحجز؟';
+
+  @override
+  String get bookingsContactProviderAction => 'التواصل مع مقدم الخدمة';
+
+  @override
+  String get bookingsViewListingAction => 'عرض الإعلان';
+
+  @override
+  String get bookingsCreateTitle => 'جدولة موعد';
+
+  @override
+  String get bookingsSelectDateHint => 'اختر تاريخ الموعد';
+
+  @override
+  String get bookingsSelectTimeHint => 'اختر الوقت المتاح';
+
+  @override
+  String get bookingsAddressHint => 'أدخل عنوان الخدمة أو المعاينة';
+
+  @override
+  String get bookingsNotesHint => 'أضف وصف الطلب أو ملاحظاتك';
+
+  @override
+  String get bookingsSubmitAction => 'إرسال الطلب';
+
+  @override
+  String get bookingsValidationDateRequired => 'يرجى اختيار التاريخ';
+
+  @override
+  String get bookingsValidationTimeRequired => 'يرجى اختيار الوقت';
+
+  @override
+  String get bookingsValidationAddressRequired => 'يرجى إدخال العنوان';
+
+  @override
+  String get bookingsBackendUnavailableNotice =>
+      'إرسال الحجز عبر الإنترنت بانتظار دعم الخادم. يمكنك التواصل مع البائع مباشرة من صفحة الإعلان.';
+
+  @override
+  String get rfqTitle => 'طلبات عروض الأسعار';
+
+  @override
+  String get rfqEmptyTitle => 'لا توجد طلبات عروض أسعار بعد';
+
+  @override
+  String get rfqEmptyMessage =>
+      'قدّم طلبات كميات مواد البناء وقارن عروض الأسعار من الموردين هنا.';
+
+  @override
+  String get rfqCreateAction => 'طلب عرض سعر جديد';
+
+  @override
+  String get rfqCreateTitle => 'إنشاء طلب عرض سعر';
+
+  @override
+  String get rfqRequestTitleLabel => 'عنوان المشروع / الطلب';
+
+  @override
+  String get rfqRequestTitleHint => 'مثال: توريد كهرباء وأسمنت لفيلا';
+
+  @override
+  String get rfqMaterialsLabel => 'المنتجات / المواد المطلوبة';
+
+  @override
+  String get rfqMaterialsHint => 'مثال: أسمنت بورتلاندي، حديد تسليح 12 مم';
+
+  @override
+  String get rfqQuantityLabel => 'الكمية والوحدة';
+
+  @override
+  String get rfqQuantityHint => 'مثال: 50 طن / 200 قطعة';
+
+  @override
+  String get rfqDescriptionLabel => 'وصف المشروع';
+
+  @override
+  String get rfqDescriptionHint => 'حدد المواصفات الفنية والجدول الزمني';
+
+  @override
+  String get rfqDeliveryLocationLabel => 'موقع التسليم';
+
+  @override
+  String get rfqDeliveryLocationHint => 'المحافظة، المدينة، عنوان الموقع';
+
+  @override
+  String get rfqAttachmentsNote =>
+      'إرفاق الصور سيتوفر فور تفعيل رفع مرفقات عروض الأسعار على الخادم.';
+
+  @override
+  String get rfqSubmitAction => 'إرسال طلب عرض السعر';
+
+  @override
+  String rfqReferenceLabel(String reference) {
+    return 'طلب #$reference';
+  }
+
+  @override
+  String rfqSubmittedDateLabel(String date) {
+    return 'تاريخ التقديم: $date';
+  }
+
+  @override
+  String rfqItemsCountLabel(int count) {
+    return '$count بنود مطلوبة';
+  }
+
+  @override
+  String rfqQuotationsCountLabel(int count) {
+    return '$count عروض مستلمة';
+  }
+
+  @override
+  String rfqLastUpdatedLabel(String date) {
+    return 'آخر تحديث: $date';
+  }
+
+  @override
+  String get rfqStatusDraft => 'مسودة';
+
+  @override
+  String get rfqStatusSubmitted => 'تم التقديم';
+
+  @override
+  String get rfqStatusUnderReview => 'قيد المراجعة';
+
+  @override
+  String get rfqStatusQuoted => 'تم التسعير';
+
+  @override
+  String get rfqStatusAccepted => 'مقبول';
+
+  @override
+  String get rfqStatusRejected => 'مرفوض';
+
+  @override
+  String get rfqStatusClosed => 'مغلق';
+
+  @override
+  String get rfqViewQuotationsAction => 'مقارنة العروض';
+
+  @override
+  String get rfqNoQuotationsYet => 'لم يتم استلام عروض أسعار من الموردين بعد.';
+
+  @override
+  String get rfqAcceptQuotationAction => 'قبول';
+
+  @override
+  String get rfqRejectQuotationAction => 'رفض';
+
+  @override
+  String get rfqValidationTitleRequired => 'يرجى إدخال عنوان الطلب';
+
+  @override
+  String get rfqValidationMaterialsRequired => 'يرجى تحديد المنتجات أو المواد';
+
+  @override
+  String get rfqValidationQuantityRequired => 'يرجى تحديد الكميات';
+
+  @override
+  String get rfqValidationLocationRequired => 'يرجى تحديد موقع التسليم';
+
+  @override
+  String get rfqBackendUnavailableNotice =>
+      'إرسال طلبات الأسعار ومقارنة العروض بانتظار دعم واجهة الخادم.';
+
+  @override
+  String get favoritesTitle => 'المفضلة';
+
+  @override
+  String get favoritesEmptyTitle => 'لا توجد إعلانات محفوظة بعد';
+
+  @override
+  String get favoritesEmptyMessage =>
+      'اضغط على أيقونة القلب في أي إعلان لحفظه والرجوع إليه هنا.';
+
+  @override
+  String get favoritesSearchEmptyTitle => 'لا توجد نتائج مطابقة';
+
+  @override
+  String get favoritesSearchEmptyMessage => 'جرّب مسح البحث أو اختيار قسم آخر.';
+
+  @override
+  String get favoritesExploreAction => 'تصفح الإعلانات';
+
+  @override
+  String get favoritesRemoveAction => 'إزالة من المفضلة';
+
+  @override
+  String get favoritesOpenListingAction => 'عرض التفاصيل';
+
+  @override
+  String get favoritesGoToSectionAction => 'الانتقال للقسم';
+
+  @override
+  String get favoritesRemovedSuccess => 'تمت الإزالة من المفضلة';
+
+  @override
+  String get favoritesSectorRealEstate => 'العقارات والأراضي';
+
+  @override
+  String get favoritesSectorCars => 'السيارات والصيانة';
+
+  @override
+  String get favoritesSectorServices => 'الخدمات والهندسة';
+
+  @override
+  String get favoritesSectorBuildingMaterials => 'مواد البناء والكهرباء';
+
+  @override
+  String get favoritesSectorAppliances => 'الأجهزة المنزلية والديكور';
+
+  @override
+  String get favoritesSectorFashion => 'الأزياء والإكسسوارات';
+
+  @override
+  String get actionRequestViewing => 'طلب معاينة';
+
+  @override
+  String get actionBookInspection => 'حجز فحص';
+
+  @override
+  String get actionBookService => 'حجز خدمة';
+
+  @override
+  String get actionRequestQuotation => 'طلب عرض سعر';
+
+  @override
+  String get actionContactSeller => 'تواصل مع البائع';
 }

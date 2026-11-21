@@ -402,7 +402,8 @@ export class AuthController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Disabled in production or when ENABLE_DEV_AUTH_BYPASS is false',
+    description:
+      'Disabled in production or when ENABLE_DEV_AUTH_BYPASS is false',
   })
   async devGuestLogin(
     @Req() req: FastifyRequest,

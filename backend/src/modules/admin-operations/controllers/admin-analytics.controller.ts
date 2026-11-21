@@ -20,7 +20,8 @@ export class AdminAnalyticsController {
   @Get('summary')
   @Permissions('analytics.read')
   @ApiOperation({
-    summary: 'Get real aggregated V1 analytics across users, listings, moderation, verification, notifications, and categories',
+    summary:
+      'Get real aggregated V1 analytics across users, listings, moderation, verification, notifications, and categories',
   })
   getSummary(@Query() query: AnalyticsQueryDto) {
     return this.service.getAnalyticsSummary(query);

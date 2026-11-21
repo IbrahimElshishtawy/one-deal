@@ -15,7 +15,8 @@ export class AdminSystemController {
   @Get('health')
   @Permissions('system_health.read')
   @ApiOperation({
-    summary: 'Read-only system health telemetry (DB, PostGIS, Redis, Storage, Outbox, API metrics)',
+    summary:
+      'Read-only system health telemetry (DB, PostGIS, Redis, Storage, Outbox, API metrics)',
   })
   getSystemHealth() {
     return this.service.getSystemHealth();

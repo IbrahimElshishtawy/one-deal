@@ -295,5 +295,234 @@
   "settingsThemeDark": "Dark",
   "settingsLanguageTitle": "App Language",
   "settingsLanguageArabic": "العربية",
-  "settingsLanguageEnglish": "English"
+  "settingsLanguageEnglish": "English",
+
+  "activityHubTitle": "Activity & Commerce Hub",
+  "activityHubSubtitle": "Manage your cart, bookings, quotations, and favorites",
+  "activityHubHeaderTooltip": "Activity & Commerce Hub",
+  "activityTabCart": "Cart",
+  "activityTabBookings": "Bookings",
+  "activityTabRfq": "RFQ",
+  "activityTabFavorites": "Favorites",
+  "activitySearchHint": "Search your activity...",
+  "activityFilterAll": "All",
+  "activitySummaryCartItems": "{count} in cart",
+  "@activitySummaryCartItems": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "activitySummaryBookings": "{count} bookings",
+  "@activitySummaryBookings": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "activitySummaryRfqs": "{count} RFQs",
+  "@activitySummaryRfqs": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "activitySummaryFavorites": "{count} saved",
+  "@activitySummaryFavorites": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "activityBackendPendingNotice": "Live server sync for this section is awaiting backend support.",
+  "activityAuthRequiredTitle": "Sign in to sync your activity",
+  "activityAuthRequiredMessage": "Log in to access your server-synced favorites and account activity.",
+  "activitySignInAction": "Sign In",
+
+  "cartTitle": "Shopping Cart",
+  "cartEmptyTitle": "Your shopping cart is empty",
+  "cartEmptyMessage": "Add building materials, appliances, or fashion items to your cart to manage quantities and contact sellers.",
+  "cartExploreProducts": "Explore Marketplace",
+  "cartSellerLabel": "Seller: {seller}",
+  "@cartSellerLabel": {
+    "placeholders": {
+      "seller": { "type": "String" }
+    }
+  },
+  "cartUnitPriceLabel": "Unit Price",
+  "cartQuantityLabel": "Quantity",
+  "cartSizeLabel": "Size: {size}",
+  "@cartSizeLabel": {
+    "placeholders": {
+      "size": { "type": "String" }
+    }
+  },
+  "cartColorLabel": "Color: {color}",
+  "@cartColorLabel": {
+    "placeholders": {
+      "color": { "type": "String" }
+    }
+  },
+  "cartRemoveItem": "Remove",
+  "cartSaveForLater": "Save for Later",
+  "cartSavedForLaterSuccess": "Saved to your favorites list",
+  "cartRemovedSuccess": "Item removed from cart",
+  "cartAddedSuccess": "Added to shopping cart",
+  "cartRemoveConfirmTitle": "Remove Item",
+  "cartRemoveConfirmMessage": "Are you sure you want to remove \"{title}\" from your cart?",
+  "@cartRemoveConfirmMessage": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  },
+  "cartClearConfirmTitle": "Clear Cart",
+  "cartClearConfirmMessage": "Remove all items from your shopping cart?",
+  "cartClearAction": "Clear All",
+  "cartSubtotalLabel": "Subtotal",
+  "cartTotalLabel": "Estimated Total",
+  "cartItemsCountLabel": "{count} items",
+  "@cartItemsCountLabel": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "cartCheckoutAction": "Proceed / Contact Sellers",
+  "cartV1CommerceNotice": "Deal One V1 operates on direct seller contact without in-app payment. Use Contact Seller on each item to finalize your deal.",
+  "cartSelectVariantTitle": "Select Options",
+  "cartSelectSize": "Select Size",
+  "cartSelectColor": "Select Color",
+  "cartAddToCartAction": "Add to Cart",
+  "cartQuantityMinError": "Quantity must be at least 1",
+
+  "bookingsTitle": "Bookings & Appointments",
+  "bookingsEmptyTitle": "No bookings or appointments yet",
+  "bookingsEmptyMessage": "Property viewings, vehicle inspections, and service appointments will appear here once scheduled.",
+  "bookingsFilterRealEstate": "Real Estate",
+  "bookingsFilterCars": "Cars & Maintenance",
+  "bookingsFilterServices": "Services & Engineering",
+  "bookingsTypePropertyViewing": "Property Viewing",
+  "bookingsTypePropertyInspection": "Property Inspection",
+  "bookingsTypeAgentContact": "Agent Contact Request",
+  "bookingsTypeVehicleInspection": "Vehicle Inspection",
+  "bookingsTypeMaintenance": "Maintenance Booking",
+  "bookingsTypeServiceCenter": "Service Center",
+  "bookingsTypePlumbing": "Plumbing Service",
+  "bookingsTypeElectricity": "Electrical Service",
+  "bookingsTypeAc": "AC Service",
+  "bookingsTypeConstruction": "Construction Service",
+  "bookingsTypeEngineering": "Engineering Service",
+  "bookingsProviderLabel": "Provider",
+  "bookingsDateLabel": "Date",
+  "bookingsTimeLabel": "Time",
+  "bookingsAddressLabel": "Address",
+  "bookingsReferenceLabel": "Ref #{reference}",
+  "@bookingsReferenceLabel": {
+    "placeholders": {
+      "reference": { "type": "String" }
+    }
+  },
+  "bookingsStatusPending": "Pending",
+  "bookingsStatusConfirmed": "Confirmed",
+  "bookingsStatusRejected": "Rejected",
+  "bookingsStatusCancelled": "Cancelled",
+  "bookingsStatusCompleted": "Completed",
+  "bookingsStatusUnknown": "Unknown",
+  "bookingsCancelAction": "Cancel Booking",
+  "bookingsCancelConfirmTitle": "Cancel Booking",
+  "bookingsCancelConfirmMessage": "Are you sure you want to cancel this booking?",
+  "bookingsContactProviderAction": "Contact Provider",
+  "bookingsViewListingAction": "View Listing",
+  "bookingsCreateTitle": "Schedule Appointment",
+  "bookingsSelectDateHint": "Select appointment date",
+  "bookingsSelectTimeHint": "Select available time",
+  "bookingsAddressHint": "Enter service or meeting address",
+  "bookingsNotesHint": "Describe your request or notes",
+  "bookingsSubmitAction": "Submit Request",
+  "bookingsValidationDateRequired": "Please select a date",
+  "bookingsValidationTimeRequired": "Please select a time",
+  "bookingsValidationAddressRequired": "Please enter an address",
+  "bookingsBackendUnavailableNotice": "Online booking submission requires backend endpoint support. You can contact the seller directly from the listing.",
+
+  "rfqTitle": "Request for Quotation",
+  "rfqEmptyTitle": "No quotation requests yet",
+  "rfqEmptyMessage": "Submit bulk material requirements and compare supplier quotations here.",
+  "rfqCreateAction": "New RFQ",
+  "rfqCreateTitle": "Create Quotation Request",
+  "rfqRequestTitleLabel": "Project / Request Title",
+  "rfqRequestTitleHint": "e.g., Villa Electrical & Cement Supply",
+  "rfqMaterialsLabel": "Products / Materials",
+  "rfqMaterialsHint": "e.g., Portland Cement, Steel Rebar 12mm",
+  "rfqQuantityLabel": "Quantity & Unit",
+  "rfqQuantityHint": "e.g., 50 Tons / 200 Units",
+  "rfqDescriptionLabel": "Project Description",
+  "rfqDescriptionHint": "Specify technical requirements and timeline",
+  "rfqDeliveryLocationLabel": "Delivery Location",
+  "rfqDeliveryLocationHint": "Governorate, City, Site Address",
+  "rfqAttachmentsNote": "Image attachments are supported once backend media upload for RFQs is enabled.",
+  "rfqSubmitAction": "Submit Quotation Request",
+  "rfqReferenceLabel": "RFQ #{reference}",
+  "@rfqReferenceLabel": {
+    "placeholders": {
+      "reference": { "type": "String" }
+    }
+  },
+  "rfqSubmittedDateLabel": "Submitted: {date}",
+  "@rfqSubmittedDateLabel": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "rfqItemsCountLabel": "{count} items requested",
+  "@rfqItemsCountLabel": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "rfqQuotationsCountLabel": "{count} quotations received",
+  "@rfqQuotationsCountLabel": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "rfqLastUpdatedLabel": "Updated: {date}",
+  "@rfqLastUpdatedLabel": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "rfqStatusDraft": "Draft",
+  "rfqStatusSubmitted": "Submitted",
+  "rfqStatusUnderReview": "Under Review",
+  "rfqStatusQuoted": "Quoted",
+  "rfqStatusAccepted": "Accepted",
+  "rfqStatusRejected": "Rejected",
+  "rfqStatusClosed": "Closed",
+  "rfqViewQuotationsAction": "Compare Quotations",
+  "rfqNoQuotationsYet": "No supplier quotations received yet.",
+  "rfqAcceptQuotationAction": "Accept",
+  "rfqRejectQuotationAction": "Reject",
+  "rfqValidationTitleRequired": "Please enter a request title",
+  "rfqValidationMaterialsRequired": "Please specify products or materials",
+  "rfqValidationQuantityRequired": "Please specify quantities",
+  "rfqValidationLocationRequired": "Please specify delivery location",
+  "rfqBackendUnavailableNotice": "RFQ submission and quotation comparison are awaiting backend API support.",
+
+  "favoritesTitle": "Favorites",
+  "favoritesEmptyTitle": "No saved listings yet",
+  "favoritesEmptyMessage": "Tap the heart icon on any listing across Deal One to save it here.",
+  "favoritesSearchEmptyTitle": "No matching favorites",
+  "favoritesSearchEmptyMessage": "Try clearing your search or selecting a different category.",
+  "favoritesExploreAction": "Browse Listings",
+  "favoritesRemoveAction": "Remove from Favorites",
+  "favoritesOpenListingAction": "View Details",
+  "favoritesGoToSectionAction": "Open Section",
+  "favoritesRemovedSuccess": "Removed from favorites",
+  "favoritesSectorRealEstate": "Real Estate & Land",
+  "favoritesSectorCars": "Cars & Maintenance",
+  "favoritesSectorServices": "Services & Engineering",
+  "favoritesSectorBuildingMaterials": "Building Materials",
+  "favoritesSectorAppliances": "Home Appliances & Decor",
+  "favoritesSectorFashion": "Fashion & Accessories",
+
+  "actionRequestViewing": "Request Viewing",
+  "actionBookInspection": "Book Inspection",
+  "actionBookService": "Book Service",
+  "actionRequestQuotation": "Request Quotation",
+  "actionContactSeller": "Contact Seller"
 }

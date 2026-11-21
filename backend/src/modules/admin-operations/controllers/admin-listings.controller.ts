@@ -38,14 +38,18 @@ export class AdminListingsController {
 
   @Get()
   @Permissions('listings.read')
-  @ApiOperation({ summary: 'List all marketplace listings with advanced filtering & sorting' })
+  @ApiOperation({
+    summary: 'List all marketplace listings with advanced filtering & sorting',
+  })
   listListings(@Query() query: AdminListingsQueryDto) {
     return this.service.listListings(query);
   }
 
   @Get(':id')
   @Permissions('listings.read')
-  @ApiOperation({ summary: 'Get full listing detail, media, owner, and moderation history' })
+  @ApiOperation({
+    summary: 'Get full listing detail, media, owner, and moderation history',
+  })
   getListingDetail(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getListingDetail(id);
   }
@@ -174,7 +178,9 @@ export class AdminListingsController {
   @Post('bulk-decision')
   @AnyPermissions('listings.approve', 'listings.reject', 'listings.hide')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Bulk approve, reject, hide, or archive up to 50 listings' })
+  @ApiOperation({
+    summary: 'Bulk approve, reject, hide, or archive up to 50 listings',
+  })
   bulkDecision(
     @Body() dto: BulkListingDecisionDto,
     @CurrentStaff() staff: AuthenticatedStaff,

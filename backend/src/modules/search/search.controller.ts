@@ -28,6 +28,10 @@ export class SearchController {
     @Query('limit') limit?: string,
   ) {
     const parsedLimit = Math.min(Math.max(Number(limit) || 8, 1), 15);
-    return this.searchService.getSuggestions(q ?? '', categorySlug, parsedLimit);
+    return this.searchService.getSuggestions(
+      q ?? '',
+      categorySlug,
+      parsedLimit,
+    );
   }
 }

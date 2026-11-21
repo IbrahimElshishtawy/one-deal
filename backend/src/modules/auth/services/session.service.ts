@@ -391,7 +391,9 @@ export class SessionService {
     });
 
     if (Array.isArray(activeSessions) && activeSessions.length > 0) {
-      await Promise.all(activeSessions.map((s) => this.denylistSessionId(s.id)));
+      await Promise.all(
+        activeSessions.map((s) => this.denylistSessionId(s.id)),
+      );
     }
 
     // Mark all access tokens issued strictly before this second as revoked in Redis

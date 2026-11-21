@@ -132,7 +132,10 @@ describe('HttpExceptionFilter', () => {
       }),
     };
 
-    filter.catch({ code: 'P1001', message: 'Can not reach db at secret-host' }, mockHost);
+    filter.catch(
+      { code: 'P1001', message: 'Can not reach db at secret-host' },
+      mockHost,
+    );
 
     expect(mockStatus).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
     expect(mockSend).toHaveBeenCalledWith(
@@ -140,7 +143,8 @@ describe('HttpExceptionFilter', () => {
         success: false,
         error: expect.objectContaining({
           code: 'SERVICE_UNAVAILABLE',
-          message: 'Database service temporarily unavailable. Please retry shortly.',
+          message:
+            'Database service temporarily unavailable. Please retry shortly.',
           trace_id: 'db-down-1',
         }),
       }),
@@ -151,7 +155,10 @@ describe('HttpExceptionFilter', () => {
     const mockSendAlreadySent = jest.fn();
     const hostSent: any = {
       switchToHttp: () => ({
-        getResponse: () => ({ sent: true, status: jest.fn().mockReturnValue({ send: mockSendAlreadySent }) }),
+        getResponse: () => ({
+          sent: true,
+          status: jest.fn().mockReturnValue({ send: mockSendAlreadySent }),
+        }),
         getRequest: () => ({ headers: {}, raw: {} }),
       }),
     };
@@ -171,6 +178,8 @@ describe('HttpExceptionFilter', () => {
         getRequest: () => ({ headers: {}, raw: {} }),
       }),
     };
-    expect(() => filter.catch(new Error('socket dropped'), hostClosedSocket)).not.toThrow();
+    expect(() =>
+      filter.catch(new Error('socket dropped'), hostClosedSocket),
+    ).not.toThrow();
   });
 });

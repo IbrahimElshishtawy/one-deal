@@ -70,7 +70,8 @@ export class AdminJwtAuthGuard implements CanActivate {
         throw new UnauthorizedException('Invalid admin token claims');
       }
 
-      const revoked = await this.staffSessionService.isAccessTokenRevoked(payload);
+      const revoked =
+        await this.staffSessionService.isAccessTokenRevoked(payload);
       if (revoked) {
         throw new UnauthorizedException(
           'Admin session has been revoked. Please sign in again.',
@@ -114,7 +115,10 @@ export class AdminJwtAuthGuard implements CanActivate {
     //    - Marketplace USER tokens are authenticated as actorType='user' with permissions=[]
     //      so PermissionsGuard strictly rejects with 403 Forbidden (preserving RBAC contract).
     //    - In production, mobile tokens can NEVER elevate to admin permissions.
-    const mobileSecret = this.configService.get<string>('JWT_ACCESS_SECRET', '');
+    const mobileSecret = this.configService.get<string>(
+      'JWT_ACCESS_SECRET',
+      '',
+    );
     if (mobileSecret) {
       try {
         const mobilePayload = this.jwtService.verify<{
@@ -146,7 +150,10 @@ export class AdminJwtAuthGuard implements CanActivate {
           );
         }
 
-        const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+        const nodeEnv = this.configService.get<string>(
+          'NODE_ENV',
+          'development',
+        );
         let permissions: string[] = [];
         if (nodeEnv !== 'production') {
           if (mobilePayload.role === 'SUPER_ADMIN') {
@@ -259,10 +266,16 @@ export class AdminJwtAuthGuard implements CanActivate {
     iat?: number;
   }): Promise<boolean> {
     if (!this.redis) return false;
-    if (payload.jti && (await this.redis.get(`auth:revoked:jti:${payload.jti}`))) {
+    if (
+      payload.jti &&
+      (await this.redis.get(`auth:revoked:jti:${payload.jti}`))
+    ) {
       return true;
     }
-    if (payload.sid && (await this.redis.get(`auth:revoked:sid:${payload.sid}`))) {
+    if (
+      payload.sid &&
+      (await this.redis.get(`auth:revoked:sid:${payload.sid}`))
+    ) {
       return true;
     }
     if (payload.sub) {

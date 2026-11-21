@@ -26,9 +26,7 @@ describe('Admin Auth Unit Tests (TotpService & PermissionsGuard)', () => {
       const code = totp.generateTotpForTime(secret);
       expect(code).toMatch(/^\d{6}$/);
       expect(totp.verifyTotp(secret, code)).toBe(true);
-      expect(totp.verifyTotp(secret, '000000')).toBe(
-        code === '000000',
-      );
+      expect(totp.verifyTotp(secret, '000000')).toBe(code === '000000');
     });
 
     it('generates 8 distinct recovery codes and SHA-256 hashes them consistently', () => {
@@ -64,7 +62,10 @@ describe('Admin Auth Unit Tests (TotpService & PermissionsGuard)', () => {
     }
 
     it('allows access when all required permissions are present', () => {
-      const ctx = mockCtx(['listings.read', 'listings.approve'], ['listings.approve']);
+      const ctx = mockCtx(
+        ['listings.read', 'listings.approve'],
+        ['listings.approve'],
+      );
       expect(guard.canActivate(ctx)).toBe(true);
     });
 

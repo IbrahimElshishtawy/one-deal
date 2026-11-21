@@ -35,7 +35,9 @@ describe('Development Guest Auth & Production Fail-Closed Safety', () => {
         sessionId: 'sess-dev-1',
       }),
     };
-    const securityAudit: any = { logEvent: jest.fn().mockResolvedValue(undefined) };
+    const securityAudit: any = {
+      logEvent: jest.fn().mockResolvedValue(undefined),
+    };
     const configService: any = {
       get: jest.fn((key: string, def?: any) =>
         key in envOverrides ? envOverrides[key] : def,
@@ -91,7 +93,10 @@ describe('Development Guest Auth & Production Fail-Closed Safety', () => {
       NODE_ENV: 'development',
       ENABLE_DEV_AUTH_BYPASS: true,
     });
-    const res = await service.authenticateDevGuest('FlutterApp/1.0', '127.0.0.1');
+    const res = await service.authenticateDevGuest(
+      'FlutterApp/1.0',
+      '127.0.0.1',
+    );
     expect(res.isDemoGuest).toBe(true);
     expect(res.user.role).toBe('USER');
     expect(res.user.isDemo).toBe(true);

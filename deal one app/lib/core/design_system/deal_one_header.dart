@@ -212,12 +212,14 @@ class DealOneHomeHeader extends ConsumerWidget {
 
           SizedBox(width: isSmall ? 6 : 8),
 
-          // Left button 1: Shopping Basket
+          // Left button 1: Shopping Basket -> Activity & Commerce Hub
           _DealOneSquareIconButton(
             icon: Icons.shopping_basket_rounded,
-            tooltip: isArabic ? 'المفضلة والسلة' : 'Favorites & Basket',
+            tooltip: isArabic
+                ? 'مركز النشاط والتجارة'
+                : 'Activity & Commerce Hub',
             size: isSmall ? 38 : 42,
-            onTap: () => context.push(RouteNames.favorites),
+            onTap: () => context.push(RouteNames.activityHub),
           ),
           SizedBox(width: isSmall ? 6 : 8),
 

@@ -276,7 +276,11 @@ export class SearchService {
     } else if (sortVal === 'oldest') {
       orderBy = [{ refreshedAt: 'asc' }, { id: 'asc' }];
     } else if (sortVal === 'most_viewed') {
-      orderBy = [{ viewsCount: 'desc' }, { refreshedAt: 'desc' }, { id: 'desc' }];
+      orderBy = [
+        { viewsCount: 'desc' },
+        { refreshedAt: 'desc' },
+        { id: 'desc' },
+      ];
     } else if (sortVal === 'featured' || sortVal === 'featured_first') {
       orderBy = [
         { promotedUntil: { sort: 'desc', nulls: 'last' } },

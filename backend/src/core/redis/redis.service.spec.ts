@@ -188,10 +188,14 @@ describe('RedisService', () => {
     expect(sub).toBe(fakeSubscriber);
     expect(fakeSubscriber.listenerCount('error')).toBeGreaterThan(0);
     // Emitting error must NOT crash the process with unhandled error event
-    expect(() => fakeSubscriber.emit('error', new Error('Redis reset'))).not.toThrow();
+    expect(() =>
+      fakeSubscriber.emit('error', new Error('Redis reset')),
+    ).not.toThrow();
 
     // Non-JSON raw fallback entry must not throw SyntaxError
-    (service as any).inMemoryFallback.set('raw_lock_key', { value: 'raw-uuid-token' });
+    (service as any).inMemoryFallback.set('raw_lock_key', {
+      value: 'raw-uuid-token',
+    });
     const rawVal = await service.get<string>('raw_lock_key');
     expect(rawVal).toBe('raw-uuid-token');
   });

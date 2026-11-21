@@ -36,14 +36,20 @@ export class TotpService {
     return output;
   }
 
-  buildOtpAuthUri(email: string, secret: string, issuer = 'Deal One Admin'): string {
+  buildOtpAuthUri(
+    email: string,
+    secret: string,
+    issuer = 'Deal One Admin',
+  ): string {
     const label = encodeURIComponent(`${issuer}:${email}`);
     const encodedIssuer = encodeURIComponent(issuer);
     return `otpauth://totp/${label}?secret=${secret}&issuer=${encodedIssuer}&algorithm=SHA1&digits=6&period=30`;
   }
 
   verifyTotp(secretBase32: string, code: string, window = 1): boolean {
-    const cleanCode = String(code ?? '').trim().replace(/\s+/g, '');
+    const cleanCode = String(code ?? '')
+      .trim()
+      .replace(/\s+/g, '');
     if (!/^\d{6}$/.test(cleanCode)) {
       return false;
     }

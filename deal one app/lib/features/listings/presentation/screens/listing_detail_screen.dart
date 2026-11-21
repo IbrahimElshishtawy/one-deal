@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:market_space/app/app_localization.dart';
 import 'package:market_space/core/errors/error_presenter.dart';
 import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/features/activity_hub/application/providers/cart_provider.dart';
+import 'package:market_space/features/activity_hub/domain/entities/activity_hub_tab.dart';
+import 'package:market_space/features/activity_hub/domain/entities/booking_entity.dart';
+import 'package:market_space/features/activity_hub/presentation/widgets/bookings/booking_request_sheet.dart';
+import 'package:market_space/features/activity_hub/presentation/widgets/cart/cart_variant_picker_sheet.dart';
+import 'package:market_space/features/activity_hub/presentation/widgets/rfq/rfq_create_sheet.dart';
+import 'package:market_space/features/activity_hub/presentation/widgets/shared/activity_action_button.dart';
 import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
 import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
 import 'package:market_space/features/listings/presentation/providers/listings_providers.dart';
@@ -587,6 +597,8 @@ class _DetailViewState extends ConsumerState<_DetailView> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  _buildSectorActivityActions(context, ref, item),
                 ],
               ),
             ),
@@ -700,6 +712,165 @@ class _DetailViewState extends ConsumerState<_DetailView> {
         ),
       ),
     );
+  }
+
+  Widget _buildSectorActivityActions(
+    BuildContext context,
+    WidgetRef ref,
+    ListingItem item,
+  ) {
+    final l10n = AppLocalization.of(context);
+    final sector = MarketplaceSectorCategory.fromCategorySlug(
+      item.categorySlug,
+    );
+
+    switch (sector) {
+      case MarketplaceSectorCategory.realEstate:
+        return SizedBox(
+          width: double.infinity,
+          child: ActivityActionButton(
+            label: l10n.actionRequestViewing,
+            icon: Icons.event_available_outlined,
+            isOutlined: true,
+            onPressed: () => BookingRequestSheet.show(
+              context,
+              listingId: item.id,
+              title: item.title,
+              providerName: item.sellerName,
+              category: BookingCategory.realEstate,
+              defaultType: BookingType.propertyViewing,
+            ),
+          ),
+        );
+      case MarketplaceSectorCategory.carsMaintenance:
+        return SizedBox(
+          width: double.infinity,
+          child: ActivityActionButton(
+            label: l10n.actionBookInspection,
+            icon: Icons.car_repair_outlined,
+            isOutlined: true,
+            onPressed: () => BookingRequestSheet.show(
+              context,
+              listingId: item.id,
+              title: item.title,
+              providerName: item.sellerName,
+              category: BookingCategory.carsMaintenance,
+              defaultType: BookingType.vehicleInspection,
+            ),
+          ),
+        );
+      case MarketplaceSectorCategory.servicesEngineering:
+        return SizedBox(
+          width: double.infinity,
+          child: ActivityActionButton(
+            label: l10n.actionBookService,
+            icon: Icons.handyman_outlined,
+            isOutlined: true,
+            onPressed: () => BookingRequestSheet.show(
+              context,
+              listingId: item.id,
+              title: item.title,
+              providerName: item.sellerName,
+              category: BookingCategory.servicesEngineering,
+              defaultType: BookingType.engineering,
+            ),
+          ),
+        );
+      case MarketplaceSectorCategory.buildingMaterials:
+        return Row(
+          children: [
+            Expanded(
+              child: ActivityActionButton(
+                label: l10n.cartAddToCartAction,
+                icon: Icons.add_shopping_cart_rounded,
+                isOutlined: true,
+                onPressed: () async {
+                  final added = await ref
+                      .read(cartProvider.notifier)
+                      .addListingToCart(item);
+                  if (added && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(l10n.cartAddedSuccess),
+                        action: SnackBarAction(
+                          label: l10n.activityTabCart,
+                          onPressed: () => context.push(RouteNames.activityHub),
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ActivityActionButton(
+                label: l10n.actionRequestQuotation,
+                icon: Icons.request_quote_outlined,
+                isOutlined: true,
+                onPressed: () => RfqCreateSheet.show(
+                  context,
+                  initialMaterials: item.title,
+                ),
+              ),
+            ),
+          ],
+        );
+      case MarketplaceSectorCategory.homeAppliances:
+        return SizedBox(
+          width: double.infinity,
+          child: ActivityActionButton(
+            label: l10n.cartAddToCartAction,
+            icon: Icons.shopping_basket_outlined,
+            isOutlined: true,
+            onPressed: () async {
+              final added = await ref
+                  .read(cartProvider.notifier)
+                  .addListingToCart(item);
+              if (added && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.cartAddedSuccess),
+                    action: SnackBarAction(
+                      label: l10n.activityTabCart,
+                      onPressed: () => context.push(RouteNames.activityHub),
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      case MarketplaceSectorCategory.fashionAccessories:
+        return SizedBox(
+          width: double.infinity,
+          child: ActivityActionButton(
+            label: l10n.cartAddToCartAction,
+            icon: Icons.shopping_bag_outlined,
+            isOutlined: true,
+            onPressed: () async {
+              final added = await CartVariantPickerSheet.show(
+                context,
+                listing: item,
+                requireSizeAndColor: true,
+              );
+              if (added == true && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.cartAddedSuccess),
+                    action: SnackBarAction(
+                      label: l10n.activityTabCart,
+                      onPressed: () => context.push(RouteNames.activityHub),
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      case MarketplaceSectorCategory.all:
+        return const SizedBox.shrink();
+    }
   }
 
   void _showReportDialog(

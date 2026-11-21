@@ -98,7 +98,10 @@ export class AdminAuthController {
     });
   }
 
-  private assertCsrfHeaderIfCookieUsed(req: FastifyRequest, hasCookie: boolean) {
+  private assertCsrfHeaderIfCookieUsed(
+    req: FastifyRequest,
+    hasCookie: boolean,
+  ) {
     if (!hasCookie) return;
     const xRequestedWith = req.headers['x-requested-with'];
     const xCsrfToken = req.headers['x-csrf-token'];
@@ -114,7 +117,10 @@ export class AdminAuthController {
   @RateLimit(10, 900, { anonymousLimit: 10 })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Authenticate an administrative staff account' })
-  @ApiResponse({ status: 200, description: 'Authenticated or MFA challenge issued' })
+  @ApiResponse({
+    status: 200,
+    description: 'Authenticated or MFA challenge issued',
+  })
   async login(
     @Body() dto: AdminLoginDto,
     @Req() req: FastifyRequest,
@@ -127,7 +133,11 @@ export class AdminAuthController {
       req.headers['x-trace-id'] as string | undefined,
     );
 
-    if (!result.requiresMfa && 'refreshToken' in result && result.refreshToken) {
+    if (
+      !result.requiresMfa &&
+      'refreshToken' in result &&
+      result.refreshToken
+    ) {
       this.setRefreshCookie(res, result.refreshToken);
       const { refreshToken: _omit, ...safeBody } = result;
       return safeBody;
@@ -140,7 +150,9 @@ export class AdminAuthController {
   @UseGuards(RateLimitGuard)
   @RateLimit(10, 900, { anonymousLimit: 10 })
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify TOTP MFA or recovery code to complete admin login' })
+  @ApiOperation({
+    summary: 'Verify TOTP MFA or recovery code to complete admin login',
+  })
   async verifyMfa(
     @Body() dto: VerifyMfaChallengeDto,
     @Req() req: FastifyRequest,
@@ -162,14 +174,15 @@ export class AdminAuthController {
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 900, { anonymousLimit: 30 })
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Rotate admin HttpOnly refresh cookie and return new access token' })
+  @ApiOperation({
+    summary: 'Rotate admin HttpOnly refresh cookie and return new access token',
+  })
   async refresh(
     @Req() req: FastifyRequest,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
     const cookieToken = (req as any).cookies?.[this.getCookieName()] as
-      | string
-      | undefined;
+      string | undefined;
 
     if (cookieToken) {
       this.assertCsrfHeaderIfCookieUsed(req, true);
@@ -195,14 +208,15 @@ export class AdminAuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Revoke admin session, denylist access token, and clear cookie' })
+  @ApiOperation({
+    summary: 'Revoke admin session, denylist access token, and clear cookie',
+  })
   async logout(
     @Req() req: FastifyRequest,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
     const cookieToken = (req as any).cookies?.[this.getCookieName()] as
-      | string
-      | undefined;
+      string | undefined;
     if (cookieToken) {
       this.assertCsrfHeaderIfCookieUsed(req, true);
     }
@@ -218,7 +232,9 @@ export class AdminAuthController {
   @Get('me')
   @ApiBearerAuth('BearerAuth')
   @UseGuards(AdminJwtAuthGuard)
-  @ApiOperation({ summary: 'Get authenticated staff identity and effective permissions' })
+  @ApiOperation({
+    summary: 'Get authenticated staff identity and effective permissions',
+  })
   async me(@CurrentStaff() staff: AuthenticatedStaff) {
     if (!staff.staffId) {
       return {
@@ -250,7 +266,9 @@ export class AdminAuthController {
   @Delete('sessions/:sessionId')
   @ApiBearerAuth('BearerAuth')
   @UseGuards(AdminJwtAuthGuard)
-  @ApiOperation({ summary: 'Revoke a specific active session for current admin' })
+  @ApiOperation({
+    summary: 'Revoke a specific active session for current admin',
+  })
   async revokeSession(
     @Param('sessionId', ParseUUIDPipe) sessionId: string,
     @CurrentStaff() staff: AuthenticatedStaff,
@@ -273,7 +291,9 @@ export class AdminAuthController {
   @ApiBearerAuth('BearerAuth')
   @UseGuards(AdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Generate TOTP secret and otpauth URI for current admin' })
+  @ApiOperation({
+    summary: 'Generate TOTP secret and otpauth URI for current admin',
+  })
   async setupMfa(@CurrentStaff() staff: AuthenticatedStaff) {
     if (!staff.staffId) {
       throw new ForbiddenException('Only staff accounts can manage MFA');
@@ -285,7 +305,9 @@ export class AdminAuthController {
   @ApiBearerAuth('BearerAuth')
   @UseGuards(AdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify TOTP code and enable MFA with recovery codes' })
+  @ApiOperation({
+    summary: 'Verify TOTP code and enable MFA with recovery codes',
+  })
   async enableMfa(
     @CurrentStaff() staff: AuthenticatedStaff,
     @Body() dto: EnableMfaDto,
@@ -315,13 +337,17 @@ export class AdminAuthController {
   @ApiBearerAuth('BearerAuth')
   @UseGuards(AdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Change current admin password and revoke other sessions' })
+  @ApiOperation({
+    summary: 'Change current admin password and revoke other sessions',
+  })
   async changePassword(
     @CurrentStaff() staff: AuthenticatedStaff,
     @Body() dto: AdminChangePasswordDto,
   ) {
     if (!staff.staffId) {
-      throw new ForbiddenException('Only staff accounts can change admin password');
+      throw new ForbiddenException(
+        'Only staff accounts can change admin password',
+      );
     }
     return this.adminAuthService.changePassword(
       staff.staffId,
@@ -343,7 +369,9 @@ export class AdminAuthController {
   @UseGuards(RateLimitGuard)
   @RateLimit(5, 900, { anonymousLimit: 5 })
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reset admin password using single-use reset token' })
+  @ApiOperation({
+    summary: 'Reset admin password using single-use reset token',
+  })
   async resetPassword(@Body() dto: AdminResetPasswordDto) {
     return this.adminAuthService.resetPassword(dto);
   }

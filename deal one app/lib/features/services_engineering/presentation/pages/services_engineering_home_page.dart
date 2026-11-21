@@ -12,6 +12,8 @@ import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/utils/responsive_utils.dart';
+import 'package:market_space/features/activity_hub/domain/entities/booking_entity.dart';
+import 'package:market_space/features/activity_hub/presentation/widgets/bookings/booking_request_sheet.dart';
 import 'package:market_space/features/listings/presentation/widgets/floating_bottom_nav.dart';
 import 'package:market_space/features/main_hub/presentation/widgets/main_hub_service_card.dart';
 import 'package:market_space/features/search/data/dto/search_dto.dart';
@@ -364,8 +366,15 @@ class _ServicesEngineeringHomePageState
                         final provider = feed.providers[index];
                         return ServicesProviderTile(
                           provider: provider,
-                          onBookTap: () =>
-                              _openSearch(query: provider.displayName),
+                          onBookTap: () => BookingRequestSheet.show(
+                            context,
+                            title: isArabic
+                                ? provider.specialtyAr
+                                : provider.specialtyEn,
+                            providerName: provider.displayName,
+                            category: BookingCategory.servicesEngineering,
+                            defaultType: BookingType.engineering,
+                          ),
                         );
                       },
                       childCount: feed.providers.length,

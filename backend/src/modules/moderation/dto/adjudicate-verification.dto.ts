@@ -13,7 +13,9 @@ export class AdjudicateVerificationDto {
   @IsIn(['approve', 'reject', 'request_resubmission'])
   action!: 'approve' | 'reject' | 'request_resubmission';
 
-  @ApiPropertyOptional({ description: 'Required when action is reject or request_resubmission' })
+  @ApiPropertyOptional({
+    description: 'Required when action is reject or request_resubmission',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(1000)
