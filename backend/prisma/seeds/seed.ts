@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import * as crypto from 'crypto';
 import { EGYPT_GEOGRAPHY } from './geography-data';
@@ -5,6 +6,24 @@ import { DEAL_ONE_TAXONOMY } from './taxonomy-data';
 import { DEMO_SELLERS } from './demo-sellers-data';
 import { DEMO_LISTINGS_TEMPLATES } from './demo-listings-generator';
 import { normalizeArabicText } from '../../src/modules/search/arabic-normalizer';
+
+/**
+ * Strips accidental whitespace, surrounding quotes, or duplicated KEY= prefixes
+ * from a connection string before URL parsing and Prisma initialization.
+ */
+function normalizeDatabaseUrl(raw: string): string {
+  const stripQuotes = (s: string) => s.replace(/^(["'])(.*)\1$/, '$2').trim();
+  let normalized = stripQuotes(raw.trim());
+  if (/^DATABASE_URL\s*=/i.test(normalized)) {
+    normalized = normalized.replace(/^DATABASE_URL\s*=\s*/i, '');
+    normalized = stripQuotes(normalized);
+  }
+  return normalized;
+}
+
+if (process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = normalizeDatabaseUrl(process.env.DATABASE_URL);
+}
 
 const prisma = new PrismaClient();
 
@@ -70,10 +89,32 @@ function deterministicUuid(seedKey: string): string {
   ].join('-');
 }
 
+/**
+ * Returns a credential-free diagnostic hint explaining why DATABASE_URL failed URL parsing.
+ */
+function diagnoseInvalidDatabaseUrl(rawUrl: string): string {
+  if (/\$\{\{.*\}\}/.test(rawUrl)) {
+    return 'Detected Railway template syntax (${{...}}) which is not resolved outside Railway.';
+  }
+  if (!/^postgres(?:ql)?:\/\//i.test(rawUrl)) {
+    return 'URL must start with postgresql:// or postgres:// (not a bare hostname, https:// URL, or placeholder).';
+  }
+  if ((rawUrl.match(/@/g) || []).length > 1) {
+    return 'Found multiple "@" characters — if the password contains "@", URL-encode it as "%40".';
+  }
+  if (/\s/.test(rawUrl)) {
+    return 'URL contains unexpected whitespace or newline characters.';
+  }
+  return 'Check for unencoded special characters (#, %, ?, :, /) in the password or an invalid port.';
+}
+
 function assertSafeDatabaseTarget(isProd: boolean, allowOverride: boolean) {
-  const rawUrl = process.env.DATABASE_URL || '';
+  const rawUrl = normalizeDatabaseUrl(process.env.DATABASE_URL || '');
   if (!rawUrl) {
     throw new Error('🚨 SAFETY BLOCK: DATABASE_URL is not defined.');
+  }
+  if (rawUrl !== process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = rawUrl;
   }
   let hostname = 'unknown';
   let dbName = 'unknown';
@@ -82,7 +123,10 @@ function assertSafeDatabaseTarget(isProd: boolean, allowOverride: boolean) {
     hostname = parsed.hostname.toLowerCase();
     dbName = parsed.pathname.replace(/^\//, '').toLowerCase();
   } catch {
-    throw new Error('🚨 SAFETY BLOCK: Invalid DATABASE_URL format.');
+    const hint = diagnoseInvalidDatabaseUrl(rawUrl);
+    throw new Error(
+      `🚨 SAFETY BLOCK: Invalid DATABASE_URL format. ${hint} Tip: run "unset DATABASE_URL" to use backend/.env locally.`,
+    );
   }
 
   const forbiddenHostPatterns = [
