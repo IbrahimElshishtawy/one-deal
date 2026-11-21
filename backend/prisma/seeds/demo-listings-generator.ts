@@ -1,3 +1,5 @@
+import { expandDemoListingsToTarget } from './demo-listings-1000-expander';
+
 export interface SeedListingTemplate {
   subcategorySlug: string;
   sellerAccountSlug: string;
@@ -11,7 +13,7 @@ export interface SeedListingTemplate {
   images: string[];
 }
 
-export const DEMO_LISTINGS_TEMPLATES: SeedListingTemplate[] = [
+const BASE_DEMO_LISTINGS_TEMPLATES: SeedListingTemplate[] = [
   // -----------------------------------------------------
   // Subcategory: apartments-for-sale (10 items)
   // -----------------------------------------------------
@@ -455,3 +457,6 @@ export const DEMO_LISTINGS_TEMPLATES: SeedListingTemplate[] = [
   {"subcategorySlug": "watches-accessories", "sellerAccountSlug": "el-basha-fashion-stores", "citySlug": "mansoura", "areaName": "حي الجامعة", "title": "محفظة كروت وبطاقات رجالي معدنية كربون فايبر بتقنية حماية RFID بالمنصورة", "description": "محفظة سمارت بنظام منبثق بضغطة زر واحدة لإخراج البطاقات بسهولة، شريحة مانعة لسرقة بيانات الفيزا والبطاقات البنكية عن بعد، سليم وعصرية.", "price": 350, "listingKind": "product", "attributes": {"item_type": "محافظ وأحزمة جلد"}, "images": ["https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=800&q=80"]},
   {"subcategorySlug": "watches-accessories", "sellerAccountSlug": "el-basha-fashion-stores", "citySlug": "tanta", "areaName": "شارع الجيش", "title": "انسيال وخاتم تنجستن رجالي أسود مات مقاوم للخدش مع علبة هدية طنطا", "description": "معدن التنجستن الأقوى في العالم المقاوم للخدوش والصدأ مدى الحياة، تصميم رجالي فخم بلون أسود كربوني وتطعيمات فضية جذابة.", "price": 450, "listingKind": "product", "attributes": {"item_type": "فضة ومجوهرات"}, "images": ["https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80"]},
 ];
+
+export const DEMO_LISTINGS_TEMPLATES: SeedListingTemplate[] =
+  expandDemoListingsToTarget(BASE_DEMO_LISTINGS_TEMPLATES, 1000);
