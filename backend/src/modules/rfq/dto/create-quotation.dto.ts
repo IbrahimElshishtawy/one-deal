@@ -32,10 +32,11 @@ export class CreateQuotationItemDto {
   @MaxLength(200)
   name!: string;
 
-  @ApiProperty({ example: 10 })
+  @ApiProperty({ example: 10, maximum: 999999999 })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 3 })
   @IsPositive()
+  @Max(999999999)
   quantity!: number;
 
   @ApiProperty({ example: 'ton' })
@@ -44,10 +45,11 @@ export class CreateQuotationItemDto {
   @MaxLength(40)
   unit!: string;
 
-  @ApiProperty({ example: 38500 })
+  @ApiProperty({ example: 38500, maximum: 999999999999 })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
+  @Max(999999999999)
   unitPrice!: number;
 
   @ApiPropertyOptional({ maxLength: 500 })
@@ -67,11 +69,12 @@ export class CreateQuotationDto {
   @IsUUID()
   supplierAccountId?: string;
 
-  @ApiPropertyOptional({ example: 2500, minimum: 0 })
+  @ApiPropertyOptional({ example: 2500, minimum: 0, maximum: 9999999999 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
+  @Max(9999999999)
   deliveryFee?: number = 0;
 
   @ApiProperty({ example: 3, minimum: 1, maximum: 365 })

@@ -234,6 +234,7 @@ export const envSchema = z.object({
 
   // Database & PgBouncer Pooling
   DATABASE_URL: z.string().optional(),
+  DIRECT_DATABASE_URL: z.string().optional(),
   DATABASE_CONNECTION_LIMIT: z.coerce.number().optional().default(10),
   PGBOUNCER_ENABLED: boolFlag(false),
 
@@ -311,7 +312,7 @@ export const envSchema = z.object({
   VIDEO_WEBHOOK_TOLERANCE_SEC: z.coerce.number().int().positive().default(300),
 
   // Payments (Paymob Egypt - Feature Flagged for V2)
-  ENABLE_V2_PAYMENTS: z.coerce.boolean().optional().default(false),
+  ENABLE_V2_PAYMENTS: boolFlag(false),
   PAYMOB_API_KEY: z.string().optional().default(''),
   PAYMOB_INTEGRATION_ID_CARD: z.coerce.number().optional().default(0),
   PAYMOB_INTEGRATION_ID_WALLET: z.coerce.number().optional().default(0),

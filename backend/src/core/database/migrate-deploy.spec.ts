@@ -83,4 +83,24 @@ describe('migrate-deploy script helpers', () => {
       false,
     );
   });
+
+  it('prefers DIRECT_DATABASE_URL and rejects PgBouncer transaction-pooled URLs', () => {
+    const resolved = migrateDeploy.resolveMigrationDatabaseUrl({
+      DATABASE_URL:
+        'postgresql://user:pass@pgbouncer:6432/marketspace?schema=public&pgbouncer=true',
+      DIRECT_DATABASE_URL:
+        'postgresql://user:pass@postgres:5432/marketspace?schema=public',
+    });
+    const parsed = new URL(resolved);
+    expect(parsed.hostname).toBe('postgres');
+    expect(parsed.port).toBe('5432');
+    expect(parsed.searchParams.get('connection_limit')).toBe('1');
+
+    expect(() =>
+      migrateDeploy.resolveMigrationDatabaseUrl({
+        DATABASE_URL:
+          'postgresql://user:pass@pgbouncer:6432/marketspace?schema=public&pgbouncer=true',
+      }),
+    ).toThrow(/PgBouncer transaction pooling/i);
+  });
 });

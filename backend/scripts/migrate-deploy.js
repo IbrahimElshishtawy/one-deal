@@ -54,6 +54,37 @@ function buildSingleConnectionUrl(rawUrl) {
 }
 
 /**
+ * Resolves the direct PostgreSQL connection URL for migrations, preferring
+ * DIRECT_DATABASE_URL / MIGRATION_DATABASE_URL over DATABASE_URL and rejecting
+ * PgBouncer transaction-pooled URLs (incompatible with session advisory locks
+ * and Prisma DDL migrations).
+ * @param {Record<string, string | undefined>} env
+ * @returns {string}
+ */
+function resolveMigrationDatabaseUrl(env) {
+  const source = env || process.env;
+  const candidate =
+    (source.DIRECT_DATABASE_URL && source.DIRECT_DATABASE_URL.trim()) ||
+    (source.MIGRATION_DATABASE_URL && source.MIGRATION_DATABASE_URL.trim()) ||
+    (source.DATABASE_URL && source.DATABASE_URL.trim()) ||
+    '';
+
+  const singleConnUrl = buildSingleConnectionUrl(candidate);
+  const parsed = new URL(singleConnUrl);
+  const isPgBouncer =
+    parsed.searchParams.get('pgbouncer') === 'true' ||
+    parsed.hostname.toLowerCase().includes('pgbouncer') ||
+    parsed.port === '6432';
+
+  if (isPgBouncer) {
+    throw new Error(
+      'Migration URL points to PgBouncer transaction pooling (pgbouncer=true or port 6432). Configure DIRECT_DATABASE_URL pointing directly to PostgreSQL (port 5432) for safe advisory locks and Prisma migrations.',
+    );
+  }
+
+  return singleConnUrl;
+}
+/**
  * Lists local migration directory names containing migration.sql.
  * @param {string} migrationsDir
  * @returns {string[]}
@@ -174,7 +205,7 @@ async function run() {
   }
 
   const prismaCliPath = resolvePrismaCliPath(appRoot);
-  const singleConnUrl = buildSingleConnectionUrl(process.env.DATABASE_URL);
+  const singleConnUrl = resolveMigrationDatabaseUrl(process.env);
 
   const prisma = new PrismaClient({
     datasources: { db: { url: singleConnUrl } },
@@ -281,7 +312,10 @@ async function run() {
       {
         cwd: appRoot,
         stdio: 'inherit',
-        env: process.env,
+        env: {
+          ...process.env,
+          DATABASE_URL: singleConnUrl,
+        },
       },
     );
 
@@ -365,6 +399,7 @@ module.exports = {
   MIGRATION_LOCK_ID,
   sanitizeMessage,
   buildSingleConnectionUrl,
+  resolveMigrationDatabaseUrl,
   listLocalMigrations,
   resolvePrismaCliPath,
   resolveCompiledSeedPath,

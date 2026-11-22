@@ -1,17 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { QuotationStatus } from '../rfq.enums';
+
+export const ALLOWED_QUOTATION_MUTATION_STATUSES: QuotationStatus[] = [
+  QuotationStatus.SHORTLISTED,
+  QuotationStatus.ACCEPTED,
+  QuotationStatus.REJECTED,
+  QuotationStatus.WITHDRAWN,
+];
 
 export class UpdateQuotationStatusDto {
   @ApiProperty({
-    enum: [
-      QuotationStatus.SHORTLISTED,
-      QuotationStatus.ACCEPTED,
-      QuotationStatus.REJECTED,
-      QuotationStatus.WITHDRAWN,
-    ],
+    enum: ALLOWED_QUOTATION_MUTATION_STATUSES,
   })
-  @IsEnum(QuotationStatus)
+  @IsIn(ALLOWED_QUOTATION_MUTATION_STATUSES)
   status!: QuotationStatus;
 
   @ApiPropertyOptional({ maxLength: 500 })

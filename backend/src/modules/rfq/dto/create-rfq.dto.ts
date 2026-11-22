@@ -12,6 +12,7 @@ import {
   IsUrl,
   IsUUID,
   Matches,
+  Max,
   MaxLength,
   MinLength,
   ValidateNested,
@@ -38,10 +39,11 @@ export class CreateRfqItemDto {
   @MaxLength(500)
   specification?: string;
 
-  @ApiProperty({ example: 10, minimum: 0.001 })
+  @ApiProperty({ example: 10, minimum: 0.001, maximum: 999999999 })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 3 })
   @IsPositive()
+  @Max(999999999)
   quantity!: number;
 
   @ApiProperty({ example: 'ton' })

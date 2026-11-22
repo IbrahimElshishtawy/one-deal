@@ -241,18 +241,29 @@ export class RfqService {
           }
         : {};
 
+    const openSupplierStatuses: RfqStatus[] = [
+      RfqStatus.SUBMITTED,
+      RfqStatus.UNDER_REVIEW,
+      RfqStatus.QUOTATIONS_RECEIVED,
+    ];
+
+    if (
+      scope === 'open_for_suppliers' &&
+      query.status &&
+      !openSupplierStatuses.includes(query.status)
+    ) {
+      throw new BadRequestException(
+        `Status '${query.status}' is not allowed when scope is 'open_for_suppliers'`,
+      );
+    }
+
     const where: Prisma.RfqRequestWhereInput =
       scope === 'open_for_suppliers'
         ? {
             userId: { not: userId },
-            status: {
-              in: [
-                RfqStatus.SUBMITTED,
-                RfqStatus.UNDER_REVIEW,
-                RfqStatus.QUOTATIONS_RECEIVED,
-              ],
-            },
-            ...(query.status ? { status: query.status } : {}),
+            status: query.status
+              ? query.status
+              : { in: openSupplierStatuses },
             ...categoryWhere,
           }
         : {
@@ -409,9 +420,15 @@ export class RfqService {
       }
     }
 
-    // Authoritative server-side pricing calculation
+    // Authoritative server-side pricing calculation with DECIMAL(14,2) overflow guard
+    const MAX_DECIMAL_14_2 = 999999999999.99;
     const computedItems = dto.items.map((item) => {
       const lineTotal = Number((item.quantity * item.unitPrice).toFixed(2));
+      if (!Number.isFinite(lineTotal) || lineTotal > MAX_DECIMAL_14_2) {
+        throw new BadRequestException(
+          `Line total for item '${item.name}' exceeds maximum supported amount`,
+        );
+      }
       return {
         rfqItemId: item.rfqItemId ?? null,
         name: item.name.trim(),
@@ -428,6 +445,16 @@ export class RfqService {
     );
     const deliveryFee = Number((dto.deliveryFee ?? 0).toFixed(2));
     const totalAmount = Number((subtotalAmount + deliveryFee).toFixed(2));
+    if (
+      !Number.isFinite(subtotalAmount) ||
+      !Number.isFinite(totalAmount) ||
+      subtotalAmount > MAX_DECIMAL_14_2 ||
+      totalAmount > MAX_DECIMAL_14_2
+    ) {
+      throw new BadRequestException(
+        'Quotation total exceeds maximum supported amount',
+      );
+    }
     const validUntil = new Date(
       Date.now() + (dto.validityDays ?? 14) * 24 * 60 * 60 * 1000,
     );

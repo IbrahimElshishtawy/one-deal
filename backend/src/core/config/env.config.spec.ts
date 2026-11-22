@@ -25,6 +25,21 @@ describe('Environment Configuration Validation', () => {
       expect(validated.DATABASE_URL).toBe(rawConfig.DATABASE_URL);
       expect(validated.JWT_ACCESS_EXPIRES_IN).toBe('15m');
       expect(validated.TRUST_PROXY).toBe('false');
+      expect(validated.ENABLE_V2_PAYMENTS).toBe(false);
+    });
+
+    it('should parse ENABLE_V2_PAYMENTS="false" as boolean false and "true" as true', () => {
+      const disabled = validateEnv({
+        NODE_ENV: 'development',
+        ENABLE_V2_PAYMENTS: 'false',
+      });
+      expect(disabled.ENABLE_V2_PAYMENTS).toBe(false);
+
+      const enabled = validateEnv({
+        NODE_ENV: 'development',
+        ENABLE_V2_PAYMENTS: 'true',
+      });
+      expect(enabled.ENABLE_V2_PAYMENTS).toBe(true);
     });
 
     it('should fallback to default DATABASE_URL and distinct dev JWT secrets when omitted in development', () => {

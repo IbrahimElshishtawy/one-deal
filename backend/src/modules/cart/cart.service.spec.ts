@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { CartService } from './cart.service';
 import { PrismaService } from '../../core/database/prisma.service';
+import { GetCartQueryDto } from './dto/get-cart-query.dto';
 
 describe('CartService', () => {
   let service: CartService;
@@ -76,5 +79,25 @@ describe('CartService', () => {
     await expect(service.removeItem('buyer-1', 'missing')).rejects.toThrow(
       NotFoundException,
     );
+  });
+
+  it('should reject invalid categoryId and excessive limit in GetCartQueryDto (SEC-02)', async () => {
+    const invalidDto = plainToInstance(GetCartQueryDto, {
+      page: 0,
+      limit: 500,
+      categoryId: 'not-a-uuid',
+    });
+    const errors = await validate(invalidDto);
+    const props = errors.map((e) => e.property);
+    expect(props).toEqual(
+      expect.arrayContaining(['page', 'limit', 'categoryId']),
+    );
+
+    const validDto = plainToInstance(GetCartQueryDto, {
+      page: 1,
+      limit: 20,
+      categoryId: '550e8400-e29b-41d4-a716-446655440000',
+    });
+    expect(await validate(validDto)).toHaveLength(0);
   });
 });

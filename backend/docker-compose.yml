@@ -62,6 +62,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER:-marketspace_app}:${POSTGRES_PASSWORD:-secretpassword}@pgbouncer:6432/${POSTGRES_DB:-marketspace}?schema=public&pgbouncer=true&connection_limit=10
+      DIRECT_DATABASE_URL: postgresql://${POSTGRES_USER:-marketspace_app}:${POSTGRES_PASSWORD:-secretpassword}@postgres:5432/${POSTGRES_DB:-marketspace}?schema=public
       PGBOUNCER_ENABLED: 'true'
       DATABASE_CONNECTION_LIMIT: 10
       REDIS_CACHE_HOST: redis-cache
@@ -95,6 +96,8 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3001
       DATABASE_URL: postgresql://${POSTGRES_USER:-marketspace_app}:${POSTGRES_PASSWORD:-secretpassword}@pgbouncer:6432/${POSTGRES_DB:-marketspace}?schema=public&pgbouncer=true&connection_limit=5
+      DIRECT_DATABASE_URL: postgresql://${POSTGRES_USER:-marketspace_app}:${POSTGRES_PASSWORD:-secretpassword}@postgres:5432/${POSTGRES_DB:-marketspace}?schema=public
+      SKIP_MIGRATIONS: 'true'
       PGBOUNCER_ENABLED: 'true'
       DATABASE_CONNECTION_LIMIT: 5
       REDIS_CACHE_HOST: redis-cache

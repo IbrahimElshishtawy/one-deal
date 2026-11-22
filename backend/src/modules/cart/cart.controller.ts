@@ -16,7 +16,6 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
-  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -27,6 +26,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CartService } from './cart.service';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
+import { GetCartQueryDto } from './dto/get-cart-query.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 
 @ApiTags('Cart (V1 Saved Basket)')
@@ -42,24 +42,13 @@ export class CartController {
     description:
       'Returns saved basket items with authoritative server-side price snapshots. V1 does not expose online checkout or payment processing.',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'categoryId', required: false, type: String })
-  @ApiQuery({ name: 'categorySlug', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Saved basket returned' })
+  @ApiResponse({ status: 400, description: 'Invalid query parameters' })
   async getCart(
     @CurrentUser() user: AuthenticatedUser,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-    @Query('categoryId') categoryId?: string,
-    @Query('categorySlug') categorySlug?: string,
+    @Query() query: GetCartQueryDto,
   ) {
-    return this.cartService.getCart(user.id, {
-      page: page ? Number(page) : 1,
-      limit: limit ? Number(limit) : 20,
-      categoryId,
-      categorySlug,
-    });
+    return this.cartService.getCart(user.id, query);
   }
 
   @Post('items')

@@ -4,9 +4,12 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { RfqService } from './rfq.service';
 import { PrismaService } from '../../core/database/prisma.service';
 import { QuotationStatus, RfqStatus } from './rfq.enums';
+import { UpdateQuotationStatusDto } from './dto/update-quotation-status.dto';
 
 describe('RfqService', () => {
   let service: RfqService;
@@ -196,5 +199,65 @@ describe('RfqService', () => {
         data: { status: RfqStatus.ACCEPTED, acceptedQuotationId: 'quot-1' },
       }),
     );
+  });
+
+  it('should reject private status filters when scope=open_for_suppliers (SEC-01)', async () => {
+    await expect(
+      service.getRfqs('supplier-1', {
+        scope: 'open_for_suppliers',
+        status: RfqStatus.DRAFT,
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    await expect(
+      service.getRfqs('supplier-1', {
+        scope: 'open_for_suppliers',
+        status: RfqStatus.CANCELLED,
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(mockPrisma.rfqRequest.findMany).not.toHaveBeenCalled();
+  });
+
+  it('should reject quotation totals that would overflow DECIMAL(14,2)', async () => {
+    mockPrisma.rfqRequest.findUnique.mockResolvedValue({
+      id: 'rfq-1',
+      reference: 'RFQ-1',
+      userId: 'buyer-1',
+      status: RfqStatus.SUBMITTED,
+      items: [],
+    });
+    mockPrisma.account.findFirst.mockResolvedValue({
+      id: 'sup-acc-1',
+      ownerUserId: 'supplier-1',
+    });
+
+    await expect(
+      service.submitQuotation('rfq-1', 'supplier-1', {
+        estimatedDeliveryDays: 2,
+        items: [
+          {
+            name: 'Steel',
+            quantity: 999999999,
+            unit: 'ton',
+            unitPrice: 999999999,
+          },
+        ],
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should reject EXPIRED and SUBMITTED in UpdateQuotationStatusDto (SEC-04)', async () => {
+    const expiredDto = plainToInstance(UpdateQuotationStatusDto, {
+      status: QuotationStatus.EXPIRED,
+    });
+    const expiredErrors = await validate(expiredDto);
+    expect(expiredErrors.length).toBeGreaterThan(0);
+
+    const validDto = plainToInstance(UpdateQuotationStatusDto, {
+      status: QuotationStatus.SHORTLISTED,
+    });
+    const validErrors = await validate(validDto);
+    expect(validErrors).toHaveLength(0);
   });
 });

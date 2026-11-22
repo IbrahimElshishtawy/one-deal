@@ -50,4 +50,4 @@ USER node
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "node scripts/migrate-deploy.js && exec node dist/src/main.js"]
+CMD ["sh", "-c", "if [ \"$SKIP_MIGRATIONS\" != \"true\" ]; then node scripts/migrate-deploy.js; fi && exec node dist/src/main.js"]
