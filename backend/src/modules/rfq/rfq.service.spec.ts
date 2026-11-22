@@ -316,4 +316,105 @@ describe('RfqService', () => {
     const validErrors = await validate(validDto);
     expect(validErrors).toHaveLength(0);
   });
+
+  it('should edit and submit a DRAFT RFQ and enqueue RFQ_SUBMITTED notification', async () => {
+    mockTx.rfqRequest.findUnique.mockResolvedValueOnce({
+      id: 'rfq-draft-1',
+      userId: 'buyer-1',
+      status: RfqStatus.DRAFT,
+    });
+    mockTx.rfqRequest.update.mockResolvedValueOnce({
+      id: 'rfq-draft-1',
+      title: 'Updated Title',
+      status: RfqStatus.DRAFT,
+      items: [{ id: 'item-1' }],
+    });
+
+    const edited = await service.updateDraftRfq('rfq-draft-1', 'buyer-1', {
+      title: 'Updated Title',
+    });
+    expect(edited.title).toBe('Updated Title');
+
+    mockTx.rfqRequest.findUnique.mockResolvedValueOnce({
+      id: 'rfq-draft-1',
+      reference: 'RFQ-DRAFT-1',
+      userId: 'buyer-1',
+      status: RfqStatus.DRAFT,
+      items: [{ id: 'item-1' }],
+    });
+    mockTx.rfqRequest.update.mockResolvedValueOnce({
+      id: 'rfq-draft-1',
+      reference: 'RFQ-DRAFT-1',
+      status: RfqStatus.SUBMITTED,
+      items: [{ id: 'item-1' }],
+    });
+
+    const submitted = await service.submitDraftRfq('rfq-draft-1', 'buyer-1');
+    expect(submitted.status).toBe(RfqStatus.SUBMITTED);
+    expect(mockTx.outboxEvent.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('should reject quotations on an expired RFQ and reject accepting an expired quotation (BUG-07)', async () => {
+    mockPrisma.rfqRequest.findUnique.mockResolvedValue({
+      id: 'rfq-exp',
+      userId: 'buyer-1',
+      status: RfqStatus.SUBMITTED,
+      expiresAt: new Date(Date.now() - 60_000),
+      items: [],
+    });
+
+    await expect(
+      service.submitQuotation('rfq-exp', 'supplier-1', {
+        estimatedDeliveryDays: 2,
+        items: [{ name: 'Steel', quantity: 1, unit: 'ton', unitPrice: 1000 }],
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    mockTx.quotation.findUnique.mockResolvedValue({
+      id: 'quot-exp',
+      rfqId: 'rfq-1',
+      supplierAccountId: 'sup-acc-1',
+      status: QuotationStatus.SUBMITTED,
+      validUntil: new Date(Date.now() - 60_000),
+      rfq: {
+        id: 'rfq-1',
+        reference: 'RFQ-1',
+        userId: 'buyer-1',
+        status: RfqStatus.QUOTATIONS_RECEIVED,
+        expiresAt: new Date(Date.now() + 86_400_000),
+      },
+      supplierAccount: { ownerUserId: 'supplier-1' },
+    });
+    mockPrisma.account.findUnique.mockResolvedValue({
+      ownerUserId: 'supplier-1',
+      members: [],
+    });
+
+    await expect(
+      service.updateQuotationStatus('quot-exp', 'buyer-1', {
+        status: QuotationStatus.ACCEPTED,
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should notify suppliers with active quotations when an RFQ is cancelled', async () => {
+    mockTx.rfqRequest.findUnique.mockResolvedValue({
+      id: 'rfq-cancel-1',
+      reference: 'RFQ-CANCEL-1',
+      userId: 'buyer-1',
+      status: RfqStatus.QUOTATIONS_RECEIVED,
+      quotations: [
+        { id: 'q-1', supplierAccount: { ownerUserId: 'supplier-owner-1' } },
+        { id: 'q-2', supplierAccount: { ownerUserId: 'supplier-owner-2' } },
+      ],
+    });
+    mockTx.rfqRequest.update.mockResolvedValue({
+      id: 'rfq-cancel-1',
+      status: RfqStatus.CANCELLED,
+      items: [],
+    });
+
+    await service.cancelRfq('rfq-cancel-1', 'buyer-1', 'Project postponed');
+    expect(mockTx.outboxEvent.create).toHaveBeenCalledTimes(2);
+  });
 });

@@ -272,4 +272,77 @@ describe('BookingsService', () => {
       }),
     );
   });
+
+  it('should reject bookingType mismatched with listing root category', async () => {
+    mockPrisma.listing.findUnique.mockResolvedValue({
+      id: 'list-fashion-1',
+      title: 'Jacket',
+      accountId: 'acc-provider',
+      categoryId: 'cat-fashion',
+      category: { slug: 'fashion', parent: null },
+      deletedAt: null,
+      publicationStatus: 'published',
+      moderationStatus: 'approved',
+      availabilityStatus: 'available',
+      account: {
+        id: 'acc-provider',
+        ownerUserId: 'provider-user',
+        isActive: true,
+        deletedAt: null,
+        members: [],
+      },
+    });
+
+    await expect(
+      service.createBooking('buyer-user', {
+        listingId: 'list-fashion-1',
+        bookingType: BookingType.PLUMBING_SERVICE,
+        scheduledDate: futureDate,
+        scheduledTime: futureTime,
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should resolve Africa/Cairo DST (+03:00 in summer, +02:00 in winter) accurately (BUG-14)', async () => {
+    mockPrisma.listing.findUnique.mockResolvedValue({
+      id: 'list-re-1',
+      title: 'Apartment',
+      accountId: 'acc-provider',
+      categoryId: 'cat-re',
+      category: { slug: 'apartments', parent: { slug: 'real-estate' } },
+      deletedAt: null,
+      publicationStatus: 'published',
+      moderationStatus: 'approved',
+      availabilityStatus: 'available',
+      account: {
+        id: 'acc-provider',
+        ownerUserId: 'provider-user',
+        isActive: true,
+        deletedAt: null,
+        members: [],
+      },
+    });
+    mockTx.booking.findFirst.mockResolvedValue(null);
+    mockTx.booking.create.mockImplementation((args: any) =>
+      Promise.resolve({ id: 'bk-dst', ...args.data }),
+    );
+
+    // July in Egypt is DST (+03:00) -> 14:00 Cairo = 11:00 UTC
+    const summer = await service.createBooking('buyer-user', {
+      listingId: 'list-re-1',
+      bookingType: BookingType.PROPERTY_VIEWING,
+      scheduledDate: '2028-07-15',
+      scheduledTime: '14:00',
+    });
+    expect(summer.scheduledAt.toISOString()).toBe('2028-07-15T11:00:00.000Z');
+
+    // January in Egypt is standard (+02:00) -> 14:00 Cairo = 12:00 UTC
+    const winter = await service.createBooking('buyer-user', {
+      listingId: 'list-re-1',
+      bookingType: BookingType.PROPERTY_VIEWING,
+      scheduledDate: '2028-01-15',
+      scheduledTime: '14:00',
+    });
+    expect(winter.scheduledAt.toISOString()).toBe('2028-01-15T12:00:00.000Z');
+  });
 });

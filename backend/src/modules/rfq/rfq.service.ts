@@ -16,6 +16,7 @@ import {
 import { ACTIVE_RFQ_STATUSES, QuotationStatus, RfqStatus } from './rfq.enums';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { CreateRfqDto } from './dto/create-rfq.dto';
+import { UpdateRfqDto } from './dto/update-rfq.dto';
 import { GetRfqsQueryDto } from './dto/get-rfqs-query.dto';
 import { UpdateQuotationStatusDto } from './dto/update-quotation-status.dto';
 
@@ -371,6 +372,186 @@ export class RfqService {
     };
   }
 
+  async updateDraftRfq(rfqId: string, userId: string, dto: UpdateRfqDto) {
+    if (dto.categoryId) {
+      const category = await this.prisma.category.findUnique({
+        where: { id: dto.categoryId },
+        select: { id: true, isActive: true },
+      });
+      if (!category || !category.isActive) {
+        throw new BadRequestException(
+          'Selected category is invalid or inactive',
+        );
+      }
+    }
+
+    let requiredByDateObj: Date | undefined;
+    if (dto.requiredByDate !== undefined) {
+      requiredByDateObj = new Date(`${dto.requiredByDate}T00:00:00Z`);
+      if (Number.isNaN(requiredByDateObj.getTime())) {
+        throw new BadRequestException('Invalid requiredByDate');
+      }
+      const todayUtc = new Date();
+      todayUtc.setUTCHours(0, 0, 0, 0);
+      if (requiredByDateObj < todayUtc) {
+        throw new BadRequestException('requiredByDate cannot be in the past');
+      }
+    }
+
+    if (dto.items) {
+      const linkedListingIds = dto.items
+        .map((i) => i.listingId)
+        .filter((id): id is string => Boolean(id));
+      if (linkedListingIds.length > 0) {
+        const foundListings = await this.prisma.listing.findMany({
+          where: { id: { in: linkedListingIds }, deletedAt: null },
+          select: { id: true },
+        });
+        const foundSet = new Set(foundListings.map((l) => l.id));
+        const missing = linkedListingIds.find((id) => !foundSet.has(id));
+        if (missing) {
+          throw new BadRequestException(
+            `Referenced material listing '${missing}' does not exist or was deleted`,
+          );
+        }
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const rfq = await tx.rfqRequest.findUnique({ where: { id: rfqId } });
+      if (!rfq) {
+        throw new NotFoundException('RFQ not found');
+      }
+      if (rfq.userId !== userId) {
+        throw new ForbiddenException('Only the RFQ owner can edit a draft RFQ');
+      }
+      if (rfq.status !== RfqStatus.DRAFT) {
+        throw new BadRequestException('Only DRAFT RFQs can be edited');
+      }
+
+      return tx.rfqRequest.update({
+        where: { id: rfq.id },
+        data: {
+          ...(dto.title !== undefined ? { title: dto.title.trim() } : {}),
+          ...(dto.description !== undefined
+            ? { description: dto.description.trim() }
+            : {}),
+          ...(dto.categoryId !== undefined
+            ? { categoryId: dto.categoryId }
+            : {}),
+          ...(dto.deliveryLocation !== undefined
+            ? { deliveryLocation: dto.deliveryLocation.trim() }
+            : {}),
+          ...(requiredByDateObj !== undefined
+            ? { requiredByDate: requiredByDateObj }
+            : {}),
+          ...(dto.supportingImages !== undefined
+            ? { supportingImages: dto.supportingImages }
+            : {}),
+          ...(dto.additionalNotes !== undefined
+            ? { additionalNotes: dto.additionalNotes.trim() || null }
+            : {}),
+          ...(dto.items
+            ? {
+                items: {
+                  deleteMany: {},
+                  create: dto.items.map((item, idx) => ({
+                    listingId: item.listingId ?? null,
+                    name: item.name.trim(),
+                    specification: item.specification?.trim() || null,
+                    quantity: item.quantity,
+                    unit: item.unit.trim(),
+                    sortOrder: idx,
+                  })),
+                },
+              }
+            : {}),
+        },
+        include: {
+          category: {
+            select: { id: true, slug: true, nameAr: true, nameEn: true },
+          },
+          items: { orderBy: { sortOrder: 'asc' } },
+        },
+      });
+    });
+  }
+
+  async submitDraftRfq(rfqId: string, userId: string) {
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const rfq = await tx.rfqRequest.findUnique({
+            where: { id: rfqId },
+            include: { items: true },
+          });
+
+          if (!rfq) {
+            throw new NotFoundException('RFQ not found');
+          }
+          if (rfq.userId !== userId) {
+            throw new ForbiddenException(
+              'Only the RFQ owner can submit this RFQ',
+            );
+          }
+
+          assertValidRfqTransition(rfq.status, RfqStatus.SUBMITTED);
+
+          if (!rfq.items || rfq.items.length === 0) {
+            throw new BadRequestException(
+              'RFQ must contain at least one item before submission',
+            );
+          }
+
+          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          const updated = await tx.rfqRequest.update({
+            where: { id: rfq.id },
+            data: {
+              status: RfqStatus.SUBMITTED,
+              expiresAt,
+            },
+            include: {
+              category: {
+                select: { id: true, slug: true, nameAr: true, nameEn: true },
+              },
+              items: { orderBy: { sortOrder: 'asc' } },
+            },
+          });
+
+          await tx.outboxEvent.create({
+            data: {
+              aggregateType: 'RfqRequest',
+              aggregateId: updated.id,
+              eventType: 'PUSH_NOTIFICATION',
+              payload: {
+                targetUserId: userId,
+                title: 'RFQ Submitted',
+                body: `Your quotation request ${updated.reference} has been submitted.`,
+                dataPayload: {
+                  type: 'RFQ_SUBMITTED',
+                  rfqId: updated.id,
+                  reference: updated.reference,
+                },
+              },
+            },
+          });
+
+          return updated;
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        },
+      );
+    } catch (err: any) {
+      if (err?.code === 'P2034') {
+        throw new ConflictException(
+          'Concurrent RFQ update detected. Please retry.',
+        );
+      }
+      throw err;
+    }
+  }
+
   async cancelRfq(
     rfqId: string,
     userId: string,
@@ -383,6 +564,22 @@ export class RfqService {
         async (tx) => {
           const rfq = await tx.rfqRequest.findUnique({
             where: { id: rfqId },
+            include: {
+              quotations: {
+                where: {
+                  status: {
+                    in: [
+                      QuotationStatus.SUBMITTED,
+                      QuotationStatus.SHORTLISTED,
+                    ],
+                  },
+                },
+                select: {
+                  id: true,
+                  supplierAccount: { select: { ownerUserId: true } },
+                },
+              },
+            },
           });
 
           if (!rfq) {
@@ -398,7 +595,7 @@ export class RfqService {
 
           assertValidRfqTransition(rfq.status, RfqStatus.CANCELLED);
 
-          return tx.rfqRequest.update({
+          const updated = await tx.rfqRequest.update({
             where: { id: rfq.id },
             data: {
               status: RfqStatus.CANCELLED,
@@ -408,6 +605,36 @@ export class RfqService {
               items: { orderBy: { sortOrder: 'asc' } },
             },
           });
+
+          const supplierOwnerIds = Array.from(
+            new Set(
+              (rfq.quotations ?? [])
+                .map((q) => q.supplierAccount?.ownerUserId)
+                .filter((id): id is string => Boolean(id)),
+            ),
+          );
+
+          for (const supplierOwnerId of supplierOwnerIds) {
+            await tx.outboxEvent.create({
+              data: {
+                aggregateType: 'RfqRequest',
+                aggregateId: rfq.id,
+                eventType: 'PUSH_NOTIFICATION',
+                payload: {
+                  targetUserId: supplierOwnerId,
+                  title: 'RFQ Cancelled',
+                  body: `RFQ ${rfq.reference} has been cancelled by the requester.`,
+                  dataPayload: {
+                    type: 'RFQ_CANCELLED',
+                    rfqId: rfq.id,
+                    reference: rfq.reference,
+                  },
+                },
+              },
+            });
+          }
+
+          return updated;
         },
         {
           isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -452,6 +679,12 @@ export class RfqService {
     ) {
       throw new BadRequestException(
         `RFQ is in status '${rfq.status}' and is not accepting quotations`,
+      );
+    }
+
+    if (rfq.expiresAt && new Date(rfq.expiresAt).getTime() <= Date.now()) {
+      throw new BadRequestException(
+        'RFQ has expired and is no longer accepting quotations',
       );
     }
 
@@ -743,6 +976,28 @@ export class RfqService {
           }
 
           assertValidQuotationTransition(quotation.status, dto.status);
+
+          if (
+            dto.status === QuotationStatus.ACCEPTED ||
+            dto.status === QuotationStatus.SHORTLISTED
+          ) {
+            if (
+              quotation.validUntil &&
+              new Date(quotation.validUntil).getTime() <= Date.now()
+            ) {
+              throw new BadRequestException(
+                'Quotation has expired and can no longer be shortlisted or accepted',
+              );
+            }
+            if (
+              quotation.rfq.expiresAt &&
+              new Date(quotation.rfq.expiresAt).getTime() <= Date.now()
+            ) {
+              throw new BadRequestException(
+                'RFQ has expired and can no longer accept quotations',
+              );
+            }
+          }
 
           if (dto.status === QuotationStatus.ACCEPTED) {
             assertValidRfqTransition(quotation.rfq.status, RfqStatus.ACCEPTED);

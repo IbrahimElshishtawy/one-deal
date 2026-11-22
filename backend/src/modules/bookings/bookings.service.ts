@@ -10,7 +10,34 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../../core/database/prisma.service';
 import { UserRole } from '../../core/enums/domain.enums';
 import { assertValidBookingTransition } from './bookings-state-machine';
-import { ACTIVE_BOOKING_STATUSES, BookingStatus } from './bookings.enums';
+import {
+  ACTIVE_BOOKING_STATUSES,
+  BookingStatus,
+  BookingType,
+} from './bookings.enums';
+
+const BOOKING_TYPE_ROOT_CATEGORY_MAP: Record<BookingType, string> = {
+  [BookingType.PROPERTY_VIEWING]: 'real-estate',
+  [BookingType.PROPERTY_INSPECTION]: 'real-estate',
+  [BookingType.GENERAL_INQUIRY]: 'real-estate',
+  [BookingType.VEHICLE_INSPECTION]: 'cars',
+  [BookingType.MAINTENANCE_APPOINTMENT]: 'cars',
+  [BookingType.SERVICE_CENTER_BOOKING]: 'cars',
+  [BookingType.PLUMBING_SERVICE]: 'services',
+  [BookingType.ELECTRICAL_SERVICE]: 'services',
+  [BookingType.AC_SERVICE]: 'services',
+  [BookingType.CONSTRUCTION_SERVICE]: 'services',
+  [BookingType.ENGINEERING_SERVICE]: 'services',
+};
+
+const KNOWN_ROOT_CATEGORY_SLUGS = new Set([
+  'real-estate',
+  'building-materials',
+  'services',
+  'home-appliances',
+  'cars',
+  'fashion',
+]);
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { GetBookingsQueryDto } from './dto/get-bookings-query.dto';
@@ -27,7 +54,32 @@ export class BookingsService {
   }
 
   /**
-   * Parses YYYY-MM-DD and HH:mm in Africa/Cairo (+02:00) into an authoritative UTC Date
+   * Resolves the exact UTC offset (+02:00 standard or +03:00 DST) for a calendar date
+   * in the IANA Africa/Cairo timezone without external dependencies.
+   */
+  private getCairoOffsetForDate(
+    scheduledDate: string,
+    scheduledTime: string,
+  ): string {
+    try {
+      const probeUtc = new Date(`${scheduledDate}T${scheduledTime}:00Z`);
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Africa/Cairo',
+        timeZoneName: 'longOffset',
+      }).formatToParts(probeUtc);
+      const tzPart = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
+      const match = tzPart.match(/GMT([+-]\d{2}:\d{2})/);
+      if (match?.[1]) {
+        return match[1];
+      }
+    } catch {
+      // Fallback to Egypt standard time if Intl timezone data is unavailable
+    }
+    return '+02:00';
+  }
+
+  /**
+   * Parses YYYY-MM-DD and HH:mm in Africa/Cairo (DST-aware) into an authoritative UTC Date
    * and rejects invalid or past slots.
    */
   private parseAndValidateSlot(
@@ -44,7 +96,13 @@ export class BookingsService {
       throw new BadRequestException('Invalid scheduledDate calendar date');
     }
 
-    const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}:00+02:00`);
+    const cairoOffset = this.getCairoOffsetForDate(
+      scheduledDate,
+      scheduledTime,
+    );
+    const scheduledAt = new Date(
+      `${scheduledDate}T${scheduledTime}:00${cairoOffset}`,
+    );
     if (Number.isNaN(scheduledAt.getTime())) {
       throw new BadRequestException('Invalid scheduledDate or scheduledTime');
     }
@@ -163,6 +221,12 @@ export class BookingsService {
       const listing = await this.prisma.listing.findUnique({
         where: { id: dto.listingId },
         include: {
+          category: {
+            select: {
+              slug: true,
+              parent: { select: { slug: true } },
+            },
+          },
           account: {
             select: {
               id: true,
@@ -206,6 +270,17 @@ export class BookingsService {
         throw new BadRequestException(
           'You cannot create a booking on your own listing',
         );
+      }
+
+      const rootCategorySlug =
+        listing.category?.parent?.slug ?? listing.category?.slug;
+      if (rootCategorySlug && KNOWN_ROOT_CATEGORY_SLUGS.has(rootCategorySlug)) {
+        const expectedRootSlug = BOOKING_TYPE_ROOT_CATEGORY_MAP[dto.bookingType];
+        if (expectedRootSlug && expectedRootSlug !== rootCategorySlug) {
+          throw new BadRequestException(
+            `Booking type '${dto.bookingType}' is not supported for category '${rootCategorySlug}'`,
+          );
+        }
       }
 
       providerAccountId = listing.accountId;

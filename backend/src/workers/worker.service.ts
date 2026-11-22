@@ -12,6 +12,7 @@ import { ListingExpiryProcessor } from './listing-expiry.processor';
 import { MediaCleanupProcessor } from './media-cleanup.processor';
 import { PaymentReconciliationProcessor } from './payment-reconciliation.processor';
 import { OutboxPublisherProcessor } from './outbox-publisher.processor';
+import { RfqExpiryProcessor } from './rfq-expiry.processor';
 import {
   NotificationProcessor,
   PushNotificationJobData,
@@ -43,6 +44,7 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly outboxPublisher?: OutboxPublisherProcessor,
     @Optional() private readonly redisService?: RedisService,
     @Optional() private readonly configService?: ConfigService,
+    @Optional() private readonly rfqExpiry?: RfqExpiryProcessor,
   ) {}
 
   async onModuleInit() {
@@ -96,6 +98,8 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
               return await this.mediaCleanup.processAbandonedMedia();
             case 'outbox-publisher':
               return await this.outboxPublisher?.publishPendingEvents();
+            case 'rfq-expiry':
+              return await this.rfqExpiry?.processExpiredRfqsAndQuotations();
             default:
               return null;
           }
@@ -143,6 +147,11 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
         'outbox-publisher',
         {},
         { repeat: { every: 10 * 1000 }, jobId: 'repeat:outbox-publisher' },
+      ),
+      this.maintenanceQueue.add(
+        'rfq-expiry',
+        {},
+        { repeat: { every: 30 * 60 * 1000 }, jobId: 'repeat:rfq-expiry' },
       ),
     ]);
   }
@@ -226,6 +235,20 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
         this.logger.error(`Error in outbox publisher job: ${err.message}`);
       });
     }, 10 * 1000);
+
+    // RFQ & quotation expiry check every 30 minutes
+    registerInterval(
+      () => {
+        runWithLock('worker:rfq-expiry', 300, () =>
+          this.rfqExpiry
+            ? this.rfqExpiry.processExpiredRfqsAndQuotations()
+            : Promise.resolve(),
+        ).catch((err) => {
+          this.logger.error(`Error in RFQ expiry job: ${err.message}`);
+        });
+      },
+      30 * 60 * 1000,
+    );
   }
 
   async onModuleDestroy() {

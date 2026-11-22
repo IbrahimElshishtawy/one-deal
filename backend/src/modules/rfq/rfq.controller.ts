@@ -29,6 +29,7 @@ import { AdminJwtAuthGuard } from '../admin-auth/guards/admin-jwt-auth.guard';
 import { CancelBookingDto } from '../bookings/dto/cancel-booking.dto';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { CreateRfqDto } from './dto/create-rfq.dto';
+import { UpdateRfqDto } from './dto/update-rfq.dto';
 import { GetRfqsQueryDto } from './dto/get-rfqs-query.dto';
 import { UpdateQuotationStatusDto } from './dto/update-quotation-status.dto';
 import { RfqService } from './rfq.service';
@@ -79,6 +80,37 @@ export class RfqController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.rfqService.getRfqById(id, user.id, user.role, user.actorType);
+  }
+
+  @Patch('rfqs/:id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Edit a DRAFT RFQ owned by the authenticated user' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Draft RFQ updated' })
+  @ApiResponse({ status: 400, description: 'Only DRAFT RFQs can be edited' })
+  async updateDraftRfq(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateRfqDto,
+  ) {
+    return this.rfqService.updateDraftRfq(id, user.id, dto);
+  }
+
+  @Patch('rfqs/:id/submit')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Submit a DRAFT RFQ so suppliers can view and quote on it',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Draft RFQ submitted' })
+  @ApiResponse({ status: 400, description: 'Invalid RFQ status transition' })
+  async submitDraftRfq(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.rfqService.submitDraftRfq(id, user.id);
   }
 
   @Patch('rfqs/:id/cancel')
