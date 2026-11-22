@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { CartService } from './cart.service';
@@ -99,5 +103,22 @@ describe('CartService', () => {
       categoryId: '550e8400-e29b-41d4-a716-446655440000',
     });
     expect(await validate(validDto)).toHaveLength(0);
+  });
+
+  it('should block AccountMember from adding their own account listing to cart (SEC-05)', async () => {
+    mockPrisma.listing.findUnique.mockResolvedValue({
+      id: 'list-1',
+      price: 2500,
+      currency: 'EGP',
+      deletedAt: null,
+      publicationStatus: 'published',
+      moderationStatus: 'approved',
+      availabilityStatus: 'available',
+      account: { ownerUserId: 'owner-1', members: [{ id: 'member-1' }] },
+    });
+
+    await expect(
+      service.addItem('member-user-1', { listingId: 'list-1', quantity: 1 }),
+    ).rejects.toThrow(BadRequestException);
   });
 });

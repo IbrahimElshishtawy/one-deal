@@ -93,16 +93,36 @@ export class RfqService {
     return account;
   }
 
+  private isAdminActor(
+    userRole?: string,
+    actorType?: 'user' | 'staff',
+  ): boolean {
+    const normalized = (userRole || '').toUpperCase();
+    const hasAdminRole =
+      normalized === UserRole.SUPER_ADMIN ||
+      normalized === UserRole.MODERATOR ||
+      normalized === 'ADMIN';
+    if (!hasAdminRole) return false;
+    if (actorType === 'staff') return true;
+    return process.env.NODE_ENV !== 'production';
+  }
+
   private async isSupplierAccountMember(
     accountId: string,
     userId: string,
+    allowedRoles?: string[],
+    actorType?: 'user' | 'staff',
   ): Promise<boolean> {
+    if (actorType === 'staff') return false;
     const account = await this.prisma.account.findUnique({
       where: { id: accountId },
       select: {
         ownerUserId: true,
         members: {
-          where: { userId },
+          where: {
+            userId,
+            ...(allowedRoles ? { role: { in: allowedRoles } } : {}),
+          },
           select: { id: true },
         },
       },
@@ -312,7 +332,12 @@ export class RfqService {
     });
   }
 
-  async getRfqById(rfqId: string, userId: string, userRole?: string) {
+  async getRfqById(
+    rfqId: string,
+    userId: string,
+    userRole?: string,
+    actorType?: 'user' | 'staff',
+  ) {
     const rfq = await this.prisma.rfqRequest.findUnique({
       where: { id: rfqId },
       include: {
@@ -328,9 +353,8 @@ export class RfqService {
       throw new NotFoundException('RFQ not found');
     }
 
-    const isOwner = rfq.userId === userId;
-    const isAdmin =
-      userRole === UserRole.SUPER_ADMIN || userRole === UserRole.MODERATOR;
+    const isOwner = actorType !== 'staff' && rfq.userId === userId;
+    const isAdmin = this.isAdminActor(userRole, actorType);
     const isOpenToSuppliers = [
       RfqStatus.SUBMITTED,
       RfqStatus.UNDER_REVIEW,
@@ -347,31 +371,56 @@ export class RfqService {
     };
   }
 
-  async cancelRfq(rfqId: string, userId: string, reason?: string) {
-    const rfq = await this.prisma.rfqRequest.findUnique({
-      where: { id: rfqId },
-    });
+  async cancelRfq(
+    rfqId: string,
+    userId: string,
+    reason?: string,
+    userRole?: string,
+    actorType?: 'user' | 'staff',
+  ) {
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const rfq = await tx.rfqRequest.findUnique({
+            where: { id: rfqId },
+          });
 
-    if (!rfq) {
-      throw new NotFoundException('RFQ not found');
+          if (!rfq) {
+            throw new NotFoundException('RFQ not found');
+          }
+
+          const isOwner = actorType !== 'staff' && rfq.userId === userId;
+          const isAdmin = this.isAdminActor(userRole, actorType);
+
+          if (!isOwner && !isAdmin) {
+            throw new ForbiddenException('Only the RFQ owner can cancel it');
+          }
+
+          assertValidRfqTransition(rfq.status, RfqStatus.CANCELLED);
+
+          return tx.rfqRequest.update({
+            where: { id: rfq.id },
+            data: {
+              status: RfqStatus.CANCELLED,
+              cancellationReason: reason?.trim() || null,
+            },
+            include: {
+              items: { orderBy: { sortOrder: 'asc' } },
+            },
+          });
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        },
+      );
+    } catch (err: any) {
+      if (err?.code === 'P2034') {
+        throw new ConflictException(
+          'Concurrent RFQ update detected. Please retry.',
+        );
+      }
+      throw err;
     }
-
-    if (rfq.userId !== userId) {
-      throw new ForbiddenException('Only the RFQ owner can cancel it');
-    }
-
-    assertValidRfqTransition(rfq.status, RfqStatus.CANCELLED);
-
-    return this.prisma.rfqRequest.update({
-      where: { id: rfq.id },
-      data: {
-        status: RfqStatus.CANCELLED,
-        cancellationReason: reason?.trim() || null,
-      },
-      include: {
-        items: { orderBy: { sortOrder: 'asc' } },
-      },
-    });
   }
 
   async submitQuotation(
@@ -554,6 +603,7 @@ export class RfqService {
     sortBy:
       'totalAmount' | 'estimatedDeliveryDays' | 'createdAt' = 'totalAmount',
     userRole?: string,
+    actorType?: 'user' | 'staff',
   ) {
     const rfq = await this.prisma.rfqRequest.findUnique({
       where: { id: rfqId },
@@ -564,9 +614,8 @@ export class RfqService {
       throw new NotFoundException('RFQ not found');
     }
 
-    const isOwner = rfq.userId === userId;
-    const isAdmin =
-      userRole === UserRole.SUPER_ADMIN || userRole === UserRole.MODERATOR;
+    const isOwner = actorType !== 'staff' && rfq.userId === userId;
+    const isAdmin = this.isAdminActor(userRole, actorType);
 
     if (!isOwner && !isAdmin) {
       throw new ForbiddenException(
@@ -603,6 +652,7 @@ export class RfqService {
     quotationId: string,
     userId: string,
     userRole?: string,
+    actorType?: 'user' | 'staff',
   ) {
     const quotation = await this.prisma.quotation.findUnique({
       where: { id: quotationId },
@@ -627,12 +677,14 @@ export class RfqService {
       throw new NotFoundException('Quotation not found');
     }
 
-    const isRfqOwner = quotation.rfq.userId === userId;
-    const isAdmin =
-      userRole === UserRole.SUPER_ADMIN || userRole === UserRole.MODERATOR;
+    const isRfqOwner =
+      actorType !== 'staff' && quotation.rfq.userId === userId;
+    const isAdmin = this.isAdminActor(userRole, actorType);
     const isSupplier = await this.isSupplierAccountMember(
       quotation.supplierAccountId,
       userId,
+      undefined,
+      actorType,
     );
 
     if (!isRfqOwner && !isSupplier && !isAdmin) {
@@ -648,87 +700,125 @@ export class RfqService {
     quotationId: string,
     userId: string,
     dto: UpdateQuotationStatusDto,
+    userRole?: string,
+    actorType?: 'user' | 'staff',
   ) {
-    const quotation = await this.prisma.quotation.findUnique({
-      where: { id: quotationId },
-      include: {
-        rfq: true,
-        supplierAccount: { select: { ownerUserId: true } },
-      },
-    });
-
-    if (!quotation) {
-      throw new NotFoundException('Quotation not found');
-    }
-
-    const isRfqOwner = quotation.rfq.userId === userId;
-    const isSupplier = await this.isSupplierAccountMember(
-      quotation.supplierAccountId,
-      userId,
-    );
-
-    if (dto.status === QuotationStatus.WITHDRAWN) {
-      if (!isSupplier) {
-        throw new ForbiddenException(
-          'Only the submitting supplier can withdraw a quotation',
-        );
-      }
-    } else {
-      if (!isRfqOwner) {
-        throw new ForbiddenException(
-          'Only the RFQ owner can shortlist, accept, or reject a quotation',
-        );
-      }
-    }
-
-    assertValidQuotationTransition(quotation.status, dto.status);
-
-    if (dto.status === QuotationStatus.ACCEPTED) {
-      assertValidRfqTransition(quotation.rfq.status, RfqStatus.ACCEPTED);
-    }
-
-    const notifyTargetUserId =
-      dto.status === QuotationStatus.WITHDRAWN
-        ? quotation.rfq.userId
-        : quotation.supplierAccount.ownerUserId;
-
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.quotation.update({
-        where: { id: quotation.id },
-        data: { status: dto.status },
-        include: { items: true },
-      });
-
-      if (dto.status === QuotationStatus.ACCEPTED) {
-        await tx.rfqRequest.update({
-          where: { id: quotation.rfqId },
-          data: {
-            status: RfqStatus.ACCEPTED,
-            acceptedQuotationId: quotation.id,
-          },
-        });
-      }
-
-      await tx.outboxEvent.create({
-        data: {
-          aggregateType: 'Quotation',
-          aggregateId: quotation.id,
-          eventType: 'PUSH_NOTIFICATION',
-          payload: {
-            targetUserId: notifyTargetUserId,
-            title: `Quotation ${dto.status}`,
-            body: `Quotation for ${quotation.rfq.reference} is now ${dto.status.toLowerCase()}.`,
-            dataPayload: {
-              type: 'QUOTATION_STATUS_CHANGED',
-              rfqId: quotation.rfqId,
-              quotationId: quotation.id,
-              status: dto.status,
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const quotation = await tx.quotation.findUnique({
+            where: { id: quotationId },
+            include: {
+              rfq: true,
+              supplierAccount: { select: { ownerUserId: true } },
             },
-          },
-        },
-      });
+          });
 
-      return updated;
-    });
+          if (!quotation) {
+            throw new NotFoundException('Quotation not found');
+          }
+
+          const isRfqOwner =
+            actorType !== 'staff' && quotation.rfq.userId === userId;
+          const isAdmin = this.isAdminActor(userRole, actorType);
+          const isSupplierAuthorized = await this.isSupplierAccountMember(
+            quotation.supplierAccountId,
+            userId,
+            ['owner', 'manager', 'responder'],
+            actorType,
+          );
+
+          if (dto.status === QuotationStatus.WITHDRAWN) {
+            if (!isSupplierAuthorized) {
+              throw new ForbiddenException(
+                'Only an authorized submitting supplier member can withdraw a quotation',
+              );
+            }
+          } else {
+            if (!isRfqOwner && !isAdmin) {
+              throw new ForbiddenException(
+                'Only the RFQ owner or an administrator can shortlist, accept, or reject a quotation',
+              );
+            }
+          }
+
+          assertValidQuotationTransition(quotation.status, dto.status);
+
+          if (dto.status === QuotationStatus.ACCEPTED) {
+            assertValidRfqTransition(quotation.rfq.status, RfqStatus.ACCEPTED);
+
+            const alreadyAccepted = await tx.quotation.findFirst({
+              where: {
+                rfqId: quotation.rfqId,
+                status: QuotationStatus.ACCEPTED,
+              },
+              select: { id: true },
+            });
+            if (alreadyAccepted) {
+              throw new ConflictException(
+                'Another quotation has already been accepted for this RFQ',
+              );
+            }
+          }
+
+          const notifyTargetUserId =
+            dto.status === QuotationStatus.WITHDRAWN
+              ? quotation.rfq.userId
+              : quotation.supplierAccount.ownerUserId;
+
+          const updated = await tx.quotation.update({
+            where: { id: quotation.id },
+            data: {
+              status: dto.status,
+              ...(dto.reason !== undefined
+                ? { statusReason: dto.reason.trim() || null }
+                : {}),
+            },
+            include: { items: true },
+          });
+
+          if (dto.status === QuotationStatus.ACCEPTED) {
+            await tx.rfqRequest.update({
+              where: { id: quotation.rfqId },
+              data: {
+                status: RfqStatus.ACCEPTED,
+                acceptedQuotationId: quotation.id,
+              },
+            });
+          }
+
+          await tx.outboxEvent.create({
+            data: {
+              aggregateType: 'Quotation',
+              aggregateId: quotation.id,
+              eventType: 'PUSH_NOTIFICATION',
+              payload: {
+                targetUserId: notifyTargetUserId,
+                title: `Quotation ${dto.status}`,
+                body: `Quotation for ${quotation.rfq.reference} is now ${dto.status.toLowerCase()}.`,
+                dataPayload: {
+                  type: 'QUOTATION_STATUS_CHANGED',
+                  rfqId: quotation.rfqId,
+                  quotationId: quotation.id,
+                  status: dto.status,
+                },
+              },
+            },
+          });
+
+          return updated;
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        },
+      );
+    } catch (err: any) {
+      if (err?.code === 'P2034' || err?.code === 'P2002') {
+        throw new ConflictException(
+          'Concurrent quotation update detected. Please retry.',
+        );
+      }
+      throw err;
+    }
   }
 }

@@ -15,6 +15,7 @@ describe('BookingsService', () => {
   const mockTx = {
     booking: {
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     },
@@ -141,7 +142,7 @@ describe('BookingsService', () => {
   });
 
   it('should forbid unauthorized user from updating booking status', async () => {
-    mockPrisma.booking.findUnique.mockResolvedValue({
+    mockTx.booking.findUnique.mockResolvedValue({
       id: 'bk-1',
       userId: 'buyer-user',
       providerAccountId: 'acc-provider',
@@ -160,7 +161,7 @@ describe('BookingsService', () => {
   });
 
   it('should allow valid transition PENDING -> CONFIRMED by provider', async () => {
-    mockPrisma.booking.findUnique.mockResolvedValue({
+    mockTx.booking.findUnique.mockResolvedValue({
       id: 'bk-1',
       reference: 'BK-1',
       userId: 'buyer-user',
@@ -186,7 +187,7 @@ describe('BookingsService', () => {
   });
 
   it('should reject invalid transition COMPLETED -> CONFIRMED', async () => {
-    mockPrisma.booking.findUnique.mockResolvedValue({
+    mockTx.booking.findUnique.mockResolvedValue({
       id: 'bk-1',
       userId: 'buyer-user',
       providerAccountId: 'acc-provider',
@@ -202,5 +203,73 @@ describe('BookingsService', () => {
         status: BookingStatus.CONFIRMED,
       }),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should block AccountMember from self-booking their own account listing (SEC-05)', async () => {
+    mockPrisma.listing.findUnique.mockResolvedValue({
+      id: 'list-1',
+      title: 'شقة بالتجمع',
+      accountId: 'acc-provider',
+      categoryId: 'cat-re',
+      deletedAt: null,
+      publicationStatus: 'published',
+      moderationStatus: 'approved',
+      availabilityStatus: 'available',
+      account: {
+        id: 'acc-provider',
+        ownerUserId: 'owner-user',
+        isActive: true,
+        deletedAt: null,
+        members: [{ id: 'member-1' }],
+      },
+    });
+
+    await expect(
+      service.createBooking('manager-user', {
+        listingId: 'list-1',
+        bookingType: BookingType.PROPERTY_VIEWING,
+        scheduledDate: futureDate,
+        scheduledTime: futureTime,
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should map Serializable conflict (P2034) on concurrent booking status update to ConflictException (BUG-03)', async () => {
+    mockPrisma.$transaction.mockRejectedValueOnce({ code: 'P2034' });
+
+    await expect(
+      service.updateBookingStatus('bk-1', 'provider-user', {
+        status: BookingStatus.CONFIRMED,
+      }),
+    ).rejects.toThrow(ConflictException);
+  });
+
+  it('should allow Enterprise Admin StaffUser to cancel booking with null cancelledByUserId (SEC-03)', async () => {
+    mockTx.booking.findUnique.mockResolvedValue({
+      id: 'bk-1',
+      reference: 'BK-1',
+      userId: 'buyer-user',
+      providerAccountId: 'acc-provider',
+      status: BookingStatus.PENDING,
+      providerAccount: { ownerUserId: 'provider-user' },
+    });
+    mockTx.booking.update.mockResolvedValue({
+      id: 'bk-1',
+      status: BookingStatus.CANCELLED,
+    });
+
+    const updated = await service.cancelBooking(
+      'bk-1',
+      'staff-uuid-1',
+      { reason: 'Admin moderation' },
+      'SUPER_ADMIN',
+      'staff',
+    );
+    expect(updated.status).toBe(BookingStatus.CANCELLED);
+    expect(mockTx.booking.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ cancelledByUserId: null }),
+      }),
+    );
   });
 });

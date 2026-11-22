@@ -165,7 +165,15 @@ export class CartService {
     const listing = await this.prisma.listing.findUnique({
       where: { id: dto.listingId },
       include: {
-        account: { select: { ownerUserId: true } },
+        account: {
+          select: {
+            ownerUserId: true,
+            members: {
+              where: { userId },
+              select: { id: true },
+            },
+          },
+        },
       },
     });
 
@@ -184,7 +192,10 @@ export class CartService {
       );
     }
 
-    if (listing.account.ownerUserId === userId) {
+    if (
+      listing.account.ownerUserId === userId ||
+      (listing.account.members?.length ?? 0) > 0
+    ) {
       throw new BadRequestException(
         'You cannot add your own listing to your saved basket',
       );

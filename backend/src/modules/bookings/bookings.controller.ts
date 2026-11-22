@@ -24,6 +24,7 @@ import {
   CurrentUser,
 } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminJwtAuthGuard } from '../admin-auth/guards/admin-jwt-auth.guard';
 import { BookingsService } from './bookings.service';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -32,13 +33,12 @@ import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 
 @ApiTags('Bookings & Appointments')
 @ApiBearerAuth('BearerAuth')
-@UseGuards(JwtAuthGuard)
 @Controller('bookings')
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
   @Post()
-  @UseGuards(RateLimitGuard)
+  @UseGuards(JwtAuthGuard, RateLimitGuard)
   @RateLimit(15, 60)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -60,6 +60,7 @@ export class BookingsController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'List paginated bookings for the authenticated user',
     description:
@@ -74,6 +75,7 @@ export class BookingsController {
   }
 
   @Get(':id')
+  @UseGuards(AdminJwtAuthGuard)
   @ApiOperation({ summary: 'Get booking details by ID' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Booking details returned' })
@@ -83,10 +85,16 @@ export class BookingsController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.bookingsService.getBookingById(id, user.id, user.role);
+    return this.bookingsService.getBookingById(
+      id,
+      user.id,
+      user.role,
+      user.actorType,
+    );
   }
 
   @Patch(':id/cancel')
+  @UseGuards(AdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel a PENDING or CONFIRMED booking' })
   @ApiParam({ name: 'id', format: 'uuid' })
@@ -98,10 +106,17 @@ export class BookingsController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CancelBookingDto,
   ) {
-    return this.bookingsService.cancelBooking(id, user.id, dto, user.role);
+    return this.bookingsService.cancelBooking(
+      id,
+      user.id,
+      dto,
+      user.role,
+      user.actorType,
+    );
   }
 
   @Patch(':id/status')
+  @UseGuards(AdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update booking status (provider or admin only)',
@@ -123,6 +138,7 @@ export class BookingsController {
       user.id,
       dto,
       user.role,
+      user.actorType,
     );
   }
 }

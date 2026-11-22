@@ -58,13 +58,32 @@ export class BookingsService {
     return { dateObj, scheduledAt };
   }
 
+  private isAdminActor(
+    userRole?: string,
+    actorType?: 'user' | 'staff',
+  ): boolean {
+    const normalized = (userRole || '').toUpperCase();
+    const hasAdminRole =
+      normalized === UserRole.SUPER_ADMIN ||
+      normalized === UserRole.MODERATOR ||
+      normalized === 'ADMIN';
+    if (!hasAdminRole) return false;
+    if (actorType === 'staff') return true;
+    return process.env.NODE_ENV !== 'production';
+  }
+
   private async isProviderAuthorized(
     providerAccountId: string,
     userId: string,
     userRole?: string,
+    actorType?: 'user' | 'staff',
   ): Promise<boolean> {
-    if (userRole === UserRole.SUPER_ADMIN || userRole === UserRole.MODERATOR) {
+    if (this.isAdminActor(userRole, actorType)) {
       return true;
+    }
+
+    if (actorType === 'staff') {
+      return false;
     }
 
     const account = await this.prisma.account.findUnique({
@@ -150,6 +169,10 @@ export class BookingsService {
               ownerUserId: true,
               isActive: true,
               deletedAt: true,
+              members: {
+                where: { userId },
+                select: { id: true },
+              },
             },
           },
         },
@@ -176,7 +199,10 @@ export class BookingsService {
         throw new BadRequestException('Provider account is not active');
       }
 
-      if (listing.account.ownerUserId === userId) {
+      if (
+        listing.account.ownerUserId === userId ||
+        (listing.account.members?.length ?? 0) > 0
+      ) {
         throw new BadRequestException(
           'You cannot create a booking on your own listing',
         );
@@ -194,6 +220,10 @@ export class BookingsService {
           ownerUserId: true,
           isActive: true,
           deletedAt: true,
+          members: {
+            where: { userId },
+            select: { id: true },
+          },
         },
       });
 
@@ -201,7 +231,10 @@ export class BookingsService {
         throw new NotFoundException('Provider account not found or inactive');
       }
 
-      if (account.ownerUserId === userId) {
+      if (
+        account.ownerUserId === userId ||
+        (account.members?.length ?? 0) > 0
+      ) {
         throw new BadRequestException(
           'You cannot create a booking with your own account',
         );
@@ -381,7 +414,12 @@ export class BookingsService {
     });
   }
 
-  async getBookingById(bookingId: string, userId: string, userRole?: string) {
+  async getBookingById(
+    bookingId: string,
+    userId: string,
+    userRole?: string,
+    actorType?: 'user' | 'staff',
+  ) {
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
       include: this.bookingInclude(),
@@ -391,11 +429,12 @@ export class BookingsService {
       throw new NotFoundException('Booking not found');
     }
 
-    const isRequester = booking.userId === userId;
+    const isRequester = actorType !== 'staff' && booking.userId === userId;
     const isProvider = await this.isProviderAuthorized(
       booking.providerAccountId,
       userId,
       userRole,
+      actorType,
     );
 
     if (!isRequester && !isProvider) {
@@ -412,69 +451,86 @@ export class BookingsService {
     userId: string,
     dto: CancelBookingDto,
     userRole?: string,
+    actorType?: 'user' | 'staff',
   ) {
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: {
-        providerAccount: { select: { ownerUserId: true } },
-      },
-    });
-
-    if (!booking) {
-      throw new NotFoundException('Booking not found');
-    }
-
-    const isRequester = booking.userId === userId;
-    const isProvider = await this.isProviderAuthorized(
-      booking.providerAccountId,
-      userId,
-      userRole,
-    );
-
-    if (!isRequester && !isProvider) {
-      throw new ForbiddenException(
-        'You do not have permission to cancel this booking',
-      );
-    }
-
-    assertValidBookingTransition(booking.status, BookingStatus.CANCELLED);
-
-    const notifyUserId = isRequester
-      ? booking.providerAccount.ownerUserId
-      : booking.userId;
-
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.booking.update({
-        where: { id: booking.id },
-        data: {
-          status: BookingStatus.CANCELLED,
-          cancellationReason: dto.reason?.trim() || null,
-          cancelledByUserId: userId,
-          cancelledAt: new Date(),
-        },
-        include: this.bookingInclude(),
-      });
-
-      await tx.outboxEvent.create({
-        data: {
-          aggregateType: 'Booking',
-          aggregateId: booking.id,
-          eventType: 'PUSH_NOTIFICATION',
-          payload: {
-            targetUserId: notifyUserId,
-            title: 'Booking Cancelled',
-            body: `Booking ${booking.reference} has been cancelled.`,
-            dataPayload: {
-              type: 'BOOKING_CANCELLED',
-              bookingId: booking.id,
-              reference: booking.reference,
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const booking = await tx.booking.findUnique({
+            where: { id: bookingId },
+            include: {
+              providerAccount: { select: { ownerUserId: true } },
             },
-          },
-        },
-      });
+          });
 
-      return updated;
-    });
+          if (!booking) {
+            throw new NotFoundException('Booking not found');
+          }
+
+          const isRequester =
+            actorType !== 'staff' && booking.userId === userId;
+          const isProvider = await this.isProviderAuthorized(
+            booking.providerAccountId,
+            userId,
+            userRole,
+            actorType,
+          );
+
+          if (!isRequester && !isProvider) {
+            throw new ForbiddenException(
+              'You do not have permission to cancel this booking',
+            );
+          }
+
+          assertValidBookingTransition(booking.status, BookingStatus.CANCELLED);
+
+          const notifyUserId = isRequester
+            ? booking.providerAccount.ownerUserId
+            : booking.userId;
+
+          const updated = await tx.booking.update({
+            where: { id: booking.id },
+            data: {
+              status: BookingStatus.CANCELLED,
+              cancellationReason: dto.reason?.trim() || null,
+              cancelledByUserId: actorType === 'staff' ? null : userId,
+              cancelledAt: new Date(),
+            },
+            include: this.bookingInclude(),
+          });
+
+          await tx.outboxEvent.create({
+            data: {
+              aggregateType: 'Booking',
+              aggregateId: booking.id,
+              eventType: 'PUSH_NOTIFICATION',
+              payload: {
+                targetUserId: notifyUserId,
+                title: 'Booking Cancelled',
+                body: `Booking ${booking.reference} has been cancelled.`,
+                dataPayload: {
+                  type: 'BOOKING_CANCELLED',
+                  bookingId: booking.id,
+                  reference: booking.reference,
+                },
+              },
+            },
+          });
+
+          return updated;
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        },
+      );
+    } catch (err: any) {
+      if (err?.code === 'P2034') {
+        throw new ConflictException(
+          'Concurrent booking update detected. Please retry.',
+        );
+      }
+      throw err;
+    }
   }
 
   async updateBookingStatus(
@@ -482,6 +538,7 @@ export class BookingsService {
     userId: string,
     dto: UpdateBookingStatusDto,
     userRole?: string,
+    actorType?: 'user' | 'staff',
   ) {
     if (dto.status === BookingStatus.CANCELLED) {
       throw new BadRequestException(
@@ -489,31 +546,32 @@ export class BookingsService {
       );
     }
 
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
-    });
-
-    if (!booking) {
-      throw new NotFoundException('Booking not found');
-    }
-
-    const isProvider = await this.isProviderAuthorized(
-      booking.providerAccountId,
-      userId,
-      userRole,
-    );
-
-    if (!isProvider) {
-      throw new ForbiddenException(
-        'Only the assigned provider or an administrator can update booking status',
-      );
-    }
-
-    assertValidBookingTransition(booking.status, dto.status);
-
     try {
       return await this.prisma.$transaction(
         async (tx) => {
+          const booking = await tx.booking.findUnique({
+            where: { id: bookingId },
+          });
+
+          if (!booking) {
+            throw new NotFoundException('Booking not found');
+          }
+
+          const isProvider = await this.isProviderAuthorized(
+            booking.providerAccountId,
+            userId,
+            userRole,
+            actorType,
+          );
+
+          if (!isProvider) {
+            throw new ForbiddenException(
+              'Only the assigned provider or an administrator can update booking status',
+            );
+          }
+
+          assertValidBookingTransition(booking.status, dto.status);
+
           if (dto.status === BookingStatus.CONFIRMED) {
             const slotConflict = await tx.booking.findFirst({
               where: {
@@ -583,9 +641,9 @@ export class BookingsService {
         },
       );
     } catch (err: any) {
-      if (err?.code === 'P2034') {
+      if (err?.code === 'P2034' || err?.code === 'P2002') {
         throw new ConflictException(
-          'Concurrent status update detected. Please retry.',
+          'Concurrent status update or slot conflict detected. Please retry.',
         );
       }
       throw err;

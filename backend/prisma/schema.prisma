@@ -93,6 +93,7 @@ model User {
   notifications      Notification[]
   payments           Payment[]
   bookings           Booking[]       @relation("UserBookings")
+  cancelledBookings  Booking[]       @relation("UserCancelledBookings")
   rfqRequests        RfqRequest[]    @relation("UserRfqRequests")
   submittedQuotations Quotation[]    @relation("UserSubmittedQuotations")
   cartItems          CartItem[]
@@ -756,10 +757,15 @@ model OutboxEvent {
   payload       Json
   status        String    @default("PENDING") @db.VarChar(20) // PENDING, PROCESSING, PUBLISHED, FAILED
   error         String?   @db.Text
+  retryCount    Int       @default(0) @map("retry_count")
+  maxRetries    Int       @default(5) @map("max_retries")
+  nextRetryAt   DateTime? @map("next_retry_at") @db.Timestamptz
+  lockedAt      DateTime? @map("locked_at") @db.Timestamptz
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
   processedAt   DateTime? @map("processed_at") @db.Timestamptz
 
   @@index([status, createdAt])
+  @@index([status, nextRetryAt, createdAt])
   @@map("outbox_events")
 }
 
@@ -832,6 +838,7 @@ model Booking {
   updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   user            User      @relation("UserBookings", fields: [userId], references: [id], onDelete: Cascade)
+  cancelledByUser User?     @relation("UserCancelledBookings", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
   listing         Listing?  @relation(fields: [listingId], references: [id], onDelete: SetNull)
   providerAccount Account   @relation("ProviderBookings", fields: [providerAccountId], references: [id], onDelete: Restrict)
   category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -855,19 +862,21 @@ model RfqRequest {
   supportingImages    Json      @default("[]") @map("supporting_images")
   additionalNotes     String?   @map("additional_notes") @db.Text
   status              String    @default("SUBMITTED") @db.VarChar(25)
-  acceptedQuotationId String?   @map("accepted_quotation_id") @db.Uuid
+  acceptedQuotationId String?   @unique @map("accepted_quotation_id") @db.Uuid
   cancellationReason  String?   @map("cancellation_reason") @db.Text
   expiresAt           DateTime? @map("expires_at") @db.Timestamptz
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  user       User        @relation("UserRfqRequests", fields: [userId], references: [id], onDelete: Cascade)
-  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  items      RfqItem[]
-  quotations Quotation[]
+  user              User        @relation("UserRfqRequests", fields: [userId], references: [id], onDelete: Cascade)
+  category          Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  acceptedQuotation Quotation?  @relation("RfqAcceptedQuotation", fields: [acceptedQuotationId], references: [id], onDelete: SetNull)
+  items             RfqItem[]
+  quotations        Quotation[]
 
   @@index([userId, status, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
+  @@index([status, expiresAt])
   @@index([categoryId])
   @@map("rfq_requests")
 }
@@ -903,16 +912,19 @@ model Quotation {
   validUntil            DateTime @map("valid_until") @db.Timestamptz
   notes                 String?  @db.Text
   status                String   @default("SUBMITTED") @db.VarChar(20)
+  statusReason          String?  @map("status_reason") @db.Text
   createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt             DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   rfq             RfqRequest      @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  acceptedForRfq  RfqRequest?     @relation("RfqAcceptedQuotation")
   supplierAccount Account         @relation("SupplierQuotations", fields: [supplierAccountId], references: [id], onDelete: Restrict)
   submittedBy     User            @relation("UserSubmittedQuotations", fields: [submittedByUserId], references: [id], onDelete: Restrict)
   items           QuotationItem[]
 
   @@unique([rfqId, supplierAccountId], name: "uq_rfq_supplier_quotation")
   @@index([rfqId, status])
+  @@index([status, validUntil])
   @@index([supplierAccountId, createdAt(sort: Desc)])
   @@map("quotations")
 }

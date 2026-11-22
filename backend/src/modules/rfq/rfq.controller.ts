@@ -25,6 +25,7 @@ import {
   CurrentUser,
 } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminJwtAuthGuard } from '../admin-auth/guards/admin-jwt-auth.guard';
 import { CancelBookingDto } from '../bookings/dto/cancel-booking.dto';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { CreateRfqDto } from './dto/create-rfq.dto';
@@ -34,13 +35,12 @@ import { RfqService } from './rfq.service';
 
 @ApiTags('RFQ & Quotations')
 @ApiBearerAuth('BearerAuth')
-@UseGuards(JwtAuthGuard)
 @Controller()
 export class RfqController {
   constructor(private readonly rfqService: RfqService) {}
 
   @Post('rfqs')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(JwtAuthGuard, RateLimitGuard)
   @RateLimit(10, 60)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -57,6 +57,7 @@ export class RfqController {
   }
 
   @Get('rfqs')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'List paginated RFQs (user own RFQs or open RFQs for suppliers)',
   })
@@ -69,6 +70,7 @@ export class RfqController {
   }
 
   @Get('rfqs/:id')
+  @UseGuards(AdminJwtAuthGuard)
   @ApiOperation({ summary: 'Get RFQ details by ID' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'RFQ details returned' })
@@ -76,10 +78,11 @@ export class RfqController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.rfqService.getRfqById(id, user.id, user.role);
+    return this.rfqService.getRfqById(id, user.id, user.role, user.actorType);
   }
 
   @Patch('rfqs/:id/cancel')
+  @UseGuards(AdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel an active or draft RFQ' })
   @ApiParam({ name: 'id', format: 'uuid' })
@@ -89,11 +92,17 @@ export class RfqController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CancelBookingDto,
   ) {
-    return this.rfqService.cancelRfq(id, user.id, dto.reason);
+    return this.rfqService.cancelRfq(
+      id,
+      user.id,
+      dto.reason,
+      user.role,
+      user.actorType,
+    );
   }
 
   @Post('rfqs/:id/quotations')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(JwtAuthGuard, RateLimitGuard)
   @RateLimit(15, 60)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -110,6 +119,7 @@ export class RfqController {
   }
 
   @Get('rfqs/:id/quotations')
+  @UseGuards(AdminJwtAuthGuard)
   @ApiOperation({
     summary: 'List and compare quotations for an RFQ (RFQ owner only)',
   })
@@ -126,10 +136,17 @@ export class RfqController {
     @Query('sortBy')
     sortBy?: 'totalAmount' | 'estimatedDeliveryDays' | 'createdAt',
   ) {
-    return this.rfqService.getQuotationsForRfq(id, user.id, sortBy, user.role);
+    return this.rfqService.getQuotationsForRfq(
+      id,
+      user.id,
+      sortBy,
+      user.role,
+      user.actorType,
+    );
   }
 
   @Get('quotations/:id')
+  @UseGuards(AdminJwtAuthGuard)
   @ApiOperation({
     summary: 'Get quotation details (RFQ owner or submitting supplier only)',
   })
@@ -139,10 +156,16 @@ export class RfqController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.rfqService.getQuotationById(id, user.id, user.role);
+    return this.rfqService.getQuotationById(
+      id,
+      user.id,
+      user.role,
+      user.actorType,
+    );
   }
 
   @Patch('quotations/:id/status')
+  @UseGuards(AdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -155,6 +178,12 @@ export class RfqController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateQuotationStatusDto,
   ) {
-    return this.rfqService.updateQuotationStatus(id, user.id, dto);
+    return this.rfqService.updateQuotationStatus(
+      id,
+      user.id,
+      dto,
+      user.role,
+      user.actorType,
+    );
   }
 }
