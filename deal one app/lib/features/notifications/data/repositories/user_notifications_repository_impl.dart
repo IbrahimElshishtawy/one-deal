@@ -19,7 +19,7 @@ class UserNotificationsRepositoryImpl implements UserNotificationsRepository {
       queryParameters: {
         'page': page,
         'limit': limit,
-        if (unreadOnly != null) 'unread': unreadOnly,
+        'unread': ?unreadOnly,
       },
     );
 

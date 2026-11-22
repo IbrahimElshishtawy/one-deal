@@ -79,14 +79,17 @@ class EditProfileController extends StateNotifier<EditProfileState> {
       return true;
     } on ValidationException catch (e) {
       final parsed = <String, String>{};
-      final rawFields = e.fieldErrors;
-      if (rawFields != null) {
+      final rawDetails = e.details;
+      if (rawDetails is Map) {
+        final rawFields = rawDetails['fieldErrors'] is Map
+            ? rawDetails['fieldErrors'] as Map
+            : rawDetails;
         for (final entry in rawFields.entries) {
           final val = entry.value;
           if (val is List && val.isNotEmpty) {
-            parsed[entry.key] = val.first.toString();
+            parsed[entry.key.toString()] = val.first.toString();
           } else if (val != null) {
-            parsed[entry.key] = val.toString();
+            parsed[entry.key.toString()] = val.toString();
           }
         }
       }

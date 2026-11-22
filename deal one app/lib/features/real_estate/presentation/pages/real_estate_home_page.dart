@@ -174,6 +174,33 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                           );
                         }),
                         InkWell(
+                          onTap: () => context.push(RouteNames.realEstateMap),
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            width: 40,
+                            height: chipRowHeight,
+                            margin: const EdgeInsetsDirectional.only(end: 8),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.darkSurface
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.darkBorder
+                                    : Colors.black.withValues(alpha: 0.08),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.map_outlined,
+                              size: 20,
+                              color: isDark
+                                  ? Colors.white
+                                  : DealOneDesignColors.navy,
+                            ),
+                          ),
+                        ),
+                        InkWell(
                           onTap: () => _openFilterSheet(state),
                           borderRadius: BorderRadius.circular(10),
                           child: Container(

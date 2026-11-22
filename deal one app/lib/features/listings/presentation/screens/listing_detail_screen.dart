@@ -19,6 +19,7 @@ import 'package:market_space/features/listings/presentation/providers/listings_p
 import 'package:market_space/features/listings/presentation/widgets/deal_one_listing_card.dart';
 import 'package:market_space/features/moderation/data/dto/report_dto.dart';
 import 'package:market_space/features/moderation/data/repositories/reports_repository_impl.dart';
+import 'package:market_space/features/real_estate/presentation/pages/real_estate_details_page.dart';
 
 class ListingDetailScreen extends ConsumerWidget {
   final String listingId;
@@ -40,6 +41,13 @@ class ListingDetailScreen extends ConsumerWidget {
               imageUrl: item.primaryImageUrl,
               categorySlug: item.categorySlug,
             );
+        if (MarketplaceSectorCategory.fromCategorySlug(item.categorySlug) ==
+            MarketplaceSectorCategory.realEstate) {
+          return RealEstateDetailsPage(
+            listingId: item.id,
+            preloadedItem: item,
+          );
+        }
         return _DetailView(item: item);
       },
       loading: () => const Scaffold(

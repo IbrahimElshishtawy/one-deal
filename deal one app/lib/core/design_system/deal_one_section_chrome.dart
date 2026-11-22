@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:market_space/core/errors/error_presenter.dart';
 import 'package:market_space/core/marketplace/section_home_models.dart';
 import 'package:market_space/core/providers/core_providers.dart';
+import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/utils/responsive_utils.dart';
+import 'package:market_space/features/real_estate/domain/entities/reel_item_entity.dart';
 
 /// Formats an EGP price cleanly with thousands separators (e.g. `3,200,000 ج.م`).
 String formatDealOnePrice(
@@ -311,7 +313,26 @@ class DealOneLivePreviewsStrip extends StatelessWidget {
         itemBuilder: (context, index) {
           final item = items[index];
           return GestureDetector(
-            onTap: () => context.push('/listings/${item.listingId}'),
+            onTap: () {
+              final reels = items
+                  .map(
+                    (e) => ReelItemEntity(
+                      listingId: e.listingId,
+                      title: e.title,
+                      price: e.price,
+                      currency: e.currency,
+                      cityName: '',
+                      governorateName: '',
+                      posterImageUrl: e.imageUrl,
+                      sellerName: e.sellerName,
+                    ),
+                  )
+                  .toList();
+              context.push(
+                '${RouteNames.realEstateReels}?index=$index',
+                extra: reels,
+              );
+            },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: SizedBox(

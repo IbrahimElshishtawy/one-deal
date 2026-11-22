@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:market_space/core/routing/app_page_transitions.dart';
 import 'package:market_space/core/routing/route_guards.dart';
 import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/features/accounts/presentation/screens/edit_account_page.dart';
 import 'package:market_space/features/accounts/presentation/screens/profile_screen.dart';
 import 'package:market_space/features/activity_hub/domain/entities/activity_hub_tab.dart';
 import 'package:market_space/features/activity_hub/presentation/pages/activity_hub_page.dart';
@@ -17,10 +18,20 @@ import 'package:market_space/features/auth/presentation/pages/sign_up/sign_up_pa
 import 'package:market_space/features/auth/presentation/pages/verification_success/verification_success_page.dart';
 import 'package:market_space/features/cars_maintenance/presentation/pages/cars_maintenance_home_page.dart';
 import 'package:market_space/features/construction_electrical/presentation/pages/construction_electrical_home_page.dart';
+import 'package:market_space/features/conversations/domain/entities/conversation_entity.dart';
+import 'package:market_space/features/conversations/presentation/pages/conversation_chat_page.dart';
+import 'package:market_space/features/conversations/presentation/pages/conversations_page.dart';
 import 'package:market_space/features/fashion_accessories/presentation/pages/fashion_accessories_home_page.dart';
+import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
 import 'package:market_space/features/listings/presentation/screens/listing_detail_screen.dart';
 import 'package:market_space/features/main_hub/presentation/pages/main_hub_page.dart';
+import 'package:market_space/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:market_space/features/real_estate/domain/entities/reel_item_entity.dart';
+import 'package:market_space/features/real_estate/presentation/pages/photo_gallery_page.dart';
+import 'package:market_space/features/real_estate/presentation/pages/real_estate_details_page.dart';
 import 'package:market_space/features/real_estate/presentation/pages/real_estate_home_page.dart';
+import 'package:market_space/features/real_estate/presentation/pages/real_estate_map_page.dart';
+import 'package:market_space/features/real_estate/presentation/pages/real_estate_reels_page.dart';
 import 'package:market_space/features/search/presentation/screens/search_screen.dart';
 import 'package:market_space/features/services_engineering/presentation/pages/services_engineering_home_page.dart';
 
@@ -166,6 +177,125 @@ class AppRouter {
                 state: state,
                 child: const ProfileScreen(),
               ),
+        ),
+        GoRoute(
+          path: RouteNames.editAccount,
+          name: RouteNames.editAccountName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const EditAccountPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.conversations,
+          name: RouteNames.conversationsName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const ConversationsPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.conversationChat,
+          name: RouteNames.conversationChatName,
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            final extra = state.extra;
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.glide,
+              child: ConversationChatPage(
+                conversationId: id,
+                initialConversation: extra is ConversationEntity ? extra : null,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: RouteNames.globalNotifications,
+          name: RouteNames.globalNotificationsName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.verticalLift,
+                child: const NotificationsPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.realEstateMap,
+          name: RouteNames.realEstateMapName,
+          pageBuilder: (context, state) {
+            final extra = state.extra;
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.verticalLift,
+              child: RealEstateMapPage(
+                focusedProperty: extra is ListingItem ? extra : null,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: RouteNames.realEstateGallery,
+          name: RouteNames.realEstateGalleryName,
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            final extra = state.extra;
+            final args = extra is PhotoGalleryArgs ? extra : null;
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.reveal,
+              child: PhotoGalleryPage(
+                listingId: id,
+                initialListing: args?.listing,
+                initialIndex: args?.initialIndex ?? 0,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: RouteNames.realEstateReels,
+          name: RouteNames.realEstateReelsName,
+          pageBuilder: (context, state) {
+            final extra = state.extra;
+            final initialIdx =
+                int.tryParse(state.uri.queryParameters['index'] ?? '') ?? 0;
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.reveal,
+              child: RealEstateReelsPage(
+                initialIndex: initialIdx,
+                initialItems: extra is List<ReelItemEntity> ? extra : null,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: RouteNames.realEstateDetail,
+          name: RouteNames.realEstateDetailName,
+          pageBuilder: (context, state) {
+            final id = state.uri.queryParameters['id'] ?? '';
+            final extra = state.extra;
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.glide,
+              child: RealEstateDetailsPage(
+                listingId: id,
+                preloadedItem: extra is ListingItem ? extra : null,
+              ),
+            );
+          },
         ),
         GoRoute(
           path: RouteNames.onboarding,

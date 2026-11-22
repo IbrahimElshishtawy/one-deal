@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:market_space/core/design_system/deal_one_design_tokens.dart';
 import 'package:market_space/core/design_system/deal_one_ui_states.dart';
-import 'package:market_space/core/providers/app_settings_providers.dart';
 import 'package:market_space/core/theme/app_radii.dart';
 import 'package:market_space/core/theme/app_spacing.dart';
 import 'package:market_space/core/utils/responsive_utils.dart';
@@ -89,13 +87,13 @@ class _EditAccountPageState extends ConsumerState<EditAccountPage> {
 
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
-    final locale = ref.read(appLocaleProvider);
+    final langCode = Localizations.localeOf(context).languageCode;
 
     final ok = await ref.read(editProfileControllerProvider.notifier).submit(
           UpdateUserProfileInput(
             fullName: _fullNameController.text.trim(),
             avatarUrl: _avatarUrl,
-            preferredLanguage: locale.languageCode,
+            preferredLanguage: langCode,
             governorateId: _selectedGovernorate?.id,
             cityId: _selectedCity?.id,
           ),
@@ -118,8 +116,8 @@ class _EditAccountPageState extends ConsumerState<EditAccountPage> {
           ),
         ),
       );
-      if (context.canPop()) {
-        context.pop();
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
       }
     }
   }
@@ -139,9 +137,7 @@ class _EditAccountPageState extends ConsumerState<EditAccountPage> {
           children: [
             DealOneSubPageHeader(
               title: isArabic ? 'تعديل بيانات الحساب' : 'Edit Account Details',
-              onBack: () {
-                if (context.canPop()) context.pop();
-              },
+              onBack: () => Navigator.of(context).maybePop(),
             ),
             Expanded(
               child: profileAsync.when(
@@ -340,9 +336,7 @@ class _EditAccountPageState extends ConsumerState<EditAccountPage> {
                               TextButton(
                                 onPressed: editState.isSubmitting
                                     ? null
-                                    : () {
-                                        if (context.canPop()) context.pop();
-                                      },
+                                    : () => Navigator.of(context).maybePop(),
                                 child: Text(
                                   isArabic ? 'إلغاء والتراجع' : 'Cancel',
                                   style: TextStyle(

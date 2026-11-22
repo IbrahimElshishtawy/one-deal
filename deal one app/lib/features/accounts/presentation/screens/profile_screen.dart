@@ -44,7 +44,7 @@ class ProfileScreen extends ConsumerWidget {
             children: [
               DealOneSubPageHeader(
                 title: l10n.profileTitleGuest,
-                showBackButton: context.canPop(),
+                showBackButton: Navigator.of(context).canPop(),
               ),
               Expanded(
                 child: DealOneEmptyStateView(
@@ -97,7 +97,8 @@ class ProfileScreen extends ConsumerWidget {
             ? (isArabic ? selectedGov.nameAr : selectedGov.nameEn)
             : (isArabic ? 'الغربية - طنطا' : 'Gharbia - Tanta');
 
-    final activeViewingsCount = bookingsState.items
+    final bookingItems = bookingsState.items.valueOrNull ?? const [];
+    final activeViewingsCount = bookingItems
         .where((b) => b.status.name != 'cancelled' && b.status.name != 'rejected')
         .length;
 
@@ -111,7 +112,7 @@ class ProfileScreen extends ConsumerWidget {
           onRefresh: () async {
             ref.invalidate(userProfileProvider);
             ref.invalidate(myAccountsProvider);
-            await ref.read(bookingsProvider.notifier).refresh();
+            await ref.read(bookingsProvider.notifier).loadBookings(refresh: true);
           },
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -119,7 +120,7 @@ class ProfileScreen extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: DealOneSubPageHeader(
                   title: isArabic ? 'الملف الشخصي' : 'Profile',
-                  showBackButton: context.canPop(),
+                  showBackButton: Navigator.of(context).canPop(),
                   trailing: _NotificationBellButton(
                     hasUnread: unreadNotificationsCount > 0,
                     onTap: () => context.push(RouteNames.globalNotifications),
