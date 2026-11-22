@@ -270,7 +270,7 @@ describe('Unified Activity & Commerce Hub E2E', () => {
       expect(statusRes.statusCode).toBe(200);
       expect(JSON.parse(statusRes.body).data.isFavorite).toBe(true);
 
-      // Paginated & filtered list
+      // Paginated & filtered list (verify Flutter ListingItemDto fields)
       const listRes = await app.inject({
         method: 'GET',
         url: `/api/v1/favorites?page=1&limit=10&categoryId=${realEstateCatId}`,
@@ -280,6 +280,9 @@ describe('Unified Activity & Commerce Hub E2E', () => {
       const listBody = JSON.parse(listRes.body);
       expect(listBody.data.length).toBeGreaterThanOrEqual(1);
       expect(listBody.meta.total).toBeGreaterThanOrEqual(1);
+      expect(listBody.data[0].listing.sellerName).toBeDefined();
+      expect(listBody.data[0].listing.account).toBeDefined();
+      expect(typeof listBody.data[0].listing.isVerified).toBe('boolean');
 
       // User isolation: attacker does not see buyer's favorite, but listing availability is still accurate (BUG-09)
       const attackerStatus = await app.inject({
@@ -396,7 +399,36 @@ describe('Unified Activity & Commerce Hub E2E', () => {
         payload: { reason: 'Rescheduling' },
       });
       expect(cancelRes.statusCode).toBe(200);
-      expect(JSON.parse(cancelRes.body).data.status).toBe('CANCELLED');
+      const cancelled = JSON.parse(cancelRes.body).data;
+      expect(cancelled.status).toBe('CANCELLED');
+      expect(cancelled.canCancel).toBe(false);
+    });
+
+    it('supports Flutter CreateBookingPayload aliases (12h timeSlot, type, address) and returns BookingDto fields', async () => {
+      const flutterRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/bookings',
+        headers: { authorization: `Bearer ${buyerToken}` },
+        payload: {
+          listingId: realEstateListingId,
+          type: 'agent_contact',
+          date: '2028-08-15T00:00:00.000Z',
+          timeSlot: '02:00 PM',
+          address: 'التجمع الخامس - القاهرة الجديدة',
+          notes: 'طلب معاينة وتواصل مع الوكيل',
+        },
+      });
+      expect(flutterRes.statusCode).toBe(201);
+      const bk = JSON.parse(flutterRes.body).data;
+      expect(bk.bookingType).toBe('general_inquiry');
+      expect(bk.type).toBe('agent_contact');
+      expect(bk.bookingTime).toBe('14:00');
+      expect(bk.title).toBe('E2E Luxury Apartment for Viewing');
+      expect(bk.providerName).toBeTruthy();
+      expect(bk.address).toBe('التجمع الخامس - القاهرة الجديدة');
+      expect(bk.referenceCode).toBe(bk.reference);
+      expect(bk.canCancel).toBe(true);
+      expect(bk.canContactProvider).toBe(true);
     });
   });
 
@@ -554,6 +586,61 @@ describe('Unified Activity & Commerce Hub E2E', () => {
       });
       expect(submitRes.statusCode).toBe(200);
       expect(JSON.parse(submitRes.body).data.status).toBe('SUBMITTED');
+    });
+
+    it('supports Flutter CreateRfqPayload shorthand (Arabic materials/quantity) and returns RfqRequestDto + RfqQuotationDto fields', async () => {
+      const flutterRfqRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/rfqs',
+        headers: { authorization: `Bearer ${buyerToken}` },
+        payload: {
+          title: 'توريد مواد بناء لمشروع فيلا',
+          materials: 'حديد تسليح 16 مم، أسمنت بورتلاندي',
+          quantity: '5 ton',
+          deliveryLocation: 'الشيخ زايد - الجيزة',
+        },
+      });
+      expect(flutterRfqRes.statusCode).toBe(201);
+      const created = JSON.parse(flutterRfqRes.body).data;
+      expect(created.referenceNumber).toBe(created.reference);
+      expect(created.requestedItemsCount).toBe(2);
+      expect(created.materialsSummary).toContain('حديد تسليح 16 مم');
+      expect(created.quantitySummary).toContain('5 ton');
+      expect(created.submittedAt).toBeTruthy();
+
+      // Supplier quotes on it
+      const quoteRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/rfqs/${created.id}/quotations`,
+        headers: { authorization: `Bearer ${sellerToken}` },
+        payload: {
+          estimatedDeliveryDays: 3,
+          items: [
+            {
+              name: 'حديد تسليح 16 مم',
+              quantity: 5,
+              unit: 'ton',
+              unitPrice: 37500,
+            },
+          ],
+        },
+      });
+      expect(quoteRes.statusCode).toBe(201);
+
+      // Owner fetches RFQ detail and sees Flutter-compatible embedded quotations[]
+      const detailRes = await app.inject({
+        method: 'GET',
+        url: `/api/v1/rfqs/${created.id}`,
+        headers: { authorization: `Bearer ${buyerToken}` },
+      });
+      expect(detailRes.statusCode).toBe(200);
+      const detail = JSON.parse(detailRes.body).data;
+      expect(detail.quotations).toHaveLength(1);
+      expect(detail.quotations[0].supplierName).toBeTruthy();
+      expect(detail.quotations[0].totalPrice).toBe(187500);
+      expect(detail.quotations[0].deliveryEstimate).toBe('3 days');
+      expect(detail.quotations[0].canAccept).toBe(true);
+      expect(detail.quotations[0].canReject).toBe(true);
     });
   });
 

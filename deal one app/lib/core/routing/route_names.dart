@@ -50,6 +50,12 @@ class RouteNames {
   static const String activityHub = '/activity-hub';
   static const String favorites = '/favorites';
   static const String profile = '/profile';
+  static const String editAccount = '/profile/edit';
+  static const String conversations = '/conversations';
+  static const String conversationChat = '/conversations/:id';
+  static const String realEstateMap = '/real-estate/map';
+  static const String realEstateGallery = '/real-estate/gallery/:id';
+  static const String realEstateReels = '/real-estate/reels';
   static const String search = '/search';
   static const String listingDetail = '/listings/:id';
   static const String onboarding = '/onboarding';
@@ -123,6 +129,12 @@ class RouteNames {
   static const String activityHubName = 'activity_hub';
   static const String favoritesName = 'favorites';
   static const String profileName = 'profile';
+  static const String editAccountName = 'edit_account';
+  static const String conversationsName = 'conversations';
+  static const String conversationChatName = 'conversation_chat';
+  static const String realEstateMapName = 'real_estate_map';
+  static const String realEstateGalleryName = 'real_estate_gallery';
+  static const String realEstateReelsName = 'real_estate_reels';
   static const String globalNotificationsName = 'global_notifications';
   static const String notFoundName = 'not_found';
 }

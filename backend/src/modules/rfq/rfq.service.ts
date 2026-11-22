@@ -31,6 +31,123 @@ export class RfqService {
     return `RFQ-${datePart}-${randPart}`;
   }
 
+  private parseFlutterShorthandItems(dto: CreateRfqDto) {
+    if (dto.items && dto.items.length > 0) {
+      return dto.items;
+    }
+    const rawMaterials = dto.materials?.trim();
+    if (!rawMaterials) {
+      throw new BadRequestException(
+        'Either items[] or materials is required to create an RFQ',
+      );
+    }
+
+    const rawQty = (dto.quantity ?? '1 unit').trim();
+    const qtyMatch = rawQty.match(/^(\d+(?:\.\d{1,3})?)\s*(.*)$/);
+    const parsedQty =
+      qtyMatch && Number(qtyMatch[1]) > 0
+        ? Math.min(Number(qtyMatch[1]), 999999999)
+        : 1;
+    const parsedUnit = (
+      qtyMatch && qtyMatch[2].trim() ? qtyMatch[2].trim() : rawQty || 'unit'
+    ).slice(0, 40);
+
+    const materialNames = rawMaterials
+      .split(/[,،\n]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length >= 2)
+      .slice(0, 50);
+
+    const names = materialNames.length > 0 ? materialNames : [rawMaterials];
+    return names.map((name, idx) => ({
+      listingId: dto.listingIds?.[idx],
+      name: name.slice(0, 200),
+      specification: undefined,
+      quantity: parsedQty,
+      unit: parsedUnit,
+    }));
+  }
+
+  private serializeQuotation<T extends Record<string, any>>(
+    q: T,
+    options: {
+      isRfqOwner?: boolean;
+      rfqStatus?: string;
+      rfqExpiresAt?: Date | null;
+    } = {},
+  ) {
+    const isOpenQuote =
+      q.status === QuotationStatus.SUBMITTED ||
+      q.status === QuotationStatus.SHORTLISTED;
+    const isRfqOpen =
+      !options.rfqStatus ||
+      [
+        RfqStatus.SUBMITTED,
+        RfqStatus.UNDER_REVIEW,
+        RfqStatus.QUOTATIONS_RECEIVED,
+      ].includes(options.rfqStatus as RfqStatus);
+    const quoteNotExpired =
+      !q.validUntil || new Date(q.validUntil).getTime() > Date.now();
+    const rfqNotExpired =
+      !options.rfqExpiresAt ||
+      new Date(options.rfqExpiresAt).getTime() > Date.now();
+    const isOwner = Boolean(options.isRfqOwner);
+
+    return {
+      ...q,
+      // Flutter RfqQuotationDto.fromJson compatible fields
+      supplierName: q.supplierAccount?.displayName ?? '',
+      totalPrice: Number(q.totalAmount ?? 0),
+      deliveryEstimate:
+        q.estimatedDeliveryDays !== undefined &&
+        q.estimatedDeliveryDays !== null
+          ? `${q.estimatedDeliveryDays} days`
+          : null,
+      canAccept:
+        isOwner && isOpenQuote && isRfqOpen && quoteNotExpired && rfqNotExpired,
+      canReject: isOwner && isOpenQuote && isRfqOpen,
+    };
+  }
+
+  private serializeRfq<T extends Record<string, any>>(
+    rfq: T,
+    options: { includeQuotations?: boolean; isRfqOwner?: boolean } = {},
+  ) {
+    const items: any[] = Array.isArray(rfq.items) ? rfq.items : [];
+    const rawQuotes: any[] =
+      options.includeQuotations && Array.isArray(rfq.quotations)
+        ? rfq.quotations
+        : [];
+
+    const serializedQuotations = rawQuotes.map((q) =>
+      this.serializeQuotation(q, {
+        isRfqOwner: options.isRfqOwner,
+        rfqStatus: rfq.status,
+        rfqExpiresAt: rfq.expiresAt ?? null,
+      }),
+    );
+
+    return {
+      ...rfq,
+      quotationsCount:
+        rfq._count?.quotations ??
+        (Array.isArray(rfq.quotations) ? rfq.quotations.length : 0),
+      // Flutter RfqRequestDto.fromJson compatible fields
+      referenceNumber: rfq.reference ?? '',
+      submittedAt:
+        rfq.createdAt instanceof Date
+          ? rfq.createdAt.toISOString()
+          : (rfq.createdAt ?? new Date().toISOString()),
+      requestedItemsCount: items.length,
+      materialsSummary: items.map((i) => i.name).join(', '),
+      quantitySummary: items
+        .map((i) => `${Number(i.quantity)} ${i.unit}`)
+        .join(', '),
+      projectDescription: rfq.description ?? null,
+      quotations: serializedQuotations,
+    };
+  }
+
   private async resolveAuthorizedSupplierAccount(
     userId: string,
     requestedAccountId?: string,
@@ -159,8 +276,10 @@ export class RfqService {
       }
     }
 
+    const normalizedItems = this.parseFlutterShorthandItems(dto);
+
     // Validate linked listing IDs if provided
-    const linkedListingIds = dto.items
+    const linkedListingIds = normalizedItems
       .map((i) => i.listingId)
       .filter((id): id is string => Boolean(id));
 
@@ -183,6 +302,11 @@ export class RfqService {
 
     const status = dto.isDraft ? RfqStatus.DRAFT : RfqStatus.SUBMITTED;
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const resolvedDescription = (
+      dto.description?.trim() ||
+      dto.materials?.trim() ||
+      dto.title.trim()
+    ).slice(0, 3000);
 
     return this.prisma.$transaction(async (tx) => {
       const rfq = await tx.rfqRequest.create({
@@ -191,7 +315,7 @@ export class RfqService {
           userId,
           categoryId: dto.categoryId ?? null,
           title: dto.title.trim(),
-          description: dto.description.trim(),
+          description: resolvedDescription,
           deliveryLocation: dto.deliveryLocation.trim(),
           requiredByDate: requiredByDateObj,
           supportingImages: dto.supportingImages ?? [],
@@ -199,7 +323,7 @@ export class RfqService {
           status,
           expiresAt,
           items: {
-            create: dto.items.map((item, idx) => ({
+            create: normalizedItems.map((item, idx) => ({
               listingId: item.listingId ?? null,
               name: item.name.trim(),
               specification: item.specification?.trim() || null,
@@ -237,7 +361,10 @@ export class RfqService {
         });
       }
 
-      return rfq;
+      return this.serializeRfq(rfq, {
+        includeQuotations: false,
+        isRfqOwner: true,
+      });
     });
   }
 
@@ -301,6 +428,25 @@ export class RfqService {
             select: { id: true, slug: true, nameAr: true, nameEn: true },
           },
           items: { orderBy: { sortOrder: 'asc' } },
+          ...(scope === 'mine'
+            ? {
+                quotations: {
+                  include: {
+                    supplierAccount: {
+                      select: {
+                        id: true,
+                        displayName: true,
+                        accountType: true,
+                        verificationStatus: true,
+                        logoUrl: true,
+                      },
+                    },
+                    items: true,
+                  },
+                  orderBy: { totalAmount: 'asc' as const },
+                },
+              }
+            : {}),
           _count: { select: { quotations: true } },
         },
         orderBy: { createdAt: 'desc' },
@@ -310,10 +456,12 @@ export class RfqService {
     ]);
 
     return {
-      data: items.map((r) => ({
-        ...r,
-        quotationsCount: r._count.quotations,
-      })),
+      data: items.map((r) =>
+        this.serializeRfq(r, {
+          includeQuotations: scope === 'mine',
+          isRfqOwner: scope === 'mine',
+        }),
+      ),
       meta: {
         total,
         page,
@@ -345,6 +493,21 @@ export class RfqService {
           select: { id: true, slug: true, nameAr: true, nameEn: true },
         },
         items: { orderBy: { sortOrder: 'asc' } },
+        quotations: {
+          include: {
+            supplierAccount: {
+              select: {
+                id: true,
+                displayName: true,
+                accountType: true,
+                verificationStatus: true,
+                logoUrl: true,
+              },
+            },
+            items: true,
+          },
+          orderBy: { totalAmount: 'asc' },
+        },
         _count: { select: { quotations: true } },
       },
     });
@@ -365,10 +528,10 @@ export class RfqService {
       throw new ForbiddenException('You do not have access to this RFQ');
     }
 
-    return {
-      ...rfq,
-      quotationsCount: rfq._count.quotations,
-    };
+    return this.serializeRfq(rfq, {
+      includeQuotations: isOwner || isAdmin,
+      isRfqOwner: isOwner || isAdmin,
+    });
   }
 
   async updateDraftRfq(rfqId: string, userId: string, dto: UpdateRfqDto) {
@@ -897,7 +1060,11 @@ export class RfqService {
     ]);
 
     return {
-      data: items,
+      data: items.map((q) =>
+        this.serializeQuotation(q, {
+          isRfqOwner: isOwner || isAdmin,
+        }),
+      ),
       meta: {
         total,
         page,
@@ -951,7 +1118,9 @@ export class RfqService {
       );
     }
 
-    return quotation;
+    return this.serializeQuotation(quotation, {
+      isRfqOwner: isRfqOwner || isAdmin,
+    });
   }
 
   async updateQuotationStatus(

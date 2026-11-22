@@ -30,6 +30,20 @@ const BOOKING_TYPE_ROOT_CATEGORY_MAP: Record<BookingType, string> = {
   [BookingType.ENGINEERING_SERVICE]: 'services',
 };
 
+const BACKEND_TO_FLUTTER_BOOKING_TYPE: Record<string, string> = {
+  [BookingType.PROPERTY_VIEWING]: 'property_viewing',
+  [BookingType.PROPERTY_INSPECTION]: 'property_inspection',
+  [BookingType.GENERAL_INQUIRY]: 'agent_contact',
+  [BookingType.VEHICLE_INSPECTION]: 'vehicle_inspection',
+  [BookingType.MAINTENANCE_APPOINTMENT]: 'maintenance_booking',
+  [BookingType.SERVICE_CENTER_BOOKING]: 'service_center',
+  [BookingType.PLUMBING_SERVICE]: 'plumbing',
+  [BookingType.ELECTRICAL_SERVICE]: 'electricity',
+  [BookingType.AC_SERVICE]: 'ac',
+  [BookingType.CONSTRUCTION_SERVICE]: 'construction',
+  [BookingType.ENGINEERING_SERVICE]: 'engineering',
+};
+
 const KNOWN_ROOT_CATEGORY_SLUGS = new Set([
   'real-estate',
   'building-materials',
@@ -195,8 +209,42 @@ export class BookingsService {
           slug: true,
           nameAr: true,
           nameEn: true,
+          parent: { select: { slug: true } },
         },
       },
+    };
+  }
+
+  private serializeBooking<T extends Record<string, any>>(booking: T) {
+    const canCancel =
+      booking.status === BookingStatus.PENDING ||
+      booking.status === BookingStatus.CONFIRMED;
+    const flutterType =
+      BACKEND_TO_FLUTTER_BOOKING_TYPE[booking.bookingType] ??
+      booking.bookingType;
+    const scheduledIso =
+      booking.scheduledAt instanceof Date
+        ? booking.scheduledAt.toISOString()
+        : (booking.scheduledAt ?? null);
+
+    return {
+      ...booking,
+      // Flutter BookingDto.fromJson compatible fields
+      title:
+        booking.listing?.title ??
+        booking.providerAccount?.displayName ??
+        booking.bookingType ??
+        '',
+      imageUrl: booking.listing?.media?.[0]?.publicUrl ?? null,
+      providerName: booking.providerAccount?.displayName ?? '',
+      type: flutterType,
+      bookingDate: scheduledIso,
+      bookingTime: booking.scheduledTime ?? null,
+      address: booking.location ?? '',
+      referenceCode: booking.reference ?? null,
+      canCancel,
+      canContactProvider: true,
+      hasTracking: false,
     };
   }
 
@@ -207,9 +255,20 @@ export class BookingsService {
       );
     }
 
+    const bookingType = (dto.bookingType ?? dto.type) as BookingType;
+    const scheduledDate = dto.scheduledDate ?? dto.bookingDate ?? dto.date;
+    const scheduledTime = dto.scheduledTime ?? dto.bookingTime ?? dto.timeSlot;
+    const location = dto.location ?? dto.address;
+
+    if (!bookingType || !scheduledDate || !scheduledTime) {
+      throw new BadRequestException(
+        'bookingType, scheduledDate, and scheduledTime are required',
+      );
+    }
+
     const { dateObj, scheduledAt } = this.parseAndValidateSlot(
-      dto.scheduledDate,
-      dto.scheduledTime,
+      scheduledDate,
+      scheduledTime,
     );
 
     let providerAccountId: string;
@@ -275,11 +334,10 @@ export class BookingsService {
       const rootCategorySlug =
         listing.category?.parent?.slug ?? listing.category?.slug;
       if (rootCategorySlug && KNOWN_ROOT_CATEGORY_SLUGS.has(rootCategorySlug)) {
-        const expectedRootSlug =
-          BOOKING_TYPE_ROOT_CATEGORY_MAP[dto.bookingType];
+        const expectedRootSlug = BOOKING_TYPE_ROOT_CATEGORY_MAP[bookingType];
         if (expectedRootSlug && expectedRootSlug !== rootCategorySlug) {
           throw new BadRequestException(
-            `Booking type '${dto.bookingType}' is not supported for category '${rootCategorySlug}'`,
+            `Booking type '${bookingType}' is not supported for category '${rootCategorySlug}'`,
           );
         }
       }
@@ -364,11 +422,11 @@ export class BookingsService {
               listingId: dto.listingId ?? null,
               providerAccountId,
               categoryId,
-              bookingType: dto.bookingType,
+              bookingType,
               scheduledDate: dateObj,
-              scheduledTime: dto.scheduledTime,
+              scheduledTime,
               scheduledAt,
-              location: dto.location?.trim() || null,
+              location: location?.trim() || null,
               notes: dto.notes?.trim() || null,
               status: BookingStatus.PENDING,
             },
@@ -384,8 +442,8 @@ export class BookingsService {
                 targetUserId: providerOwnerUserId,
                 title: 'New Booking Request',
                 body: listingTitle
-                  ? `New ${dto.bookingType} request for "${listingTitle}" on ${dto.scheduledDate} at ${dto.scheduledTime}`
-                  : `New ${dto.bookingType} request on ${dto.scheduledDate} at ${dto.scheduledTime}`,
+                  ? `New ${bookingType} request for "${listingTitle}" on ${scheduledDate} at ${scheduledTime}`
+                  : `New ${bookingType} request on ${scheduledDate} at ${scheduledTime}`,
                 dataPayload: {
                   type: 'BOOKING_SUBMITTED',
                   bookingId: booking.id,
@@ -395,7 +453,7 @@ export class BookingsService {
             },
           });
 
-          return booking;
+          return this.serializeBooking(booking);
         },
         {
           isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -471,7 +529,7 @@ export class BookingsService {
     ]);
 
     return {
-      data: items,
+      data: items.map((b) => this.serializeBooking(b)),
       meta: {
         total,
         page,
@@ -519,7 +577,7 @@ export class BookingsService {
       );
     }
 
-    return booking;
+    return this.serializeBooking(booking);
   }
 
   async cancelBooking(
@@ -593,7 +651,7 @@ export class BookingsService {
             },
           });
 
-          return updated;
+          return this.serializeBooking(updated);
         },
         {
           isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -710,7 +768,7 @@ export class BookingsService {
             },
           });
 
-          return updated;
+          return this.serializeBooking(updated);
         },
         {
           isolationLevel: Prisma.TransactionIsolationLevel.Serializable,

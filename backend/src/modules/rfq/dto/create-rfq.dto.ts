@@ -15,6 +15,7 @@ import {
   Max,
   MaxLength,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -60,13 +61,48 @@ export class CreateRfqDto {
   @MaxLength(200)
   title!: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'مطلوب عرض سعر شامل النقل والتنزيل لموقع المشروع خلال أسبوع',
   })
+  @ValidateIf((o) => !o.materials)
   @IsString()
   @MinLength(5)
   @MaxLength(3000)
-  description!: string;
+  description?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Flutter shorthand materials summary (used when structured items[] is omitted)',
+    example: 'حديد تسليح عز 16 مم، أسمنت بورتلاندي',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(500)
+  materials?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Flutter shorthand quantity summary (e.g. "10 tons" or "50 bags")',
+    example: '10 ton',
+    maxLength: 100,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  quantity?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Optional linked listing UUIDs from Flutter CreateRfqPayload',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID(undefined, { each: true })
+  listingIds?: string[];
 
   @ApiPropertyOptional({
     description: 'Category UUID (e.g. building-materials)',
@@ -113,11 +149,12 @@ export class CreateRfqDto {
   @IsBoolean()
   isDraft?: boolean = false;
 
-  @ApiProperty({ type: [CreateRfqItemDto] })
+  @ApiPropertyOptional({ type: [CreateRfqItemDto] })
+  @ValidateIf((o) => !o.materials)
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(50)
   @ValidateNested({ each: true })
   @Type(() => CreateRfqItemDto)
-  items!: CreateRfqItemDto[];
+  items?: CreateRfqItemDto[];
 }

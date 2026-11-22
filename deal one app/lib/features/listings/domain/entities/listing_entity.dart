@@ -29,9 +29,12 @@ class ListingItem {
   final String governorateNameAr;
   final List<ListingMedia> media;
   final String sellerName;
+  final String? sellerAvatarUrl;
   final String? sellerPhone; // Protected by privacy policy; null in public feeds
   final String sellerType;
   final bool isVerified;
+  final double? latitude;
+  final double? longitude;
   final Map<String, dynamic> attributes;
   final int viewsCount;
   final int favoritesCount;
@@ -55,9 +58,12 @@ class ListingItem {
     required this.governorateNameAr,
     this.media = const [],
     required this.sellerName,
+    this.sellerAvatarUrl,
     this.sellerPhone,
     this.sellerType = 'individual',
     this.isVerified = false,
+    this.latitude,
+    this.longitude,
     this.attributes = const {},
     this.viewsCount = 0,
     this.favoritesCount = 0,

@@ -1,416 +1,370 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:market_space/core/providers/app_settings_providers.dart';
+import 'package:market_space/core/design_system/deal_one_design_tokens.dart';
+import 'package:market_space/core/design_system/deal_one_ui_states.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
-import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/core/theme/app_radii.dart';
+import 'package:market_space/core/theme/app_spacing.dart';
+import 'package:market_space/core/utils/responsive_utils.dart';
 import 'package:market_space/features/accounts/presentation/providers/accounts_providers.dart';
+import 'package:market_space/features/accounts/presentation/providers/user_profile_providers.dart';
+import 'package:market_space/features/accounts/presentation/widgets/profile_bottom_nav.dart';
+import 'package:market_space/features/accounts/presentation/widgets/profile_business_banner.dart';
+import 'package:market_space/features/accounts/presentation/widgets/profile_menu_card.dart';
+import 'package:market_space/features/accounts/presentation/widgets/profile_quick_stats_row.dart';
+import 'package:market_space/features/accounts/presentation/widgets/profile_settings_sheet.dart';
+import 'package:market_space/features/accounts/presentation/widgets/profile_user_card.dart';
+import 'package:market_space/features/activity_hub/application/providers/bookings_provider.dart';
 import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
 import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
-import 'package:market_space/features/quotas/presentation/providers/quotas_providers.dart';
+import 'package:market_space/features/conversations/presentation/providers/conversations_providers.dart';
+import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
+import 'package:market_space/features/locations/presentation/providers/locations_providers.dart';
+import 'package:market_space/features/notifications/presentation/providers/user_notifications_providers.dart';
 
+/// Profile Screen matching `Profile.png` and connected to real Deal One backend endpoints:
+/// `GET /users/me`, `GET /accounts/my-accounts`, `GET /favorites`, `GET /bookings`.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.authL10n;
+    final isArabic = Directionality.of(context) == TextDirection.rtl;
     final session = ref.watch(sessionProvider);
-    final quotaAsync = ref.watch(myQuotaUsageProvider);
-    final accountsAsync = ref.watch(myAccountsProvider);
 
     if (!session.isAuthenticated) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.profileTitleGuest)),
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.account_circle_outlined,
-                  size: 80,
-                  color: AppColors.primaryOf(context),
+        backgroundColor: DealOneTokens.pageBgOf(context),
+        bottomNavigationBar: const ProfileBottomNav(activeIndex: 3),
+        body: SafeArea(
+          child: Column(
+            children: [
+              DealOneSubPageHeader(
+                title: l10n.profileTitleGuest,
+                showBackButton: context.canPop(),
+              ),
+              Expanded(
+                child: DealOneEmptyStateView(
+                  icon: Icons.account_circle_outlined,
+                  title: l10n.profileGuestHeadline,
+                  description: isArabic
+                      ? 'سجّل الدخول لإدارة حسابك، متابعة محادثاتك ومعايناتك، والوصول لمفضلتك.'
+                      : 'Sign in to manage your account, chats, viewings, and saved properties.',
+                  actionLabel: l10n.profileLoginWithPhone,
+                  actionIcon: Icons.login_rounded,
+                  onAction: () => context.push(RouteNames.login),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.profileGuestHeadline,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: context.horizontalScreenPadding,
+                  vertical: AppSpacing.sm,
+                ),
+                child: TextButton.icon(
+                  onPressed: () => showProfileSettingsSheet(context),
+                  icon: const Icon(Icons.tune_rounded),
+                  label: Text(
+                    isArabic
+                        ? 'الإعدادات (اللغة، المظهر)'
+                        : 'Settings (Language, Theme)',
                   ),
                 ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    icon: const Icon(Icons.login),
-                    label: Text(
-                      l10n.profileLoginWithPhone,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    onPressed: () => context.push(RouteNames.login),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const _ThemeModeCard(),
-                const SizedBox(height: 12),
-                const _LanguageSelectorCard(),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );
     }
 
+    final hPad = context.horizontalScreenPadding;
+    final profileAsync = ref.watch(userProfileProvider);
+    final accountsAsync = ref.watch(myAccountsProvider);
+    final favoriteIds = ref.watch(favoriteIdsProvider);
+    final bookingsState = ref.watch(bookingsProvider);
+    final conversationsAsync = ref.watch(conversationsListProvider);
+    final unreadNotificationsCount = ref.watch(
+      userNotificationsProvider.select((s) => s.unreadCount),
+    );
+    final selectedGov = ref.watch(selectedGovernorateProvider);
+    final selectedCity = ref.watch(selectedCityProvider);
+
+    final locationDisplay = selectedCity != null
+        ? '${isArabic ? selectedGov?.nameAr ?? '' : selectedGov?.nameEn ?? ''} - ${isArabic ? selectedCity.nameAr : selectedCity.nameEn}'
+        : selectedGov != null
+            ? (isArabic ? selectedGov.nameAr : selectedGov.nameEn)
+            : (isArabic ? 'الغربية - طنطا' : 'Gharbia - Tanta');
+
+    final activeViewingsCount = bookingsState.items
+        .where((b) => b.status.name != 'cancelled' && b.status.name != 'rejected')
+        .length;
+
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.profileTitleAuth)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // User header card
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: AppColors.surfaceSecondaryOf(context),
-                    child: Icon(
-                      Icons.person,
-                      size: 36,
-                      color: AppColors.primaryOf(context),
-                    ),
+      backgroundColor: DealOneTokens.pageBgOf(context),
+      bottomNavigationBar: const ProfileBottomNav(activeIndex: 3),
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          color: DealOneTokens.navy,
+          onRefresh: () async {
+            ref.invalidate(userProfileProvider);
+            ref.invalidate(myAccountsProvider);
+            await ref.read(bookingsProvider.notifier).refresh();
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: DealOneSubPageHeader(
+                  title: isArabic ? 'الملف الشخصي' : 'Profile',
+                  showBackButton: context.canPop(),
+                  trailing: _NotificationBellButton(
+                    hasUnread: unreadNotificationsCount > 0,
+                    onTap: () => context.push(RouteNames.globalNotifications),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.profileRegisteredUser,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          session.userId ?? l10n.profileIdAvailable,
-                          style: TextStyle(
-                            color: AppColors.textMutedOf(context),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Daily Quota Card (Cairo Timezone)
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.shield_outlined,
-                        color: AppColors.successOf(context),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l10n.profileDailyQuotaTitle,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  quotaAsync.when(
-                    data: (quota) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        LinearProgressIndicator(
-                          value: quota.limit > 0
-                              ? (quota.used / quota.limit)
-                              : 0,
-                          backgroundColor: AppColors.surfaceSecondaryOf(
-                            context,
-                          ),
-                          valueColor: AlwaysStoppedAnimation(
-                            quota.isLimitReached
-                                ? AppColors.errorOf(context)
-                                : AppColors.successOf(context),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.profileDailyQuotaRemaining(
-                            quota.remaining,
-                            quota.limit,
-                          ),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondaryOf(context),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.profileDailyQuotaNote,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textMutedOf(context),
-                          ),
-                        ),
-                      ],
-                    ),
-                    loading: () => const LinearProgressIndicator(),
-                    error: (_, _) => Text(l10n.profileDailyQuotaError),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Accounts / Organizations
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.profileAccountsTitle,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  accountsAsync.when(
-                    data: (accounts) {
-                      if (accounts.isEmpty) {
-                        return Text(
-                          l10n.profileAccountsEmpty,
-                          style: TextStyle(
-                            color: AppColors.textMutedOf(context),
-                          ),
-                        );
-                      }
-                      return Column(
-                        children: accounts.map((acc) {
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.store),
-                            title: Text(acc.displayName),
-                            subtitle: Text(
-                              l10n.profileRoleLabel(
-                                acc.role,
-                                acc.isVerified
-                                    ? l10n.profileVerified
-                                    : l10n.profileUnderReview,
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  hPad,
+                  AppSpacing.sm,
+                  hPad,
+                  AppSpacing.xxxl,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 640),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // 1. User Summary Card
+                          profileAsync.when(
+                            loading: () => Container(
+                              height: 92,
+                              decoration: DealOneTokens.cardDecoration(context),
+                              child: const Center(
+                                child: CircularProgressIndicator.adaptive(),
                               ),
                             ),
-                          );
-                        }).toList(),
-                      );
-                    },
-                    loading: () => const Center(
-                      child: CircularProgressIndicator.adaptive(),
+                            error: (err, _) => DealOneErrorStateView(
+                              error: err,
+                              onRetry: () => ref.invalidate(userProfileProvider),
+                            ),
+                            data: (profile) => ProfileUserCard(
+                              fullName: profile.fullName.isNotEmpty
+                                  ? profile.fullName
+                                  : l10n.profileRegisteredUser,
+                              locationLabel: locationDisplay,
+                              avatarUrl: profile.avatarUrl,
+                              isVerified: profile.isPhoneVerified,
+                              onEditTap: () =>
+                                  context.push(RouteNames.editAccount),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+
+                          // 2. Quick Stat Cards Row (Active Viewings, Favorites, Conversations)
+                          ProfileQuickStatsRow(
+                            items: [
+                              ProfileStatItem(
+                                label: isArabic
+                                    ? 'المعاينات النشطة'
+                                    : 'Active Viewings',
+                                icon: Icons.event_available_outlined,
+                                count: activeViewingsCount,
+                                highlightBadge: true,
+                                onTap: () => context.push(
+                                  '${RouteNames.activityHub}?tab=bookings',
+                                ),
+                              ),
+                              ProfileStatItem(
+                                label: isArabic ? 'المفضلة' : 'Favorites',
+                                icon: Icons.auto_awesome_outlined,
+                                count: favoriteIds.length,
+                                highlightBadge: false,
+                                onTap: () => context.push(RouteNames.favorites),
+                              ),
+                              ProfileStatItem(
+                                label: isArabic ? 'المحادثات' : 'Chats',
+                                icon: Icons.chat_bubble_outline_rounded,
+                                count: conversationsAsync.valueOrNull?.length ?? 0,
+                                highlightBadge: true,
+                                onTap: () =>
+                                    context.push(RouteNames.conversations),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+
+                          // 3. Create Business Account Banner
+                          ProfileBusinessBanner(
+                            accounts: accountsAsync.valueOrNull ?? const [],
+                            onStartNow: () =>
+                                showCreateBusinessAccountSheet(context),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+
+                          // 4. Menu List Card
+                          ProfileMenuCard(
+                            primaryItems: [
+                              ProfileMenuRowItem(
+                                title: isArabic
+                                    ? 'طلباتي ومعايناتي'
+                                    : 'My Orders & Viewings',
+                                icon: Icons.assignment_outlined,
+                                onTap: () =>
+                                    context.push(RouteNames.activityHub),
+                              ),
+                              ProfileMenuRowItem(
+                                tileKey: const Key('profile_settings_tile'),
+                                title: isArabic
+                                    ? 'الإعدادات (اللغة، المظهر، الإشعارات)'
+                                    : 'Settings (Language, Theme, Notifications)',
+                                icon: Icons.tune_rounded,
+                                onTap: () => showProfileSettingsSheet(context),
+                              ),
+                              ProfileMenuRowItem(
+                                title: isArabic
+                                    ? 'مركز المساعدة والدعم'
+                                    : 'Help & Support Center',
+                                icon: Icons.support_agent_rounded,
+                                onTap: () => _showHelpDialog(context),
+                              ),
+                              ProfileMenuRowItem(
+                                title: isArabic
+                                    ? 'الشروط وسياسة الخصوصية'
+                                    : 'Terms & Privacy Policy',
+                                icon: Icons.verified_user_outlined,
+                                onTap: () => context.push(RouteNames.terms),
+                              ),
+                            ],
+                            logoutItem: ProfileMenuRowItem(
+                              tileKey: const Key('profile_logout_tile'),
+                              title: l10n.profileLogout,
+                              icon: Icons.logout_rounded,
+                              isDestructive: true,
+                              onTap: () => _confirmLogout(context, ref),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    error: (_, _) => Text(l10n.profileAccountsError),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 16),
+        ),
+      ),
+    );
+  }
 
-          const _ThemeModeCard(),
-          const SizedBox(height: 12),
-          const _LanguageSelectorCard(),
-          const SizedBox(height: 24),
-
-          // Logout Button
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.errorOf(context),
-              side: BorderSide(color: AppColors.errorOf(context)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-            icon: const Icon(Icons.logout),
-            label: Text(
-              l10n.profileLogout,
-              style: const TextStyle(fontSize: 16),
-            ),
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).logout();
-            },
+  void _showHelpDialog(BuildContext context) {
+    final isArabic = Directionality.of(context) == TextDirection.rtl;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isArabic ? 'مركز المساعدة والدعم' : 'Help & Support'),
+        content: Text(
+          isArabic
+              ? 'فريق دعم Deal One متاح لمساعدتك في جميع استفسارات العقارات والحسابات.'
+              : 'Deal One support is available to assist you with listings and account questions.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(isArabic ? 'حسناً' : 'OK'),
           ),
         ],
       ),
     );
   }
-}
 
-class _ThemeModeCard extends ConsumerWidget {
-  const _ThemeModeCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.authL10n;
-    final currentMode = ref.watch(appThemeModeProvider);
-
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.brightness_6_outlined,
-                  size: 20,
-                  color: AppColors.primaryOf(context),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.settingsThemeTitle,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<ThemeMode>(
-                selected: {currentMode},
-                onSelectionChanged: (selection) {
-                  if (selection.isNotEmpty) {
-                    ref
-                        .read(appThemeModeProvider.notifier)
-                        .setThemeMode(selection.first);
-                  }
-                },
-                segments: [
-                  ButtonSegment<ThemeMode>(
-                    value: ThemeMode.system,
-                    icon: const Icon(
-                      Icons.settings_brightness_outlined,
-                      size: 18,
-                    ),
-                    label: Text(l10n.settingsThemeSystem),
-                  ),
-                  ButtonSegment<ThemeMode>(
-                    value: ThemeMode.light,
-                    icon: const Icon(Icons.light_mode_outlined, size: 18),
-                    label: Text(l10n.settingsThemeLight),
-                  ),
-                  ButtonSegment<ThemeMode>(
-                    value: ThemeMode.dark,
-                    icon: const Icon(Icons.dark_mode_outlined, size: 18),
-                    label: Text(l10n.settingsThemeDark),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final isArabic = Directionality.of(context) == TextDirection.rtl;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isArabic ? 'تسجيل الخروج' : 'Sign Out'),
+        content: Text(
+          isArabic
+              ? 'هل أنت متأكد من تسجيل الخروج من حسابك؟'
+              : 'Are you sure you want to sign out of your account?',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: DealOneTokens.dangerRed,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(isArabic ? 'تسجيل الخروج' : 'Sign Out'),
+          ),
+        ],
       ),
     );
+    if (confirmed == true) {
+      await ref.read(authControllerProvider.notifier).logout();
+    }
   }
 }
 
-class _LanguageSelectorCard extends ConsumerWidget {
-  const _LanguageSelectorCard();
+class _NotificationBellButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final bool hasUnread;
+
+  const _NotificationBellButton({
+    required this.onTap,
+    this.hasUnread = false,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.authL10n;
-    final currentLocale = ref.watch(appLocaleProvider);
-
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.language_rounded,
-                  size: 20,
-                  color: AppColors.primaryOf(context),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.settingsLanguageTitle,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<String>(
-                key: const Key('profile_language_selector'),
-                selected: {currentLocale.languageCode},
-                onSelectionChanged: (selection) {
-                  if (selection.isNotEmpty) {
-                    ref
-                        .read(appLocaleProvider.notifier)
-                        .setLocale(Locale(selection.first));
-                  }
-                },
-                segments: [
-                  ButtonSegment<String>(
-                    value: 'ar',
-                    label: Text(l10n.settingsLanguageArabic),
-                  ),
-                  ButtonSegment<String>(
-                    value: 'en',
-                    label: Text(l10n.settingsLanguageEnglish),
-                  ),
-                ],
+  Widget build(BuildContext context) {
+    return Material(
+      color: DealOneTokens.cardSurfaceOf(context),
+      borderRadius: AppRadii.md,
+      child: InkWell(
+        key: const Key('profile_notifications_button'),
+        onTap: onTap,
+        borderRadius: AppRadii.md,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            borderRadius: AppRadii.md,
+            border: Border.all(color: DealOneTokens.cardBorderOf(context)),
+            boxShadow: DealOneTokens.softShadow(context),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                Icons.notifications_rounded,
+                size: 22,
+                color: DealOneTokens.textPrimaryOf(context),
               ),
-            ),
-          ],
+              if (hasUnread)
+                PositionedDirectional(
+                  top: 9,
+                  end: 10,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: DealOneTokens.dangerRed,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

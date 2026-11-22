@@ -38,9 +38,12 @@ class ListingItemDto {
   final String governorateNameAr;
   final List<ListingMediaDto> media;
   final String sellerName;
+  final String? sellerAvatarUrl;
   final String? sellerPhone; // Verified: always null in public feed
   final String sellerType;
   final bool isVerified;
+  final double? latitude;
+  final double? longitude;
   final Map<String, dynamic> attributes;
   final int viewsCount;
   final int favoritesCount;
@@ -64,9 +67,12 @@ class ListingItemDto {
     required this.governorateNameAr,
     this.media = const [],
     required this.sellerName,
+    this.sellerAvatarUrl,
     this.sellerPhone,
     this.sellerType = 'individual',
     this.isVerified = false,
+    this.latitude,
+    this.longitude,
     this.attributes = const {},
     this.viewsCount = 0,
     this.favoritesCount = 0,
@@ -111,6 +117,27 @@ class ListingItemDto {
         ? Map<String, dynamic>.from(json['attributes'] as Map)
         : <String, dynamic>{};
 
+    final owner = account['owner'] is Map
+        ? Map<String, dynamic>.from(account['owner'] as Map)
+        : <String, dynamic>{};
+
+    double? parseCoord(dynamic v) {
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v);
+      return null;
+    }
+
+    final parsedLat = parseCoord(json['latitude']) ??
+        parseCoord(json['lat']) ??
+        parseCoord(attrs['latitude']) ??
+        parseCoord(attrs['lat']) ??
+        parseCoord(area['latitude']);
+    final parsedLng = parseCoord(json['longitude']) ??
+        parseCoord(json['lng']) ??
+        parseCoord(attrs['longitude']) ??
+        parseCoord(attrs['lng']) ??
+        parseCoord(area['longitude']);
+
     return ListingItemDto(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
@@ -139,7 +166,11 @@ class ListingItemDto {
       sellerName: json['sellerName']?.toString() ??
           json['seller_name']?.toString() ??
           account['displayName']?.toString() ??
+          owner['fullName']?.toString() ??
           '',
+      sellerAvatarUrl: json['sellerAvatarUrl']?.toString() ??
+          account['logoUrl']?.toString() ??
+          owner['avatarUrl']?.toString(),
       sellerPhone: json['sellerPhone']?.toString() ?? json['seller_phone']?.toString(),
       sellerType: json['sellerType']?.toString() ??
           json['seller_type']?.toString() ??
@@ -148,6 +179,8 @@ class ListingItemDto {
       isVerified: json['isVerified'] == true ||
           json['is_verified'] == true ||
           account['verificationStatus'] == 'approved',
+      latitude: parsedLat,
+      longitude: parsedLng,
       attributes: attrs,
       viewsCount: (json['viewsCount'] ?? json['views_count'] as num?)?.toInt() ?? 0,
       favoritesCount: (json['favoritesCount'] ?? json['favorites_count'] as num?)?.toInt() ?? 0,

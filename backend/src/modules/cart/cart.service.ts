@@ -99,9 +99,35 @@ export class CartService {
         item.listing.publicationStatus === 'published' &&
         item.listing.availabilityStatus === 'available';
 
+      const attrs =
+        item.variantAttributes && typeof item.variantAttributes === 'object'
+          ? (item.variantAttributes as Record<string, unknown>)
+          : {};
+
       return {
         id: item.id,
         listingId: item.listingId,
+        // Flutter CartItemModel.fromJson compatible fields
+        title: item.listing.title,
+        imageUrl: item.listing.media[0]?.publicUrl ?? null,
+        sellerName: item.listing.account.displayName,
+        sellerType: item.listing.account.accountType,
+        unitPrice: livePrice,
+        selectedSize:
+          typeof attrs.size === 'string'
+            ? attrs.size
+            : typeof attrs.selectedSize === 'string'
+              ? attrs.selectedSize
+              : null,
+        selectedColor:
+          typeof attrs.color === 'string'
+            ? attrs.color
+            : typeof attrs.selectedColor === 'string'
+              ? attrs.selectedColor
+              : null,
+        categorySlug: item.listing.category.slug,
+        addedAt: item.createdAt,
+        // Authoritative backend basket metadata
         quantity: item.quantity,
         variantKey: item.variantKey,
         variantAttributes: item.variantAttributes,

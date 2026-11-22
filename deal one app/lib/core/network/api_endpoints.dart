@@ -87,7 +87,12 @@ class ApiEndpoints {
 
   // Conversations & Chat
   static const String conversations = '/conversations';
+  static const String conversationsStream = '/conversations/stream';
   static String conversationMessages(String id) => '/conversations/$id/messages';
+
+  // Video Feed / Reels
+  static const String videoFeed = '/video-feed';
+  static const String videoUploadToken = '/media/video/upload-token';
 
   // Push Notifications & Inbox
   static const String notifications = '/notifications';
