@@ -83,6 +83,9 @@ describe('ActivityHubService', () => {
     expect(result.rfqs?.items).toHaveLength(1);
     expect(result.favorites?.items).toHaveLength(1);
     expect(result.cart?.commerceMode).toBe('V1_SAVED_BASKET');
+    // Unfiltered full load reuses section totals without redundant count queries
+    expect(mockCartService.getCartItemsCount).not.toHaveBeenCalled();
+    expect(mockFavoritesService.getFavoritesCount).not.toHaveBeenCalled();
   });
 
   it('should only load requested sections when include filter is provided', async () => {

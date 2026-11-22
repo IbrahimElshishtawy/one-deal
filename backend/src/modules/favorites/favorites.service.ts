@@ -199,7 +199,8 @@ export class FavoritesService {
   }
 
   /**
-   * Returns total active favorites count for Activity Hub summary.
+   * Returns total active available favorites count for Activity Hub summary
+   * (aligned with getMyFavorites default includeUnavailable=false predicate).
    */
   async getFavoritesCount(userId: string): Promise<number> {
     return this.prisma.favorite.count({
@@ -209,41 +210,47 @@ export class FavoritesService {
           deletedAt: null,
           publicationStatus: 'published',
           moderationStatus: 'approved',
+          availabilityStatus: 'available',
         },
       },
     });
   }
 
   /**
-   * Checks whether a specific listing is favorited by the user.
+   * Checks whether a specific listing is favorited by the user and whether the listing itself is available.
    */
   async getFavoriteStatus(userId: string, listingId: string) {
-    const favorite = await this.prisma.favorite.findUnique({
-      where: {
-        uq_user_favorite: {
-          userId,
-          listingId,
-        },
-      },
-      select: {
-        id: true,
-        createdAt: true,
-        listing: {
-          select: {
-            deletedAt: true,
-            publicationStatus: true,
-            availabilityStatus: true,
+    const [favorite, listing] = await Promise.all([
+      this.prisma.favorite.findUnique({
+        where: {
+          uq_user_favorite: {
+            userId,
+            listingId,
           },
         },
-      },
-    });
+        select: {
+          id: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.listing.findUnique({
+        where: { id: listingId },
+        select: {
+          deletedAt: true,
+          publicationStatus: true,
+          moderationStatus: true,
+          availabilityStatus: true,
+        },
+      }),
+    ]);
 
     const isFavorite = Boolean(favorite);
     const isListingAvailable = Boolean(
-      favorite?.listing &&
-      favorite.listing.deletedAt === null &&
-      favorite.listing.publicationStatus === 'published' &&
-      favorite.listing.availabilityStatus === 'available',
+      listing &&
+      listing.deletedAt === null &&
+      listing.publicationStatus === 'published' &&
+      listing.moderationStatus === 'approved' &&
+      listing.availabilityStatus === 'available',
     );
 
     return {

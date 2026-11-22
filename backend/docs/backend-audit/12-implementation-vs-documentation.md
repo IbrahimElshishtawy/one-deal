@@ -3,7 +3,9 @@
 **Project:** Deal One (`market-space-backend` v1.0.0)  
 **Audit Date:** 2026-11-22  
 **Audit Scope:** Full evidence-based audit of `src/`, `prisma/`, `scripts/`, `test/`, `Dockerfile`, `docker-compose.yml`, and runtime configuration against all 14 documentation files in `docs/activity-hub-backend/`.  
-**Audit Mode:** Read-only (zero existing source, schema, migration, or config files modified).
+**Audit Mode:** Read-only baseline completed; **Phases 0–5 remediation executed and verified locally on 2026-11-22** (see `docs/backend-audit/remediation-progress.md` for full execution evidence).
+
+> **Post-Remediation Status (2026-11-22):** All **2 Critical**, **8 High**, and targeted **Medium** findings from this report have been remediated and covered by automated unit (`46/46` suites, `306/306` tests) and E2E (`8/8` Activity Hub E2E tests) verification with `0` TypeScript/ESLint/build errors and `11/11` additive Prisma migrations verified locally. Remaining pre-production gate: staging deployment dry-run with `DIRECT_DATABASE_URL` + PgBouncer (Acceptance Criterion #8).
 
 ---
 

@@ -10,6 +10,7 @@ import { RfqService } from './rfq.service';
 import { PrismaService } from '../../core/database/prisma.service';
 import { QuotationStatus, RfqStatus } from './rfq.enums';
 import { UpdateQuotationStatusDto } from './dto/update-quotation-status.dto';
+import { GetRfqQuotationsQueryDto } from './dto/get-rfq-quotations-query.dto';
 
 describe('RfqService', () => {
   let service: RfqService;
@@ -416,5 +417,23 @@ describe('RfqService', () => {
 
     await service.cancelRfq('rfq-cancel-1', 'buyer-1', 'Project postponed');
     expect(mockTx.outboxEvent.create).toHaveBeenCalledTimes(2);
+  });
+
+  it('should validate sortBy and pagination in GetRfqQuotationsQueryDto', async () => {
+    const invalid = plainToInstance(GetRfqQuotationsQueryDto, {
+      sortBy: 'invalidField',
+      limit: 500,
+    });
+    const errors = await validate(invalid);
+    expect(errors.map((e) => e.property)).toEqual(
+      expect.arrayContaining(['sortBy', 'limit']),
+    );
+
+    const valid = plainToInstance(GetRfqQuotationsQueryDto, {
+      sortBy: 'estimatedDeliveryDays',
+      page: 1,
+      limit: 20,
+    });
+    expect(await validate(valid)).toHaveLength(0);
   });
 });

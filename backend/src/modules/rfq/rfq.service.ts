@@ -18,6 +18,7 @@ import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { CreateRfqDto } from './dto/create-rfq.dto';
 import { UpdateRfqDto } from './dto/update-rfq.dto';
 import { GetRfqsQueryDto } from './dto/get-rfqs-query.dto';
+import { GetRfqQuotationsQueryDto } from './dto/get-rfq-quotations-query.dto';
 import { UpdateQuotationStatusDto } from './dto/update-quotation-status.dto';
 
 @Injectable()
@@ -282,9 +283,7 @@ export class RfqService {
       scope === 'open_for_suppliers'
         ? {
             userId: { not: userId },
-            status: query.status
-              ? query.status
-              : { in: openSupplierStatuses },
+            status: query.status ? query.status : { in: openSupplierStatuses },
             ...categoryWhere,
           }
         : {
@@ -833,11 +832,23 @@ export class RfqService {
   async getQuotationsForRfq(
     rfqId: string,
     userId: string,
-    sortBy:
-      'totalAmount' | 'estimatedDeliveryDays' | 'createdAt' = 'totalAmount',
+    queryOrSortBy:
+      | GetRfqQuotationsQueryDto
+      | 'totalAmount'
+      | 'estimatedDeliveryDays'
+      | 'createdAt' = {},
     userRole?: string,
     actorType?: 'user' | 'staff',
   ) {
+    const query: GetRfqQuotationsQueryDto =
+      typeof queryOrSortBy === 'string'
+        ? { sortBy: queryOrSortBy }
+        : queryOrSortBy;
+    const sortBy = query.sortBy ?? 'totalAmount';
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
     const rfq = await this.prisma.rfqRequest.findUnique({
       where: { id: rfqId },
       select: { id: true, userId: true },
@@ -863,22 +874,37 @@ export class RfqService {
           ? { createdAt: 'desc' }
           : { totalAmount: 'asc' };
 
-    return this.prisma.quotation.findMany({
-      where: { rfqId },
-      include: {
-        supplierAccount: {
-          select: {
-            id: true,
-            displayName: true,
-            accountType: true,
-            verificationStatus: true,
-            logoUrl: true,
+    const [total, items] = await Promise.all([
+      this.prisma.quotation.count({ where: { rfqId } }),
+      this.prisma.quotation.findMany({
+        where: { rfqId },
+        include: {
+          supplierAccount: {
+            select: {
+              id: true,
+              displayName: true,
+              accountType: true,
+              verificationStatus: true,
+              logoUrl: true,
+            },
           },
+          items: true,
         },
-        items: true,
+        orderBy,
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return {
+      data: items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: total === 0 ? 0 : Math.ceil(total / limit),
       },
-      orderBy,
-    });
+    };
   }
 
   async getQuotationById(
@@ -910,8 +936,7 @@ export class RfqService {
       throw new NotFoundException('Quotation not found');
     }
 
-    const isRfqOwner =
-      actorType !== 'staff' && quotation.rfq.userId === userId;
+    const isRfqOwner = actorType !== 'staff' && quotation.rfq.userId === userId;
     const isAdmin = this.isAdminActor(userRole, actorType);
     const isSupplier = await this.isSupplierAccountMember(
       quotation.supplierAccountId,

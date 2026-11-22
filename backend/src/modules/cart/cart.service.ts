@@ -125,19 +125,48 @@ export class CartService {
       };
     });
 
-    const estimatedSubtotal = Number(
-      mapped
-        .filter((i) => i.isAvailable)
-        .reduce((sum, i) => sum + i.lineEstimate, 0)
-        .toFixed(2),
-    );
+    let estimatedSubtotal: number;
+    if (total <= items.length) {
+      estimatedSubtotal = Number(
+        mapped
+          .filter((i) => i.isAvailable)
+          .reduce((sum, i) => sum + i.lineEstimate, 0)
+          .toFixed(2),
+      );
+    } else {
+      const allForSubtotal = await this.prisma.cartItem.findMany({
+        where,
+        select: {
+          quantity: true,
+          listing: {
+            select: {
+              price: true,
+              deletedAt: true,
+              publicationStatus: true,
+              availabilityStatus: true,
+            },
+          },
+        },
+      });
+      estimatedSubtotal = Number(
+        allForSubtotal
+          .filter(
+            (i) =>
+              i.listing.deletedAt === null &&
+              i.listing.publicationStatus === 'published' &&
+              i.listing.availabilityStatus === 'available',
+          )
+          .reduce((sum, i) => sum + Number(i.listing.price) * i.quantity, 0)
+          .toFixed(2),
+      );
+    }
 
     return {
       data: {
         commerceMode: 'V1_SAVED_BASKET',
         checkoutSupported: false,
         estimatedSubtotal,
-        currency: 'EGP',
+        currency: mapped[0]?.currency ?? 'EGP',
         items: mapped,
       },
       meta: {
@@ -151,13 +180,7 @@ export class CartService {
 
   async getCartItemsCount(userId: string): Promise<number> {
     return this.prisma.cartItem.count({
-      where: {
-        userId,
-        listing: {
-          deletedAt: null,
-          publicationStatus: 'published',
-        },
-      },
+      where: { userId },
     });
   }
 
@@ -204,6 +227,22 @@ export class CartService {
     const variantKey = (dto.variantKey || 'default').trim();
     const quantityToAdd = dto.quantity ?? 1;
 
+    const incrementExisting = async (existingId: string, currentQty: number) =>
+      this.prisma.cartItem.update({
+        where: { id: existingId },
+        data: {
+          quantity: Math.min(currentQty + quantityToAdd, 999),
+          unitPriceSnapshot: listing.price,
+          currency: listing.currency,
+          ...(dto.variantAttributes !== undefined
+            ? { variantAttributes: dto.variantAttributes as any }
+            : {}),
+          ...(dto.notes !== undefined
+            ? { notes: dto.notes.trim() || null }
+            : {}),
+        },
+      });
+
     const existing = await this.prisma.cartItem.findUnique({
       where: {
         uq_cart_user_listing_variant: {
@@ -215,31 +254,39 @@ export class CartService {
     });
 
     if (existing) {
-      return this.prisma.cartItem.update({
-        where: { id: existing.id },
-        data: {
-          quantity: Math.min(existing.quantity + quantityToAdd, 999),
-          unitPriceSnapshot: listing.price,
-          currency: listing.currency,
-          ...(dto.notes !== undefined
-            ? { notes: dto.notes.trim() || null }
-            : {}),
-        },
-      });
+      return incrementExisting(existing.id, existing.quantity);
     }
 
-    return this.prisma.cartItem.create({
-      data: {
-        userId,
-        listingId: dto.listingId,
-        quantity: quantityToAdd,
-        variantKey,
-        variantAttributes: (dto.variantAttributes ?? {}) as any,
-        unitPriceSnapshot: listing.price,
-        currency: listing.currency,
-        notes: dto.notes?.trim() || null,
-      },
-    });
+    try {
+      return await this.prisma.cartItem.create({
+        data: {
+          userId,
+          listingId: dto.listingId,
+          quantity: quantityToAdd,
+          variantKey,
+          variantAttributes: (dto.variantAttributes ?? {}) as any,
+          unitPriceSnapshot: listing.price,
+          currency: listing.currency,
+          notes: dto.notes?.trim() || null,
+        },
+      });
+    } catch (err: any) {
+      if (err?.code === 'P2002') {
+        const concurrent = await this.prisma.cartItem.findUnique({
+          where: {
+            uq_cart_user_listing_variant: {
+              userId,
+              listingId: dto.listingId,
+              variantKey,
+            },
+          },
+        });
+        if (concurrent) {
+          return incrementExisting(concurrent.id, concurrent.quantity);
+        }
+      }
+      throw err;
+    }
   }
 
   async updateItem(userId: string, itemId: string, dto: UpdateCartItemDto) {
@@ -278,13 +325,13 @@ export class CartService {
     }
 
     await this.prisma.cartItem.delete({ where: { id: item.id } });
-    return { success: true, deletedId: item.id };
+    return { deletedId: item.id };
   }
 
   async clearCart(userId: string) {
     const result = await this.prisma.cartItem.deleteMany({
       where: { userId },
     });
-    return { success: true, deletedCount: result.count };
+    return { deletedCount: result.count };
   }
 }

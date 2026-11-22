@@ -20,6 +20,8 @@ export class OutboxPublisherProcessor {
     @Optional() private readonly emailService?: EmailService,
   ) {}
 
+  private readonly staleProcessingMs = 5 * 60 * 1000;
+
   async publishPendingEvents(batchSize = 50): Promise<{
     publishedCount: number;
     failedCount: number;
@@ -28,9 +30,36 @@ export class OutboxPublisherProcessor {
       return { publishedCount: 0, failedCount: 0 };
     }
 
+    const now = new Date();
+
     try {
+      // Recover stale PROCESSING events left behind by crashed workers
+      if ((this.prisma as any).outboxEvent?.updateMany) {
+        const staleCutoff = new Date(now.getTime() - this.staleProcessingMs);
+        try {
+          await this.prisma.outboxEvent.updateMany({
+            where: {
+              status: 'PROCESSING',
+              OR: [
+                { lockedAt: { lte: staleCutoff } },
+                { lockedAt: null, createdAt: { lte: staleCutoff } },
+              ],
+            },
+            data: {
+              status: 'PENDING',
+              lockedAt: null,
+            },
+          });
+        } catch {
+          // Non-fatal recovery failure
+        }
+      }
+
       const pendingEvents = await this.prisma.outboxEvent.findMany({
-        where: { status: 'PENDING' },
+        where: {
+          status: 'PENDING',
+          OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
+        },
         orderBy: { createdAt: 'asc' },
         take: batchSize,
       });
@@ -46,7 +75,7 @@ export class OutboxPublisherProcessor {
         // Atomic claim to prevent double delivery across concurrent workers
         const claim = await this.prisma.outboxEvent.updateMany({
           where: { id: evt.id, status: 'PENDING' },
-          data: { status: 'PROCESSING' },
+          data: { status: 'PROCESSING', lockedAt: new Date() },
         });
 
         if (claim.count === 0) {
@@ -63,26 +92,48 @@ export class OutboxPublisherProcessor {
             data: {
               status: 'PUBLISHED',
               processedAt: new Date(),
+              lockedAt: null,
               error: null,
             },
           });
           publishedCount += 1;
         } catch (err: any) {
           failedCount += 1;
-          await this.prisma.outboxEvent
-            .update({
+          const nextRetryCount = (evt.retryCount ?? 0) + 1;
+          const maxRetries = evt.maxRetries ?? 5;
+          const shouldRetry = nextRetryCount < maxRetries;
+          const backoffSeconds = Math.min(
+            30 * Math.pow(2, nextRetryCount - 1),
+            3600,
+          );
+          const errorMessage = String(
+            err?.message || 'Unknown outbox dispatch error',
+          ).slice(0, 1000);
+
+          try {
+            await this.prisma.outboxEvent.update({
               where: { id: evt.id },
-              data: {
-                status: 'FAILED',
-                error: String(
-                  err?.message || 'Unknown outbox dispatch error',
-                ).slice(0, 1000),
-                processedAt: new Date(),
-              },
-            })
-            .catch(() => undefined);
+              data: shouldRetry
+                ? {
+                    status: 'PENDING',
+                    retryCount: nextRetryCount,
+                    nextRetryAt: new Date(Date.now() + backoffSeconds * 1000),
+                    lockedAt: null,
+                    error: errorMessage,
+                  }
+                : {
+                    status: 'FAILED',
+                    retryCount: nextRetryCount,
+                    lockedAt: null,
+                    error: errorMessage,
+                    processedAt: new Date(),
+                  },
+            });
+          } catch {
+            // Ignore secondary update failure
+          }
           this.logger.error(
-            `❌ [Outbox] Failed to publish event ${evt.id} (${evt.eventType}): ${err?.message}`,
+            `❌ [Outbox] Failed to publish event ${evt.id} (${evt.eventType}) attempt ${nextRetryCount}/${maxRetries}: ${err?.message}`,
           );
         }
       }

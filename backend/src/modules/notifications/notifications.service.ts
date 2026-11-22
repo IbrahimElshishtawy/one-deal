@@ -15,6 +15,8 @@ export class NotificationsService {
   private readonly firebaseProjectId: string;
   private readonly firebaseClientEmail: string;
   private readonly firebasePrivateKey: string;
+  private cachedAccessToken: string | null = null;
+  private cachedAccessTokenExpiresAt = 0;
 
   constructor(
     private readonly configService: ConfigService,
@@ -132,6 +134,7 @@ export class NotificationsService {
       devices.map(async ({ fcmToken }) => {
         const res = await fetch(fcmEndpoint, {
           method: 'POST',
+          signal: AbortSignal.timeout(5000),
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
@@ -249,9 +252,16 @@ export class NotificationsService {
   }
 
   /**
-   * Generates a short-lived Google OAuth2 access token from Service Account credentials for FCM HTTP v1.
+   * Generates and caches a short-lived Google OAuth2 access token from Service Account credentials for FCM HTTP v1.
    */
   private async mintGoogleAccessToken(): Promise<string> {
+    if (
+      this.cachedAccessToken &&
+      Date.now() < this.cachedAccessTokenExpiresAt - 60_000
+    ) {
+      return this.cachedAccessToken;
+    }
+
     const now = Math.floor(Date.now() / 1000);
     const header = Buffer.from(
       JSON.stringify({ alg: 'RS256', typ: 'JWT' }),
@@ -275,6 +285,7 @@ export class NotificationsService {
     const assertion = `${unsigned}.${signature}`;
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
+      signal: AbortSignal.timeout(5000),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -282,10 +293,20 @@ export class NotificationsService {
       }),
     });
 
-    const tokenJson = (await tokenRes.json()) as { access_token?: string };
+    const tokenJson = (await tokenRes.json()) as {
+      access_token?: string;
+      expires_in?: number;
+    };
     if (!tokenRes.ok || !tokenJson.access_token) {
       throw new Error('Failed to mint Google OAuth2 token for FCM');
     }
+
+    const ttlMs =
+      typeof tokenJson.expires_in === 'number' && tokenJson.expires_in > 120
+        ? tokenJson.expires_in * 1000
+        : 50 * 60 * 1000;
+    this.cachedAccessToken = tokenJson.access_token;
+    this.cachedAccessTokenExpiresAt = Date.now() + ttlMs;
     return tokenJson.access_token;
   }
 }

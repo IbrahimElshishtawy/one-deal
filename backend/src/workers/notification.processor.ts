@@ -25,12 +25,18 @@ export class NotificationProcessor {
       this.logger.log(
         `📬 [Worker: Notification] Processing push dispatch to user ${data.targetUserId}...`,
       );
-      await this.notificationsService.sendPushNotification(
+      const result = await this.notificationsService.sendPushNotification(
         data.targetUserId,
         data.title,
         data.body,
         data.dataPayload || {},
       );
+      if (result && result.success === false) {
+        this.logger.warn(
+          `⚠️ [Worker: Notification] Push dispatch reported failure for user ${data.targetUserId}`,
+        );
+        return false;
+      }
       return true;
     } catch (err: any) {
       this.logger.error(

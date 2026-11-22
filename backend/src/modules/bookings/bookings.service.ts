@@ -275,7 +275,8 @@ export class BookingsService {
       const rootCategorySlug =
         listing.category?.parent?.slug ?? listing.category?.slug;
       if (rootCategorySlug && KNOWN_ROOT_CATEGORY_SLUGS.has(rootCategorySlug)) {
-        const expectedRootSlug = BOOKING_TYPE_ROOT_CATEGORY_MAP[dto.bookingType];
+        const expectedRootSlug =
+          BOOKING_TYPE_ROOT_CATEGORY_MAP[dto.bookingType];
         if (expectedRootSlug && expectedRootSlug !== rootCategorySlug) {
           throw new BadRequestException(
             `Booking type '${dto.bookingType}' is not supported for category '${rootCategorySlug}'`,

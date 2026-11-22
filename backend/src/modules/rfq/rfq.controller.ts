@@ -15,7 +15,6 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
-  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -26,11 +25,12 @@ import {
 } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminJwtAuthGuard } from '../admin-auth/guards/admin-jwt-auth.guard';
-import { CancelBookingDto } from '../bookings/dto/cancel-booking.dto';
+import { CancelRfqDto } from './dto/cancel-rfq.dto';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { CreateRfqDto } from './dto/create-rfq.dto';
 import { UpdateRfqDto } from './dto/update-rfq.dto';
 import { GetRfqsQueryDto } from './dto/get-rfqs-query.dto';
+import { GetRfqQuotationsQueryDto } from './dto/get-rfq-quotations-query.dto';
 import { UpdateQuotationStatusDto } from './dto/update-quotation-status.dto';
 import { RfqService } from './rfq.service';
 
@@ -122,7 +122,7 @@ export class RfqController {
   async cancelRfq(
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CancelBookingDto,
+    @Body() dto: CancelRfqDto,
   ) {
     return this.rfqService.cancelRfq(
       id,
@@ -153,25 +153,20 @@ export class RfqController {
   @Get('rfqs/:id/quotations')
   @UseGuards(AdminJwtAuthGuard)
   @ApiOperation({
-    summary: 'List and compare quotations for an RFQ (RFQ owner only)',
+    summary:
+      'List and compare paginated quotations for an RFQ (RFQ owner or admin)',
   })
   @ApiParam({ name: 'id', format: 'uuid' })
-  @ApiQuery({
-    name: 'sortBy',
-    required: false,
-    enum: ['totalAmount', 'estimatedDeliveryDays', 'createdAt'],
-  })
-  @ApiResponse({ status: 200, description: 'Quotations returned' })
+  @ApiResponse({ status: 200, description: 'Paginated quotations returned' })
   async getQuotationsForRfq(
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Query('sortBy')
-    sortBy?: 'totalAmount' | 'estimatedDeliveryDays' | 'createdAt',
+    @Query() query: GetRfqQuotationsQueryDto,
   ) {
     return this.rfqService.getQuotationsForRfq(
       id,
       user.id,
-      sortBy,
+      query,
       user.role,
       user.actorType,
     );

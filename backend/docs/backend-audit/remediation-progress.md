@@ -123,3 +123,82 @@
 
 ### Remaining Issues / Risks
 - Phase 3–5 items remain open; proceeding to Phase 3.
+
+---
+
+## Phase 3 — API Contract Alignment
+
+**Status:** `COMPLETED`
+
+### Findings Addressed
+- **BUG-09 (MEDIUM):** Fixed `FavoritesService.getFavoriteStatus` to query `listing.findUnique` in parallel with `favorite.findUnique`, ensuring `isListingAvailable` reflects true listing availability even when not favorited.
+- **BUG-10 (MEDIUM):** Fixed `CartService.getCart` to compute `estimatedSubtotal` across the entire matching basket (not just the current paginated slice) and derive `currency` from items.
+- **BUG-11 (MEDIUM):** Made `CartService.addItem` atomic against concurrent `P2002` unique constraint races and updated `variantAttributes` on existing items.
+- **BUG-12 (MEDIUM):** Aligned `FavoritesService.getFavoritesCount` (`availabilityStatus: 'available'`) and `CartService.getCartItemsCount` (`userId`) with their corresponding section list predicates.
+- **P3.3 (MEDIUM):** Added validated `GetRfqQuotationsQueryDto` (`sortBy`, `page`, `limit`) and paginated `{ data, meta }` response on `GET /api/v1/rfqs/:id/quotations`. Created dedicated `CancelRfqDto` (removing cross-module import of `CancelBookingDto`).
+- **Nested `success` Envelope Alignment (Flutter-Safe):** Inspected Flutter app (`deal one app/lib/features/favorites/data/dto/favorite_dto.dart:37`), which explicitly reads `json['success'] == true` on Favorites mutations — therefore preserved `success: true` in `FavoritesService` for 100% Flutter compatibility, while removing redundant nested `success: true` from `CartService.removeItem` and `CartService.clearCart` (not yet consumed by Flutter).
+
+### Files Changed
+- `src/modules/favorites/favorites.service.ts`
+- `src/modules/cart/cart.service.ts`
+- `src/modules/rfq/dto/cancel-rfq.dto.ts` (new)
+- `src/modules/rfq/dto/get-rfq-quotations-query.dto.ts` (new)
+- `src/modules/rfq/rfq.controller.ts`
+- `src/modules/rfq/rfq.service.ts`
+- `src/modules/favorites/favorites.service.spec.ts`
+- `src/modules/cart/cart.service.spec.ts`
+- `src/modules/rfq/rfq.service.spec.ts`
+
+### Tests Added & Results
+- Added 3 regression unit tests (unfavorited `isListingAvailable`, full-basket `estimatedSubtotal`, concurrent `P2002` cart `addItem`, `GetRfqQuotationsQueryDto`).
+- `npx tsc --noEmit && npm run build`: **PASSED**
+- `npx jest --runInBand --forceExit`: **PASSED** (46/46 suites, 304/304 tests)
+- `npx jest --config ./test/jest-e2e.json test/activity-hub.e2e-spec.ts --forceExit`: **PASSED** (1/1 suite, 6/6 tests)
+
+---
+
+## Phase 4 — Performance & Reliability
+
+**Status:** `COMPLETED`
+
+### Findings Addressed
+- **P4.1 (HIGH):** Implemented Outbox retry with exponential backoff (`30s * 2^(attempt-1)`, capped at 1h, up to `maxRetries = 5`), atomic `lockedAt` claim timestamping, and automatic recovery of stale `PROCESSING` rows older than 5 minutes in `OutboxPublisherProcessor`. Fixed `NotificationProcessor` to return `false` when `NotificationsService.sendPushNotification` returns `{ success: false }`.
+- **P4.2 (MEDIUM):** Cached Google OAuth2 access tokens (~50 min TTL) in `NotificationsService.mintGoogleAccessToken()` and added `AbortSignal.timeout(5000)` to both OAuth2 and FCM HTTP v1 `fetch()` calls.
+- **P4.3 (MEDIUM):** Reduced redundant `COUNT(*)` queries in `ActivityHubService.getActivityHub` by reusing `cartResult.meta.total` and `favoritesResult.meta.total` whenever `cart`/`favorites` sections are loaded without category filters.
+
+### Files Changed
+- `src/workers/outbox-publisher.processor.ts`
+- `src/workers/notification.processor.ts`
+- `src/modules/notifications/notifications.service.ts`
+- `src/modules/activity-hub/activity-hub.service.ts`
+- `src/workers/outbox-publisher.processor.spec.ts`
+- `src/modules/activity-hub/activity-hub.service.spec.ts`
+
+### Tests Added & Results
+- Added Outbox exponential backoff retry, `FAILED` exhaustion, stale `PROCESSING` recovery, and Activity Hub query-reduction assertions.
+- Verified inside final Phase 5 suite below (`46/46` unit suites, `306/306` unit tests).
+
+---
+
+## Phase 5 — Testing, Documentation Alignment & Verification
+
+**Status:** `COMPLETED` (local verification complete; staging deploy dry-run pending environment deployment)
+
+### Findings Addressed
+- Added E2E security & contract tests in `test/activity-hub.e2e-spec.ts` covering `SEC-01` (private DRAFT RFQ isolation), `SEC-02` (Cart query validation), `SEC-04` (`EXPIRED` quotation status rejection), `BUG-09` (unfavorited `isListingAvailable`), draft RFQ edit/submit, and paginated quotation comparison (`sortBy` validation + `meta`).
+- Updated all aligned documentation in `docs/activity-hub-backend/` (`02`, `04`, `05`, `08`, `09`, `11`, `13`, `14`) and `docs/backend-audit/12-implementation-vs-documentation.md`.
+
+### Final Verification Results (2026-11-22)
+| Check | Command | Result |
+|---|---|---|
+| Prisma Schema | `npx prisma validate` | **PASSED** |
+| Migration Status (local) | `npx prisma migrate status` | **PASSED** (`11/11` applied, up to date) |
+| ESLint | `npx eslint "{src,apps,libs,test}/**/*.ts"` | **PASSED** (0 errors, 9 pre-existing warnings) |
+| TypeScript | `npx tsc --noEmit` | **PASSED** (0 errors) |
+| Production Build | `npm run build` | **PASSED** (0 errors) |
+| Unit Tests | `npx jest --runInBand --forceExit` | **PASSED** (**46/46 suites, 306/306 tests**) |
+| Activity Hub E2E | `npx jest --config ./test/jest-e2e.json test/activity-hub.e2e-spec.ts --forceExit` | **PASSED** (**1/1 suite, 8/8 tests**) |
+
+### Remaining Items Before Production Sign-Off
+1. **Staging Verification (Acceptance Criterion #8):** Run `node scripts/migrate-deploy.js` with `DIRECT_DATABASE_URL` against a staging PostgreSQL + PgBouncer environment and verify `api` + `worker` container startup.
+2. **Deferred Non-Blocking Features (Documented in `14-known-limitations.md`):** Per-category notification preferences and favorite unavailability push hooks in `ListingsService`.

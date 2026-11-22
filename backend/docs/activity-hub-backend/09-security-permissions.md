@@ -1,11 +1,13 @@
 # 09 — Security & Permissions
 
 ## Authentication & Authorization
-- All Favorites, Bookings, RFQ, Cart, and Activity Hub endpoints require `JwtAuthGuard` (`Authorization: Bearer <JWT>`).
+- Consumer creation/listing endpoints require `JwtAuthGuard` (`Authorization: Bearer <mobile JWT>`).
+- Bookings and RFQ detail, cancel, and status endpoints use `AdminJwtAuthGuard`, accepting both mobile `User` JWTs and Enterprise Admin `StaffUser` JWTs (`deal-one-admin`), while blocking mobile token privilege escalation in production.
 - `userId` is always extracted from `@CurrentUser()` (JWT payload), never from request bodies or query strings.
 
 ## Mass Assignment & Input Validation
-- Global `ValidationPipe` (`whitelist: true`, `forbidNonWhitelisted: true`, `transform: true`) rejects any unexpected properties such as client-supplied `userId`, `providerAccountId` (when `listingId` is present), or `totalAmount`.
+- Global `ValidationPipe` (`whitelist: true`, `forbidNonWhitelisted: true`, `transform: true`) rejects unexpected properties (`userId`, `totalAmount`, etc.) across all DTO-backed endpoints including `GetCartQueryDto` and `GetRfqQuotationsQueryDto`. When `listingId` is provided on `POST /bookings`, `providerAccountId` is ignored server-side in favor of `listing.accountId`.
+- `UpdateQuotationStatusDto` restricts `status` to `@IsIn([SHORTLISTED, ACCEPTED, REJECTED, WITHDRAWN])`.
 - All UUID path parameters use `ParseUUIDPipe`.
 
 ## IDOR & Resource Ownership

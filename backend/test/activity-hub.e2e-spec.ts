@@ -4,7 +4,6 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
-import * as crypto from 'crypto';
 import { AppModule } from '../src/app.module';
 import { HttpExceptionFilter } from '../src/core/filters/http-exception.filter';
 import { TransformInterceptor } from '../src/core/interceptors/transform.interceptor';
@@ -282,13 +281,15 @@ describe('Unified Activity & Commerce Hub E2E', () => {
       expect(listBody.data.length).toBeGreaterThanOrEqual(1);
       expect(listBody.meta.total).toBeGreaterThanOrEqual(1);
 
-      // User isolation: attacker does not see buyer's favorite
+      // User isolation: attacker does not see buyer's favorite, but listing availability is still accurate (BUG-09)
       const attackerStatus = await app.inject({
         method: 'GET',
         url: `/api/v1/favorites/${realEstateListingId}/status`,
         headers: { authorization: `Bearer ${attackerToken}` },
       });
-      expect(JSON.parse(attackerStatus.body).data.isFavorite).toBe(false);
+      const attackerStatusBody = JSON.parse(attackerStatus.body).data;
+      expect(attackerStatusBody.isFavorite).toBe(false);
+      expect(attackerStatusBody.isListingAvailable).toBe(true);
     });
   });
 
@@ -463,14 +464,38 @@ describe('Unified Activity & Commerce Hub E2E', () => {
       });
       expect(attackerQuotRes.statusCode).toBe(403);
 
-      // Buyer views & compares quotations
+      // Buyer views & compares paginated quotations
       const ownerQuotRes = await app.inject({
         method: 'GET',
-        url: `/api/v1/rfqs/${rfqId}/quotations?sortBy=totalAmount`,
+        url: `/api/v1/rfqs/${rfqId}/quotations?sortBy=totalAmount&page=1&limit=10`,
         headers: { authorization: `Bearer ${buyerToken}` },
       });
       expect(ownerQuotRes.statusCode).toBe(200);
-      expect(JSON.parse(ownerQuotRes.body).data).toHaveLength(1);
+      const ownerQuotBody = JSON.parse(ownerQuotRes.body);
+      expect(ownerQuotBody.data).toHaveLength(1);
+      expect(ownerQuotBody.meta).toEqual({
+        total: 1,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      });
+
+      // Invalid sortBy rejected with 400
+      const badSortRes = await app.inject({
+        method: 'GET',
+        url: `/api/v1/rfqs/${rfqId}/quotations?sortBy=invalid`,
+        headers: { authorization: `Bearer ${buyerToken}` },
+      });
+      expect(badSortRes.statusCode).toBe(400);
+
+      // Illegal EXPIRED status transition via API rejected with 400 (SEC-04)
+      const expireAttempt = await app.inject({
+        method: 'PATCH',
+        url: `/api/v1/quotations/${quotationId}/status`,
+        headers: { authorization: `Bearer ${buyerToken}` },
+        payload: { status: 'EXPIRED' },
+      });
+      expect(expireAttempt.statusCode).toBe(400);
 
       // Buyer accepts quotation
       const acceptRes = await app.inject({
@@ -482,12 +507,69 @@ describe('Unified Activity & Commerce Hub E2E', () => {
       expect(acceptRes.statusCode).toBe(200);
       expect(JSON.parse(acceptRes.body).data.status).toBe('ACCEPTED');
     });
+
+    it('protects private DRAFT RFQs from open_for_suppliers leak (SEC-01) and supports draft edit & submit', async () => {
+      const draftRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/rfqs',
+        headers: { authorization: `Bearer ${buyerToken}` },
+        payload: {
+          title: 'Private Draft Steel Request',
+          description: 'Confidential draft RFQ before publication',
+          categoryId: materialsCatId,
+          deliveryLocation: 'New Cairo',
+          isDraft: true,
+          items: [{ name: 'Steel Rebar', quantity: 2, unit: 'ton' }],
+        },
+      });
+      expect(draftRes.statusCode).toBe(201);
+      const draft = JSON.parse(draftRes.body).data;
+      expect(draft.status).toBe('DRAFT');
+
+      // Attacker attempting to filter open_for_suppliers by status=DRAFT must get 400
+      const leakAttempt = await app.inject({
+        method: 'GET',
+        url: '/api/v1/rfqs?scope=open_for_suppliers&status=DRAFT',
+        headers: { authorization: `Bearer ${attackerToken}` },
+      });
+      expect(leakAttempt.statusCode).toBe(400);
+
+      // Buyer edits draft
+      const editRes = await app.inject({
+        method: 'PATCH',
+        url: `/api/v1/rfqs/${draft.id}`,
+        headers: { authorization: `Bearer ${buyerToken}` },
+        payload: { title: 'Updated Draft Steel Request' },
+      });
+      expect(editRes.statusCode).toBe(200);
+      expect(JSON.parse(editRes.body).data.title).toBe(
+        'Updated Draft Steel Request',
+      );
+
+      // Buyer submits draft
+      const submitRes = await app.inject({
+        method: 'PATCH',
+        url: `/api/v1/rfqs/${draft.id}/submit`,
+        headers: { authorization: `Bearer ${buyerToken}` },
+      });
+      expect(submitRes.statusCode).toBe(200);
+      expect(JSON.parse(submitRes.body).data.status).toBe('SUBMITTED');
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 4. CART (V1 SAVED BASKET) & ACTIVITY HUB AGGREGATION
   // ---------------------------------------------------------------------------
   describe('Cart & Unified Activity Hub', () => {
+    it('rejects invalid cart query parameters with 400 (SEC-02)', async () => {
+      const badCartQuery = await app.inject({
+        method: 'GET',
+        url: '/api/v1/cart?limit=500&categoryId=not-a-uuid',
+        headers: { authorization: `Bearer ${buyerToken}` },
+      });
+      expect(badCartQuery.statusCode).toBe(400);
+    });
+
     it('adds item to V1 saved basket and aggregates Activity Hub accurately', async () => {
       const addCartRes = await app.inject({
         method: 'POST',

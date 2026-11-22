@@ -26,17 +26,21 @@
 
 ### RFQ & Quotations
 - `POST /api/v1/rfqs`
-- `GET /api/v1/rfqs?page=1&limit=20&status=&categoryId=&categorySlug=&scope=mine|open_for_suppliers`
+- `GET /api/v1/rfqs?page=1&limit=20&status=&categoryId=&categorySlug=&scope=mine|open_for_suppliers` (non-open `status` values rejected with `400` in `open_for_suppliers` scope)
 - `GET /api/v1/rfqs/:id`
-- `PATCH /api/v1/rfqs/:id/cancel`
+- `PATCH /api/v1/rfqs/:id` (edit `DRAFT` RFQ)
+- `PATCH /api/v1/rfqs/:id/submit` (submit `DRAFT` RFQ -> `SUBMITTED`)
+- `PATCH /api/v1/rfqs/:id/cancel` (body: `{ "reason"?: "string" }`)
 - `POST /api/v1/rfqs/:id/quotations`
-- `GET /api/v1/rfqs/:id/quotations?sortBy=totalAmount|estimatedDeliveryDays|createdAt`
+- `GET /api/v1/rfqs/:id/quotations?sortBy=totalAmount|estimatedDeliveryDays|createdAt&page=1&limit=20` (paginated `{ data, meta }`)
 - `GET /api/v1/quotations/:id`
 - `PATCH /api/v1/quotations/:id/status` (body: `{ "status": "SHORTLISTED|ACCEPTED|REJECTED|WITHDRAWN", "reason"?: "string" }`)
 
 ### Cart (V1 Non-Transactional Saved Basket)
-- `GET /api/v1/cart?page=1&limit=20&categoryId=&categorySlug=`
+- `GET /api/v1/cart?page=1&limit=20&categoryId=&categorySlug=` (strictly validated via `GetCartQueryDto`; `estimatedSubtotal` spans full matching basket)
 - `POST /api/v1/cart/items` (body: `{ "listingId": "uuid", "quantity": 1, "variantKey"?: "default", "variantAttributes"?: {}, "notes"?: "" }`)
 - `PATCH /api/v1/cart/items/:id` (body: `{ "quantity"?: 2, "notes"?: "" }`)
-- `DELETE /api/v1/cart/items/:id`
-- `DELETE /api/v1/cart`
+- `DELETE /api/v1/cart/items/:id` (returns `{ deletedId }`)
+- `DELETE /api/v1/cart` (returns `{ deletedCount }`)
+
+> **Flutter Compatibility Note:** Favorites mutation endpoints (`POST /favorites`, `POST /favorites/:listingId`, `DELETE /favorites/:listingId`, `POST /listings/:listingId/favorite`) intentionally retain `success: true` inside `data` because the existing Flutter `FavoriteToggleResultDto.fromJson` reads `json['success'] == true`.

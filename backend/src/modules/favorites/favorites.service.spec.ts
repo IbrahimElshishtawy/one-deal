@@ -127,20 +127,37 @@ describe('FavoritesService', () => {
     );
   });
 
-  it('should return favorite status accurately', async () => {
-    mockPrisma.favorite.findUnique.mockResolvedValue({
+  it('should return favorite status accurately for both favorited and non-favorited available listings (BUG-09)', async () => {
+    mockPrisma.favorite.findUnique.mockResolvedValueOnce({
       id: 'fav-1',
       createdAt: new Date(),
-      listing: {
-        deletedAt: null,
-        publicationStatus: 'published',
-        availabilityStatus: 'available',
-      },
+    });
+    mockPrisma.listing.findUnique.mockResolvedValueOnce({
+      deletedAt: null,
+      publicationStatus: 'published',
+      moderationStatus: 'approved',
+      availabilityStatus: 'available',
     });
 
     const status = await service.getFavoriteStatus('user-1', 'list-1');
     expect(status.isFavorite).toBe(true);
     expect(status.isListingAvailable).toBe(true);
+
+    // Non-favorited but available listing must still report isListingAvailable: true
+    mockPrisma.favorite.findUnique.mockResolvedValueOnce(null);
+    mockPrisma.listing.findUnique.mockResolvedValueOnce({
+      deletedAt: null,
+      publicationStatus: 'published',
+      moderationStatus: 'approved',
+      availabilityStatus: 'available',
+    });
+
+    const unfavoritedStatus = await service.getFavoriteStatus(
+      'user-1',
+      'list-2',
+    );
+    expect(unfavoritedStatus.isFavorite).toBe(false);
+    expect(unfavoritedStatus.isListingAvailable).toBe(true);
   });
 
   it('should toggle favorite off if already exists', async () => {

@@ -1,8 +1,12 @@
 # 02 — Database Design & Prisma Schema
 
-## Migration
-- **Migration:** `prisma/migrations/20261121213256_add_activity_hub_domains/migration.sql`
-- **Status:** Non-destructive additive migration (creates 5 new tables and adds `favorites_listing_id_idx`).
+## Migrations
+- **Initial Migration:** `prisma/migrations/20261121213256_add_activity_hub_domains/migration.sql` (additive: creates 6 new tables — `bookings`, `rfq_requests`, `rfq_items`, `quotations`, `quotation_items`, `cart_items` — and adds `favorites_listing_id_idx`).
+- **Stabilization Migration (2026-11-22):** `prisma/migrations/20261122000001_stabilize_activity_hub_constraints_and_outbox/migration.sql` (additive):
+  - Adds `outbox_events` retry/recovery columns (`retry_count`, `max_retries`, `next_retry_at`, `locked_at`) and composite index `(status, next_retry_at, created_at)`.
+  - Adds `quotations.status_reason` and expiry scan indexes `rfq_requests(status, expires_at)` and `quotations(status, valid_until)`.
+  - Adds foreign keys `bookings.cancelled_by_user_id -> users(id)` (`ON DELETE SET NULL`) and `rfq_requests.accepted_quotation_id -> quotations(id)` (`ON DELETE SET NULL`, unique).
+  - Adds DB-level partial unique concurrency guards: `uq_bookings_provider_confirmed_slot` (`WHERE status = 'CONFIRMED'`) and `uq_quotations_rfq_single_accepted` (`WHERE status = 'ACCEPTED'`).
 
 ## Tables & Models
 

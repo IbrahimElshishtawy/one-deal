@@ -35,20 +35,29 @@ export class ActivityHubService {
       query.include && query.include.length > 0 ? query.include : ALL_SECTIONS,
     );
 
+    const hasCategoryFilter = Boolean(query.categoryId || query.categorySlug);
+    const reuseCartCount = includeSet.has('cart') && !hasCategoryFilter;
+    const reuseFavoritesCount =
+      includeSet.has('favorites') && !hasCategoryFilter;
+
     const [
-      cartItemsCount,
+      cartItemsCountRaw,
       activeBookingsCount,
       activeRfqCount,
-      favoritesCount,
+      favoritesCountRaw,
       cartResult,
       bookingsResult,
       rfqsResult,
       favoritesResult,
     ] = await Promise.all([
-      this.cartService.getCartItemsCount(userId),
+      reuseCartCount
+        ? Promise.resolve(null)
+        : this.cartService.getCartItemsCount(userId),
       this.bookingsService.getActiveBookingsCount(userId),
       this.rfqService.getActiveRfqCount(userId),
-      this.favoritesService.getFavoritesCount(userId),
+      reuseFavoritesCount
+        ? Promise.resolve(null)
+        : this.favoritesService.getFavoritesCount(userId),
       includeSet.has('cart')
         ? this.cartService.getCart(userId, {
             page,
@@ -84,6 +93,10 @@ export class ActivityHubService {
           })
         : Promise.resolve(null),
     ]);
+
+    const cartItemsCount = cartItemsCountRaw ?? cartResult?.meta?.total ?? 0;
+    const favoritesCount =
+      favoritesCountRaw ?? favoritesResult?.meta?.total ?? 0;
 
     return {
       summary: {

@@ -40,7 +40,9 @@ export class UpdateRfqDto {
   @IsUUID()
   categoryId?: string;
 
-  @ApiPropertyOptional({ example: 'القاهرة الجديدة - التجمع الخامس - الحي الثالث' })
+  @ApiPropertyOptional({
+    example: 'القاهرة الجديدة - التجمع الخامس - الحي الثالث',
+  })
   @IsOptional()
   @IsString()
   @MinLength(3)

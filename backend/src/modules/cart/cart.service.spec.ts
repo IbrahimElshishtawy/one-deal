@@ -121,4 +121,92 @@ describe('CartService', () => {
       service.addItem('member-user-1', { listingId: 'list-1', quantity: 1 }),
     ).rejects.toThrow(BadRequestException);
   });
+
+  it('should recover atomically from concurrent P2002 race on addItem (BUG-11)', async () => {
+    mockPrisma.listing.findUnique.mockResolvedValue({
+      id: 'list-1',
+      price: 100,
+      currency: 'EGP',
+      deletedAt: null,
+      publicationStatus: 'published',
+      moderationStatus: 'approved',
+      availabilityStatus: 'available',
+      account: { ownerUserId: 'seller-1', members: [] },
+    });
+    mockPrisma.cartItem.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'ci-concurrent', quantity: 2 });
+    mockPrisma.cartItem.create.mockRejectedValueOnce({ code: 'P2002' });
+    mockPrisma.cartItem.update.mockResolvedValueOnce({
+      id: 'ci-concurrent',
+      quantity: 3,
+    });
+
+    const res = await service.addItem('buyer-1', {
+      listingId: 'list-1',
+      quantity: 1,
+    });
+    expect(res.quantity).toBe(3);
+  });
+
+  it('should compute full-basket estimatedSubtotal across all pages (BUG-10)', async () => {
+    mockPrisma.cartItem.count.mockResolvedValue(2);
+    mockPrisma.cartItem.findMany
+      .mockResolvedValueOnce([
+        {
+          id: 'ci-1',
+          listingId: 'list-1',
+          quantity: 1,
+          variantKey: 'default',
+          variantAttributes: {},
+          unitPriceSnapshot: 100,
+          currency: 'EGP',
+          notes: null,
+          updatedAt: new Date(),
+          listing: {
+            id: 'list-1',
+            title: 'Item 1',
+            price: 100,
+            currency: 'EGP',
+            listingKind: 'product',
+            publicationStatus: 'published',
+            availabilityStatus: 'available',
+            deletedAt: null,
+            category: { id: 'c1', slug: 's', nameAr: 'a', nameEn: 'e' },
+            account: {
+              id: 'a1',
+              displayName: 'Seller',
+              accountType: 'store',
+              verificationStatus: 'approved',
+            },
+            media: [],
+          },
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          quantity: 1,
+          listing: {
+            price: 100,
+            deletedAt: null,
+            publicationStatus: 'published',
+            availabilityStatus: 'available',
+          },
+        },
+        {
+          quantity: 2,
+          listing: {
+            price: 250,
+            deletedAt: null,
+            publicationStatus: 'published',
+            availabilityStatus: 'available',
+          },
+        },
+      ]);
+
+    const res = await service.getCart('buyer-1', { page: 1, limit: 1 });
+    expect(res.data.items).toHaveLength(1);
+    expect(res.data.estimatedSubtotal).toBe(600);
+    expect(res.meta.total).toBe(2);
+  });
 });
