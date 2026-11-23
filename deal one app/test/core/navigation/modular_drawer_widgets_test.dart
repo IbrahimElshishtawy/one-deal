@@ -235,6 +235,14 @@ void main() {
         expect(find.byKey(Key('deal_one_navigation_drawer_$slug')), findsOneWidget);
         expect(find.byKey(const Key('drawer_account_header')), findsOneWidget);
         expect(find.byKey(const Key('drawer_category_switcher_section')), findsOneWidget);
+
+        await tester.scrollUntilVisible(
+          find.byKey(const Key('drawer_footer_widget')),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+
         expect(find.byKey(const Key('drawer_account_management_section')), findsOneWidget);
         expect(find.byKey(const Key('drawer_support_legal_section')), findsOneWidget);
         expect(find.byKey(const Key('drawer_footer_widget')), findsOneWidget);
