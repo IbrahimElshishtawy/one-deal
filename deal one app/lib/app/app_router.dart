@@ -320,6 +320,8 @@ class AppRouter {
           pageBuilder: (context, state) {
             final slug = state.pathParameters['categorySlug'] ?? 'real-estate';
             final mode = state.pathParameters['mode'] ?? 'listings';
+            final tabParam = state.uri.queryParameters['tab'];
+            final initialTabIndex = tabParam == 'incoming' ? 1 : 0;
             return AppPageTransitions.buildCinematicPage(
               context: context,
               state: state,
@@ -327,6 +329,7 @@ class AppRouter {
               child: SellerManagementPage(
                 categorySlug: slug,
                 mode: mode,
+                initialTabIndex: initialTabIndex,
               ),
             );
           },

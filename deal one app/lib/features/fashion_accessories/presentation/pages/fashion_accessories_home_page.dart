@@ -13,6 +13,7 @@ import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/utils/responsive_utils.dart';
 import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
+import 'package:market_space/core/navigation/drawer/config/categories/fashion_drawer.dart';
 import 'package:market_space/core/navigation/presentation/widgets/deal_one_section_bottom_nav.dart';
 import 'package:market_space/features/search/data/dto/search_dto.dart';
 import 'package:market_space/features/search/presentation/providers/search_providers.dart';
@@ -121,6 +122,7 @@ class _FashionAccessoriesHomePageState
       backgroundColor:
           isDark ? AppColors.darkBackground : DealOneDesignColors.canvasLight,
       extendBody: true,
+      drawer: const FashionDrawer(),
       bottomNavigationBar: const DealOneSectionBottomNav(
         sectionId: FashionAccessoriesHomePage.sectionSlug,
         activeTabId: 'home',

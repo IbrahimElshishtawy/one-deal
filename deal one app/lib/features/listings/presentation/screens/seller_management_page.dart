@@ -28,11 +28,13 @@ import 'package:market_space/features/maps/domain/entities/map_category_config.d
 class SellerManagementPage extends ConsumerStatefulWidget {
   final String categorySlug;
   final String mode; // 'listings' | 'services' | 'products'
+  final int initialTabIndex;
 
   const SellerManagementPage({
     super.key,
     required this.categorySlug,
     required this.mode,
+    this.initialTabIndex = 0,
   });
 
   @override
@@ -65,7 +67,11 @@ class _SellerManagementPageState extends ConsumerState<SellerManagementPage>
     super.initState();
     _slug = MapCategoryRegistry.normalizeSlug(widget.categorySlug);
     if (_hasSecondaryTab) {
-      _tabController = TabController(length: 2, vsync: this);
+      _tabController = TabController(
+        length: 2,
+        initialIndex: widget.initialTabIndex.clamp(0, 1),
+        vsync: this,
+      );
     }
     _scrollController.addListener(_onScroll);
   }

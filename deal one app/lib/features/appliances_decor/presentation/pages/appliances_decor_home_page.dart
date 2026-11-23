@@ -12,6 +12,7 @@ import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/utils/responsive_utils.dart';
+import 'package:market_space/core/navigation/drawer/config/categories/appliances_drawer.dart';
 import 'package:market_space/core/navigation/presentation/widgets/deal_one_section_bottom_nav.dart';
 import 'package:market_space/features/search/data/dto/search_dto.dart';
 import 'package:market_space/features/search/presentation/providers/search_providers.dart';
@@ -119,6 +120,7 @@ class _AppliancesDecorHomePageState
       backgroundColor:
           isDark ? AppColors.darkBackground : DealOneDesignColors.canvasLight,
       extendBody: true,
+      drawer: const AppliancesDrawer(),
       bottomNavigationBar: const DealOneSectionBottomNav(
         sectionId: AppliancesDecorHomePage.sectionSlug,
         activeTabId: 'home',

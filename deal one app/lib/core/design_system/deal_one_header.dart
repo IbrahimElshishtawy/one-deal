@@ -223,8 +223,15 @@ class DealOneHomeHeader extends ConsumerWidget {
           ),
           SizedBox(width: isSmall ? 6 : 8),
 
-          // Left button 2: Menu / Back to Main Hub
-          if (showBackToHub)
+          // Left button 2: Dynamic Navigation Drawer (when Scaffold has a drawer) or Back/Language fallback
+          if (Scaffold.maybeOf(context)?.hasDrawer == true)
+            _DealOneSquareIconButton(
+              icon: Icons.menu_rounded,
+              tooltip: isArabic ? 'القائمة' : 'Menu',
+              size: isSmall ? 38 : 42,
+              onTap: () => Scaffold.of(context).openDrawer(),
+            )
+          else if (showBackToHub)
             _DealOneSquareIconButton(
               icon: Icons.menu_rounded,
               tooltip: isArabic ? 'العودة للرئيسية' : 'Back to Main Hub',

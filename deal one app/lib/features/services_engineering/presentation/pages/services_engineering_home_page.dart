@@ -14,6 +14,7 @@ import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/utils/responsive_utils.dart';
 import 'package:market_space/features/activity_hub/domain/entities/booking_entity.dart';
 import 'package:market_space/features/activity_hub/presentation/widgets/bookings/booking_request_sheet.dart';
+import 'package:market_space/core/navigation/drawer/config/categories/services_drawer.dart';
 import 'package:market_space/core/navigation/presentation/widgets/deal_one_section_bottom_nav.dart';
 import 'package:market_space/features/main_hub/presentation/widgets/main_hub_service_card.dart';
 import 'package:market_space/features/search/data/dto/search_dto.dart';
@@ -124,6 +125,7 @@ class _ServicesEngineeringHomePageState
       backgroundColor:
           isDark ? AppColors.darkBackground : DealOneDesignColors.canvasLight,
       extendBody: true,
+      drawer: const ServicesDrawer(),
       bottomNavigationBar: const DealOneSectionBottomNav(
         sectionId: ServicesEngineeringHomePage.sectionSlug,
         activeTabId: 'home',
