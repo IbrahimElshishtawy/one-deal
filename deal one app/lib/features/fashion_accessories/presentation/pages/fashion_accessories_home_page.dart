@@ -7,6 +7,9 @@ import 'package:market_space/core/design_system/deal_one_promo_banner.dart';
 import 'package:market_space/core/design_system/deal_one_search_bar.dart';
 import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
 import 'package:market_space/core/design_system/server_driven_filter_sheet.dart';
+import 'package:market_space/core/home/widgets/recently_viewed_section_widget.dart';
+import 'package:market_space/core/home/widgets/role_based_business_section.dart';
+import 'package:market_space/core/home/widgets/suppliers_strip_section.dart';
 import 'package:market_space/core/marketplace/section_home_controller.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
@@ -157,6 +160,11 @@ class _FashionAccessoriesHomePageState
                   activeFilterCount: state.filters.activeFilterCount,
                   onSearchTap: _openSearch,
                   onFilterTap: () => _openFilterSheet(state),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: RoleBasedBusinessSection(
+                  categorySlug: FashionAccessoriesHomePage.sectionSlug,
                 ),
               ),
               if (state.isInitialLoading && feed == null)
@@ -376,7 +384,24 @@ class _FashionAccessoriesHomePageState
                     ),
                   ),
                 ],
+                if (feed.providers.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SuppliersStripSection(
+                      sectionKey: 'fashion_sellers',
+                      title: isArabic ? 'أشهر المتاجر والبائعين' : 'Popular Sellers',
+                      actionLabel: isArabic ? 'عرض الكل' : 'View All',
+                      providers: feed.providers,
+                      onActionTap: _openSearch,
+                    ),
+                  ),
               ],
+              const SliverToBoxAdapter(
+                child: RecentlyViewedSectionWidget(
+                  categorySlug: FashionAccessoriesHomePage.sectionSlug,
+                  titleAr: 'أزياء شاهدتها مؤخراً',
+                  titleEn: 'Recently Viewed',
+                ),
+              ),
               const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],
           ),

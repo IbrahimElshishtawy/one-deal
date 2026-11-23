@@ -7,6 +7,7 @@ import 'package:market_space/core/design_system/deal_one_promo_banner.dart';
 import 'package:market_space/core/design_system/deal_one_search_bar.dart';
 import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
 import 'package:market_space/core/design_system/server_driven_filter_sheet.dart';
+import 'package:market_space/core/home/widgets/role_based_business_section.dart';
 import 'package:market_space/core/marketplace/section_home_controller.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
@@ -160,6 +161,11 @@ class _ServicesEngineeringHomePageState
                   activeFilterCount: state.filters.activeFilterCount,
                   onSearchTap: _openSearch,
                   onFilterTap: () => _openFilterSheet(state),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: RoleBasedBusinessSection(
+                  categorySlug: ServicesEngineeringHomePage.sectionSlug,
                 ),
               ),
               if (state.isInitialLoading && feed == null)

@@ -6,6 +6,8 @@ import 'package:market_space/core/design_system/deal_one_header.dart';
 import 'package:market_space/core/design_system/deal_one_search_bar.dart';
 import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
 import 'package:market_space/core/design_system/server_driven_filter_sheet.dart';
+import 'package:market_space/core/home/widgets/recently_viewed_section_widget.dart';
+import 'package:market_space/core/home/widgets/role_based_business_section.dart';
 import 'package:market_space/core/marketplace/section_home_controller.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
@@ -139,6 +141,53 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                   activeFilterCount: state.filters.activeFilterCount,
                   onSearchTap: _openSearch,
                   onFilterTap: () => _openFilterSheet(state),
+                ),
+              ),
+
+              // 2.5 Role-Based Business Overview (Activated Real Estate Sellers only)
+              const SliverToBoxAdapter(
+                child: RoleBasedBusinessSection(
+                  categorySlug: RealEstateHomePage.sectionSlug,
+                ),
+              ),
+
+              // 2.6 Quick Sale / Rent Switcher
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(hPad, 6, hPad, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _RealEstateChip(
+                          label: isArabic ? 'الكل' : 'All',
+                          selected: state.filters.listingKind == null,
+                          onTap: () => controller.applyFilters(
+                            state.filters.copyWith(clearListingKind: true),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _RealEstateChip(
+                          label: isArabic ? 'للبيع' : 'For Sale',
+                          selected: state.filters.listingKind == 'sale',
+                          onTap: () => controller.applyFilters(
+                            state.filters.copyWith(listingKind: 'sale'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _RealEstateChip(
+                          label: isArabic ? 'للإيجار' : 'For Rent',
+                          selected: state.filters.listingKind == 'rent',
+                          onTap: () => controller.applyFilters(
+                            state.filters.copyWith(listingKind: 'rent'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -325,6 +374,14 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                   ),
                 ],
               ],
+
+              const SliverToBoxAdapter(
+                child: RecentlyViewedSectionWidget(
+                  categorySlug: RealEstateHomePage.sectionSlug,
+                  titleAr: 'عقارات شاهدتها مؤخراً',
+                  titleEn: 'Recently Viewed Properties',
+                ),
+              ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],

@@ -7,6 +7,8 @@ import 'package:market_space/core/design_system/deal_one_promo_banner.dart';
 import 'package:market_space/core/design_system/deal_one_search_bar.dart';
 import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
 import 'package:market_space/core/design_system/server_driven_filter_sheet.dart';
+import 'package:market_space/core/home/widgets/role_based_business_section.dart';
+import 'package:market_space/core/home/widgets/suppliers_strip_section.dart';
 import 'package:market_space/core/marketplace/section_home_controller.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
@@ -152,6 +154,11 @@ class _ConstructionElectricalHomePageState
                   activeFilterCount: state.filters.activeFilterCount,
                   onSearchTap: _openSearch,
                   onFilterTap: () => _openFilterSheet(state),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: RoleBasedBusinessSection(
+                  categorySlug: ConstructionElectricalHomePage.sectionSlug,
                 ),
               ),
               if (state.isInitialLoading && feed == null)
@@ -355,6 +362,17 @@ class _ConstructionElectricalHomePageState
                   ),
                 ],
 
+                if (feed.providers.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SuppliersStripSection(
+                      sectionKey: 'building_materials_suppliers',
+                      title: isArabic ? 'موردون بالقرب منك' : 'Nearby Suppliers',
+                      actionLabel: isArabic ? 'عرض الكل' : 'View All',
+                      providers: feed.providers,
+                      onActionTap: _openSearch,
+                    ),
+                  ),
+
                 // Bottom Contractor Bulk Order RFQ Banner (matching PNG)
                 SliverToBoxAdapter(
                   child: Container(
@@ -405,7 +423,13 @@ class _ConstructionElectricalHomePageState
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              onPressed: _openSearch,
+                              onPressed: () => context.push(
+                                RouteNames.activityHubFor(
+                                  tab: 'rfq',
+                                  categorySlug:
+                                      ConstructionElectricalHomePage.sectionSlug,
+                                ),
+                              ),
                               icon: const Icon(
                                 Icons.description_outlined,
                                 size: 18,

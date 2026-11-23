@@ -7,6 +7,8 @@ import 'package:market_space/core/design_system/deal_one_promo_banner.dart';
 import 'package:market_space/core/design_system/deal_one_search_bar.dart';
 import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
 import 'package:market_space/core/design_system/server_driven_filter_sheet.dart';
+import 'package:market_space/core/home/widgets/role_based_business_section.dart';
+import 'package:market_space/core/home/widgets/suppliers_strip_section.dart';
 import 'package:market_space/core/marketplace/section_home_controller.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
@@ -143,6 +145,11 @@ class _CarsMaintenanceHomePageState
                   onFilterTap: () => _openFilterSheet(state),
                 ),
               ),
+              const SliverToBoxAdapter(
+                child: RoleBasedBusinessSection(
+                  categorySlug: CarsMaintenanceHomePage.sectionSlug,
+                ),
+              ),
               if (state.isInitialLoading && feed == null)
                 const SliverToBoxAdapter(
                   child: Column(
@@ -193,19 +200,18 @@ class _CarsMaintenanceHomePageState
                     onChanged: (idx) {
                       setState(() => _activeSegment = idx);
                       if (idx == 1) {
-                        final partsSub = subs
-                            .where((s) => s.slug.contains('part'))
-                            .firstOrNull;
-                        if (partsSub != null) {
-                          controller.applyFilters(
-                            state.filters.copyWith(
-                              subcategorySlug: partsSub.slug,
-                            ),
-                          );
-                        }
+                        controller.applyFilters(
+                          state.filters.copyWith(
+                            listingKind: 'service',
+                            clearSubcategory: true,
+                          ),
+                        );
                       } else {
                         controller.applyFilters(
-                          state.filters.copyWith(clearSubcategory: true),
+                          state.filters.copyWith(
+                            clearListingKind: true,
+                            clearSubcategory: true,
+                          ),
                         );
                       }
                     },
@@ -395,6 +401,18 @@ class _CarsMaintenanceHomePageState
                     ),
                   ),
                 ],
+                if (feed.providers.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SuppliersStripSection(
+                      sectionKey: 'cars_service_centers',
+                      title: isArabic
+                          ? 'مراكز الصيانة والمعارض المعتمدة'
+                          : 'Nearby Service Centers & Showrooms',
+                      actionLabel: isArabic ? 'عرض الكل' : 'View All',
+                      providers: feed.providers,
+                      onActionTap: _openSearch,
+                    ),
+                  ),
               ],
               const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],

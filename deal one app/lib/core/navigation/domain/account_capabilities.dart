@@ -15,6 +15,7 @@ enum NavigationCapability {
   manageEngineeringServices,
   manageBuildingMaterialsProducts,
   manageAppliancesListings,
+  manageAutomotiveListings,
   manageAutomotiveMaintenanceServices,
   manageFashionListings,
   useSavedCart,
@@ -172,9 +173,17 @@ class AccountCapabilities {
       const {'individual', 'store', 'company', 'factory'}
           .contains(normalizedAccountType);
 
+  /// Automotive car/parts sales capability (individuals, showrooms/stores, companies).
+  /// Strictly separated from [canManageAutomotiveMaintenanceServices].
+  bool get canManageAutomotiveListings =>
+      hasVerifiedListingManagementRole &&
+      const {'individual', 'store', 'company'}.contains(normalizedAccountType);
+
+  /// Automotive maintenance & workshop service capability (service offices/centers & companies).
+  /// Strictly separated from [canManageAutomotiveListings].
   bool get canManageAutomotiveMaintenanceServices =>
       hasVerifiedListingManagementRole &&
-      const {'company', 'store', 'office'}.contains(normalizedAccountType);
+      const {'company', 'office'}.contains(normalizedAccountType);
 
   bool get canManageFashionListings =>
       hasVerifiedListingManagementRole &&
@@ -196,6 +205,8 @@ class AccountCapabilities {
         return canManageBuildingMaterialsProducts;
       case NavigationCapability.manageAppliancesListings:
         return canManageAppliancesListings;
+      case NavigationCapability.manageAutomotiveListings:
+        return canManageAutomotiveListings;
       case NavigationCapability.manageAutomotiveMaintenanceServices:
         return canManageAutomotiveMaintenanceServices;
       case NavigationCapability.manageFashionListings:
@@ -228,7 +239,12 @@ class AccountCapabilities {
 
   /// Returns true if the current user is an activated seller/provider for [sectionId].
   bool isActivatedSellerForSection(String sectionId) {
-    final cap = sellerCapabilityForSection(sectionId);
+    final normalized = MapCategoryRegistry.normalizeSlug(sectionId);
+    if (normalized == MapCategoryRegistry.carsSlug) {
+      return canManageAutomotiveListings ||
+          canManageAutomotiveMaintenanceServices;
+    }
+    final cap = sellerCapabilityForSection(normalized);
     if (cap == NavigationCapability.none) return false;
     return hasCapability(cap);
   }
