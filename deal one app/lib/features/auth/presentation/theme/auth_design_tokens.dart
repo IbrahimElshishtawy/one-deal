@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'package:market_space/core/constants/app_constants.dart';
+
 /// Visual & spacing tokens extracted from the 7 Deal One authentication
 /// design PNGs on a standardized 4/8pt layout rhythm, with dark-mode support.
 class AuthDesignTokens {
   AuthDesignTokens._();
 
-  static const String logoAssetPath = 'assets/image/logo.png';
+  static const String logoAssetPath = AppConstants.logoAssetPath;
 
   // Brand & Semantic Accents from Design Reference
   static const Color navyPrimary = Color(0xFF1D2B44);

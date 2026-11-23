@@ -10,13 +10,13 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Deal One';
+  String get appTitle => 'DealOne';
 
   @override
-  String get brandNameAr => 'Deal One';
+  String get brandNameAr => 'DealOne';
 
   @override
-  String get brandNameEn => 'DEAL ONE';
+  String get brandNameEn => 'DealOne';
 
   @override
   String get retry => 'Retry';

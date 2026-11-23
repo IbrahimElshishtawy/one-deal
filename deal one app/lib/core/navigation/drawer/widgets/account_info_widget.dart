@@ -22,7 +22,7 @@ class AccountInfoWidget extends StatelessWidget {
         ? (activeAcc?.displayName.isNotEmpty == true
             ? activeAcc!.displayName
             : (userName ?? (isArabic ? 'حسابي' : 'My Account')))
-        : (isArabic ? 'زائر ديل ون' : 'Deal One Guest');
+        : (isArabic ? 'زائر DealOne' : 'DealOne Guest');
 
     return Column(
       key: const Key('drawer_account_info'),

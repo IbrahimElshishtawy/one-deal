@@ -10,13 +10,13 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'ديل ون';
+  String get appTitle => 'DealOne';
 
   @override
   String get brandNameAr => 'ديل ون';
 
   @override
-  String get brandNameEn => 'DEAL ONE';
+  String get brandNameEn => 'DealOne';
 
   @override
   String get retry => 'إعادة المحاولة';

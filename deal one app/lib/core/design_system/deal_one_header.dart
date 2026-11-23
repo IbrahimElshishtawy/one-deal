@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:market_space/core/design_system/deal_one_logo.dart';
 import 'package:market_space/features/listings/presentation/widgets/location_selector_sheet.dart';
 import 'package:market_space/features/locations/presentation/providers/locations_providers.dart';
 import 'package:market_space/core/providers/app_settings_providers.dart';
@@ -100,12 +101,10 @@ class DealOneHomeHeader extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    child: Image.asset(
-                      'assets/image/logo.png',
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => const Center(
+                    child: const DealOneLogo(
+                      fallback: Center(
                         child: Text(
-                          'ديل ون',
+                          'DealOne',
                           style: TextStyle(
                             fontSize: 6.5,
                             fontWeight: FontWeight.w900,

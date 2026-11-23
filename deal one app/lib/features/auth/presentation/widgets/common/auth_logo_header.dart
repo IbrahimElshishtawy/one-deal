@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'package:market_space/core/design_system/deal_one_logo.dart';
 import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
 
-/// Displays the official Deal One emblem (`assets/image/logo.png`) cleanly without
+/// Displays the official DealOne emblem (`assets/image/logo.png`) cleanly without
 /// an enclosing box, paired with localized heading and subtitle copy.
 class AuthLogoHeader extends StatelessWidget {
   final String title;
@@ -25,48 +26,9 @@ class AuthLogoHeader extends StatelessWidget {
           tag: 'deal_one_auth_logo',
           child: Material(
             type: MaterialType.transparency,
-            child: DecoratedBox(
-              decoration: AuthDesignTokens.isDark(context)
-                  ? BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.22),
-                          Colors.white.withValues(alpha: 0.06),
-                          Colors.transparent,
-                        ],
-                        stops: const [0.0, 0.58, 1.0],
-                      ),
-                    )
-                  : const BoxDecoration(),
-              child: SizedBox(
-                height: logoSize,
-                child: Image.asset(
-                  AuthDesignTokens.logoAssetPath,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.handshake_outlined,
-                          size: logoSize * 0.55,
-                          color: AuthDesignTokens.primaryActionOf(context),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'ديل ون',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: AuthDesignTokens.headingOf(context),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
+            child: DealOneLogo(
+              height: logoSize,
+              showDarkModeGlow: true,
             ),
           ),
         ),

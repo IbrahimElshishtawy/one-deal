@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:market_space/core/design_system/deal_one_logo.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/features/auth/domain/entities/auth_session.dart';
 import 'package:market_space/features/auth/presentation/l10n/auth_l10n_extension.dart';
@@ -66,20 +67,25 @@ class _VerificationSuccessPageState
         children: [
           Column(
             children: [
+              const DealOneLogo(
+                height: 68,
+                showDarkModeGlow: true,
+              ),
+              const SizedBox(height: AuthDesignTokens.spaceXs),
               Text(
                 l10n.brandNameAr,
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.w900,
                   color: AuthDesignTokens.headingOf(context),
                   height: 1.1,
                 ),
               ),
-              const SizedBox(height: AuthDesignTokens.spaceXs),
+              const SizedBox(height: 2),
               Text(
                 l10n.brandNameEn,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
                   color: AuthDesignTokens.headingOf(context),
@@ -87,9 +93,9 @@ class _VerificationSuccessPageState
               ),
             ],
           ),
-          const SizedBox(height: AuthDesignTokens.space3xl),
+          const SizedBox(height: AuthDesignTokens.spaceLg),
           const SuccessBadgeWidget(),
-          const SizedBox(height: AuthDesignTokens.spaceXl),
+          const SizedBox(height: AuthDesignTokens.spaceBase),
           Text(
             l10n.successTitle,
             textAlign: TextAlign.center,
@@ -111,7 +117,7 @@ class _VerificationSuccessPageState
               height: 1.65,
             ),
           ),
-          const SizedBox(height: AuthDesignTokens.space2xl),
+          const SizedBox(height: AuthDesignTokens.spaceLg),
           AuthPrimaryButton(
             key: const Key('verification_success_continue_button'),
             label: l10n.successContinueButton,

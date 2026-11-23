@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:market_space/app/splash_screen.dart';
 import 'package:market_space/core/navigation/presentation/widgets/deal_one_navigation_shell.dart';
 import 'package:market_space/core/routing/app_page_transitions.dart';
 import 'package:market_space/core/routing/route_guards.dart';
@@ -57,6 +58,23 @@ class AppRouter {
           : (context, state) =>
                 routeGuard.evaluateRedirect(context, state.uri.toString()),
       routes: [
+        GoRoute(
+          path: RouteNames.splash,
+          name: RouteNames.splashName,
+          pageBuilder: (context, state) {
+            final next = state.uri.queryParameters['next'];
+            final nextRoute =
+                (next != null && next.startsWith('/') && next != RouteNames.splash)
+                ? next
+                : RouteNames.root;
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.reveal,
+              child: SplashScreen(nextRoute: nextRoute),
+            );
+          },
+        ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) =>
               DealOneNavigationShell(navigationShell: navigationShell),

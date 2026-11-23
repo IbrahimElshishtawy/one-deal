@@ -101,19 +101,19 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Deal One'**
+  /// **'DealOne'**
   String get appTitle;
 
   /// No description provided for @brandNameAr.
   ///
   /// In en, this message translates to:
-  /// **'Deal One'**
+  /// **'DealOne'**
   String get brandNameAr;
 
   /// No description provided for @brandNameEn.
   ///
   /// In en, this message translates to:
-  /// **'DEAL ONE'**
+  /// **'DealOne'**
   String get brandNameEn;
 
   /// No description provided for @retry.

@@ -31,7 +31,7 @@ class SectionNavigationRegistry {
 
   static const SectionNavigationConfig defaultConfig = SectionNavigationConfig(
     sectionId: 'deal_one',
-    sectionName: 'Deal One',
+    sectionName: 'DealOne',
     items: [
       NavigationItemConfig(
         id: homeTabId,

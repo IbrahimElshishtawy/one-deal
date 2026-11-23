@@ -1,5 +1,6 @@
 class AppConstants {
-  static const String appName = 'Market Space';
+  static const String appName = 'DealOne';
+  static const String logoAssetPath = 'assets/image/logo.png';
   static const String defaultLocaleLanguageCode = 'ar';
   static const String defaultLocaleCountryCode = 'EG';
   static const String fallbackLocaleLanguageCode = 'en';

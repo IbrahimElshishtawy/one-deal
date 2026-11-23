@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:market_space/core/constants/app_constants.dart';
+import 'package:market_space/core/design_system/deal_one_logo.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/theme/app_radii.dart';
 import 'package:market_space/core/theme/app_spacing.dart';
@@ -46,26 +48,14 @@ class MarketHeaderBar extends StatelessWidget {
   }
 
   Widget _buildBrand(BuildContext context, bool isCompact) {
+    final logoSize = isCompact ? 36.0 : 40.0;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: isCompact ? 34.0 : 38.0,
-          height: isCompact ? 34.0 : 38.0,
-          decoration: BoxDecoration(
-            color: AppColors.primaryOf(context),
-            borderRadius: const BorderRadius.all(Radius.circular(10.0)),
-          ),
-          child: Center(
-            child: Text(
-              'ب',
-              style: TextStyle(
-                color: AppColors.onPrimaryOf(context),
-                fontSize: 22.0,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
+        DealOneLogo(
+          height: logoSize,
+          width: logoSize,
+          showDarkModeGlow: true,
         ),
         const SizedBox(width: AppSpacing.xs + 2),
         Expanded(
@@ -74,7 +64,7 @@ class MarketHeaderBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'بازار جو',
+                AppConstants.appName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

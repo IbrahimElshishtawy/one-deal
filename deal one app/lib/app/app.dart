@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:market_space/core/constants/app_constants.dart';
 import 'package:market_space/core/providers/app_settings_providers.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_guards.dart';
@@ -39,10 +40,14 @@ class _MarketSpaceAppState extends ConsumerState<MarketSpaceApp> {
   void initState() {
     super.initState();
     final appConfig = ref.read(appConfigProvider);
-    final initialRoute =
+    final nextRoute =
         (appConfig.startOnHome || widget.dependencies.onboardingCompleted)
         ? RouteNames.root
         : RouteNames.onboarding;
+    final initialRoute = Uri(
+      path: RouteNames.splash,
+      queryParameters: {'next': nextRoute},
+    ).toString();
     final routeGuard = SessionRouteGuard(
       tokenProvider: ref.read(tokenProvider),
       isAuthenticatedProvider: () => ref.read(sessionProvider).isAuthenticated,
@@ -75,7 +80,7 @@ class _MarketSpaceAppState extends ConsumerState<MarketSpaceApp> {
     return AppDependenciesScope(
       dependencies: widget.dependencies,
       child: MaterialApp.router(
-        title: 'Deal One (صفقة ون)',
+        title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
         routerConfig: _router,
         locale: currentLocale,

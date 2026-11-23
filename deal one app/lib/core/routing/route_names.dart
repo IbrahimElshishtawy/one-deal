@@ -1,4 +1,5 @@
 class RouteNames {
+  static const String splash = '/splash';
   static const String root = '/';
   static const String realEstate = '/real-estate';
   static const String realEstateDetail = '/real-estate/detail';
@@ -100,6 +101,7 @@ class RouteNames {
   static const String privacyName = 'privacy';
   static const String loginName = 'login';
 
+  static const String splashName = 'splash';
   static const String rootName = 'root';
   static const String realEstateName = 'real_estate';
   static const String realEstateDetailName = 'real_estate_detail';

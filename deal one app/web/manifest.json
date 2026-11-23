@@ -1,6 +1,6 @@
 {
-    "name": "market_space",
-    "short_name": "market_space",
+    "name": "DealOne",
+    "short_name": "DealOne",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
