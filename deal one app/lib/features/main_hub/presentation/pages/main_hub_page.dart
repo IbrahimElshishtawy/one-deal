@@ -6,6 +6,7 @@ import 'package:market_space/core/design_system/deal_one_header.dart';
 import 'package:market_space/core/design_system/deal_one_promo_banner.dart';
 import 'package:market_space/core/design_system/deal_one_search_bar.dart';
 import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
+import 'package:market_space/core/navigation/presentation/widgets/deal_one_navigation_shell.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
@@ -97,12 +98,15 @@ class _MainHubPageState extends ConsumerState<MainHubPage> {
     final isOffline = ref.watch(isOfflineProvider).valueOrNull ?? false;
 
     final feed = hubState.feed;
+    final insideShell = DealOneNavigationShellScope.isInsideShell(context);
 
     return Scaffold(
       backgroundColor:
           isDark ? AppColors.darkBackground : DealOneDesignColors.canvasLight,
-      extendBody: true,
-      bottomNavigationBar: const DealOneFloatingBottomNav(activeIndex: 0),
+      extendBody: !insideShell,
+      bottomNavigationBar: insideShell
+          ? null
+          : const DealOneFloatingBottomNav(activeIndex: 0),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(

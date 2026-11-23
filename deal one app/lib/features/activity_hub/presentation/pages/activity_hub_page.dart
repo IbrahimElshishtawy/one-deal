@@ -43,6 +43,19 @@ class _ActivityHubPageState extends ConsumerState<ActivityHubPage> {
   }
 
   @override
+  void didUpdateWidget(covariant ActivityHubPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTab != widget.initialTab) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref
+            .read(activityHubControllerProvider.notifier)
+            .selectTab(widget.initialTab);
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();

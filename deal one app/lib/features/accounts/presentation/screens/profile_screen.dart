@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:market_space/core/design_system/deal_one_design_tokens.dart';
 import 'package:market_space/core/design_system/deal_one_ui_states.dart';
+import 'package:market_space/core/navigation/presentation/widgets/deal_one_navigation_shell.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_radii.dart';
@@ -34,11 +35,14 @@ class ProfileScreen extends ConsumerWidget {
     final l10n = context.authL10n;
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final session = ref.watch(sessionProvider);
+    final insideShell = DealOneNavigationShellScope.isInsideShell(context);
 
     if (!session.isAuthenticated) {
       return Scaffold(
         backgroundColor: DealOneTokens.pageBgOf(context),
-        bottomNavigationBar: const ProfileBottomNav(activeIndex: 3),
+        bottomNavigationBar: insideShell
+            ? null
+            : const ProfileBottomNav(activeIndex: 3),
         body: SafeArea(
           child: Column(
             children: [
@@ -104,7 +108,9 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: DealOneTokens.pageBgOf(context),
-      bottomNavigationBar: const ProfileBottomNav(activeIndex: 3),
+      bottomNavigationBar: insideShell
+          ? null
+          : const ProfileBottomNav(activeIndex: 3),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -177,7 +183,7 @@ class ProfileScreen extends ConsumerWidget {
                                 icon: Icons.event_available_outlined,
                                 count: activeViewingsCount,
                                 highlightBadge: true,
-                                onTap: () => context.push(
+                                onTap: () => context.go(
                                   '${RouteNames.activityHub}?tab=bookings',
                                 ),
                               ),
@@ -186,7 +192,7 @@ class ProfileScreen extends ConsumerWidget {
                                 icon: Icons.auto_awesome_outlined,
                                 count: favoriteIds.length,
                                 highlightBadge: false,
-                                onTap: () => context.push(RouteNames.favorites),
+                                onTap: () => context.go(RouteNames.favorites),
                               ),
                               ProfileStatItem(
                                 label: isArabic ? 'المحادثات' : 'Chats',
@@ -217,7 +223,7 @@ class ProfileScreen extends ConsumerWidget {
                                     : 'My Orders & Viewings',
                                 icon: Icons.assignment_outlined,
                                 onTap: () =>
-                                    context.push(RouteNames.activityHub),
+                                    context.go(RouteNames.activityHub),
                               ),
                               ProfileMenuRowItem(
                                 tileKey: const Key('profile_settings_tile'),

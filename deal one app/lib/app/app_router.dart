@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:market_space/core/navigation/presentation/widgets/deal_one_navigation_shell.dart';
 import 'package:market_space/core/routing/app_page_transitions.dart';
 import 'package:market_space/core/routing/route_guards.dart';
 import 'package:market_space/core/routing/route_names.dart';
@@ -41,7 +42,10 @@ class AppRouter {
     Listenable? refreshListenable,
     String initialLocation = RouteNames.root,
   }) {
+    final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+
     return GoRouter(
+      navigatorKey: rootNavigatorKey,
       initialLocation: initialLocation,
       refreshListenable: refreshListenable,
       redirect: routeGuard == null
@@ -49,16 +53,82 @@ class AppRouter {
           : (context, state) =>
                 routeGuard.evaluateRedirect(context, state.uri.toString()),
       routes: [
-        GoRoute(
-          path: RouteNames.root,
-          name: RouteNames.rootName,
-          pageBuilder: (context, state) =>
-              AppPageTransitions.buildCinematicPage(
-                context: context,
-                state: state,
-                style: CinematicTransitionStyle.reveal,
-                child: const MainHubPage(),
-              ),
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) =>
+              DealOneNavigationShell(navigationShell: navigationShell),
+          branches: [
+            // Branch 0: Home (الرئيسية)
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: RouteNames.root,
+                  name: RouteNames.rootName,
+                  pageBuilder: (context, state) =>
+                      AppPageTransitions.buildCinematicPage(
+                        context: context,
+                        state: state,
+                        style: CinematicTransitionStyle.reveal,
+                        child: const MainHubPage(),
+                      ),
+                ),
+              ],
+            ),
+            // Branch 1: Favorites (المفضلة)
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: RouteNames.favorites,
+                  name: RouteNames.favoritesName,
+                  pageBuilder: (context, state) =>
+                      AppPageTransitions.buildCinematicPage(
+                        context: context,
+                        state: state,
+                        child: const ActivityHubPage(
+                          key: ValueKey<String>('shell_favorites_tab'),
+                          initialTab: ActivityHubTab.favorites,
+                        ),
+                      ),
+                ),
+              ],
+            ),
+            // Branch 2: Orders (طلباتي)
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: RouteNames.activityHub,
+                  name: RouteNames.activityHubName,
+                  pageBuilder: (context, state) {
+                    final tab = ActivityHubTab.fromQuery(
+                      state.uri.queryParameters['tab'],
+                    );
+                    return AppPageTransitions.buildCinematicPage(
+                      context: context,
+                      state: state,
+                      child: ActivityHubPage(
+                        key: const ValueKey<String>('shell_orders_tab'),
+                        initialTab: tab,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            // Branch 3: Profile (البروفايل)
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: RouteNames.profile,
+                  name: RouteNames.profileName,
+                  pageBuilder: (context, state) =>
+                      AppPageTransitions.buildCinematicPage(
+                        context: context,
+                        state: state,
+                        child: const ProfileScreen(),
+                      ),
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(
           path: RouteNames.realEstate,
@@ -141,42 +211,6 @@ class AppRouter {
               child: ListingDetailScreen(listingId: id),
             );
           },
-        ),
-        GoRoute(
-          path: RouteNames.activityHub,
-          name: RouteNames.activityHubName,
-          pageBuilder: (context, state) {
-            final tab = ActivityHubTab.fromQuery(
-              state.uri.queryParameters['tab'],
-            );
-            return AppPageTransitions.buildCinematicPage(
-              context: context,
-              state: state,
-              child: ActivityHubPage(initialTab: tab),
-            );
-          },
-        ),
-        GoRoute(
-          path: RouteNames.favorites,
-          name: RouteNames.favoritesName,
-          pageBuilder: (context, state) =>
-              AppPageTransitions.buildCinematicPage(
-                context: context,
-                state: state,
-                child: const ActivityHubPage(
-                  initialTab: ActivityHubTab.favorites,
-                ),
-              ),
-        ),
-        GoRoute(
-          path: RouteNames.profile,
-          name: RouteNames.profileName,
-          pageBuilder: (context, state) =>
-              AppPageTransitions.buildCinematicPage(
-                context: context,
-                state: state,
-                child: const ProfileScreen(),
-              ),
         ),
         GoRoute(
           path: RouteNames.editAccount,
