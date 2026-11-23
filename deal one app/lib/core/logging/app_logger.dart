@@ -88,7 +88,7 @@ class AppLoggerImpl implements AppLogger {
 
     developer.log(
       buffer.toString(),
-      name: 'MarketSpace',
+      name: 'DealOne',
       time: DateTime.now(),
       error: error,
       stackTrace: stackTrace,

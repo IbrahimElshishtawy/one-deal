@@ -12,8 +12,17 @@ final favoritesRepositoryProvider = Provider<FavoritesRepository>((ref) {
 class FavoritesNotifier extends StateNotifier<AsyncValue<List<FavoriteItem>>> {
   final FavoritesRepository _repository;
 
-  FavoritesNotifier(this._repository) : super(const AsyncValue.loading()) {
-    loadFavorites();
+  FavoritesNotifier(
+    this._repository, {
+    bool autoLoad = true,
+  }) : super(
+         autoLoad
+             ? const AsyncValue.loading()
+             : const AsyncValue.data(<FavoriteItem>[]),
+       ) {
+    if (autoLoad) {
+      loadFavorites();
+    }
   }
 
   Future<void> loadFavorites() async {
@@ -45,7 +54,10 @@ class FavoritesNotifier extends StateNotifier<AsyncValue<List<FavoriteItem>>> {
 final favoritesProvider =
     StateNotifierProvider<FavoritesNotifier, AsyncValue<List<FavoriteItem>>>((ref) {
   final repository = ref.watch(favoritesRepositoryProvider);
-  return FavoritesNotifier(repository);
+  final isAuthenticated = ref.watch(
+    sessionProvider.select((s) => s.isAuthenticated),
+  );
+  return FavoritesNotifier(repository, autoLoad: isAuthenticated);
 });
 
 /// Alias for controller access across feature modules.

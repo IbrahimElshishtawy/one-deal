@@ -205,7 +205,9 @@ class SessionNotifier extends Notifier<SessionState> {
   /// with the backend when running in DEVELOPMENT mode. Strictly disabled in Production.
   Future<bool> _tryEstablishDevGuestSession() async {
     final config = ref.read(appConfigProvider);
-    if (!config.enableDevGuestAuth || config.environment.isProduction) {
+    if (!config.enableDevGuestAuth ||
+        config.environment.isProduction ||
+        config.apiBaseUrl == AppConfig.defaultProductionApiBaseUrl) {
       return false;
     }
 
