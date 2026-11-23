@@ -11,7 +11,7 @@ import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/utils/responsive_utils.dart';
-import 'package:market_space/features/listings/presentation/widgets/floating_bottom_nav.dart';
+import 'package:market_space/core/navigation/presentation/widgets/deal_one_section_bottom_nav.dart';
 import 'package:market_space/features/search/data/dto/search_dto.dart';
 import 'package:market_space/features/search/presentation/providers/search_providers.dart';
 import 'package:market_space/features/real_estate/presentation/widgets/property_card.dart';
@@ -99,7 +99,10 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
       backgroundColor:
           isDark ? AppColors.darkBackground : DealOneDesignColors.canvasLight,
       extendBody: true,
-      bottomNavigationBar: const DealOneFloatingBottomNav(activeIndex: 0),
+      bottomNavigationBar: const DealOneSectionBottomNav(
+        sectionId: RealEstateHomePage.sectionSlug,
+        activeTabId: 'home',
+      ),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(

@@ -54,6 +54,8 @@ class RouteNames {
   static const String conversations = '/conversations';
   static const String conversationChat = '/conversations/:id';
   static const String realEstateMap = '/real-estate/map';
+  static const String categoryMap = '/map/:categorySlug';
+  static String categoryMapFor(String slug) => '/map/$slug';
   static const String realEstateGallery = '/real-estate/gallery/:id';
   static const String realEstateReels = '/real-estate/reels';
   static const String search = '/search';
@@ -133,6 +135,7 @@ class RouteNames {
   static const String conversationsName = 'conversations';
   static const String conversationChatName = 'conversation_chat';
   static const String realEstateMapName = 'real_estate_map';
+  static const String categoryMapName = 'category_map';
   static const String realEstateGalleryName = 'real_estate_gallery';
   static const String realEstateReelsName = 'real_estate_reels';
   static const String globalNotificationsName = 'global_notifications';

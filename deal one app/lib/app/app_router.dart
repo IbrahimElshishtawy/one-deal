@@ -26,6 +26,7 @@ import 'package:market_space/features/fashion_accessories/presentation/pages/fas
 import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
 import 'package:market_space/features/listings/presentation/screens/listing_detail_screen.dart';
 import 'package:market_space/features/main_hub/presentation/pages/main_hub_page.dart';
+import 'package:market_space/features/maps/presentation/pages/category_map_page.dart';
 import 'package:market_space/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:market_space/features/real_estate/domain/entities/reel_item_entity.dart';
 import 'package:market_space/features/real_estate/presentation/pages/photo_gallery_page.dart';
@@ -273,6 +274,23 @@ class AppRouter {
               style: CinematicTransitionStyle.verticalLift,
               child: RealEstateMapPage(
                 focusedProperty: extra is ListingItem ? extra : null,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: RouteNames.categoryMap,
+          name: RouteNames.categoryMapName,
+          pageBuilder: (context, state) {
+            final slug = state.pathParameters['categorySlug'] ?? 'real-estate';
+            final extra = state.extra;
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.reveal,
+              child: CategoryMapPage(
+                categorySlug: slug,
+                focusedListing: extra is ListingItem ? extra : null,
               ),
             );
           },
