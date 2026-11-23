@@ -38,6 +38,17 @@ class BookingDto {
   });
 
   factory BookingDto.fromJson(Map<String, dynamic> json) {
+    String resolvedCategory = '';
+    final rawCat = json['category'];
+    if (rawCat is Map) {
+      final parent = rawCat['parent'];
+      resolvedCategory = (parent is Map ? parent['slug']?.toString() : null) ??
+          rawCat['slug']?.toString() ??
+          '';
+    } else if (rawCat != null) {
+      resolvedCategory = rawCat.toString();
+    }
+
     return BookingDto(
       id: json['id']?.toString() ?? '',
       listingId: json['listingId']?.toString() ?? json['listing_id']?.toString(),
@@ -47,7 +58,7 @@ class BookingDto {
           json['providerName']?.toString() ??
           json['provider_name']?.toString() ??
           '',
-      category: json['category']?.toString() ?? '',
+      category: resolvedCategory,
       type: json['type']?.toString() ?? '',
       bookingDate:
           json['bookingDate']?.toString() ?? json['booking_date']?.toString(),

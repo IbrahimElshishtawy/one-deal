@@ -34,6 +34,15 @@ abstract class ListingsRepository {
   /// Creates a new listing
   Future<ListingItem> createListing(CreateListingDto dto);
 
+  /// Updates listing publication status (`published`, `hidden`, `archived`)
+  Future<void> updateListingPublicationStatus(String id, String status);
+
+  /// Updates listing operational availability (`available`, `reserved`, `sold`, `rented`)
+  Future<void> updateListingAvailability(String id, String availabilityStatus);
+
+  /// Submits a draft listing for moderation review
+  Future<void> submitListingForModeration(String id);
+
   /// Soft-deletes a listing
   Future<void> deleteListing(String id);
 }

@@ -157,6 +157,33 @@ class ListingsRepositoryImpl implements ListingsRepository {
   }
 
   @override
+  Future<void> updateListingPublicationStatus(String id, String status) async {
+    await apiClient.patch(
+      ApiEndpoints.listingStatus(id),
+      data: {'status': status},
+    );
+  }
+
+  @override
+  Future<void> updateListingAvailability(
+    String id,
+    String availabilityStatus,
+  ) async {
+    await apiClient.patch(
+      ApiEndpoints.listingAvailability(id),
+      data: {'availabilityStatus': availabilityStatus},
+    );
+  }
+
+  @override
+  Future<void> submitListingForModeration(String id) async {
+    await apiClient.post(
+      ApiEndpoints.submitForModeration(id),
+      data: const <String, dynamic>{},
+    );
+  }
+
+  @override
   Future<void> deleteListing(String id) async {
     await apiClient.delete(ApiEndpoints.listingDetails(id));
   }

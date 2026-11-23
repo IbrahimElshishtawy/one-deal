@@ -45,6 +45,10 @@ class ListingMapper {
       favoritesCount: dto.favoritesCount,
       isFeatured: dto.isFeatured,
       createdAt: parsedDate,
+      accountId: dto.accountId,
+      moderationStatus: dto.moderationStatus,
+      publicationStatus: dto.publicationStatus,
+      availabilityStatus: dto.availabilityStatus,
     );
   }
 

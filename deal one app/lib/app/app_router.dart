@@ -18,13 +18,16 @@ import 'package:market_space/features/auth/presentation/pages/otp_verification/o
 import 'package:market_space/features/auth/presentation/pages/sign_up/sign_up_page.dart';
 import 'package:market_space/features/auth/presentation/pages/verification_success/verification_success_page.dart';
 import 'package:market_space/features/cars_maintenance/presentation/pages/cars_maintenance_home_page.dart';
+import 'package:market_space/features/categories/presentation/screens/section_categories_page.dart';
 import 'package:market_space/features/construction_electrical/presentation/pages/construction_electrical_home_page.dart';
 import 'package:market_space/features/conversations/domain/entities/conversation_entity.dart';
 import 'package:market_space/features/conversations/presentation/pages/conversation_chat_page.dart';
 import 'package:market_space/features/conversations/presentation/pages/conversations_page.dart';
 import 'package:market_space/features/fashion_accessories/presentation/pages/fashion_accessories_home_page.dart';
 import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
+import 'package:market_space/features/listings/presentation/screens/create_listing_page.dart';
 import 'package:market_space/features/listings/presentation/screens/listing_detail_screen.dart';
+import 'package:market_space/features/listings/presentation/screens/seller_management_page.dart';
 import 'package:market_space/features/main_hub/presentation/pages/main_hub_page.dart';
 import 'package:market_space/features/maps/presentation/pages/category_map_page.dart';
 import 'package:market_space/features/notifications/presentation/pages/notifications_page.dart';
@@ -102,12 +105,14 @@ class AppRouter {
                     final tab = ActivityHubTab.fromQuery(
                       state.uri.queryParameters['tab'],
                     );
+                    final categorySlug = state.uri.queryParameters['category'];
                     return AppPageTransitions.buildCinematicPage(
                       context: context,
                       state: state,
                       child: ActivityHubPage(
                         key: const ValueKey<String>('shell_orders_tab'),
                         initialTab: tab,
+                        initialCategorySlug: categorySlug,
                       ),
                     );
                   },
@@ -291,6 +296,55 @@ class AppRouter {
               child: CategoryMapPage(
                 categorySlug: slug,
                 focusedListing: extra is ListingItem ? extra : null,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: RouteNames.sectionCategories,
+          name: RouteNames.sectionCategoriesName,
+          pageBuilder: (context, state) {
+            final slug =
+                state.pathParameters['categorySlug'] ?? 'building-materials';
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.glide,
+              child: SectionCategoriesPage(categorySlug: slug),
+            );
+          },
+        ),
+        GoRoute(
+          path: RouteNames.sellerManagement,
+          name: RouteNames.sellerManagementName,
+          pageBuilder: (context, state) {
+            final slug = state.pathParameters['categorySlug'] ?? 'real-estate';
+            final mode = state.pathParameters['mode'] ?? 'listings';
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.glide,
+              child: SellerManagementPage(
+                categorySlug: slug,
+                mode: mode,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: RouteNames.createListing,
+          name: RouteNames.createListingName,
+          pageBuilder: (context, state) {
+            final slug =
+                state.uri.queryParameters['category'] ?? 'real-estate';
+            final kind = state.uri.queryParameters['kind'] ?? 'sale';
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.verticalLift,
+              child: CreateListingPage(
+                categorySlug: slug,
+                listingKind: kind,
               ),
             );
           },

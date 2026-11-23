@@ -75,6 +75,23 @@ class ApiEndpoints {
   static const String favorites = '/favorites';
   static String favoriteItem(String listingId) => '/favorites/$listingId';
 
+  // Bookings & Appointments
+  static const String bookings = '/bookings';
+  static String bookingById(String id) => '/bookings/$id';
+  static String bookingCancel(String id) => '/bookings/$id/cancel';
+  static String bookingStatus(String id) => '/bookings/$id/status';
+
+  // RFQ & Quotations
+  static const String rfqs = '/rfqs';
+  static String rfqById(String id) => '/rfqs/$id';
+  static String rfqQuotations(String id) => '/rfqs/$id/quotations';
+  static String quotationStatus(String id) => '/quotations/$id/status';
+
+  // Cart (V1 Saved Basket)
+  static const String cart = '/cart';
+  static const String cartItems = '/cart/items';
+  static String cartItem(String id) => '/cart/items/$id';
+
   // Media
   static const String imageUploadUrls = '/media/images/upload-url';
   static const String confirmUpload = '/media/confirm-upload';

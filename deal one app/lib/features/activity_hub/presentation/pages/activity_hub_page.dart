@@ -5,8 +5,10 @@ import 'package:market_space/app/app_localization.dart';
 import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/theme/app_spacing.dart';
 import 'package:market_space/features/activity_hub/application/providers/activity_hub_provider.dart';
+import 'package:market_space/features/activity_hub/application/providers/bookings_provider.dart';
 import 'package:market_space/features/activity_hub/application/providers/cart_provider.dart';
 import 'package:market_space/features/activity_hub/domain/entities/activity_hub_tab.dart';
+import 'package:market_space/features/activity_hub/domain/entities/booking_entity.dart';
 import 'package:market_space/features/activity_hub/presentation/widgets/activity_hub_header.dart';
 import 'package:market_space/features/activity_hub/presentation/widgets/activity_hub_tab_bar.dart';
 import 'package:market_space/features/activity_hub/presentation/widgets/activity_search_bar.dart';
@@ -18,10 +20,12 @@ import 'package:market_space/features/activity_hub/presentation/widgets/rfq/rfq_
 
 class ActivityHubPage extends ConsumerStatefulWidget {
   final ActivityHubTab initialTab;
+  final String? initialCategorySlug;
 
   const ActivityHubPage({
     super.key,
     this.initialTab = ActivityHubTab.cart,
+    this.initialCategorySlug,
   });
 
   @override
@@ -31,26 +35,38 @@ class ActivityHubPage extends ConsumerStatefulWidget {
 class _ActivityHubPageState extends ConsumerState<ActivityHubPage> {
   late final TextEditingController _searchController;
 
+  void _applyInitialContext() {
+    ref
+        .read(activityHubControllerProvider.notifier)
+        .selectTab(widget.initialTab);
+    final slug = widget.initialCategorySlug;
+    if (widget.initialTab == ActivityHubTab.bookings &&
+        slug != null &&
+        slug.isNotEmpty) {
+      ref
+          .read(bookingsProvider.notifier)
+          .setCategoryFilter(BookingCategory.fromBackend(slug));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(activityHubControllerProvider.notifier)
-          .selectTab(widget.initialTab);
+      if (!mounted) return;
+      _applyInitialContext();
     });
   }
 
   @override
   void didUpdateWidget(covariant ActivityHubPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialTab != widget.initialTab) {
+    if (oldWidget.initialTab != widget.initialTab ||
+        oldWidget.initialCategorySlug != widget.initialCategorySlug) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ref
-            .read(activityHubControllerProvider.notifier)
-            .selectTab(widget.initialTab);
+        _applyInitialContext();
       });
     }
   }

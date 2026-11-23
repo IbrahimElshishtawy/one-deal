@@ -40,6 +40,13 @@ class ListingItem {
   final int favoritesCount;
   final bool isFeatured;
   final DateTime? createdAt;
+  final String? accountId;
+  /// Orthogonal lifecycle axis 1: draft, pending, approved, rejected
+  final String moderationStatus;
+  /// Orthogonal lifecycle axis 2: unpublished, published, hidden, archived, expired
+  final String publicationStatus;
+  /// Orthogonal lifecycle axis 3: available, reserved, sold, rented, out_of_stock, discontinued
+  final String availabilityStatus;
 
   const ListingItem({
     required this.id,
@@ -69,6 +76,10 @@ class ListingItem {
     this.favoritesCount = 0,
     this.isFeatured = false,
     this.createdAt,
+    this.accountId,
+    this.moderationStatus = 'approved',
+    this.publicationStatus = 'published',
+    this.availabilityStatus = 'available',
   });
 
   String? get primaryImageUrl => media.isNotEmpty ? media.first.publicUrl : null;

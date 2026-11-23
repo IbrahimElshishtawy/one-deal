@@ -1,11 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/features/activity_hub/data/repositories/rfq_repository_impl.dart';
 import 'package:market_space/features/activity_hub/domain/entities/rfq_entity.dart';
 import 'package:market_space/features/activity_hub/domain/repositories/rfq_repository.dart';
 
 final rfqRepositoryProvider = Provider<RfqRepository>((ref) {
-  return RfqRepositoryImpl();
+  final session = ref.watch(sessionProvider);
+  if (!session.isAuthenticated) {
+    return RfqRepositoryImpl();
+  }
+  final apiClient = ref.watch(apiClientProvider);
+  return RfqRepositoryImpl(apiClient: apiClient);
 });
 
 class RfqState {

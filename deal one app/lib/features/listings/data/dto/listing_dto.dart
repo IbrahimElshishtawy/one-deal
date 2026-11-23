@@ -49,6 +49,10 @@ class ListingItemDto {
   final int favoritesCount;
   final bool isFeatured;
   final String createdAt;
+  final String? accountId;
+  final String moderationStatus;
+  final String publicationStatus;
+  final String availabilityStatus;
 
   const ListingItemDto({
     required this.id,
@@ -78,6 +82,10 @@ class ListingItemDto {
     this.favoritesCount = 0,
     this.isFeatured = false,
     required this.createdAt,
+    this.accountId,
+    this.moderationStatus = 'approved',
+    this.publicationStatus = 'published',
+    this.availabilityStatus = 'available',
   });
 
   factory ListingItemDto.fromJson(Map<String, dynamic> json) {
@@ -186,6 +194,18 @@ class ListingItemDto {
       favoritesCount: (json['favoritesCount'] ?? json['favorites_count'] as num?)?.toInt() ?? 0,
       isFeatured: json['isFeatured'] == true || json['is_featured'] == true,
       createdAt: json['createdAt']?.toString() ?? json['created_at']?.toString() ?? '',
+      accountId: json['accountId']?.toString() ??
+          json['account_id']?.toString() ??
+          account['id']?.toString(),
+      moderationStatus: json['moderationStatus']?.toString() ??
+          json['moderation_status']?.toString() ??
+          'approved',
+      publicationStatus: json['publicationStatus']?.toString() ??
+          json['publication_status']?.toString() ??
+          'published',
+      availabilityStatus: json['availabilityStatus']?.toString() ??
+          json['availability_status']?.toString() ??
+          'available',
     );
   }
 }

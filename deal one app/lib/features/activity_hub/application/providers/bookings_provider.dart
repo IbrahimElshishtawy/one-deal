@@ -1,11 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/features/activity_hub/data/repositories/bookings_repository_impl.dart';
 import 'package:market_space/features/activity_hub/domain/entities/booking_entity.dart';
 import 'package:market_space/features/activity_hub/domain/repositories/bookings_repository.dart';
 
 final bookingsRepositoryProvider = Provider<BookingsRepository>((ref) {
-  return BookingsRepositoryImpl();
+  final session = ref.watch(sessionProvider);
+  if (!session.isAuthenticated) {
+    return BookingsRepositoryImpl();
+  }
+  final apiClient = ref.watch(apiClientProvider);
+  return BookingsRepositoryImpl(apiClient: apiClient);
 });
 
 class BookingsState {

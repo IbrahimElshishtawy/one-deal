@@ -10,13 +10,24 @@ final accountsRepositoryProvider = Provider<AccountsRepository>((ref) {
 });
 
 final myAccountsProvider = FutureProvider<List<UserAccountEntity>>((ref) async {
+  final session = ref.watch(sessionProvider);
+  if (!session.isAuthenticated) {
+    return const [];
+  }
   final repository = ref.watch(accountsRepositoryProvider);
   return repository.getMyAccounts();
 });
 
 final activeAccountProvider = StateProvider<UserAccountEntity?>((ref) {
+  final session = ref.watch(sessionProvider);
+  if (!session.isAuthenticated) {
+    return null;
+  }
   final accounts = ref.watch(myAccountsProvider).valueOrNull;
   if (accounts != null && accounts.isNotEmpty) {
+    for (final acc in accounts) {
+      if (acc.isActive && acc.isVerified) return acc;
+    }
     return accounts.first;
   }
   return null;

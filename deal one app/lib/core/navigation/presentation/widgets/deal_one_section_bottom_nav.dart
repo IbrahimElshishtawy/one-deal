@@ -4,15 +4,22 @@ import 'package:go_router/go_router.dart';
 import 'package:market_space/core/navigation/config/deal_one_navigation_tokens.dart';
 import 'package:market_space/core/navigation/config/navigation_item_config.dart';
 import 'package:market_space/core/navigation/config/section_navigation_registry.dart';
+import 'package:market_space/core/navigation/domain/account_capabilities.dart';
 import 'package:market_space/core/navigation/presentation/widgets/active_navigation_indicator.dart';
+import 'package:market_space/core/navigation/providers/section_navigation_provider.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/utils/responsive_utils.dart';
 import 'package:market_space/features/search/data/dto/search_dto.dart';
 import 'package:market_space/features/search/presentation/providers/search_providers.dart';
 
-/// Unified Bottom Navigation bar for Deal One's 6 category sections.
-/// Always includes the fixed Universal Map tab (`الخريطة` / `Map`) bound to
-/// the active category's route `/map/<sectionId>`.
+/// Unified, Role-Aware Bottom Navigation bar for Deal One's 6 category sections.
+///
+/// - Dynamically resolves items from [sectionNavigationConfigProvider] based on
+///   active category context + verified Backend [AccountCapabilities].
+/// - Prevents Favorites -> Seller Action flicker during initial account load
+///   by rendering a calm loading placeholder in the role-sensitive slot.
+/// - Displays unread chat count & cart count badges when available.
+/// - Preserves RTL/LTR alignment, clamped text scaling, SafeArea, and keyboard auto-hide.
 class DealOneSectionBottomNav extends ConsumerWidget {
   final String sectionId;
   final String activeTabId;
@@ -25,24 +32,6 @@ class DealOneSectionBottomNav extends ConsumerWidget {
     this.onItemTap,
   });
 
-  String _localizedLabel(NavigationItemConfig item, bool isArabic) {
-    if (isArabic) return item.label;
-    switch (item.id) {
-      case 'home':
-        return 'Home';
-      case 'map':
-        return 'Map';
-      case 'explore':
-        return 'Explore';
-      case 'favorites':
-        return 'Saved';
-      case 'profile':
-        return 'Profile';
-      default:
-        return item.label;
-    }
-  }
-
   void _navigateToItem(
     BuildContext context,
     WidgetRef ref,
@@ -54,16 +43,18 @@ class DealOneSectionBottomNav extends ConsumerWidget {
       return;
     }
 
-    if (item.id == 'explore' && item.destination == RouteNames.search) {
+    if (item.id == SectionNavigationRegistry.exploreTabId &&
+        item.destination == RouteNames.search) {
       ref.read(searchQueryProvider.notifier).state = '';
       ref.read(searchActiveQueryDtoProvider.notifier).state = SearchQueryDto(
-        categorySlug: sectionId,
+        categorySlug: item.categoryContext ?? sectionId,
       );
       context.push(RouteNames.search);
       return;
     }
 
-    if (item.id == 'home' || item.id == SectionNavigationRegistry.mapTabId) {
+    if (item.id == SectionNavigationRegistry.homeTabId ||
+        item.id == SectionNavigationRegistry.mapTabId) {
       context.go(item.destination);
       return;
     }
@@ -73,7 +64,8 @@ class DealOneSectionBottomNav extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final config = SectionNavigationRegistry.getConfig(sectionId);
+    final capabilities = ref.watch(accountCapabilitiesProvider);
+    final config = ref.watch(sectionNavigationConfigProvider(sectionId));
     final items = config.items;
     final activeIndex = items.indexWhere((i) => i.id == activeTabId);
     final safeIndex = activeIndex < 0 ? 0 : activeIndex;
@@ -129,8 +121,28 @@ class DealOneSectionBottomNav extends ConsumerWidget {
                       Row(
                         children: List.generate(items.length, (index) {
                           final item = items[index];
+                          final isRoleDependentSlot =
+                              item.visibilityRule ==
+                                  NavigationVisibilityRule.buyerOnly ||
+                              item.visibilityRule ==
+                                  NavigationVisibilityRule.sellerOnly;
+
+                          // Never flash Favorites then swap to Seller Action while
+                          // backend account permissions are loading.
+                          if (isRoleDependentSlot && capabilities.isLoading) {
+                            return Expanded(
+                              child: _RoleSlotLoadingPlaceholder(
+                                key: const Key('section_nav_role_slot_loading'),
+                                isSmall: isSmall,
+                              ),
+                            );
+                          }
+
                           final isActive = index == safeIndex;
-                          final label = _localizedLabel(item, isArabic);
+                          final label = item.localizedLabel(isArabic);
+                          final badgeCount = ref.watch(
+                            navigationBadgeCountProvider(item.badgeKey),
+                          );
                           final fgColor = isActive
                               ? DealOneBottomNavTokens.activeForegroundOf(
                                   context,
@@ -140,53 +152,63 @@ class DealOneSectionBottomNav extends ConsumerWidget {
                                 );
 
                           return Expanded(
-                            child: Semantics(
-                              button: true,
-                              selected: isActive,
-                              label: label,
-                              child: InkWell(
-                                key: Key('section_nav_tab_${item.id}'),
-                                onTap: () =>
-                                    _navigateToItem(context, ref, item),
-                                borderRadius: BorderRadius.circular(
-                                  DealOneBottomNavTokens.activePillRadius,
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 220),
+                              switchInCurve: Curves.easeOutCubic,
+                              switchOutCurve: Curves.easeInCubic,
+                              child: Semantics(
+                                key: ValueKey<String>(
+                                  '${item.id}_${isActive ? 1 : 0}',
                                 ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 2,
-                                    vertical: 6,
+                                button: true,
+                                selected: isActive,
+                                label: label,
+                                child: InkWell(
+                                  key: Key('section_nav_tab_${item.id}'),
+                                  onTap: () =>
+                                      _navigateToItem(context, ref, item),
+                                  borderRadius: BorderRadius.circular(
+                                    DealOneBottomNavTokens.activePillRadius,
                                   ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        isActive
-                                            ? item.activeIcon
-                                            : item.inactiveIcon,
-                                        size: isSmall ? 20 : 22,
-                                        color: fgColor,
-                                      ),
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        label,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontFamily:
-                                              DealOneBottomNavTokens.fontFamily,
-                                          fontSize: isSmall ? 10.5 : 11.5,
-                                          fontWeight: isActive
-                                              ? DealOneBottomNavTokens
-                                                    .activeFontWeight
-                                              : DealOneBottomNavTokens
-                                                    .inactiveFontWeight,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 2,
+                                      vertical: 6,
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        _NavIconWithBadge(
+                                          icon: isActive
+                                              ? item.activeIcon
+                                              : item.inactiveIcon,
+                                          size: isSmall ? 20 : 22,
                                           color: fgColor,
-                                          height: 1.15,
+                                          badgeCount: badgeCount,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          label,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontFamily: DealOneBottomNavTokens
+                                                .fontFamily,
+                                            fontSize: isSmall ? 10.5 : 11.5,
+                                            fontWeight: isActive
+                                                ? DealOneBottomNavTokens
+                                                    .activeFontWeight
+                                                : DealOneBottomNavTokens
+                                                    .inactiveFontWeight,
+                                            color: fgColor,
+                                            height: 1.15,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -201,6 +223,105 @@ class DealOneSectionBottomNav extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NavIconWithBadge extends StatelessWidget {
+  final IconData icon;
+  final double size;
+  final Color color;
+  final int badgeCount;
+
+  const _NavIconWithBadge({
+    required this.icon,
+    required this.size,
+    required this.color,
+    required this.badgeCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (badgeCount <= 0) {
+      return Icon(icon, size: size, color: color);
+    }
+
+    final badgeText = badgeCount > 99 ? '99+' : '$badgeCount';
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon, size: size, color: color),
+        PositionedDirectional(
+          top: -5,
+          end: -9,
+          child: Container(
+            key: const Key('section_nav_badge'),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDC2626),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: DealOneBottomNavTokens.barBackgroundOf(context),
+                width: 1.2,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              badgeText,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RoleSlotLoadingPlaceholder extends StatelessWidget {
+  final bool isSmall;
+
+  const _RoleSlotLoadingPlaceholder({
+    super.key,
+    required this.isSmall,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final baseColor = DealOneBottomNavTokens.inactiveForegroundOf(
+      context,
+    ).withValues(alpha: 0.18);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: isSmall ? 18 : 20,
+            height: isSmall ? 18 : 20,
+            decoration: BoxDecoration(
+              color: baseColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Container(
+            width: isSmall ? 30 : 36,
+            height: 8,
+            decoration: BoxDecoration(
+              color: baseColor,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ],
       ),
     );
   }

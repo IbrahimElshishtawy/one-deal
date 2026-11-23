@@ -56,6 +56,26 @@ class RouteNames {
   static const String realEstateMap = '/real-estate/map';
   static const String categoryMap = '/map/:categorySlug';
   static String categoryMapFor(String slug) => '/map/$slug';
+  static const String sectionCategories = '/categories/:categorySlug';
+  static String sectionCategoriesFor(String slug) => '/categories/$slug';
+  static const String sellerManagement = '/seller/:categorySlug/:mode';
+  static String sellerManagementFor(String slug, String mode) =>
+      '/seller/$slug/$mode';
+  static const String createListing = '/listings/create';
+  static String createListingFor(String slug, {String? listingKind}) {
+    final params = <String, String>{'category': slug};
+    if (listingKind != null && listingKind.isNotEmpty) {
+      params['kind'] = listingKind;
+    }
+    return Uri(path: createListing, queryParameters: params).toString();
+  }
+  static String activityHubFor({required String tab, String? categorySlug}) {
+    final params = <String, String>{'tab': tab};
+    if (categorySlug != null && categorySlug.isNotEmpty) {
+      params['category'] = categorySlug;
+    }
+    return Uri(path: activityHub, queryParameters: params).toString();
+  }
   static const String realEstateGallery = '/real-estate/gallery/:id';
   static const String realEstateReels = '/real-estate/reels';
   static const String search = '/search';
@@ -136,6 +156,9 @@ class RouteNames {
   static const String conversationChatName = 'conversation_chat';
   static const String realEstateMapName = 'real_estate_map';
   static const String categoryMapName = 'category_map';
+  static const String sectionCategoriesName = 'section_categories';
+  static const String sellerManagementName = 'seller_management';
+  static const String createListingName = 'create_listing';
   static const String realEstateGalleryName = 'real_estate_gallery';
   static const String realEstateReelsName = 'real_estate_reels';
   static const String globalNotificationsName = 'global_notifications';
