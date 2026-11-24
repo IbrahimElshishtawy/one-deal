@@ -52,6 +52,7 @@ class AuthMapper {
       deliveryChannel: dto.deliveryChannel,
       whatsappAvailable: dto.whatsappAvailable,
       errorCode: dto.errorCode,
+      devOtp: dto.devOtp,
     );
   }
 }

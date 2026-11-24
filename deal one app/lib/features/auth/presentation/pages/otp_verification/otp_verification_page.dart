@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -267,6 +268,36 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
           onChanged: controller.updateCode,
           onCompleted: verifyAndProceed,
         ),
+        if (!kReleaseMode && state.devOtp != null && state.devOtp!.isNotEmpty) ...[
+          const SizedBox(height: AuthDesignTokens.spaceMd),
+          Center(
+            child: InkWell(
+              key: const Key('dev_otp_hint_banner'),
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => controller.updateCode(state.devOtp!),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AuthDesignTokens.primaryActionOf(context)
+                      .withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AuthDesignTokens.primaryActionOf(context)
+                        .withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Text(
+                  'DEV OTP: ${state.devOtp} — اضغط للتعبئة',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: AuthDesignTokens.primaryActionOf(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
 

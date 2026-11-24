@@ -210,6 +210,7 @@ class OtpVerificationState {
   final int failedAttempts;
   final int maxAttempts;
   final AuthSession? authenticatedSession;
+  final String? devOtp;
 
   const OtpVerificationState({
     required this.normalizedPhone,
@@ -228,6 +229,7 @@ class OtpVerificationState {
     this.failedAttempts = 0,
     this.maxAttempts = 5,
     this.authenticatedSession,
+    this.devOtp,
   });
 
   bool get isVerifying => status == OtpStatus.verifying;
@@ -293,6 +295,7 @@ class OtpVerificationState {
     int? failedAttempts,
     int? maxAttempts,
     AuthSession? authenticatedSession,
+    String? devOtp,
   }) {
     return OtpVerificationState(
       normalizedPhone: normalizedPhone ?? this.normalizedPhone,
@@ -317,6 +320,7 @@ class OtpVerificationState {
       failedAttempts: failedAttempts ?? this.failedAttempts,
       maxAttempts: maxAttempts ?? this.maxAttempts,
       authenticatedSession: authenticatedSession ?? this.authenticatedSession,
+      devOtp: devOtp ?? this.devOtp,
     );
   }
 }

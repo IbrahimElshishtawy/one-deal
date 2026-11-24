@@ -23,6 +23,7 @@ export interface OtpDispatchResult {
   success: boolean;
   message: string;
   cooldownSeconds: number;
+  devOtp?: string;
 }
 
 @Injectable()
@@ -222,10 +223,15 @@ export class OtpService {
     const channelLabel =
       delivery.provider === 'WHATSAPP_CLOUD' ? 'WhatsApp' : 'SMS';
 
+    const isLocalDevMock =
+      this.configService.get<string>('NODE_ENV') === 'development' &&
+      delivery.provider === 'MOCK_DEV_GATEWAY';
+
     return {
       success: true,
       message: `OTP verification code dispatched successfully via ${channelLabel}.`,
       cooldownSeconds: this.resendCooldownSeconds,
+      ...(isLocalDevMock ? { devOtp: code } : {}),
     };
   }
 

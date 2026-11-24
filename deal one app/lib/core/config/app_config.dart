@@ -5,6 +5,8 @@ import 'package:market_space/core/config/environment.dart';
 class AppConfig {
   static const String defaultProductionApiBaseUrl =
       'https://one-deal-cjjt-production.up.railway.app/api/v1';
+  static const String defaultLocalDevApiBaseUrl =
+      'http://127.0.0.1:3000/api/v1';
 
   final AppEnvironment environment;
   final String apiBaseUrl;
@@ -35,7 +37,7 @@ class AppConfig {
   factory AppConfig.development() {
     return const AppConfig(
       environment: AppEnvironment.development,
-      apiBaseUrl: defaultProductionApiBaseUrl,
+      apiBaseUrl: defaultLocalDevApiBaseUrl,
       connectTimeout: Duration(seconds: 15),
       receiveTimeout: Duration(seconds: 15),
       enableLogging: true,

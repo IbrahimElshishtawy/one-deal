@@ -105,6 +105,7 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
         cooldownSeconds: dispatchResult.cooldownSeconds,
         otpExpirySeconds: dispatchResult.otpExpirySeconds,
         redirectTo: redirectTo,
+        devOtp: dispatchResult.devOtp,
       );
       state = state.copyWith(isSubmitting: false, pendingContext: pending);
       return pending;

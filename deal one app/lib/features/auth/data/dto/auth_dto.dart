@@ -51,6 +51,7 @@ class OtpDispatchResponseDto {
   final String? deliveryChannel;
   final bool? whatsappAvailable;
   final String? errorCode;
+  final String? devOtp;
 
   const OtpDispatchResponseDto({
     required this.success,
@@ -60,6 +61,7 @@ class OtpDispatchResponseDto {
     this.deliveryChannel,
     this.whatsappAvailable,
     this.errorCode,
+    this.devOtp,
   });
 
   factory OtpDispatchResponseDto.fromJson(Map<String, dynamic> json) {
@@ -87,6 +89,7 @@ class OtpDispatchResponseDto {
                 ? json['whatsapp_available'] as bool
                 : null),
       errorCode: json['errorCode']?.toString() ?? json['code']?.toString(),
+      devOtp: json['devOtp']?.toString() ?? json['dev_otp']?.toString(),
     );
   }
 }

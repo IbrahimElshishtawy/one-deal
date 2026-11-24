@@ -32,6 +32,7 @@ class OtpVerificationController
       redirectTo: arg.redirectTo,
       cooldownRemainingSeconds: arg.cooldownSeconds,
       expiryRemainingSeconds: arg.otpExpirySeconds,
+      devOtp: arg.devOtp,
     );
   }
 
@@ -213,6 +214,7 @@ class OtpVerificationController
         cooldownRemainingSeconds: dispatch.cooldownSeconds,
         expiryRemainingSeconds: dispatch.otpExpirySeconds,
         failedAttempts: 0,
+        devOtp: dispatch.devOtp,
       );
 
       if (ref.read(otpAutoTimerEnabledProvider)) {

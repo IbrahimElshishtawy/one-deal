@@ -119,6 +119,7 @@ class OtpDispatchResult {
   final String? deliveryChannel;
   final bool? whatsappAvailable;
   final String? errorCode;
+  final String? devOtp;
 
   const OtpDispatchResult({
     this.success = true,
@@ -128,6 +129,7 @@ class OtpDispatchResult {
     this.deliveryChannel,
     this.whatsappAvailable,
     this.errorCode,
+    this.devOtp,
   });
 }
 
@@ -141,6 +143,7 @@ class PendingAuthContext {
   final int cooldownSeconds;
   final int otpExpirySeconds;
   final String? redirectTo;
+  final String? devOtp;
 
   const PendingAuthContext({
     required this.normalizedPhone,
@@ -151,6 +154,7 @@ class PendingAuthContext {
     this.cooldownSeconds = 60,
     this.otpExpirySeconds = 180,
     this.redirectTo,
+    this.devOtp,
   });
 
   PendingAuthContext copyWith({
@@ -162,6 +166,7 @@ class PendingAuthContext {
     int? cooldownSeconds,
     int? otpExpirySeconds,
     String? redirectTo,
+    String? devOtp,
   }) {
     return PendingAuthContext(
       normalizedPhone: normalizedPhone ?? this.normalizedPhone,
@@ -172,6 +177,7 @@ class PendingAuthContext {
       cooldownSeconds: cooldownSeconds ?? this.cooldownSeconds,
       otpExpirySeconds: otpExpirySeconds ?? this.otpExpirySeconds,
       redirectTo: redirectTo ?? this.redirectTo,
+      devOtp: devOtp ?? this.devOtp,
     );
   }
 
@@ -186,7 +192,8 @@ class PendingAuthContext {
         other.flowMode == flowMode &&
         other.cooldownSeconds == cooldownSeconds &&
         other.otpExpirySeconds == otpExpirySeconds &&
-        other.redirectTo == redirectTo;
+        other.redirectTo == redirectTo &&
+        other.devOtp == devOtp;
   }
 
   @override
@@ -199,5 +206,6 @@ class PendingAuthContext {
     cooldownSeconds,
     otpExpirySeconds,
     redirectTo,
+    devOtp,
   );
 }
