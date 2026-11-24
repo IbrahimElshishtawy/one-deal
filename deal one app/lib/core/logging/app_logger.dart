@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:market_space/core/logging/log_sanitizer.dart';
@@ -76,22 +77,44 @@ class AppLoggerImpl implements AppLogger {
     Object? error,
     StackTrace? stackTrace,
   }) {
-    final sanitizedData = data != null ? LogSanitizer.sanitize(data) : null;
-    final buffer = StringBuffer('[$level] $message');
+    final bool isPreformattedBlock = message.startsWith('┌');
+    final buffer = StringBuffer();
 
-    if (sanitizedData != null) {
-      buffer.write(' | data: $sanitizedData');
-    }
-    if (error != null) {
-      buffer.write(' | error: $error');
+    if (isPreformattedBlock) {
+      buffer.write('\n$message');
+    } else {
+      buffer.write('[$level] $message');
+      if (data != null) {
+        final sanitizedData = LogSanitizer.sanitize(data);
+        buffer.write('\n${_formatData(sanitizedData)}');
+      }
+      if (error != null) {
+        buffer.write('\n  Error: $error');
+      }
     }
 
     developer.log(
       buffer.toString(),
       name: 'DealOne',
       time: DateTime.now(),
-      error: error,
       stackTrace: stackTrace,
     );
+  }
+
+  String _formatData(dynamic sanitizedData) {
+    try {
+      const encoder = JsonEncoder.withIndent('  ');
+      final encoded = encoder.convert(sanitizedData);
+      if (encoded.length <= 600) {
+        return encoded;
+      }
+      return '${encoded.substring(0, 600)}\n  ... [truncated]';
+    } catch (_) {
+      final text = sanitizedData.toString();
+      if (text.length <= 600) {
+        return '  $text';
+      }
+      return '  ${text.substring(0, 600)}... [truncated]';
+    }
   }
 }

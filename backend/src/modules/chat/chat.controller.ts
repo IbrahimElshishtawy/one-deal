@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Param,
+  ParseUUIDPipe,
   Query,
   Body,
   UseGuards,
@@ -72,7 +73,7 @@ export class ChatController {
   @ApiResponse({ status: 200, description: 'Messages returned' })
   @ApiResponse({ status: 403, description: 'Forbidden (Not a participant)' })
   async getMessages(
-    @Param('id') conversationId: string,
+    @Param('id', ParseUUIDPipe) conversationId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Query('page') page = 1,
     @Query('limit') limit = 30,
@@ -91,7 +92,7 @@ export class ChatController {
   @ApiResponse({ status: 201, description: 'Message sent' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async sendMessage(
-    @Param('id') conversationId: string,
+    @Param('id', ParseUUIDPipe) conversationId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: SendMessageDto,
   ) {

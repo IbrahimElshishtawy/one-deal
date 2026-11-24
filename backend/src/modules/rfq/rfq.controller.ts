@@ -24,7 +24,7 @@ import {
   CurrentUser,
 } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { AdminJwtAuthGuard } from '../admin-auth/guards/admin-jwt-auth.guard';
+import { UserOrAdminJwtAuthGuard } from '../admin-auth/guards/user-or-admin-jwt-auth.guard';
 import { SellerCapability } from '../../core/enums/domain.enums';
 import { SellerAuthorizationGuard } from '../accounts/guards/seller-authorization.guard';
 import { RequireSellerCapability } from '../accounts/decorators/require-seller-capability.decorator';
@@ -74,7 +74,7 @@ export class RfqController {
   }
 
   @Get('rfqs/:id')
-  @UseGuards(AdminJwtAuthGuard)
+  @UseGuards(UserOrAdminJwtAuthGuard)
   @ApiOperation({ summary: 'Get RFQ details by ID' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'RFQ details returned' })
@@ -117,7 +117,7 @@ export class RfqController {
   }
 
   @Patch('rfqs/:id/cancel')
-  @UseGuards(AdminJwtAuthGuard)
+  @UseGuards(UserOrAdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel an active or draft RFQ' })
   @ApiParam({ name: 'id', format: 'uuid' })
@@ -155,7 +155,7 @@ export class RfqController {
   }
 
   @Get('rfqs/:id/quotations')
-  @UseGuards(AdminJwtAuthGuard)
+  @UseGuards(UserOrAdminJwtAuthGuard)
   @ApiOperation({
     summary:
       'List and compare paginated quotations for an RFQ (RFQ owner or admin)',
@@ -177,7 +177,7 @@ export class RfqController {
   }
 
   @Get('quotations/:id')
-  @UseGuards(AdminJwtAuthGuard)
+  @UseGuards(UserOrAdminJwtAuthGuard)
   @ApiOperation({
     summary: 'Get quotation details (RFQ owner or submitting supplier only)',
   })
@@ -196,7 +196,7 @@ export class RfqController {
   }
 
   @Patch('quotations/:id/status')
-  @UseGuards(AdminJwtAuthGuard)
+  @UseGuards(UserOrAdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:

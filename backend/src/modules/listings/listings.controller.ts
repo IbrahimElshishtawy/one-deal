@@ -6,6 +6,7 @@ import {
   Delete,
   Patch,
   Param,
+  ParseUUIDPipe,
   Query,
   Body,
   Req,
@@ -65,7 +66,7 @@ export class ListingsController {
   @ApiOperation({ summary: 'Get detailed listing by ID' })
   @ApiResponse({ status: 200, description: 'Listing details returned' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
-  async getById(@Param('id') id: string) {
+  async getById(@Param('id', ParseUUIDPipe) id: string) {
     return this.listingsService.getListingById(id);
   }
 
@@ -95,7 +96,24 @@ export class ListingsController {
   @ApiResponse({ status: 403, description: 'Forbidden (Not approved seller or owner)' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
   async updateListing(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateListingDto,
+  ) {
+    return this.listingsService.updateListing(id, user.id, dto, user.role);
+  }
+
+  @Patch(':id')
+  @ApiBearerAuth('BearerAuth')
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_MANAGE_LISTING)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Partially update existing listing details' })
+  @ApiResponse({ status: 200, description: 'Listing updated successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden (Not approved seller or owner)' })
+  @ApiResponse({ status: 404, description: 'Listing not found' })
+  async patchListing(
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateListingDto,
   ) {
@@ -112,7 +130,7 @@ export class ListingsController {
   @ApiResponse({ status: 403, description: 'Forbidden (Not approved seller or owner)' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
   async deleteListing(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.listingsService.deleteListing(id, user.id, user.role);
@@ -127,7 +145,7 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Availability updated' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async updateAvailability(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateAvailabilityDto,
   ) {
@@ -148,7 +166,7 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Listing submitted for review' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async submitForModeration(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.listingsService.submitForModeration(id, user.id);
@@ -165,7 +183,7 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Publication status updated' })
   @ApiResponse({ status: 403, description: 'Forbidden (Not approved seller or owner)' })
   async updateStatus(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateListingStatusDto,
   ) {
@@ -191,7 +209,7 @@ export class ListingsController {
     description: 'Daily contact reveal quota exceeded (5/day in Cairo)',
   })
   async contactSeller(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Req() req: FastifyRequest,
     @CurrentUser() user: AuthenticatedUser,
   ) {
@@ -214,7 +232,7 @@ export class ListingsController {
     description: 'Daily contact reveal quota exceeded (5/day in Cairo)',
   })
   async revealContactAlias(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Req() req: FastifyRequest,
     @CurrentUser() user: AuthenticatedUser,
   ) {

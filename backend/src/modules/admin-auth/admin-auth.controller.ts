@@ -237,6 +237,11 @@ export class AdminAuthController {
   })
   async me(@CurrentStaff() staff: AuthenticatedStaff) {
     if (!staff.staffId) {
+      if (!Array.isArray(staff.permissions) || staff.permissions.length === 0) {
+        throw new ForbiddenException(
+          'Admin staff privileges are required to access this resource.',
+        );
+      }
       return {
         id: staff.id,
         email: staff.email,
@@ -256,7 +261,11 @@ export class AdminAuthController {
   @UseGuards(AdminJwtAuthGuard)
   @ApiOperation({ summary: 'List active sessions for current admin' })
   async listSessions(@CurrentStaff() staff: AuthenticatedStaff) {
-    if (!staff.staffId) return [];
+    if (!staff.staffId) {
+      throw new ForbiddenException(
+        'Only staff accounts can manage admin sessions',
+      );
+    }
     return this.staffSessionService.getStaffActiveSessions(
       staff.staffId,
       staff.sessionId,
@@ -274,7 +283,9 @@ export class AdminAuthController {
     @CurrentStaff() staff: AuthenticatedStaff,
   ) {
     if (!staff.staffId) {
-      throw new NotFoundException('Session not found');
+      throw new ForbiddenException(
+        'Only staff accounts can manage admin sessions',
+      );
     }
     const revoked = await this.staffSessionService.revokeSessionById(
       staff.staffId,

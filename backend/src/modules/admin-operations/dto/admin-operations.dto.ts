@@ -96,6 +96,23 @@ export class AddUserNoteDto {
   note!: string;
 }
 
+export class OptionalAdminNotesDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  notes?: string;
+}
+
+export class AdminAccountsQueryDto extends AdminPaginationDto {
+  @IsOptional()
+  @IsString()
+  verificationStatus?: string;
+
+  @IsOptional()
+  @IsString()
+  accountType?: string;
+}
+
 export class UpdateSellerAccountStatusDto {
   @IsBoolean()
   isActive!: boolean;

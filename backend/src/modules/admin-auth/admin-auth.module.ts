@@ -6,6 +6,7 @@ import { AdminAuthService } from './admin-auth.service';
 import { StaffSessionService } from './services/staff-session.service';
 import { TotpService } from './services/totp.service';
 import { AdminJwtAuthGuard } from './guards/admin-jwt-auth.guard';
+import { UserOrAdminJwtAuthGuard } from './guards/user-or-admin-jwt-auth.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
 import { SecurityAuditService } from '../../core/security/security-audit.service';
 import { RateLimitGuard } from '../../core/guards/rate-limit.guard';
@@ -39,6 +40,7 @@ import { RateLimitGuard } from '../../core/guards/rate-limit.guard';
     StaffSessionService,
     AdminAuthService,
     AdminJwtAuthGuard,
+    UserOrAdminJwtAuthGuard,
     PermissionsGuard,
   ],
   exports: [
@@ -47,6 +49,7 @@ import { RateLimitGuard } from '../../core/guards/rate-limit.guard';
     StaffSessionService,
     AdminAuthService,
     AdminJwtAuthGuard,
+    UserOrAdminJwtAuthGuard,
     PermissionsGuard,
   ],
 })

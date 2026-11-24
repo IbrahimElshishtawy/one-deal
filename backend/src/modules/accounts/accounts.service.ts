@@ -161,7 +161,7 @@ export class AccountsService {
     });
 
     if (!account || !account.isActive || account.deletedAt) {
-      return null;
+      throw new NotFoundException('Seller account not found');
     }
 
     return {

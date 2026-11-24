@@ -24,7 +24,7 @@ import {
   CurrentUser,
 } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { AdminJwtAuthGuard } from '../admin-auth/guards/admin-jwt-auth.guard';
+import { UserOrAdminJwtAuthGuard } from '../admin-auth/guards/user-or-admin-jwt-auth.guard';
 import { BookingsService } from './bookings.service';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -75,7 +75,7 @@ export class BookingsController {
   }
 
   @Get(':id')
-  @UseGuards(AdminJwtAuthGuard)
+  @UseGuards(UserOrAdminJwtAuthGuard)
   @ApiOperation({ summary: 'Get booking details by ID' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Booking details returned' })
@@ -94,7 +94,7 @@ export class BookingsController {
   }
 
   @Patch(':id/cancel')
-  @UseGuards(AdminJwtAuthGuard)
+  @UseGuards(UserOrAdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel a PENDING or CONFIRMED booking' })
   @ApiParam({ name: 'id', format: 'uuid' })
@@ -116,7 +116,7 @@ export class BookingsController {
   }
 
   @Patch(':id/status')
-  @UseGuards(AdminJwtAuthGuard)
+  @UseGuards(UserOrAdminJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update booking status (provider or admin only)',

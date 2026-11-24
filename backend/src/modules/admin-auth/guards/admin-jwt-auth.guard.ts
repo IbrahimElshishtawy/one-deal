@@ -27,22 +27,22 @@ export class AdminJwtAuthGuard implements CanActivate {
     @Optional() private readonly redis?: RedisService,
   ) {}
 
+  protected getUnauthorizedMessage(): string {
+    return 'Admin authentication token is missing, invalid, or expired';
+  }
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const authHeader =
       request?.headers?.authorization || request?.headers?.Authorization;
 
     if (!authHeader || typeof authHeader !== 'string') {
-      throw new UnauthorizedException(
-        'Admin authentication token is missing, invalid, or expired',
-      );
+      throw new UnauthorizedException(this.getUnauthorizedMessage());
     }
 
     const match = authHeader.match(/^Bearer\s+(.+)$/i);
     if (!match || !match[1]) {
-      throw new UnauthorizedException(
-        'Admin authentication token is missing, invalid, or expired',
-      );
+      throw new UnauthorizedException(this.getUnauthorizedMessage());
     }
     const token = match[1].trim();
 
@@ -193,9 +193,7 @@ export class AdminJwtAuthGuard implements CanActivate {
       }
     }
 
-    throw new UnauthorizedException(
-      'Admin authentication token is missing, invalid, or expired',
-    );
+    throw new UnauthorizedException(this.getUnauthorizedMessage());
   }
 
   private async loadActiveStaff(staffId: string) {

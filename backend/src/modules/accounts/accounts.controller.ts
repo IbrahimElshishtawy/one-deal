@@ -61,7 +61,7 @@ export class AccountsController {
   @ApiResponse({ status: 201, description: 'Branch added' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async createBranch(
-    @Param('id') accountId: string,
+    @Param('id', ParseUUIDPipe) accountId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateBranchDto,
   ) {
@@ -85,14 +85,14 @@ export class AccountsController {
   @ApiOperation({ summary: 'Get Public Seller Account Details' })
   @ApiResponse({ status: 200, description: 'Seller profile returned' })
   @ApiResponse({ status: 404, description: 'Seller account not found' })
-  async getAccountById(@Param('id') id: string) {
+  async getAccountById(@Param('id', ParseUUIDPipe) id: string) {
     return this.accountsService.getAccountById(id);
   }
 
   @Get(':id/branches')
   @ApiOperation({ summary: 'Get Branches for Seller Account' })
   @ApiResponse({ status: 200, description: 'Branches returned' })
-  async getAccountBranches(@Param('id') id: string) {
+  async getAccountBranches(@Param('id', ParseUUIDPipe) id: string) {
     return this.accountsService.getAccountBranches(id);
   }
 
@@ -105,8 +105,8 @@ export class AccountsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Branch not found' })
   async updateBranch(
-    @Param('id') accountId: string,
-    @Param('branchId') branchId: string,
+    @Param('id', ParseUUIDPipe) accountId: string,
+    @Param('branchId', ParseUUIDPipe) branchId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateBranchDto,
   ) {
@@ -122,8 +122,8 @@ export class AccountsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Branch not found' })
   async deleteBranch(
-    @Param('id') accountId: string,
-    @Param('branchId') branchId: string,
+    @Param('id', ParseUUIDPipe) accountId: string,
+    @Param('branchId', ParseUUIDPipe) branchId: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.accountsService.deleteBranch(accountId, branchId, user.id);
@@ -137,7 +137,7 @@ export class AccountsController {
   @ApiResponse({ status: 200, description: 'Members returned successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async getAccountMembers(
-    @Param('id') accountId: string,
+    @Param('id', ParseUUIDPipe) accountId: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.accountsService.getAccountMembers(accountId, user.id);
@@ -153,7 +153,7 @@ export class AccountsController {
   @ApiResponse({ status: 400, description: 'User already a member' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async inviteMember(
-    @Param('id') accountId: string,
+    @Param('id', ParseUUIDPipe) accountId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: InviteMemberDto,
   ) {
@@ -169,8 +169,8 @@ export class AccountsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Member not found' })
   async removeMember(
-    @Param('id') accountId: string,
-    @Param('userId') targetUserId: string,
+    @Param('id', ParseUUIDPipe) accountId: string,
+    @Param('userId', ParseUUIDPipe) targetUserId: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.accountsService.removeMember(accountId, user.id, targetUserId);

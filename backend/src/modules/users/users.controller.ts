@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Patch,
   Put,
   Delete,
   Body,
@@ -41,6 +42,16 @@ export class UsersController {
   @ApiOperation({ summary: 'Update profile information' })
   @ApiResponse({ status: 200, description: 'Profile updated' })
   async updateMyProfile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.usersService.updateProfile(user.id, dto);
+  }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Partially update profile information' })
+  @ApiResponse({ status: 200, description: 'Profile updated' })
+  async patchMyProfile(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateProfileDto,
   ) {

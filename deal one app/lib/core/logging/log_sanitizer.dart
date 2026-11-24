@@ -15,7 +15,6 @@ class LogSanitizer {
     'passwordhash',
     'passcode',
     'otp',
-    'code',
     'codehash',
     'secret',
     'cvv',
@@ -45,6 +44,12 @@ class LogSanitizer {
     return '${trimmed.substring(0, 5)}***${trimmed.substring(trimmed.length - 4)}';
   }
 
+  static final RegExp _apiErrorCodePattern = RegExp(r'^[A-Z][A-Z0-9_]{2,}$');
+
+  static bool _isApiErrorCode(dynamic value) {
+    return value is String && _apiErrorCodePattern.hasMatch(value);
+  }
+
   static dynamic sanitize(dynamic data, {int depth = 0}) {
     if (data == null || depth > 6) {
       return data;
@@ -60,6 +65,10 @@ class LogSanitizer {
         );
         if (sensitiveKeys.contains(normalizedKey)) {
           sanitizedMap[keyString] = '[REDACTED]';
+        } else if (normalizedKey == 'code') {
+          sanitizedMap[keyString] = _isApiErrorCode(entry.value)
+              ? entry.value
+              : '[REDACTED]';
         } else if (normalizedKey == 'email' && entry.value is String) {
           sanitizedMap[keyString] = maskEmail(entry.value as String);
         } else if ((normalizedKey == 'phone' ||

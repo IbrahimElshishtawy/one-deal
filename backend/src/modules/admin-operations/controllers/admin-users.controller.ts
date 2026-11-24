@@ -22,9 +22,10 @@ import { AuthenticatedStaff } from '../../admin-auth/types/authenticated-staff.t
 import { AdminMarketplaceService } from '../services/admin-marketplace.service';
 import {
   AddUserNoteDto,
-  AdminPaginationDto,
+  AdminAccountsQueryDto,
   AdminUsersQueryDto,
   BanUserDto,
+  OptionalAdminNotesDto,
   SuspendUserDto,
   UpdateAdminUserDto,
   UpdateSellerAccountStatusDto,
@@ -87,7 +88,7 @@ export class AdminUsersController {
   @ApiOperation({ summary: 'Lift user suspension and restore active state' })
   unsuspendUser(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { notes?: string },
+    @Body() body: OptionalAdminNotesDto,
     @CurrentStaff() staff: AuthenticatedStaff,
   ) {
     return this.service.unsuspendUser(id, staff.id, body?.notes, staff.staffId);
@@ -113,7 +114,7 @@ export class AdminUsersController {
   @ApiOperation({ summary: 'Unban user and restore active status' })
   unbanUser(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { notes?: string },
+    @Body() body: OptionalAdminNotesDto,
     @CurrentStaff() staff: AuthenticatedStaff,
   ) {
     return this.service.unbanUser(id, staff.id, body?.notes, staff.staffId);
@@ -147,13 +148,7 @@ export class AdminUsersController {
   @ApiOperation({
     summary: 'List seller accounts with filtering and pagination',
   })
-  listAccounts(
-    @Query()
-    query: AdminPaginationDto & {
-      verificationStatus?: string;
-      accountType?: string;
-    },
-  ) {
+  listAccounts(@Query() query: AdminAccountsQueryDto) {
     return this.service.listAccounts(query);
   }
 
