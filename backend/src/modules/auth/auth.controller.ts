@@ -61,10 +61,16 @@ export class AuthController {
     @Body() dto: SendOtpDto,
     @Req() req: FastifyRequest,
     @Headers('x-trace-id') traceId?: string,
+    @Headers('x-request-id') requestId?: string,
   ) {
     const userAgent = req.headers['user-agent'];
     const ipAddress = req.ip;
-    return this.authService.sendOtp(dto, ipAddress, userAgent, traceId);
+    return this.authService.sendOtp(
+      dto,
+      ipAddress,
+      userAgent,
+      requestId || traceId,
+    );
   }
 
   @Post('otp/resend')
@@ -119,10 +125,16 @@ export class AuthController {
     @Body() dto: VerifyOtpDto,
     @Req() req: FastifyRequest,
     @Headers('x-trace-id') traceId?: string,
+    @Headers('x-request-id') requestId?: string,
   ) {
     const userAgent = req.headers['user-agent'];
     const ipAddress = req.ip;
-    return this.authService.verifyOtp(dto, userAgent, ipAddress, traceId);
+    return this.authService.verifyOtp(
+      dto,
+      userAgent,
+      ipAddress,
+      requestId || traceId,
+    );
   }
 
   @Post('login')

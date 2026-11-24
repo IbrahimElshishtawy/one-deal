@@ -1,6 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
+import { StructuredFlowLogger } from '../../core/observability/structured-flow.logger';
 import {
   EMAIL_DEFAULTS,
   KNOWN_PLACEHOLDER_RESEND_KEYS,
@@ -135,11 +136,19 @@ export class EmailService {
   }
 
   async sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
+    const startedAt = Date.now();
     const recipients = Array.isArray(options.to) ? options.to : [options.to];
     const maskedRecipients = recipients.map(maskEmail).join(', ');
     const locale = options.locale ?? 'ar';
 
     if (!this.isConfigured() || !this.resend) {
+      StructuredFlowLogger.logEmail({
+        event: 'SKIPPED',
+        template: options.template,
+        recipient: recipients[0] || '',
+        durationMs: Date.now() - startedAt,
+        error: 'EMAIL_PROVIDER_UNCONFIGURED',
+      });
       this.logger.warn(
         JSON.stringify({
           event: 'email_skipped_unconfigured',
@@ -222,6 +231,13 @@ export class EmailService {
         }
 
         const messageId = response?.data?.id;
+        StructuredFlowLogger.logEmail({
+          event: 'DISPATCHED',
+          template: options.template,
+          recipient: recipients[0] || '',
+          durationMs: Date.now() - startedAt,
+          messageId: messageId ?? null,
+        });
         this.logger.log(
           JSON.stringify({
             event: 'email_sent',

@@ -5,6 +5,23 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import {
+  DbCrudCategory,
+  StructuredFlowLogger,
+} from '../observability/structured-flow.logger';
+
+function classifyPrismaAction(action: string): DbCrudCategory {
+  if (action === 'create' || action === 'createMany' || action === 'upsert') {
+    return 'CREATE';
+  }
+  if (action === 'update' || action === 'updateMany') {
+    return 'UPDATE';
+  }
+  if (action === 'delete' || action === 'deleteMany') {
+    return 'DELETE';
+  }
+  return 'READ';
+}
 
 /**
  * Builds a pooled DATABASE_URL with explicit connection_limit and pgbouncer=true
@@ -50,6 +67,45 @@ export class PrismaService
       ...(datasourceUrl ? { datasources: { db: { url: datasourceUrl } } } : {}),
       log:
         process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+    });
+    this.registerDatabaseActivityMonitor();
+  }
+
+  /**
+   * Monitors CREATE/READ/UPDATE/DELETE operations with model name, status,
+   * duration, and Correlation/Request ID without ever logging user payloads.
+   */
+  private registerDatabaseActivityMonitor(): void {
+    this.$use(async (params, next) => {
+      const startedAt = Date.now();
+      const model = params.model || 'RawQuery';
+      const action = params.action;
+      const operation = classifyPrismaAction(action);
+
+      try {
+        const result = await next(params);
+        StructuredFlowLogger.logDatabase({
+          operation,
+          action,
+          model,
+          success: true,
+          durationMs: Date.now() - startedAt,
+        });
+        return result;
+      } catch (error: any) {
+        StructuredFlowLogger.logDatabase({
+          operation,
+          action,
+          model,
+          success: false,
+          durationMs: Date.now() - startedAt,
+          errorCode:
+            typeof error?.code === 'string'
+              ? error.code
+              : error?.name || 'DB_ERROR',
+        });
+        throw error;
+      }
     });
   }
 

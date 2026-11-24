@@ -57,13 +57,14 @@ export class EmailVerificationController {
     @Body() dto: RequestEmailVerificationDto,
     @Req() req: FastifyRequest,
     @Headers('x-trace-id') traceId?: string,
+    @Headers('x-request-id') requestId?: string,
   ) {
     return this.emailVerificationService.requestVerification(
       user.id,
       dto.email,
       req.ip,
       req.headers['user-agent'],
-      traceId,
+      requestId || traceId,
     );
   }
 

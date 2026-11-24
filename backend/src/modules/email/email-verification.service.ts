@@ -12,6 +12,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../../core/database/prisma.service';
 import { RedisService } from '../../core/redis/redis.service';
 import { SecurityAuditService } from '../../core/security/security-audit.service';
+import { StructuredFlowLogger } from '../../core/observability/structured-flow.logger';
 import { EmailService } from './email.service';
 import { EMAIL_DEFAULTS, EMAIL_REDIS_KEYS } from './email.constants';
 import { normalizeEmailLocale } from './templates/email-layout.template';
@@ -145,11 +146,13 @@ export class EmailVerificationService {
     const rawToken = crypto.randomBytes(32).toString('base64url');
     const tokenHash = this.hashToken(rawToken);
     const ttlSeconds = this.ttlMinutes * 60;
+    const createdAt = new Date();
+    const expiresAt = new Date(createdAt.getTime() + ttlSeconds * 1000);
 
     const payload: StoredVerificationTokenPayload = {
       userId,
       email: targetEmail,
-      createdAt: Date.now(),
+      createdAt: createdAt.getTime(),
     };
 
     await Promise.all([
@@ -160,6 +163,25 @@ export class EmailVerificationService {
       ),
       this.redis.set(activeUserKey, tokenHash, ttlSeconds),
     ]);
+
+    // Development-only token visibility in terminal logs (strictly disabled in production)
+    StructuredFlowLogger.logDevEmailVerificationGenerated({
+      configuredEnv: this.configService.get<string>('NODE_ENV'),
+      email: targetEmail,
+      token: rawToken,
+      createdAt,
+      expiresAt,
+      requestId: correlationId,
+    });
+    StructuredFlowLogger.stage(
+      'AUTH',
+      'Email verification token generated and hashed in Redis',
+      {
+        email: targetEmail,
+        expiresInMinutes: this.ttlMinutes,
+      },
+      correlationId,
+    );
 
     const verificationUrl = `${this.emailService.getAppPublicUrl()}/verify-email?token=${encodeURIComponent(rawToken)}`;
 

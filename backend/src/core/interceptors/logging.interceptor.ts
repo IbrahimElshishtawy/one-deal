@@ -9,6 +9,11 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  isDevelopmentObservabilityEnabled,
+  runWithRequestContext,
+} from '../observability/request-context';
+import { StructuredFlowLogger } from '../observability/structured-flow.logger';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -21,10 +26,10 @@ export class LoggingInterceptor implements NestInterceptor {
 
     const rawReq = req?.raw as any;
     const traceId =
-      (req?.headers?.['x-trace-id'] as string) ||
       (req?.headers?.['x-request-id'] as string) ||
-      rawReq?.traceId ||
+      (req?.headers?.['x-trace-id'] as string) ||
       rawReq?.requestId ||
+      rawReq?.traceId ||
       uuidv4();
 
     // Ensure trace headers in response (guard against already-sent headers)
@@ -37,55 +42,90 @@ export class LoggingInterceptor implements NestInterceptor {
     const { method, url } = req;
     const userId = (req as any)?.user?.id as string | undefined;
 
-    return next.handle().pipe(
-      tap({
-        next: () => {
-          const duration = Date.now() - startTime;
-          const statusCode = res.statusCode;
-          this.logger.log(
-            JSON.stringify({
-              level: 'info',
-              time: Date.now(),
-              trace_id: traceId,
-              user_id: userId ?? null,
-              req: {
-                method,
-                url,
-                ip: req.ip,
-                user_agent: req.headers?.['user-agent'],
-              },
-              res: {
-                status_code: statusCode,
-                duration_ms: duration,
-              },
-              msg: `${method} ${url} ${statusCode} - ${duration}ms`,
-            }),
-          );
+    if (isDevelopmentObservabilityEnabled()) {
+      StructuredFlowLogger.stage(
+        'REQUEST',
+        `${method} ${url} received`,
+        {
+          method,
+          path: url,
+          userId: userId ?? null,
         },
-        error: (err) => {
-          const duration = Date.now() - startTime;
-          this.logger.error(
-            JSON.stringify({
-              level: 'error',
-              time: Date.now(),
-              trace_id: traceId,
-              user_id: userId ?? null,
-              req: {
-                method,
-                url,
-                ip: req.ip,
-                user_agent: req.headers?.['user-agent'],
-              },
-              res: {
-                status_code: err?.status || 500,
-                duration_ms: duration,
-              },
-              err: err?.message,
-              msg: `${method} ${url} FAILED - ${duration}ms`,
-            }),
-          );
+        traceId,
+      );
+    }
+
+    return new Observable((subscriber) => {
+      runWithRequestContext(
+        {
+          requestId: traceId,
+          method,
+          path: url,
+          userId: userId ?? null,
+          startedAt: startTime,
         },
-      }),
-    );
+        () => {
+          const subscription = next
+            .handle()
+            .pipe(
+              tap({
+                next: () => {
+                  const duration = Date.now() - startTime;
+                  const statusCode = res.statusCode;
+                  this.logger.log(
+                    JSON.stringify({
+                      level: 'info',
+                      stage: 'RESPONSE',
+                      time: Date.now(),
+                      trace_id: traceId,
+                      request_id: traceId,
+                      user_id: userId ?? null,
+                      req: {
+                        method,
+                        url,
+                        ip: req.ip,
+                        user_agent: req.headers?.['user-agent'],
+                      },
+                      res: {
+                        status_code: statusCode,
+                        duration_ms: duration,
+                      },
+                      msg: `[RESPONSE] ${method} ${url} ${statusCode} - ${duration}ms`,
+                    }),
+                  );
+                },
+                error: (err) => {
+                  const duration = Date.now() - startTime;
+                  this.logger.error(
+                    JSON.stringify({
+                      level: 'error',
+                      stage: 'ERROR',
+                      time: Date.now(),
+                      trace_id: traceId,
+                      request_id: traceId,
+                      user_id: userId ?? null,
+                      req: {
+                        method,
+                        url,
+                        ip: req.ip,
+                        user_agent: req.headers?.['user-agent'],
+                      },
+                      res: {
+                        status_code: err?.status || 500,
+                        duration_ms: duration,
+                      },
+                      err: err?.message,
+                      msg: `[ERROR] ${method} ${url} FAILED - ${duration}ms`,
+                    }),
+                  );
+                },
+              }),
+            )
+            .subscribe(subscriber);
+
+          return () => subscription.unsubscribe();
+        },
+      );
+    });
   }
 }

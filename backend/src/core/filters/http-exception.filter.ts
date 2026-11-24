@@ -8,6 +8,10 @@ import {
 } from '@nestjs/common';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  ErrorLayer,
+  StructuredFlowLogger,
+} from '../observability/structured-flow.logger';
 
 export interface StandardApiError {
   code: string;
@@ -46,16 +50,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const rawReq = request?.raw as any;
     const traceId: string =
-      (request?.headers?.['x-trace-id'] as string) ||
       (request?.headers?.['x-request-id'] as string) ||
-      rawReq?.traceId ||
+      (request?.headers?.['x-trace-id'] as string) ||
       rawReq?.requestId ||
+      rawReq?.traceId ||
       uuidv4();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let code = 'INTERNAL_SERVER_ERROR';
     let message = 'An unexpected server error occurred.';
     let details: unknown = undefined;
+    let layer: ErrorLayer = 'SERVER';
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -82,6 +87,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = String(exceptionResponse);
         code = normalizeErrorCode(status);
       }
+      if (status === HttpStatus.UNAUTHORIZED) {
+        layer = 'AUTH';
+      } else if (status === HttpStatus.FORBIDDEN) {
+        layer = 'AUTHORIZATION';
+      } else if (status === HttpStatus.TOO_MANY_REQUESTS) {
+        layer = 'RATE_LIMIT';
+      } else if (code === 'VALIDATION_FAILED' || status === HttpStatus.BAD_REQUEST) {
+        layer = 'VALIDATION';
+      } else {
+        layer = 'HTTP';
+      }
     } else if (
       typeof exception === 'object' &&
       exception !== null &&
@@ -89,6 +105,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       typeof (exception as any).code === 'string' &&
       (exception as any).code.startsWith('P2')
     ) {
+      layer = 'DATABASE';
       // Safe, sanitized Prisma known request error mapping (never leaks schema/SQL)
       const prismaCode = (exception as any).code as string;
       if (prismaCode === 'P2023') {
@@ -123,6 +140,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         (typeof (exception as any).code === 'string' &&
           (exception as any).code.startsWith('P1')))
     ) {
+      layer = 'DATABASE';
       // Safe 503 Service Unavailable for database connectivity/initialization errors (never leaks host/credentials)
       const prismaCode = (exception as any).code || (exception as any).name;
       this.logger.error(
@@ -151,6 +169,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
         err?.stack,
       );
     }
+
+    // Emit unified structured error telemetry (stack trace included only in development)
+    StructuredFlowLogger.logError({
+      code,
+      message,
+      layer,
+      statusCode: status,
+      requestId: traceId,
+      method: request?.method,
+      path: request?.url,
+      stack: exception instanceof Error ? exception.stack : undefined,
+    });
 
     if (response.sent || (response.raw as any)?.headersSent) {
       this.logger.warn(

@@ -13,6 +13,7 @@ import { PrismaService } from '../../../core/database/prisma.service';
 import { RedisService } from '../../../core/redis/redis.service';
 import { PhoneNormalizationService } from '../../../core/identity/phone-normalization.service';
 import { SecurityAuditService } from '../../../core/security/security-audit.service';
+import { StructuredFlowLogger } from '../../../core/observability/structured-flow.logger';
 import {
   ISmsGatewayAdapter,
   SMS_GATEWAY_ADAPTER,
@@ -136,7 +137,10 @@ export class OtpService {
     // 5. Generate cryptographically secure random 6-digit OTP
     const code = crypto.randomInt(100000, 999999).toString();
     const codeHash = this.hashOtp(code);
-    const expiresAt = new Date(Date.now() + this.otpExpirySeconds * 1000);
+    const createdAt = new Date();
+    const expiresAt = new Date(
+      createdAt.getTime() + this.otpExpirySeconds * 1000,
+    );
 
     // 6. Persist hashed OTP challenge to PostgreSQL ledger
     await this.prisma.otp.create({
@@ -149,6 +153,27 @@ export class OtpService {
         expiresAt,
       },
     });
+
+    // Development-only OTP visibility in terminal logs (strictly disabled in production)
+    StructuredFlowLogger.logDevOtpGenerated({
+      configuredEnv: this.configService.get<string>('NODE_ENV'),
+      targetPhone: normalizedPhone,
+      purpose,
+      otp: code,
+      createdAt,
+      expiresAt,
+      requestId: correlationId,
+    });
+    StructuredFlowLogger.stage(
+      'AUTH',
+      'OTP challenge generated and hashed in database',
+      {
+        purpose,
+        phone: normalizedPhone,
+        expiresInSeconds: this.otpExpirySeconds,
+      },
+      correlationId,
+    );
 
     // 7. Enforce resend cooldown in Redis Cache
     await this.redis.set(cooldownKey, '1', this.resendCooldownSeconds);
