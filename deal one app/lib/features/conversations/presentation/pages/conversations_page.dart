@@ -76,28 +76,43 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
           children: [
             DealOneSubPageHeader(
               title: isArabic ? 'المحادثات' : 'Conversations',
-              trailing: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: DealOneTokens.navy,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    key: const Key('conversations_settings_button'),
+                    tooltip: isArabic ? 'إعدادات الدردشة' : 'Chat settings',
+                    onPressed: () => context.push(RouteNames.chatSettings),
+                    icon: Icon(
+                      Icons.tune_rounded,
+                      color: DealOneTokens.textPrimaryOf(context),
+                    ),
                   ),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: AppRadii.full,
+                  const SizedBox(width: 4),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DealOneTokens.navy,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadii.full,
+                      ),
+                    ),
+                    onPressed: () => context.push(RouteNames.realEstate),
+                    icon: const Icon(Icons.edit_square, size: 16),
+                    label: Text(
+                      isArabic ? 'محادثة جديدة' : 'New Chat',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
-                onPressed: () => context.push(RouteNames.realEstate),
-                icon: const Icon(Icons.edit_square, size: 16),
-                label: Text(
-                  isArabic ? 'محادثة جديدة' : 'New Chat',
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                ],
               ),
             ),
             Expanded(

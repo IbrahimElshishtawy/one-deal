@@ -22,6 +22,7 @@ import 'package:market_space/features/cars_maintenance/presentation/pages/cars_m
 import 'package:market_space/features/categories/presentation/screens/section_categories_page.dart';
 import 'package:market_space/features/construction_electrical/presentation/pages/construction_electrical_home_page.dart';
 import 'package:market_space/features/conversations/domain/entities/conversation_entity.dart';
+import 'package:market_space/features/conversations/presentation/pages/chat_settings_page.dart';
 import 'package:market_space/features/conversations/presentation/pages/conversation_chat_page.dart';
 import 'package:market_space/features/conversations/presentation/pages/conversations_page.dart';
 import 'package:market_space/features/fashion_accessories/presentation/pages/fashion_accessories_home_page.dart';
@@ -260,6 +261,17 @@ class AppRouter {
                 state: state,
                 style: CinematicTransitionStyle.glide,
                 child: const ConversationsPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.chatSettings,
+          name: RouteNames.chatSettingsName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const ChatSettingsPage(),
               ),
         ),
         GoRoute(

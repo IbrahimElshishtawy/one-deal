@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:market_space/core/design_system/deal_one_design_tokens.dart';
 import 'package:market_space/core/design_system/deal_one_ui_states.dart';
 import 'package:market_space/core/providers/core_providers.dart';
-import 'package:market_space/core/theme/app_radii.dart';
+import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_spacing.dart';
+import 'package:market_space/features/conversations/domain/entities/chat_settings_entity.dart';
 import 'package:market_space/features/conversations/domain/entities/conversation_entity.dart';
+import 'package:market_space/features/conversations/presentation/providers/chat_settings_provider.dart';
 import 'package:market_space/features/conversations/presentation/providers/conversations_providers.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_app_bar.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_attachment_sheet.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_date_separator.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_empty_state.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_input_composer.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_listing_context_banner.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_message_actions_sheet.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_message_bubble.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_quick_replies_bar.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_reply_preview_bar.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_scroll_to_bottom_fab.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_search_bar.dart';
+import 'package:market_space/features/conversations/presentation/widgets/chat/chat_wallpaper_background.dart';
 
-/// Conversation Chat Thread Screen connected to:
-/// `GET /conversations/:id/messages` and `POST /conversations/:id/messages`.
+/// Complete Telegram-inspired Conversation Chat Thread Screen composed of
+/// independent reusable widgets and wired to `chatSettingsProvider`.
 class ConversationChatPage extends ConsumerStatefulWidget {
   final String conversationId;
   final ConversationEntity? initialConversation;
@@ -28,27 +44,101 @@ class ConversationChatPage extends ConsumerStatefulWidget {
 
 class _ConversationChatPageState extends ConsumerState<ConversationChatPage> {
   final _messageController = TextEditingController();
+  final _searchController = TextEditingController();
   final _scrollController = ScrollController();
+
   bool _sending = false;
+  bool _isSearching = false;
+  bool _bannerDismissed = false;
+  bool _showQuickRepliesOverride = false;
+  bool _showScrollToBottom = false;
+  int _activeSearchMatchIdx = 0;
+  ChatMessageEntity? _replyingTo;
+  final Map<String, GlobalKey> _messageKeys = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_handleScroll);
+  }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_handleScroll);
     _messageController.dispose();
+    _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _sendMessage() async {
-    final text = _messageController.text.trim();
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final current = _scrollController.position.pixels;
+    final awayFromBottom = (maxScroll - current) > 140;
+    if (awayFromBottom != _showScrollToBottom) {
+      setState(() => _showScrollToBottom = awayFromBottom);
+    }
+  }
+
+  void _scrollToBottom({bool animated = true}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final target = _scrollController.position.maxScrollExtent;
+      if (animated) {
+        _scrollController.animateTo(
+          target,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+        );
+      } else {
+        _scrollController.jumpTo(target);
+      }
+    });
+  }
+
+  String _composePayload(String rawText) {
+    final trimmed = rawText.trim();
+    final reply = _replyingTo;
+    if (reply == null) return trimmed;
+    final senderLabel = reply.senderName.trim().isNotEmpty
+        ? reply.senderName.trim()
+        : (widget.initialConversation?.counterpartName ?? 'Deal One');
+    final snippet = reply.body.replaceAll('\n', ' ').trim();
+    final clipped = snippet.length > 60
+        ? '${snippet.substring(0, 60)}...'
+        : snippet;
+    return '↪ $senderLabel: $clipped\n$trimmed';
+  }
+
+  Future<void> _sendMessage({String? overrideText}) async {
+    final raw = overrideText ?? _messageController.text;
+    final text = raw.trim();
     if (text.isEmpty || _sending) return;
+
+    final settings = ref.read(chatSettingsProvider);
+    if (settings.hapticFeedback) {
+      HapticFeedback.lightImpact();
+    }
+
+    final payload = _composePayload(text);
     setState(() => _sending = true);
+
     try {
       await ref
           .read(conversationsRepositoryProvider)
-          .sendMessage(widget.conversationId, text);
-      _messageController.clear();
+          .sendMessage(widget.conversationId, payload);
+      if (overrideText == null) {
+        _messageController.clear();
+      }
+      if (mounted) {
+        setState(() => _replyingTo = null);
+      }
       ref.invalidate(conversationMessagesFamily(widget.conversationId));
       ref.invalidate(conversationsListProvider);
+      if (settings.autoScrollToBottom) {
+        _scrollToBottom();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -60,179 +150,323 @@ class _ConversationChatPageState extends ConsumerState<ConversationChatPage> {
     }
   }
 
+  void _openMessageActions(
+    ChatMessageEntity msg,
+    bool isArabic,
+    ChatSettingsEntity settings,
+  ) {
+    if (settings.hapticFeedback) {
+      HapticFeedback.selectionClick();
+    }
+    ChatMessageActionsSheet.show(
+      context,
+      message: msg,
+      colorTheme: settings.colorTheme,
+      onReply: () => setState(() => _replyingTo = msg),
+      onCopy: () {
+        Clipboard.setData(ClipboardData(text: msg.body));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isArabic ? 'تم نسخ الرسالة' : 'Message copied',
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _jumpToMatch(List<int> matchIndices, List<ChatMessageEntity> messages) {
+    if (matchIndices.isEmpty) return;
+    final safeIdx = _activeSearchMatchIdx.clamp(0, matchIndices.length - 1);
+    final msg = messages[matchIndices[safeIdx]];
+    final key = _messageKeys[msg.id];
+    final ctx = key?.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 220),
+        alignment: 0.45,
+      );
+    }
+  }
+
+  bool _isSameCalendarDay(DateTime a, DateTime b) {
+    final la = a.toLocal();
+    final lb = b.toLocal();
+    return la.year == lb.year && la.month == lb.month && la.day == lb.day;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final currentUserId = ref.watch(sessionProvider).userId;
-    final messagesAsync =
-        ref.watch(conversationMessagesFamily(widget.conversationId));
-    final title = widget.initialConversation?.counterpartName ??
-        (isArabic ? 'المحادثة' : 'Conversation');
-    final listingTitle = widget.initialConversation?.listing?.title;
+    final settings = ref.watch(chatSettingsProvider);
+    final messagesAsync = ref.watch(
+      conversationMessagesFamily(widget.conversationId),
+    );
+
+    final conv = widget.initialConversation;
+    final title =
+        conv?.counterpartName ?? (isArabic ? 'المحادثة' : 'Conversation');
+    final listing = conv?.listing;
+    final listingId = conv?.listingId ?? listing?.id ?? '';
+    final isMuted = settings.isMuted(widget.conversationId);
+    final showQuickReplies =
+        settings.showQuickReplies || _showQuickRepliesOverride;
 
     return Scaffold(
       backgroundColor: DealOneTokens.pageBgOf(context),
       body: SafeArea(
         child: Column(
           children: [
-            DealOneSubPageHeader(
+            ChatAppBar(
               title: title,
-              subtitle: listingTitle,
+              subtitle: listing?.title ?? conv?.counterpartSubtitle,
+              avatarUrl: conv?.counterpartAvatarUrl,
+              isVerified: conv?.isVerified ?? false,
+              isMuted: isMuted,
+              hasListing: listingId.isNotEmpty,
+              colorTheme: settings.colorTheme,
               onBack: () {
                 if (context.canPop()) context.pop();
               },
-              trailing: widget.initialConversation?.listingId.isNotEmpty == true
-                  ? IconButton(
-                      tooltip: isArabic ? 'عرض العقار' : 'View Property',
-                      onPressed: () => context.push(
-                        '/listings/${widget.initialConversation!.listingId}',
-                      ),
-                      icon: Icon(
-                        Icons.home_work_outlined,
-                        color: DealOneTokens.textPrimaryOf(context),
-                      ),
-                    )
+              onSearchTap: () {
+                setState(() {
+                  _isSearching = !_isSearching;
+                  if (!_isSearching) {
+                    _searchController.clear();
+                    _activeSearchMatchIdx = 0;
+                  }
+                });
+              },
+              onSettingsTap: () => context.push(RouteNames.chatSettings),
+              onToggleMute: () {
+                ref
+                    .read(chatSettingsProvider.notifier)
+                    .toggleMuteConversation(widget.conversationId);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      !isMuted
+                          ? (isArabic
+                                ? 'تم كتم إشعارات هذه المحادثة'
+                                : 'Notifications muted for this chat')
+                          : (isArabic
+                                ? 'تم تفعيل إشعارات هذه المحادثة'
+                                : 'Notifications unmuted'),
+                    ),
+                  ),
+                );
+              },
+              onViewListing: listingId.isNotEmpty
+                  ? () => context.push('/listings/$listingId')
                   : null,
             ),
-            Expanded(
-              child: messagesAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator.adaptive(),
-                ),
-                error: (err, _) => DealOneErrorStateView(
-                  error: err,
-                  onRetry: () => ref.invalidate(
-                    conversationMessagesFamily(widget.conversationId),
-                  ),
-                ),
-                data: (messages) {
-                  if (messages.isEmpty) {
-                    return DealOneEmptyStateView(
-                      icon: Icons.mark_chat_unread_outlined,
-                      title: isArabic
-                          ? 'ابدأ المحادثة الآن'
-                          : 'Start the conversation',
-                      description: isArabic
-                          ? 'أرسل سؤالك حول العقار أو طلب موعد معاينة.'
-                          : 'Send your inquiry about the property or request a viewing.',
-                    );
+            if (_isSearching)
+              Builder(
+                builder: (context) {
+                  final list =
+                      messagesAsync.valueOrNull ?? const <ChatMessageEntity>[];
+                  final q = _searchController.text.trim().toLowerCase();
+                  final matchIndices = <int>[];
+                  if (q.isNotEmpty) {
+                    for (var i = 0; i < list.length; i++) {
+                      if (list[i].body.toLowerCase().contains(q)) {
+                        matchIndices.add(i);
+                      }
+                    }
                   }
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = messages[index];
-                      final isMine = currentUserId != null &&
-                          msg.senderUserId == currentUserId;
-                      return Align(
-                        alignment: isMine
-                            ? AlignmentDirectional.centerEnd
-                            : AlignmentDirectional.centerStart,
-                        child: Container(
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.sizeOf(context).width * 0.78,
+                  return ChatSearchBar(
+                    controller: _searchController,
+                    totalMatches: matchIndices.length,
+                    currentMatchIndex: matchIndices.isEmpty
+                        ? 0
+                        : _activeSearchMatchIdx.clamp(
+                            0,
+                            matchIndices.length - 1,
                           ),
-                          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isMine
-                                ? DealOneTokens.navy
-                                : DealOneTokens.cardSurfaceOf(context),
-                            borderRadius: AppRadii.lg,
-                            border: isMine
-                                ? null
-                                : Border.all(
-                                    color: DealOneTokens.cardBorderOf(context),
-                                  ),
-                          ),
-                          child: Text(
-                            msg.body,
-                            style: TextStyle(
-                              fontSize: 14,
-                              height: 1.45,
-                              color: isMine
-                                  ? Colors.white
-                                  : DealOneTokens.textPrimaryOf(context),
-                            ),
-                          ),
-                        ),
-                      );
+                    colorTheme: settings.colorTheme,
+                    onChanged: (_) => setState(() => _activeSearchMatchIdx = 0),
+                    onPreviousMatch: () {
+                      if (matchIndices.isEmpty) return;
+                      setState(() {
+                        _activeSearchMatchIdx =
+                            (_activeSearchMatchIdx - 1 + matchIndices.length) %
+                            matchIndices.length;
+                      });
+                      _jumpToMatch(matchIndices, list);
+                    },
+                    onNextMatch: () {
+                      if (matchIndices.isEmpty) return;
+                      setState(() {
+                        _activeSearchMatchIdx =
+                            (_activeSearchMatchIdx + 1) % matchIndices.length;
+                      });
+                      _jumpToMatch(matchIndices, list);
+                    },
+                    onClose: () {
+                      setState(() {
+                        _isSearching = false;
+                        _searchController.clear();
+                        _activeSearchMatchIdx = 0;
+                      });
                     },
                   );
                 },
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.sm,
-                AppSpacing.md,
-                AppSpacing.md,
+            if (settings.showListingBanner &&
+                !_bannerDismissed &&
+                listing != null)
+              ChatListingContextBanner(
+                listing: listing,
+                colorTheme: settings.colorTheme,
+                onOpenListing: () => context.push('/listings/${listing.id}'),
+                onDismiss: () => setState(() => _bannerDismissed = true),
               ),
-              decoration: BoxDecoration(
-                color: DealOneTokens.cardSurfaceOf(context),
-                border: Border(
-                  top: BorderSide(color: DealOneTokens.cardBorderOf(context)),
+            Expanded(
+              child: ChatWallpaperBackground(
+                wallpaper: settings.wallpaper,
+                child: Stack(
+                  children: [
+                    messagesAsync.when(
+                      loading: () => const Center(
+                        child: CircularProgressIndicator.adaptive(),
+                      ),
+                      error: (err, _) => DealOneErrorStateView(
+                        error: err,
+                        onRetry: () => ref.invalidate(
+                          conversationMessagesFamily(widget.conversationId),
+                        ),
+                      ),
+                      data: (messages) {
+                        if (messages.isEmpty) {
+                          return ChatEmptyState(
+                            counterpartName: title,
+                            colorTheme: settings.colorTheme,
+                            onPromptSelected: (prompt) =>
+                                _sendMessage(overrideText: prompt),
+                          );
+                        }
+
+                        final q = _searchController.text.trim().toLowerCase();
+                        final matchIds = <String>[];
+                        if (_isSearching && q.isNotEmpty) {
+                          for (final m in messages) {
+                            if (m.body.toLowerCase().contains(q)) {
+                              matchIds.add(m.id);
+                            }
+                          }
+                        }
+                        final focusedMatchId = matchIds.isNotEmpty
+                            ? matchIds[_activeSearchMatchIdx.clamp(
+                                0,
+                                matchIds.length - 1,
+                              )]
+                            : null;
+
+                        return ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.md,
+                          ),
+                          itemCount: messages.length,
+                          itemBuilder: (context, index) {
+                            final msg = messages[index];
+                            final msgKey = _messageKeys.putIfAbsent(
+                              msg.id,
+                              () => GlobalKey(),
+                            );
+                            final isMine =
+                                currentUserId != null &&
+                                msg.senderUserId == currentUserId;
+                            final showDateHeader =
+                                index == 0 ||
+                                !_isSameCalendarDay(
+                                  messages[index - 1].sentAt,
+                                  msg.sentAt,
+                                );
+
+                            return Column(
+                              key: msgKey,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (showDateHeader)
+                                  ChatDateSeparator(date: msg.sentAt),
+                                ChatMessageBubble(
+                                  message: msg,
+                                  isMine: isMine,
+                                  settings: settings,
+                                  searchQuery: _isSearching
+                                      ? _searchController.text
+                                      : '',
+                                  isHighlightedMatch: focusedMatchId == msg.id,
+                                  onLongPress: () => _openMessageActions(
+                                    msg,
+                                    isArabic,
+                                    settings,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    PositionedDirectional(
+                      end: AppSpacing.md,
+                      bottom: AppSpacing.md,
+                      child: ChatScrollToBottomFab(
+                        visible: _showScrollToBottom,
+                        colorTheme: settings.colorTheme,
+                        onPressed: _scrollToBottom,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      minLines: 1,
-                      maxLines: 4,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
-                      decoration: InputDecoration(
-                        hintText: isArabic
-                            ? 'اكتب رسالتك هنا...'
-                            : 'Type your message...',
-                        filled: true,
-                        fillColor: DealOneTokens.inputFillOf(context),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        border: const OutlineInputBorder(
-                          borderRadius: AppRadii.full,
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Material(
-                    color: DealOneTokens.navy,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      onTap: _sending ? null : _sendMessage,
-                      customBorder: const CircleBorder(),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: _sending
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.send_rounded,
-                                size: 20,
-                                color: Colors.white,
-                              ),
-                      ),
-                    ),
-                  ),
-                ],
+            ),
+            if (_replyingTo != null)
+              ChatReplyPreviewBar(
+                replyingTo: _replyingTo!,
+                senderLabel: _replyingTo!.senderUserId == currentUserId
+                    ? (isArabic ? 'أنت' : 'You')
+                    : (_replyingTo!.senderName.trim().isNotEmpty
+                          ? _replyingTo!.senderName
+                          : title),
+                colorTheme: settings.colorTheme,
+                onCancel: () => setState(() => _replyingTo = null),
               ),
+            if (showQuickReplies)
+              ChatQuickRepliesBar(
+                colorTheme: settings.colorTheme,
+                onSelected: (text) {
+                  _messageController.text = text;
+                  _messageController.selection = TextSelection.collapsed(
+                    offset: text.length,
+                  );
+                },
+              ),
+            ChatInputComposer(
+              controller: _messageController,
+              settings: settings,
+              sending: _sending,
+              showQuickRepliesActive: showQuickReplies,
+              onSend: () => _sendMessage(),
+              onAttachmentTap: () {
+                ChatAttachmentSheet.show(
+                  context,
+                  colorTheme: settings.colorTheme,
+                  onTemplateSelected: (template) =>
+                      _sendMessage(overrideText: template),
+                );
+              },
+              onToggleQuickReplies: () {
+                setState(
+                  () => _showQuickRepliesOverride = !_showQuickRepliesOverride,
+                );
+              },
             ),
           ],
         ),

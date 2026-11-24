@@ -53,6 +53,7 @@ class RouteNames {
   static const String profile = '/profile';
   static const String editAccount = '/profile/edit';
   static const String conversations = '/conversations';
+  static const String chatSettings = '/conversations/settings';
   static const String conversationChat = '/conversations/:id';
   static const String realEstateMap = '/real-estate/map';
   static const String categoryMap = '/map/:categorySlug';
@@ -176,6 +177,7 @@ class RouteNames {
   static const String profileName = 'profile';
   static const String editAccountName = 'edit_account';
   static const String conversationsName = 'conversations';
+  static const String chatSettingsName = 'chat_settings';
   static const String conversationChatName = 'conversation_chat';
   static const String realEstateMapName = 'real_estate_map';
   static const String categoryMapName = 'category_map';
