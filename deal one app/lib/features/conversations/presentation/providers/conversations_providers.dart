@@ -4,7 +4,7 @@ import 'package:market_space/features/conversations/data/repositories/conversati
 import 'package:market_space/features/conversations/domain/entities/conversation_entity.dart';
 import 'package:market_space/features/conversations/domain/repositories/conversations_repository.dart';
 
-enum ConversationFilter { all, unread, read }
+enum ConversationFilter { all, unread, pinned, read }
 
 final conversationsRepositoryProvider = Provider<ConversationsRepository>((
   ref,

@@ -13,6 +13,7 @@ import 'package:market_space/features/conversations/presentation/widgets/setting
 import 'package:market_space/features/conversations/presentation/widgets/settings/chat_settings_section_card.dart';
 import 'package:market_space/features/conversations/presentation/widgets/settings/chat_settings_slider_tile.dart';
 import 'package:market_space/features/conversations/presentation/widgets/settings/chat_settings_toggle_tile.dart';
+import 'package:market_space/features/conversations/presentation/widgets/settings/chat_swipe_action_picker.dart';
 import 'package:market_space/features/conversations/presentation/widgets/settings/chat_wallpaper_picker.dart';
 
 /// Telegram-inspired Chat Settings page with live interactive preview,
@@ -248,6 +249,59 @@ class ChatSettingsPage extends ConsumerWidget {
                         value: settings.autoScrollToBottom,
                         colorTheme: settings.colorTheme,
                         onChanged: notifier.setAutoScrollToBottom,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  ChatSettingsSectionCard(
+                    title: isArabic
+                        ? 'قائمة المحادثات (Inbox)'
+                        : 'Chat List (Inbox)',
+                    colorTheme: settings.colorTheme,
+                    children: [
+                      ChatSwipeActionPicker(
+                        selectedAction: settings.swipeAction,
+                        colorTheme: settings.colorTheme,
+                        onSelected: notifier.setSwipeAction,
+                      ),
+                      ChatSettingsToggleTile(
+                        switchKey: const Key('chat_list_two_lines_switch'),
+                        icon: Icons.view_headline_rounded,
+                        title: isArabic
+                            ? 'عرض المحادثة في سطرين'
+                            : 'Two-line chat list',
+                        subtitle: isArabic
+                            ? 'توفير مساحة أكبر لعرض عدد أكبر من المحادثات'
+                            : 'Compact two-line layout per conversation row',
+                        value: settings.chatListTwoLines,
+                        colorTheme: settings.colorTheme,
+                        onChanged: notifier.setChatListTwoLines,
+                      ),
+                      ChatSettingsToggleTile(
+                        switchKey: const Key('chat_list_listing_tag_switch'),
+                        icon: Icons.sell_outlined,
+                        title: isArabic
+                            ? 'إظهار بطاقة الإعلان في القائمة'
+                            : 'Show listing tag in inbox',
+                        subtitle: isArabic
+                            ? 'عرض اسم الإعلان وسعره داخل بطاقة المحادثة'
+                            : 'Display linked listing title and price in inbox',
+                        value: settings.showListingTagInInbox,
+                        colorTheme: settings.colorTheme,
+                        onChanged: notifier.setShowListingTagInInbox,
+                      ),
+                      ChatSettingsToggleTile(
+                        switchKey: const Key('chat_list_advisor_banner_switch'),
+                        icon: Icons.verified_user_outlined,
+                        title: isArabic
+                            ? 'شريط حالة مستشاري ديل ون'
+                            : 'Advisors status banner',
+                        subtitle: isArabic
+                            ? 'إظهار شريط الردود الفورية أعلى قائمة المحادثات'
+                            : 'Show live advisor availability banner in inbox',
+                        value: settings.showAdvisorBanner,
+                        colorTheme: settings.colorTheme,
+                        onChanged: notifier.setShowAdvisorBanner,
                       ),
                     ],
                   ),

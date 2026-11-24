@@ -140,6 +140,44 @@ extension ChatWallpaperPresetX on ChatWallpaperPreset {
   }
 }
 
+/// Telegram-style swipe gesture action on conversation list items.
+enum ChatListSwipeAction { pin, mute, archive }
+
+extension ChatListSwipeActionX on ChatListSwipeAction {
+  String label(bool isArabic) {
+    switch (this) {
+      case ChatListSwipeAction.pin:
+        return isArabic ? 'تثبيت' : 'Pin';
+      case ChatListSwipeAction.mute:
+        return isArabic ? 'كتم' : 'Mute';
+      case ChatListSwipeAction.archive:
+        return isArabic ? 'أرشفة' : 'Archive';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case ChatListSwipeAction.pin:
+        return Icons.push_pin_rounded;
+      case ChatListSwipeAction.mute:
+        return Icons.notifications_off_rounded;
+      case ChatListSwipeAction.archive:
+        return Icons.archive_rounded;
+    }
+  }
+
+  Color color(bool isDark, ChatColorTheme theme) {
+    switch (this) {
+      case ChatListSwipeAction.pin:
+        return theme.accent(isDark);
+      case ChatListSwipeAction.mute:
+        return const Color(0xFFD97706);
+      case ChatListSwipeAction.archive:
+        return isDark ? const Color(0xFF64748B) : const Color(0xFF475569);
+    }
+  }
+}
+
 /// Persistent user-configurable Telegram-style chat settings.
 class ChatSettingsEntity {
   static const double minFontSize = 12.0;
@@ -160,6 +198,12 @@ class ChatSettingsEntity {
   final bool hapticFeedback;
   final bool autoScrollToBottom;
   final Set<String> mutedConversationIds;
+  final Set<String> pinnedConversationIds;
+  final Set<String> archivedConversationIds;
+  final ChatListSwipeAction swipeAction;
+  final bool chatListTwoLines;
+  final bool showListingTagInInbox;
+  final bool showAdvisorBanner;
 
   const ChatSettingsEntity({
     this.fontSize = 15.0,
@@ -175,12 +219,24 @@ class ChatSettingsEntity {
     this.hapticFeedback = true,
     this.autoScrollToBottom = true,
     this.mutedConversationIds = const {},
+    this.pinnedConversationIds = const {},
+    this.archivedConversationIds = const {},
+    this.swipeAction = ChatListSwipeAction.pin,
+    this.chatListTwoLines = false,
+    this.showListingTagInInbox = true,
+    this.showAdvisorBanner = true,
   });
 
   static const ChatSettingsEntity defaults = ChatSettingsEntity();
 
   bool isMuted(String conversationId) =>
       mutedConversationIds.contains(conversationId);
+
+  bool isPinned(String conversationId) =>
+      pinnedConversationIds.contains(conversationId);
+
+  bool isArchived(String conversationId) =>
+      archivedConversationIds.contains(conversationId);
 
   ChatSettingsEntity copyWith({
     double? fontSize,
@@ -196,6 +252,12 @@ class ChatSettingsEntity {
     bool? hapticFeedback,
     bool? autoScrollToBottom,
     Set<String>? mutedConversationIds,
+    Set<String>? pinnedConversationIds,
+    Set<String>? archivedConversationIds,
+    ChatListSwipeAction? swipeAction,
+    bool? chatListTwoLines,
+    bool? showListingTagInInbox,
+    bool? showAdvisorBanner,
   }) {
     return ChatSettingsEntity(
       fontSize: (fontSize ?? this.fontSize).clamp(minFontSize, maxFontSize),
@@ -215,6 +277,15 @@ class ChatSettingsEntity {
       autoScrollToBottom: autoScrollToBottom ?? this.autoScrollToBottom,
       mutedConversationIds:
           mutedConversationIds ?? this.mutedConversationIds,
+      pinnedConversationIds:
+          pinnedConversationIds ?? this.pinnedConversationIds,
+      archivedConversationIds:
+          archivedConversationIds ?? this.archivedConversationIds,
+      swipeAction: swipeAction ?? this.swipeAction,
+      chatListTwoLines: chatListTwoLines ?? this.chatListTwoLines,
+      showListingTagInInbox:
+          showListingTagInInbox ?? this.showListingTagInInbox,
+      showAdvisorBanner: showAdvisorBanner ?? this.showAdvisorBanner,
     );
   }
 
@@ -233,6 +304,12 @@ class ChatSettingsEntity {
       'hapticFeedback': hapticFeedback,
       'autoScrollToBottom': autoScrollToBottom,
       'mutedConversationIds': mutedConversationIds.toList(),
+      'pinnedConversationIds': pinnedConversationIds.toList(),
+      'archivedConversationIds': archivedConversationIds.toList(),
+      'swipeAction': swipeAction.name,
+      'chatListTwoLines': chatListTwoLines,
+      'showListingTagInInbox': showListingTagInInbox,
+      'showAdvisorBanner': showAdvisorBanner,
     };
   }
 
@@ -259,9 +336,14 @@ class ChatSettingsEntity {
       orElse: () => defaults.wallpaper,
     );
 
-    final rawMuted = json['mutedConversationIds'];
-    final parsedMuted = rawMuted is List
-        ? rawMuted.map((e) => e.toString()).where((e) => e.isNotEmpty).toSet()
+    final swipeName = json['swipeAction']?.toString();
+    final parsedSwipe = ChatListSwipeAction.values.firstWhere(
+      (s) => s.name == swipeName,
+      orElse: () => defaults.swipeAction,
+    );
+
+    Set<String> parseIdSet(dynamic raw) => raw is List
+        ? raw.map((e) => e.toString()).where((e) => e.isNotEmpty).toSet()
         : const <String>{};
 
     return ChatSettingsEntity(
@@ -293,7 +375,19 @@ class ChatSettingsEntity {
       autoScrollToBottom: json['autoScrollToBottom'] is bool
           ? json['autoScrollToBottom'] as bool
           : defaults.autoScrollToBottom,
-      mutedConversationIds: parsedMuted,
+      mutedConversationIds: parseIdSet(json['mutedConversationIds']),
+      pinnedConversationIds: parseIdSet(json['pinnedConversationIds']),
+      archivedConversationIds: parseIdSet(json['archivedConversationIds']),
+      swipeAction: parsedSwipe,
+      chatListTwoLines: json['chatListTwoLines'] is bool
+          ? json['chatListTwoLines'] as bool
+          : defaults.chatListTwoLines,
+      showListingTagInInbox: json['showListingTagInInbox'] is bool
+          ? json['showListingTagInInbox'] as bool
+          : defaults.showListingTagInInbox,
+      showAdvisorBanner: json['showAdvisorBanner'] is bool
+          ? json['showAdvisorBanner'] as bool
+          : defaults.showAdvisorBanner,
     );
   }
 
@@ -313,7 +407,13 @@ class ChatSettingsEntity {
         other.compactMode == compactMode &&
         other.hapticFeedback == hapticFeedback &&
         other.autoScrollToBottom == autoScrollToBottom &&
-        _setEquals(other.mutedConversationIds, mutedConversationIds);
+        _setEquals(other.mutedConversationIds, mutedConversationIds) &&
+        _setEquals(other.pinnedConversationIds, pinnedConversationIds) &&
+        _setEquals(other.archivedConversationIds, archivedConversationIds) &&
+        other.swipeAction == swipeAction &&
+        other.chatListTwoLines == chatListTwoLines &&
+        other.showListingTagInInbox == showListingTagInInbox &&
+        other.showAdvisorBanner == showAdvisorBanner;
   }
 
   @override
@@ -331,6 +431,12 @@ class ChatSettingsEntity {
     hapticFeedback,
     autoScrollToBottom,
     Object.hashAllUnordered(mutedConversationIds),
+    Object.hashAllUnordered(pinnedConversationIds),
+    Object.hashAllUnordered(archivedConversationIds),
+    swipeAction,
+    chatListTwoLines,
+    showListingTagInInbox,
+    showAdvisorBanner,
   );
 
   static bool _setEquals(Set<String> a, Set<String> b) {

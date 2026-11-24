@@ -102,6 +102,45 @@ class ChatSettingsNotifier extends Notifier<ChatSettingsEntity> {
     _update(state.copyWith(mutedConversationIds: nextSet));
   }
 
+  void togglePinConversation(String conversationId) {
+    final nextPinned = Set<String>.from(state.pinnedConversationIds);
+    if (nextPinned.contains(conversationId)) {
+      nextPinned.remove(conversationId);
+    } else {
+      nextPinned.add(conversationId);
+    }
+    _update(state.copyWith(pinnedConversationIds: nextPinned));
+  }
+
+  void toggleArchiveConversation(String conversationId) {
+    final nextArchived = Set<String>.from(state.archivedConversationIds);
+    final nextPinned = Set<String>.from(state.pinnedConversationIds);
+    if (nextArchived.contains(conversationId)) {
+      nextArchived.remove(conversationId);
+    } else {
+      nextArchived.add(conversationId);
+      nextPinned.remove(conversationId);
+    }
+    _update(
+      state.copyWith(
+        archivedConversationIds: nextArchived,
+        pinnedConversationIds: nextPinned,
+      ),
+    );
+  }
+
+  void setSwipeAction(ChatListSwipeAction action) =>
+      _update(state.copyWith(swipeAction: action));
+
+  void setChatListTwoLines(bool value) =>
+      _update(state.copyWith(chatListTwoLines: value));
+
+  void setShowListingTagInInbox(bool value) =>
+      _update(state.copyWith(showListingTagInInbox: value));
+
+  void setShowAdvisorBanner(bool value) =>
+      _update(state.copyWith(showAdvisorBanner: value));
+
   void resetToDefaults() => _update(ChatSettingsEntity.defaults);
 }
 

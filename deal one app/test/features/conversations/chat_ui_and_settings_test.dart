@@ -11,20 +11,24 @@ import 'package:market_space/features/conversations/domain/entities/conversation
 import 'package:market_space/features/conversations/domain/repositories/conversations_repository.dart';
 import 'package:market_space/features/conversations/presentation/pages/chat_settings_page.dart';
 import 'package:market_space/features/conversations/presentation/pages/conversation_chat_page.dart';
+import 'package:market_space/features/conversations/presentation/pages/conversations_page.dart';
 import 'package:market_space/features/conversations/presentation/providers/chat_settings_provider.dart';
 import 'package:market_space/features/conversations/presentation/providers/conversations_providers.dart';
 
 class _FakeConversationsRepository implements ConversationsRepository {
+  final List<ConversationEntity> conversations;
   final List<ChatMessageEntity> messages;
   final List<String> sentTexts = [];
 
-  _FakeConversationsRepository(this.messages);
+  _FakeConversationsRepository(
+    this.messages, {
+    this.conversations = const [],
+  });
 
   @override
   Future<List<ConversationEntity>> getMyConversations({
     String? currentUserId,
-  }) async =>
-      const [];
+  }) async => List.unmodifiable(conversations);
 
   @override
   Future<ConversationEntity> startOrGetConversation(
@@ -39,8 +43,7 @@ class _FakeConversationsRepository implements ConversationsRepository {
     String conversationId, {
     int page = 1,
     int limit = 30,
-  }) async =>
-      List.unmodifiable(messages);
+  }) async => List.unmodifiable(messages);
 
   @override
   Future<ChatMessageEntity> sendMessage(
@@ -64,45 +67,63 @@ class _FakeConversationsRepository implements ConversationsRepository {
 
 void main() {
   group('ChatSettingsNotifier persistence & defaults', () {
-    test('updates, persists across containers, toggles mute, and resets', () async {
-      final prefs = InMemoryPreferencesService();
-      final container1 = ProviderContainer(
-        overrides: [preferencesServiceProvider.overrideWithValue(prefs)],
-      );
-      addTearDown(container1.dispose);
+    test(
+      'updates, persists across containers, toggles mute, and resets',
+      () async {
+        final prefs = InMemoryPreferencesService();
+        final container1 = ProviderContainer(
+          overrides: [preferencesServiceProvider.overrideWithValue(prefs)],
+        );
+        addTearDown(container1.dispose);
 
-      await Future<void>.delayed(Duration.zero);
-      final notifier = container1.read(chatSettingsProvider.notifier);
+        await Future<void>.delayed(Duration.zero);
+        final notifier = container1.read(chatSettingsProvider.notifier);
 
-      notifier.setFontSize(19.0);
-      notifier.setBubbleRadius(10.0);
-      notifier.setColorTheme(ChatColorTheme.telegramBlue);
-      notifier.setWallpaper(ChatWallpaperPreset.midnightAurora);
-      notifier.setSendByEnter(false);
-      notifier.setCompactMode(true);
-      notifier.toggleMuteConversation('conv-1');
+        notifier.setFontSize(19.0);
+        notifier.setBubbleRadius(10.0);
+        notifier.setColorTheme(ChatColorTheme.telegramBlue);
+        notifier.setWallpaper(ChatWallpaperPreset.midnightAurora);
+        notifier.setSendByEnter(false);
+        notifier.setCompactMode(true);
+        notifier.toggleMuteConversation('conv-1');
+        notifier.togglePinConversation('conv-2');
+        notifier.toggleArchiveConversation('conv-3');
+        notifier.setSwipeAction(ChatListSwipeAction.archive);
+        notifier.setChatListTwoLines(true);
+        notifier.setShowListingTagInInbox(false);
+        notifier.setShowAdvisorBanner(false);
 
-      await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
 
-      final container2 = ProviderContainer(
-        overrides: [preferencesServiceProvider.overrideWithValue(prefs)],
-      );
-      addTearDown(container2.dispose);
-      container2.read(chatSettingsProvider);
-      await Future<void>.delayed(Duration.zero);
+        final container2 = ProviderContainer(
+          overrides: [preferencesServiceProvider.overrideWithValue(prefs)],
+        );
+        addTearDown(container2.dispose);
+        container2.read(chatSettingsProvider);
+        await Future<void>.delayed(Duration.zero);
 
-      final loaded = container2.read(chatSettingsProvider);
-      expect(loaded.fontSize, 19.0);
-      expect(loaded.bubbleRadius, 10.0);
-      expect(loaded.colorTheme, ChatColorTheme.telegramBlue);
-      expect(loaded.wallpaper, ChatWallpaperPreset.midnightAurora);
-      expect(loaded.sendByEnter, isFalse);
-      expect(loaded.compactMode, isTrue);
-      expect(loaded.isMuted('conv-1'), isTrue);
+        final loaded = container2.read(chatSettingsProvider);
+        expect(loaded.fontSize, 19.0);
+        expect(loaded.bubbleRadius, 10.0);
+        expect(loaded.colorTheme, ChatColorTheme.telegramBlue);
+        expect(loaded.wallpaper, ChatWallpaperPreset.midnightAurora);
+        expect(loaded.sendByEnter, isFalse);
+        expect(loaded.compactMode, isTrue);
+        expect(loaded.isMuted('conv-1'), isTrue);
+        expect(loaded.isPinned('conv-2'), isTrue);
+        expect(loaded.isArchived('conv-3'), isTrue);
+        expect(loaded.swipeAction, ChatListSwipeAction.archive);
+        expect(loaded.chatListTwoLines, isTrue);
+        expect(loaded.showListingTagInInbox, isFalse);
+        expect(loaded.showAdvisorBanner, isFalse);
 
-      container2.read(chatSettingsProvider.notifier).resetToDefaults();
-      expect(container2.read(chatSettingsProvider), ChatSettingsEntity.defaults);
-    });
+        container2.read(chatSettingsProvider.notifier).resetToDefaults();
+        expect(
+          container2.read(chatSettingsProvider),
+          ChatSettingsEntity.defaults,
+        );
+      },
+    );
   });
 
   group('ConversationChatPage & ChatSettingsPage Widgets', () {
@@ -185,7 +206,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.byKey(const Key('chat_listing_context_banner')), findsOneWidget);
+        expect(
+          find.byKey(const Key('chat_listing_context_banner')),
+          findsOneWidget,
+        );
         expect(find.byKey(const Key('chat_quick_replies_bar')), findsOneWidget);
         expect(find.byKey(const Key('chat_input_composer')), findsOneWidget);
         expect(find.text('مرحباً بك في إعلان زايد هايتس'), findsOneWidget);
@@ -195,7 +219,10 @@ void main() {
         await tester.tap(find.byKey(const Key('chat_search_button')));
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('chat_search_bar')), findsOneWidget);
-        await tester.enterText(find.byKey(const Key('chat_search_input')), 'تفاوض');
+        await tester.enterText(
+          find.byKey(const Key('chat_search_input')),
+          'تفاوض',
+        );
         await tester.pumpAndSettle();
         expect(find.text('1/1'), findsOneWidget);
         await tester.tap(find.byKey(const Key('chat_search_close_button')));
@@ -234,10 +261,15 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.byKey(const Key('chat_settings_preview_card')), findsOneWidget);
+        expect(
+          find.byKey(const Key('chat_settings_preview_card')),
+          findsOneWidget,
+        );
 
         // Tap Telegram blue theme option
-        await tester.tap(find.byKey(const Key('chat_theme_option_telegramBlue')));
+        await tester.tap(
+          find.byKey(const Key('chat_theme_option_telegramBlue')),
+        );
         await tester.pumpAndSettle();
 
         // Tap Aurora wallpaper option
@@ -264,6 +296,19 @@ void main() {
         await tester.tap(find.byKey(const Key('chat_compact_mode_switch')));
         await tester.pumpAndSettle();
 
+        // Scroll down to Inbox section and select Archive swipe action
+        await tester.scrollUntilVisible(
+          find.byKey(const Key('chat_swipe_option_archive')),
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.ensureVisible(
+          find.byKey(const Key('chat_swipe_option_archive')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('chat_swipe_option_archive')));
+        await tester.pumpAndSettle();
+
         // Tap reset
         await tester.tap(find.byKey(const Key('chat_settings_reset_button')));
         await tester.pumpAndSettle();
@@ -278,6 +323,113 @@ void main() {
 
         expect(
           find.byKey(const ValueKey('chat_wallpaper_geometricDoodle')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'ConversationsPage renders independent inbox widgets, pins & archives chats',
+      (tester) async {
+        final now = DateTime.now();
+        final repoWithList = _FakeConversationsRepository(
+          const [],
+          conversations: [
+            sampleConv,
+            ConversationEntity(
+              id: 'conv-200',
+              listingId: 'listing-2',
+              buyerUserId: 'user-me',
+              sellerAccountId: 'seller-acc-2',
+              counterpartName: 'شركة النيل للمقاولات',
+              lastMessageText: 'هل المعاينة متاحة غداً؟',
+              lastMessageAt: now.subtract(const Duration(minutes: 1)),
+              unreadCount: 2,
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              preferencesServiceProvider.overrideWithValue(prefs),
+              conversationsRepositoryProvider.overrideWithValue(repoWithList),
+              sessionProvider.overrideWith(
+                () => _AuthenticatedTestSessionNotifier('user-me'),
+              ),
+            ],
+            child: MaterialApp(
+              locale: const Locale('ar'),
+              themeMode: ThemeMode.dark,
+              theme: AppThemeData.lightTheme,
+              darkTheme: AppThemeData.darkTheme,
+              localizationsDelegates: AppLocalization.localizationsDelegates,
+              supportedLocales: AppLocalization.supportedLocales,
+              home: const ConversationsPage(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const Key('inbox_app_bar')), findsOneWidget);
+        expect(find.byKey(const Key('inbox_search_bar')), findsOneWidget);
+        expect(find.byKey(const Key('inbox_folder_tabs')), findsOneWidget);
+        expect(find.byKey(const Key('inbox_status_banner')), findsOneWidget);
+        expect(find.byKey(const Key('inbox_new_chat_fab')), findsOneWidget);
+        expect(
+          find.byKey(const Key('inbox_conversation_tile_conv-100')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('inbox_conversation_tile_conv-200')),
+          findsOneWidget,
+        );
+
+        // Long-press conv-100 -> Pin it
+        await tester.longPress(
+          find.byKey(const Key('inbox_conversation_tile_conv-100')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('inbox_action_pin')));
+        await tester.pumpAndSettle();
+
+        // Switch to Pinned folder tab
+        await tester.tap(find.byKey(const Key('inbox_tab_pinned')));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const Key('inbox_conversation_tile_conv-100')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('inbox_conversation_tile_conv-200')),
+          findsNothing,
+        );
+
+        // Switch back to All and Archive conv-100
+        await tester.tap(find.byKey(const Key('inbox_tab_all')));
+        await tester.pumpAndSettle();
+        await tester.longPress(
+          find.byKey(const Key('inbox_conversation_tile_conv-100')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('inbox_action_archive')));
+        await tester.pumpAndSettle();
+
+        // Archived folder tile appears and conv-100 moves out of active list
+        expect(
+          find.byKey(const Key('inbox_archived_folder_tile')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('inbox_conversation_tile_conv-100')),
+          findsNothing,
+        );
+
+        // Open Archived folder -> conv-100 is visible inside
+        await tester.tap(find.byKey(const Key('inbox_archived_folder_tile')));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const Key('inbox_conversation_tile_conv-100')),
           findsOneWidget,
         );
       },
