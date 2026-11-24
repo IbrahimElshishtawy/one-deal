@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:market_space/app/app.dart';
 import 'package:market_space/app/app_dependencies.dart';
 import 'package:market_space/app/app_theme.dart';
+import 'package:market_space/core/cache/crash_cache_recovery_service.dart';
 import 'package:market_space/core/config/app_config.dart';
 import 'package:market_space/core/config/config_validator.dart';
 import 'package:market_space/core/localization/locale_controller.dart';
@@ -26,8 +27,17 @@ Future<AppDependencies> initializeDependencies(AppConfig config) async {
   ConfigValidator.validate(config);
 
   final logger = AppLoggerImpl(isLoggingEnabled: config.enableLogging);
-  final observer = BootstrapObserver(logger: logger);
+  final crashRecovery = CrashCacheRecoveryService(logger: logger);
+  final observer = BootstrapObserver(
+    logger: logger,
+    crashRecovery: crashRecovery,
+  );
   observer.attachGlobalErrorHooks();
+
+  // If the previous launch crashed before finishing boot, purge volatile caches
+  // immediately before loading any cached state or controllers.
+  await crashRecovery.checkAndRecoverFromPreviousStartupCrash();
+  await crashRecovery.markBootStarted();
 
   final sharedPreferences = await SharedPreferences.getInstance();
   final preferencesService = SharedPreferencesServiceImpl(
@@ -113,6 +123,9 @@ Future<void> bootstrap(AppConfig config) async {
         child: MarketSpaceApp(dependencies: dependencies),
       ),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CrashCacheRecoveryService(logger: dependencies.logger).markBootCompleted();
+    });
   } catch (error, stackTrace) {
     final fallbackLogger = AppLoggerImpl(isLoggingEnabled: true);
     fallbackLogger.error(
@@ -120,17 +133,45 @@ Future<void> bootstrap(AppConfig config) async {
       error: error,
       stackTrace: stackTrace,
     );
+    await CrashCacheRecoveryService.emergencyPurgeVolatileCaches(
+      logger: fallbackLogger,
+      reason: 'bootstrap_fatal_error',
+    );
 
     runApp(
       MaterialApp(
+        debugShowCheckedModeBanner: false,
         home: Scaffold(
           body: Center(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
-              child: Text(
-                'Fatal initialization error: $error',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red, fontSize: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.cleaning_services_rounded,
+                    size: 48,
+                    color: Colors.redAccent,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'تم مسح الكاش المؤقت تلقائيًا بعد حدوث خطأ غير متوقع.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$error',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () => bootstrap(config),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('إعادة التشغيل'),
+                  ),
+                ],
               ),
             ),
           ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:market_space/core/cache/crash_cache_recovery_service.dart';
 import 'package:market_space/core/cache/hybrid_cache_manager.dart';
 import 'package:market_space/core/cache/price_freshness_service.dart';
 import 'package:market_space/core/config/app_config.dart';
@@ -49,7 +50,12 @@ final preferencesServiceProvider = Provider<PreferencesService>((ref) {
 /// Provides the two-tier Hybrid Local Cache (L1 Memory + L2 Persistent).
 final hybridCacheManagerProvider = Provider<HybridCacheManager>((ref) {
   final prefs = ref.watch(preferencesServiceProvider);
-  return HybridCacheManager(preferencesService: prefs);
+  final manager = HybridCacheManager(preferencesService: prefs);
+  final unregister = CrashCacheRecoveryService.registerMemoryCacheCleaner(
+    manager.clearMemory,
+  );
+  ref.onDispose(unregister);
+  return manager;
 });
 
 /// Live network connectivity stream (true = offline, false = online).

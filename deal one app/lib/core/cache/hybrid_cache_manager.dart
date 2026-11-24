@@ -138,6 +138,11 @@ class HybridCacheManager {
     _memory.removeWhere((k, _) => k.startsWith(prefix));
   }
 
+  /// Clears all L1 in-memory cached entries immediately (e.g. on crash recovery).
+  void clearMemory() {
+    _memory.clear();
+  }
+
   void _putMemory(String key, CacheRecord record) {
     if (_memory.length >= _maxMemoryEntries && !_memory.containsKey(key)) {
       _memory.remove(_memory.keys.first);
