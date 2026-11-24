@@ -111,10 +111,13 @@ void main() {
       expect(AppConfig.production().enableDevGuestAuth, isFalse);
     });
 
-    test('development enables Home-first startup and Dev Guest auth', () {
+    test('development starts at Login by default; Dev Guest auth is opt-in', () {
       final cfg = AppConfig.development();
-      expect(cfg.startOnHome, isTrue);
-      expect(cfg.enableDevGuestAuth, isTrue);
+      expect(cfg.startOnHome, isFalse);
+      expect(
+        cfg.enableDevGuestAuth,
+        const bool.fromEnvironment('ENABLE_DEV_GUEST_AUTH'),
+      );
     });
   });
 

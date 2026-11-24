@@ -46,6 +46,7 @@ class AppRouter {
     RouteGuard? routeGuard,
     Listenable? refreshListenable,
     String initialLocation = RouteNames.root,
+    Future<String> Function()? splashNextResolver,
   }) {
     final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -71,7 +72,10 @@ class AppRouter {
               context: context,
               state: state,
               style: CinematicTransitionStyle.reveal,
-              child: SplashScreen(nextRoute: nextRoute),
+              child: SplashScreen(
+                nextRoute: nextRoute,
+                resolveNextRoute: splashNextResolver,
+              ),
             );
           },
         ),

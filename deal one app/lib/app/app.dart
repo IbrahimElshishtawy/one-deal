@@ -61,8 +61,27 @@ class _MarketSpaceAppState extends ConsumerState<MarketSpaceApp> {
           routeGuard: routeGuard,
           refreshListenable: _refreshNotifier,
           initialLocation: initialRoute,
+          splashNextResolver: _resolveStartRoute,
         );
-    Future.microtask(() => ref.read(sessionProvider.notifier).restoreSession());
+    _sessionRestored = Future<void>.microtask(
+      () => ref.read(sessionProvider.notifier).restoreSession(),
+    );
+  }
+
+  late final Future<void> _sessionRestored;
+
+  /// Decides the first screen after the splash: authenticated users go to Home,
+  /// everyone else goes to Login (or Onboarding on first launch).
+  Future<String> _resolveStartRoute() async {
+    try {
+      await _sessionRestored;
+    } catch (_) {}
+    if (ref.read(sessionProvider).isAuthenticated) {
+      return RouteNames.root;
+    }
+    return widget.dependencies.onboardingCompleted
+        ? RouteNames.login
+        : RouteNames.onboarding;
   }
 
   @override

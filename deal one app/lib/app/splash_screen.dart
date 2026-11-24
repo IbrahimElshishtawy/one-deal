@@ -14,10 +14,15 @@ class SplashScreen extends StatefulWidget {
   final String nextRoute;
   final Duration delay;
 
+  /// Optional async resolver evaluated after [delay] (e.g. once the session is
+  /// restored). When provided, its result overrides [nextRoute].
+  final Future<String> Function()? resolveNextRoute;
+
   const SplashScreen({
     super.key,
     this.nextRoute = RouteNames.root,
     this.delay = AppConstants.splashDelayDuration,
+    this.resolveNextRoute,
   });
 
   @override
@@ -33,9 +38,18 @@ class _SplashScreenState extends State<SplashScreen> {
     _timer = Timer(widget.delay, _navigateNext);
   }
 
-  void _navigateNext() {
+  Future<void> _navigateNext() async {
+    var target = widget.nextRoute;
+    final resolver = widget.resolveNextRoute;
+    if (resolver != null) {
+      try {
+        target = await resolver();
+      } catch (_) {
+        target = widget.nextRoute;
+      }
+    }
     if (!mounted) return;
-    context.go(widget.nextRoute);
+    context.go(target);
   }
 
   @override

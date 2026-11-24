@@ -40,8 +40,9 @@ class AppConfig {
       receiveTimeout: Duration(seconds: 15),
       enableLogging: true,
       enableMockMode: false,
-      enableDevGuestAuth: true,
-      startOnHome: true,
+      // Opt-in only: run with --dart-define=ENABLE_DEV_GUEST_AUTH=true to skip login.
+      enableDevGuestAuth: bool.fromEnvironment('ENABLE_DEV_GUEST_AUTH'),
+      startOnHome: false,
     );
   }
 
@@ -54,7 +55,7 @@ class AppConfig {
       enableLogging: true,
       enableMockMode: false,
       enableDevGuestAuth: false,
-      startOnHome: true,
+      startOnHome: false,
     );
   }
 
