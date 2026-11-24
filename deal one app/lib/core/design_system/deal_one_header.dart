@@ -218,7 +218,7 @@ class DealOneHomeHeader extends ConsumerWidget {
                 ? 'مركز النشاط والتجارة'
                 : 'Activity & Commerce Hub',
             size: isSmall ? 38 : 42,
-            onTap: () => context.push(RouteNames.activityHub),
+            onTap: () => context.go(RouteNames.activityHub),
           ),
           SizedBox(width: isSmall ? 6 : 8),
 

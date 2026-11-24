@@ -54,7 +54,8 @@ class DealOneSectionBottomNav extends ConsumerWidget {
     }
 
     if (item.id == SectionNavigationRegistry.homeTabId ||
-        item.id == SectionNavigationRegistry.mapTabId) {
+        item.id == SectionNavigationRegistry.mapTabId ||
+        RouteNames.isShellBranchLocation(item.destination)) {
       context.go(item.destination);
       return;
     }

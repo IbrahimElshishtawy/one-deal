@@ -34,11 +34,15 @@ class NotificationsPage extends ConsumerWidget {
       return;
     }
     if (item.bookingId != null && item.bookingId!.isNotEmpty) {
-      context.push('${RouteNames.activityHub}?tab=bookings');
+      context.go('${RouteNames.activityHub}?tab=bookings');
       return;
     }
     if (item.targetRoute != null && item.targetRoute!.startsWith('/')) {
-      context.push(item.targetRoute!);
+      if (RouteNames.isShellBranchLocation(item.targetRoute!)) {
+        context.go(item.targetRoute!);
+      } else {
+        context.push(item.targetRoute!);
+      }
     }
   }
 

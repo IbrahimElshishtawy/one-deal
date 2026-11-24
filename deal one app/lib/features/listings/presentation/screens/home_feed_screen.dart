@@ -123,7 +123,7 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
                   locationDisplay: locationDisplay,
                   isArabic: isArabic,
                   onLocationTap: () => showLocationSelectorSheet(context, ref),
-                  onFavoritesTap: () => context.push(RouteNames.favorites),
+                  onFavoritesTap: () => context.go(RouteNames.favorites),
                   onToggleLanguage: () {
                     final current = ref.read(appLocaleProvider);
                     ref.read(appLocaleProvider.notifier).setLocale(

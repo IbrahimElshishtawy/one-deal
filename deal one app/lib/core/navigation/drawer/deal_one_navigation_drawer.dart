@@ -76,13 +76,25 @@ class DealOneNavigationDrawer extends ConsumerWidget {
           return;
         }
         if (item.routeName != null && item.routeName!.isNotEmpty) {
-          context.pushNamed(
-            item.routeName!,
-            pathParameters: item.pathParameters,
-            queryParameters: item.queryParameters,
-          );
+          if (RouteNames.isShellBranchName(item.routeName!)) {
+            context.goNamed(
+              item.routeName!,
+              pathParameters: item.pathParameters,
+              queryParameters: item.queryParameters,
+            );
+          } else {
+            context.pushNamed(
+              item.routeName!,
+              pathParameters: item.pathParameters,
+              queryParameters: item.queryParameters,
+            );
+          }
         } else if (item.route.isNotEmpty) {
-          context.push(item.route);
+          if (RouteNames.isShellBranchLocation(item.route)) {
+            context.go(item.route);
+          } else {
+            context.push(item.route);
+          }
         }
         return;
     }

@@ -802,7 +802,7 @@ class _DetailViewState extends ConsumerState<_DetailView> {
                         content: Text(l10n.cartAddedSuccess),
                         action: SnackBarAction(
                           label: l10n.activityTabCart,
-                          onPressed: () => context.push(RouteNames.activityHub),
+                          onPressed: () => context.go(RouteNames.activityHub),
                         ),
                       ),
                     );
@@ -841,7 +841,7 @@ class _DetailViewState extends ConsumerState<_DetailView> {
                     content: Text(l10n.cartAddedSuccess),
                     action: SnackBarAction(
                       label: l10n.activityTabCart,
-                      onPressed: () => context.push(RouteNames.activityHub),
+                      onPressed: () => context.go(RouteNames.activityHub),
                     ),
                   ),
                 );
@@ -868,7 +868,7 @@ class _DetailViewState extends ConsumerState<_DetailView> {
                     content: Text(l10n.cartAddedSuccess),
                     action: SnackBarAction(
                       label: l10n.activityTabCart,
-                      onPressed: () => context.push(RouteNames.activityHub),
+                      onPressed: () => context.go(RouteNames.activityHub),
                     ),
                   ),
                 );

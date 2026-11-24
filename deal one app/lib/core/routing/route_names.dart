@@ -77,6 +77,27 @@ class RouteNames {
     }
     return Uri(path: activityHub, queryParameters: params).toString();
   }
+
+  /// Returns true if [location] targets one of the 4 branches hosted inside
+  /// GoRouter's [StatefulShellRoute] (`root`, `favorites`, `activityHub`, `profile`).
+  ///
+  /// Shell branch routes must be navigated via `context.go` / `context.goNamed`
+  /// (never `push` / `pushNamed`) to avoid duplicate Navigator GlobalKey crashes.
+  static bool isShellBranchLocation(String location) {
+    final path = Uri.tryParse(location)?.path ?? location;
+    return path == root ||
+        path == favorites ||
+        path == activityHub ||
+        path == profile;
+  }
+
+  /// Returns true if [routeName] targets one of the 4 [StatefulShellRoute] branches.
+  static bool isShellBranchName(String routeName) {
+    return routeName == rootName ||
+        routeName == favoritesName ||
+        routeName == activityHubName ||
+        routeName == profileName;
+  }
   static const String realEstateGallery = '/real-estate/gallery/:id';
   static const String realEstateReels = '/real-estate/reels';
   static const String search = '/search';

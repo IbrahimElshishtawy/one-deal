@@ -423,7 +423,7 @@ class _ConstructionElectricalHomePageState
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              onPressed: () => context.push(
+                              onPressed: () => context.go(
                                 RouteNames.activityHubFor(
                                   tab: 'rfq',
                                   categorySlug:

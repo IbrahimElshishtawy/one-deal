@@ -218,7 +218,7 @@ class ConstructionMaterialCard extends ConsumerWidget {
                                       action: SnackBarAction(
                                         label: isArabic ? 'عرض' : 'View',
                                         onPressed: () =>
-                                            context.push(RouteNames.activityHub),
+                                            context.go(RouteNames.activityHub),
                                       ),
                                       duration: const Duration(seconds: 2),
                                     ),

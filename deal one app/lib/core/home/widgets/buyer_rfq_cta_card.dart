@@ -23,7 +23,7 @@ class BuyerRfqCtaCard extends StatelessWidget {
         color: DealOneDesignColors.navy,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: () => context.push(
+          onTap: () => context.go(
             RouteNames.activityHubFor(
               tab: 'rfq',
               categorySlug: 'building-materials',

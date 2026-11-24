@@ -169,7 +169,7 @@ class _SellerManagementPageState extends ConsumerState<SellerManagementPage>
                       : 'Managing listings or services requires a backend-verified and activated account for this sector.',
                   actionLabel: isArabic ? 'إدارة الحساب' : 'Go to Profile',
                   actionIcon: Icons.person_outline_rounded,
-                  onAction: () => context.push(RouteNames.profile),
+                  onAction: () => context.go(RouteNames.profile),
                 ),
               ),
             ],
