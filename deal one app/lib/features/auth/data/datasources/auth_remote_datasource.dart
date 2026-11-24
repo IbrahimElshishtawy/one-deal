@@ -10,6 +10,13 @@ abstract class AuthRemoteDataSource {
   Future<AuthResponseDto> loginWithPassword(LoginPasswordRequestDto dto);
   Future<AuthUserDto> updateProfile(UpdateProfileRequestDto dto);
   Future<AuthUserDto?> fetchCurrentUser();
+  Future<EmailVerificationDispatchResponseDto> requestEmailVerification(
+    RequestEmailVerificationDto dto,
+  );
+  Future<EmailVerificationDispatchResponseDto> resendEmailVerification(
+    RequestEmailVerificationDto dto,
+  );
+  Future<bool> verifyEmailToken(VerifyEmailTokenDto dto);
   Future<void> logout(RefreshTokenRequestDto dto);
 }
 
@@ -79,6 +86,42 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         : payload;
     final dto = AuthUserDto.fromJson(userMap);
     return dto.id.isEmpty ? null : dto;
+  }
+
+  @override
+  Future<EmailVerificationDispatchResponseDto> requestEmailVerification(
+    RequestEmailVerificationDto dto,
+  ) async {
+    final response = await apiClient.post(
+      ApiEndpoints.requestEmailVerification,
+      data: dto.toJson(),
+    );
+    return EmailVerificationDispatchResponseDto.fromJson(
+      _unwrapMap(response.data),
+    );
+  }
+
+  @override
+  Future<EmailVerificationDispatchResponseDto> resendEmailVerification(
+    RequestEmailVerificationDto dto,
+  ) async {
+    final response = await apiClient.post(
+      ApiEndpoints.resendEmailVerification,
+      data: dto.toJson(),
+    );
+    return EmailVerificationDispatchResponseDto.fromJson(
+      _unwrapMap(response.data),
+    );
+  }
+
+  @override
+  Future<bool> verifyEmailToken(VerifyEmailTokenDto dto) async {
+    final response = await apiClient.post(
+      ApiEndpoints.verifyEmail,
+      data: dto.toJson(),
+    );
+    final payload = _unwrapMap(response.data);
+    return payload['isEmailVerified'] == true || payload['success'] == true;
   }
 
   @override

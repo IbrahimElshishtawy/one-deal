@@ -122,7 +122,10 @@ class DioApiClient implements ApiClient {
         trustedOrigin: appConfig.apiBaseUrl,
         onSessionExpired: onSessionExpired,
       ),
-      if (appConfig.enableLogging) NetworkLoggingInterceptor(logger: logger),
+      NetworkLoggingInterceptor(
+        logger: logger,
+        isProduction: appConfig.environment.isProduction || !appConfig.enableLogging,
+      ),
       RetryInterceptor(dio: dioInstance),
     ]);
 

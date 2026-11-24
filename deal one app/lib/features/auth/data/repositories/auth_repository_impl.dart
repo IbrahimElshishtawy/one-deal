@@ -96,6 +96,23 @@ class AuthRepositoryImpl implements AuthRepository {
     return AuthMapper.toUserEntity(dto);
   }
 
+  /// Dispatches a real email verification link for the authenticated user via
+  /// `POST /auth/email/verification/request`.
+  Future<EmailVerificationDispatchResponseDto> requestEmailVerification(
+    String email,
+  ) {
+    return _remoteDataSource.requestEmailVerification(
+      RequestEmailVerificationDto(email: email.trim().toLowerCase()),
+    );
+  }
+
+  /// Verifies a single-use email verification token via `POST /auth/email/verify`.
+  Future<bool> verifyEmailToken(String token) {
+    return _remoteDataSource.verifyEmailToken(
+      VerifyEmailTokenDto(token: token.trim()),
+    );
+  }
+
   @override
   Future<void> logout() async {
     try {

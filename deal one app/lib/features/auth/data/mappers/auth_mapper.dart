@@ -11,6 +11,7 @@ class AuthMapper {
       email: dto.email,
       avatarUrl: dto.avatarUrl,
       isPhoneVerified: dto.isPhoneVerified,
+      isEmailVerified: dto.isEmailVerified,
       preferredLanguage: dto.preferredLanguage,
       role: dto.role,
     );

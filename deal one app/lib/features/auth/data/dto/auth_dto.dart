@@ -98,6 +98,7 @@ class AuthUserDto {
   final String? email;
   final String? avatarUrl;
   final bool isPhoneVerified;
+  final bool isEmailVerified;
   final String? preferredLanguage;
   final String? role;
 
@@ -108,6 +109,7 @@ class AuthUserDto {
     this.email,
     this.avatarUrl,
     required this.isPhoneVerified,
+    this.isEmailVerified = false,
     this.preferredLanguage,
     this.role,
   });
@@ -123,10 +125,59 @@ class AuthUserDto {
           json['avatarUrl']?.toString() ?? json['avatar_url']?.toString(),
       isPhoneVerified:
           json['isPhoneVerified'] == true || json['is_phone_verified'] == true,
+      isEmailVerified:
+          json['isEmailVerified'] == true || json['is_email_verified'] == true,
       preferredLanguage:
           json['preferredLanguage']?.toString() ??
           json['preferred_language']?.toString(),
       role: json['role']?.toString(),
+    );
+  }
+}
+
+class RequestEmailVerificationDto {
+  final String email;
+
+  const RequestEmailVerificationDto({required this.email});
+
+  Map<String, dynamic> toJson() => {'email': email};
+}
+
+class VerifyEmailTokenDto {
+  final String token;
+
+  const VerifyEmailTokenDto({required this.token});
+
+  Map<String, dynamic> toJson() => {'token': token};
+}
+
+class EmailVerificationDispatchResponseDto {
+  final bool success;
+  final String message;
+  final int expiresInMinutes;
+  final int cooldownSeconds;
+
+  const EmailVerificationDispatchResponseDto({
+    required this.success,
+    required this.message,
+    required this.expiresInMinutes,
+    required this.cooldownSeconds,
+  });
+
+  factory EmailVerificationDispatchResponseDto.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return EmailVerificationDispatchResponseDto(
+      success: json['success'] != false,
+      message: json['message']?.toString() ?? '',
+      expiresInMinutes: _parsePositiveInt(
+        json['expiresInMinutes'] ?? json['expires_in_minutes'],
+        fallback: 30,
+      ),
+      cooldownSeconds: _parsePositiveInt(
+        json['cooldownSeconds'] ?? json['cooldown_seconds'],
+        fallback: 60,
+      ),
     );
   }
 }

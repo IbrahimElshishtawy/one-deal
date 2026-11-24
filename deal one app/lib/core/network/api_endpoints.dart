@@ -17,6 +17,11 @@ class ApiEndpoints {
   static const String refreshToken = '/auth/refresh';
   static const String logout = '/auth/logout';
   static const String authMe = '/auth/me';
+  static const String requestEmailVerification =
+      '/auth/email/verification/request';
+  static const String resendEmailVerification =
+      '/auth/email/verification/resend';
+  static const String verifyEmail = '/auth/email/verify';
   static const String devGuestLogin = '/auth/dev-guest';
   static const String activeSessions = '/auth/sessions';
   static const String terminateAllSessions = '/auth/sessions/terminate-all';

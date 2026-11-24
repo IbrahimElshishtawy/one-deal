@@ -15,6 +15,7 @@ class AuthUser {
   final String? email;
   final String? avatarUrl;
   final bool isPhoneVerified;
+  final bool isEmailVerified;
   final String? preferredLanguage;
   final String? role;
 
@@ -25,6 +26,7 @@ class AuthUser {
     this.email,
     this.avatarUrl,
     required this.isPhoneVerified,
+    this.isEmailVerified = false,
     this.preferredLanguage,
     this.role,
   });
@@ -36,6 +38,7 @@ class AuthUser {
     String? email,
     String? avatarUrl,
     bool? isPhoneVerified,
+    bool? isEmailVerified,
     String? preferredLanguage,
     String? role,
   }) {
@@ -46,6 +49,7 @@ class AuthUser {
       email: email ?? this.email,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       preferredLanguage: preferredLanguage ?? this.preferredLanguage,
       role: role ?? this.role,
     );

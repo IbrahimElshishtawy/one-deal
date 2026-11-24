@@ -19,6 +19,7 @@ import 'package:market_space/core/theme/app_radii.dart';
 import 'package:market_space/core/theme/app_spacing.dart';
 import 'package:market_space/features/accounts/presentation/providers/accounts_providers.dart';
 import 'package:market_space/features/accounts/presentation/widgets/profile_settings_sheet.dart';
+import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
 import 'package:market_space/features/maps/domain/entities/map_category_config.dart';
 import 'package:market_space/features/search/data/dto/search_dto.dart';
 import 'package:market_space/features/search/presentation/providers/search_providers.dart';
@@ -57,7 +58,7 @@ class DealOneNavigationDrawer extends ConsumerWidget {
         showProfileSettingsSheet(context);
         return;
       case DrawerItemAction.logout:
-        ref.read(sessionProvider.notifier).logout();
+        ref.read(authControllerProvider.notifier).logout();
         return;
       case DrawerItemAction.openCategorySearch:
         ref.read(searchQueryProvider.notifier).state = '';
@@ -241,7 +242,7 @@ class DealOneNavigationDrawer extends ConsumerWidget {
               isArabic: isArabic,
               onLogout: () {
                 _closeDrawer(context);
-                ref.read(sessionProvider.notifier).logout();
+                ref.read(authControllerProvider.notifier).logout();
               },
             ),
           ],

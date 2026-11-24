@@ -37,6 +37,40 @@ export enum VerificationStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
+  SUSPENDED = 'suspended',
+}
+
+export enum SellerApplicationStatus {
+  NOT_REQUESTED = 'NOT_REQUESTED',
+  DRAFT = 'DRAFT',
+  PENDING = 'PENDING',
+  UNDER_REVIEW = 'UNDER_REVIEW',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  SUSPENDED = 'SUSPENDED',
+}
+
+export enum SellerDocumentType {
+  NATIONAL_ID_FRONT = 'national_id_front',
+  NATIONAL_ID_BACK = 'national_id_back',
+  COMMERCIAL_REGISTER = 'commercial_register',
+  TAX_CARD = 'tax_card',
+  PROOF_OF_ADDRESS = 'proof_of_address',
+  BUSINESS_LICENSE = 'business_license',
+}
+
+export enum SellerDocumentStatus {
+  PENDING_UPLOAD = 'PENDING_UPLOAD',
+  UPLOADED = 'UPLOADED',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED',
+}
+
+export enum SellerCapability {
+  CAN_CREATE_LISTING = 'canCreateListing',
+  CAN_MANAGE_LISTING = 'canManageListing',
+  CAN_ACCESS_SELLER_DASHBOARD = 'canAccessSellerDashboard',
+  CAN_SUBMIT_SELLER_APPLICATION = 'canSubmitSellerApplication',
 }
 
 export enum ModerationStatus {

@@ -75,30 +75,38 @@ model User {
   moderationStatus  String         @default("active") @map("moderation_status") @db.VarChar(20)
   suspendedUntil    DateTime?      @map("suspended_until") @db.Timestamptz
   suspensionReason  String?        @map("suspension_reason") @db.Text
-  bannedAt          DateTime?      @map("banned_at") @db.Timestamptz
-  banReason         String?        @map("ban_reason") @db.Text
-  internalNotes     Json?          @default("[]") @map("internal_notes")
-  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt         DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-  deletedAt         DateTime?      @map("deleted_at") @db.Timestamptz
+  bannedAt               DateTime?      @map("banned_at") @db.Timestamptz
+  banReason              String?        @map("ban_reason") @db.Text
+  sellerStatus           String         @default("NOT_REQUESTED") @map("seller_status") @db.VarChar(25)
+  sellerApprovedAt       DateTime?      @map("seller_approved_at") @db.Timestamptz
+  sellerSuspendedAt      DateTime?      @map("seller_suspended_at") @db.Timestamptz
+  sellerSuspensionReason String?        @map("seller_suspension_reason") @db.Text
+  internalNotes          Json?          @default("[]") @map("internal_notes")
+  createdAt              DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt              DateTime?      @map("deleted_at") @db.Timestamptz
 
-  sessions           UserSession[]
-  devices            UserDevice[]
-  ownedAccounts      Account[]       @relation("AccountOwner")
-  accountMemberships AccountMember[]
-  favorites          Favorite[]
-  reportsFiled       Report[]        @relation("ReporterRelation")
-  buyerConversations Conversation[]  @relation("BuyerConversations")
-  messagesSent       Message[]       @relation("MessageSender")
-  notifications      Notification[]
-  payments           Payment[]
-  bookings           Booking[]       @relation("UserBookings")
-  cancelledBookings  Booking[]       @relation("UserCancelledBookings")
-  rfqRequests        RfqRequest[]    @relation("UserRfqRequests")
-  submittedQuotations Quotation[]    @relation("UserSubmittedQuotations")
-  cartItems          CartItem[]
+  sessions                    UserSession[]
+  devices                     UserDevice[]
+  ownedAccounts               Account[]                    @relation("AccountOwner")
+  accountMemberships          AccountMember[]
+  sellerApplications          SellerApplication[]          @relation("UserSellerApplications")
+  sellerApplicationDocuments  SellerApplicationDocument[]  @relation("UserSellerApplicationDocuments")
+  sellerApplicationHistories  SellerApplicationHistory[]   @relation("UserSellerApplicationHistories")
+  favorites                   Favorite[]
+  reportsFiled                Report[]                     @relation("ReporterRelation")
+  buyerConversations          Conversation[]               @relation("BuyerConversations")
+  messagesSent                Message[]                    @relation("MessageSender")
+  notifications               Notification[]
+  payments                    Payment[]
+  bookings                    Booking[]                    @relation("UserBookings")
+  cancelledBookings           Booking[]                    @relation("UserCancelledBookings")
+  rfqRequests                 RfqRequest[]                 @relation("UserRfqRequests")
+  submittedQuotations         Quotation[]                  @relation("UserSubmittedQuotations")
+  cartItems                   CartItem[]
 
   @@index([isDemo])
+  @@index([sellerStatus])
   @@map("users")
 }
 
@@ -176,6 +184,7 @@ model Account {
   owner               User                  @relation("AccountOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
   members             AccountMember[]
   verifications       AccountVerification[]
+  sellerApplications  SellerApplication[]   @relation("AccountSellerApplications")
   branches            Branch[]
   serviceAreas        ServiceArea[]
   projects            Project[]
@@ -226,6 +235,91 @@ model AccountVerification {
 
   @@index([status, createdAt])
   @@map("account_verifications")
+}
+
+model SellerApplication {
+  id                       String    @id @default(uuid()) @db.Uuid
+  userId                   String    @map("user_id") @db.Uuid
+  accountId                String?   @map("account_id") @db.Uuid
+  status                   String    @default("DRAFT") @db.VarChar(25) // DRAFT, PENDING, UNDER_REVIEW, APPROVED, REJECTED, SUSPENDED
+  businessType             String    @default("individual") @map("business_type") @db.VarChar(20) // individual, company, factory, office, store
+  businessName             String?   @map("business_name") @db.VarChar(150)
+  businessDescription      String?   @map("business_description") @db.Text
+  nationalIdNumber         String?   @map("national_id_number") @db.VarChar(50)
+  taxIdNumber              String?   @map("tax_id_number") @db.VarChar(50)
+  commercialRegisterNumber String?   @map("commercial_register_number") @db.VarChar(100)
+  contactPhone             String?   @map("contact_phone") @db.VarChar(20)
+  contactEmail             String?   @map("contact_email") @db.VarChar(255)
+  cityId                   Int?      @map("city_id")
+  address                  String?   @db.Text
+  submittedAt              DateTime? @map("submitted_at") @db.Timestamptz
+  reviewedAt               DateTime? @map("reviewed_at") @db.Timestamptz
+  reviewedByStaffId        String?   @map("reviewed_by_staff_id") @db.Uuid
+  assignedToStaffId        String?   @map("assigned_to_staff_id") @db.Uuid
+  rejectionReason          String?   @map("rejection_reason") @db.Text
+  suspensionReason         String?   @map("suspension_reason") @db.Text
+  adminNotes               String?   @map("admin_notes") @db.Text
+  resubmissionCount        Int       @default(0) @map("resubmission_count")
+  isActive                 Boolean   @default(true) @map("is_active")
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user       User                        @relation("UserSellerApplications", fields: [userId], references: [id], onDelete: Restrict)
+  account    Account?                    @relation("AccountSellerApplications", fields: [accountId], references: [id], onDelete: SetNull)
+  reviewedBy StaffUser?                  @relation("ReviewedSellerApplications", fields: [reviewedByStaffId], references: [id], onDelete: SetNull)
+  assignedTo StaffUser?                  @relation("AssignedSellerApplications", fields: [assignedToStaffId], references: [id], onDelete: SetNull)
+  documents  SellerApplicationDocument[]
+  history    SellerApplicationHistory[]
+
+  @@index([userId, isActive])
+  @@index([status, submittedAt])
+  @@index([assignedToStaffId, status])
+  @@map("seller_applications")
+}
+
+model SellerApplicationDocument {
+  id               String    @id @default(uuid()) @db.Uuid
+  applicationId    String    @map("application_id") @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  documentType     String    @map("document_type") @db.VarChar(50)
+  storageKey       String    @unique @map("storage_key") @db.VarChar(500)
+  originalFileName String    @map("original_file_name") @db.VarChar(255)
+  mimeType         String    @map("mime_type") @db.VarChar(100)
+  fileSizeBytes    Int       @map("file_size_bytes")
+  checksumSha256   String?   @map("checksum_sha256") @db.VarChar(64)
+  status           String    @default("UPLOADED") @db.VarChar(20) // PENDING_UPLOAD, UPLOADED, VERIFIED, REJECTED
+  uploadedAt       DateTime? @map("uploaded_at") @db.Timestamptz
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  application SellerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user        User              @relation("UserSellerApplicationDocuments", fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([applicationId, documentType])
+  @@index([userId])
+  @@map("seller_application_documents")
+}
+
+model SellerApplicationHistory {
+  id             String   @id @default(uuid()) @db.Uuid
+  applicationId  String   @map("application_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  adminId        String?  @map("admin_id") @db.Uuid
+  actorType      String   @map("actor_type") @db.VarChar(20) // user, staff, system
+  previousStatus String   @map("previous_status") @db.VarChar(25)
+  newStatus      String   @map("new_status") @db.VarChar(25)
+  reason         String?  @db.Text
+  metadata       Json?    @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  application SellerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user        User              @relation("UserSellerApplicationHistories", fields: [userId], references: [id], onDelete: Restrict)
+  admin       StaffUser?        @relation("AdminSellerApplicationDecisions", fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([adminId, createdAt(sort: Desc)])
+  @@map("seller_application_history")
 }
 
 model Branch {
@@ -581,8 +675,11 @@ model StaffUser {
   sessions                StaffSession[]
   loginAttempts           StaffLoginAttempt[]
   passwordResetTokens     StaffPasswordResetToken[]
-  reviewedVerifications   AccountVerification[]     @relation("ReviewedVerifications")
-  resolvedReports         Report[]                  @relation("ResolvedReports")
+  reviewedVerifications          AccountVerification[]       @relation("ReviewedVerifications")
+  reviewedSellerApplications     SellerApplication[]         @relation("ReviewedSellerApplications")
+  assignedSellerApplications     SellerApplication[]         @relation("AssignedSellerApplications")
+  sellerApplicationDecisions     SellerApplicationHistory[]  @relation("AdminSellerApplicationDecisions")
+  resolvedReports                Report[]                    @relation("ResolvedReports")
   assignedReports         Report[]                  @relation("AssignedReports")
   platformSettingsUpdates PlatformSetting[]         @relation("StaffPlatformSettings")
   moderationActions       ModerationLog[]
