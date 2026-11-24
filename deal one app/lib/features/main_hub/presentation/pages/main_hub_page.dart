@@ -6,6 +6,7 @@ import 'package:market_space/core/design_system/deal_one_header.dart';
 import 'package:market_space/core/design_system/deal_one_promo_banner.dart';
 import 'package:market_space/core/design_system/deal_one_search_bar.dart';
 import 'package:market_space/core/design_system/deal_one_section_chrome.dart';
+import 'package:market_space/core/navigation/drawer/deal_one_navigation_drawer.dart';
 import 'package:market_space/core/navigation/presentation/widgets/deal_one_navigation_shell.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
@@ -104,6 +105,7 @@ class _MainHubPageState extends ConsumerState<MainHubPage> {
       backgroundColor:
           isDark ? AppColors.darkBackground : DealOneDesignColors.canvasLight,
       extendBody: !insideShell,
+      drawer: const DealOneNavigationDrawer(activeCategorySlug: 'deal_one'),
       bottomNavigationBar: insideShell
           ? null
           : const DealOneFloatingBottomNav(activeIndex: 0),

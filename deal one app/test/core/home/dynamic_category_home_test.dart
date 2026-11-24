@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:market_space/core/home/providers/category_business_overview_provider.dart';
 import 'package:market_space/core/home/providers/recently_viewed_provider.dart';
@@ -439,6 +440,7 @@ void main() {
     testWidgets('RecentlyViewedSectionWidget hides when empty and renders when items exist', (
       tester,
     ) async {
+      SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
 

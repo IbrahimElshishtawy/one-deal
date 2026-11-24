@@ -81,116 +81,123 @@ class CategoryBusinessOverview {
 /// - Isolates failures so a business overview error never breaks buyer content.
 final categoryBusinessOverviewProvider =
     Provider.family<CategoryBusinessOverview?, String>((ref, categorySlug) {
-  final normalized = MapCategoryRegistry.normalizeSlug(categorySlug);
-  final capabilities = ref.watch(accountCapabilitiesProvider);
+      final normalized = MapCategoryRegistry.normalizeSlug(categorySlug);
+      final capabilities = ref.watch(accountCapabilitiesProvider);
 
-  // Zero-flicker & strict authorization gate:
-  // Do not show any business section while loading or when unauthorized.
-  if (!capabilities.isAuthenticated || capabilities.isLoading) {
-    return null;
-  }
+      // Zero-flicker & strict authorization gate:
+      // Do not show any business section while loading or when unauthorized.
+      if (!capabilities.isAuthenticated || capabilities.isLoading) {
+        return null;
+      }
 
-  final activeAccount = capabilities.effectiveAccount;
-  if (activeAccount == null || !activeAccount.isActive || !activeAccount.isVerified) {
-    return null;
-  }
+      final activeAccount = capabilities.effectiveAccount;
+      if (activeAccount == null ||
+          !activeAccount.isActive ||
+          !activeAccount.isVerified) {
+        return null;
+      }
 
-  final bool isCars = normalized == MapCategoryRegistry.carsSlug;
-  final bool showAutoSales = isCars && capabilities.canManageAutomotiveListings;
-  final bool showAutoMaint =
-      isCars && capabilities.canManageAutomotiveMaintenanceServices;
+      final bool isCars = normalized == MapCategoryRegistry.carsSlug;
+      final bool showAutoSales =
+          isCars && capabilities.canManageAutomotiveListings;
+      final bool showAutoMaint =
+          isCars && capabilities.canManageAutomotiveMaintenanceServices;
 
-  final bool isAuthorized = isCars
-      ? (showAutoSales || showAutoMaint)
-      : capabilities.isActivatedSellerForSection(normalized);
+      final bool isAuthorized = isCars
+          ? (showAutoSales || showAutoMaint)
+          : capabilities.isActivatedSellerForSection(normalized);
 
-  if (!isAuthorized) {
-    return null;
-  }
+      if (!isAuthorized) {
+        return null;
+      }
 
-  final sellerState = ref.watch(sellerListingsControllerProvider(normalized));
-  final ownItems = sellerState.items;
+      final sellerState = ref.watch(
+        sellerListingsControllerProvider(normalized),
+      );
+      final ownItems = sellerState.items;
 
-  int publishedCount = 0;
-  int pendingCount = 0;
-  int availableCount = 0;
-  int viewsSum = 0;
+      int publishedCount = 0;
+      int pendingCount = 0;
+      int availableCount = 0;
+      int viewsSum = 0;
 
-  for (final item in ownItems) {
-    if (item.publicationStatus.toLowerCase() == 'published') {
-      publishedCount++;
-    }
-    if (item.moderationStatus.toLowerCase() == 'pending') {
-      pendingCount++;
-    }
-    if (item.availabilityStatus.toLowerCase() == 'available') {
-      availableCount++;
-    }
-    viewsSum += item.viewsCount;
-  }
+      for (final item in ownItems) {
+        if (item.publicationStatus.toLowerCase() == 'published') {
+          publishedCount++;
+        }
+        if (item.moderationStatus.toLowerCase() == 'pending') {
+          pendingCount++;
+        }
+        if (item.availabilityStatus.toLowerCase() == 'available') {
+          availableCount++;
+        }
+        viewsSum += item.viewsCount;
+      }
 
-  // Incoming inquiries (only when user role has `chat:respond`)
-  int? inquiriesCount;
-  if (capabilities.canRespondAsProvider) {
-    final convsAsync = ref.watch(conversationsListProvider);
-    inquiriesCount = convsAsync.whenOrNull(
-      data: (list) => list.fold<int>(0, (sum, c) => sum + c.unreadCount),
-    );
-  }
+      // Incoming inquiries (only when user role has `chat:respond`)
+      int? inquiriesCount;
+      if (capabilities.canRespondAsProvider) {
+        final convsAsync = ref.watch(conversationsListProvider);
+        inquiriesCount = convsAsync.whenOrNull(
+          data: (list) => list.fold<int>(0, (sum, c) => sum + c.unreadCount),
+        );
+      }
 
-  // Services & Automotive Maintenance incoming bookings (provider-scoped only)
-  int incomingBookings = 0;
-  int upcomingAppointments = 0;
-  bool extraLoading = false;
-  if (normalized == MapCategoryRegistry.servicesSlug || showAutoMaint) {
-    final bookingsAsync = ref.watch(providerIncomingBookingsProvider(normalized));
-    extraLoading = extraLoading || bookingsAsync.isLoading;
-    final bookings = bookingsAsync.valueOrNull ?? const <BookingEntity>[];
-    incomingBookings = bookings
-        .where((b) => b.status == BookingStatus.pending)
-        .length;
-    upcomingAppointments = bookings
-        .where((b) => b.status == BookingStatus.confirmed)
-        .length;
-  }
+      // Services & Automotive Maintenance incoming bookings (provider-scoped only)
+      int incomingBookings = 0;
+      int upcomingAppointments = 0;
+      bool extraLoading = false;
+      if (normalized == MapCategoryRegistry.servicesSlug || showAutoMaint) {
+        final bookingsAsync = ref.watch(
+          providerIncomingBookingsProvider(normalized),
+        );
+        extraLoading = extraLoading || bookingsAsync.isLoading;
+        final bookings = bookingsAsync.valueOrNull ?? const <BookingEntity>[];
+        incomingBookings = bookings
+            .where((b) => b.status == BookingStatus.pending)
+            .length;
+        upcomingAppointments = bookings
+            .where((b) => b.status == BookingStatus.confirmed)
+            .length;
+      }
 
-  // Building Materials supplier RFQs & Quotations (supplier-scoped only)
-  int incomingRfqs = 0;
-  int submittedQuotations = 0;
-  if (normalized == MapCategoryRegistry.buildingMaterialsSlug) {
-    final rfqsAsync = ref.watch(supplierOpenRfqsProvider(normalized));
-    extraLoading = extraLoading || rfqsAsync.isLoading;
-    final rfqs = rfqsAsync.valueOrNull ?? const [];
-    incomingRfqs = rfqs.length;
-    for (final rfq in rfqs) {
-      submittedQuotations += rfq.quotations
-          .where(
-            (q) =>
-                q.supplierName.trim().toLowerCase() ==
-                activeAccount.displayName.trim().toLowerCase(),
-          )
-          .length;
-    }
-  }
+      // Building Materials supplier RFQs & Quotations (supplier-scoped only)
+      int incomingRfqs = 0;
+      int submittedQuotations = 0;
+      if (normalized == MapCategoryRegistry.buildingMaterialsSlug) {
+        final rfqsAsync = ref.watch(supplierOpenRfqsProvider(normalized));
+        extraLoading = extraLoading || rfqsAsync.isLoading;
+        final rfqs = rfqsAsync.valueOrNull ?? const [];
+        incomingRfqs = rfqs.length;
+        for (final rfq in rfqs) {
+          submittedQuotations += rfq.quotations
+              .where(
+                (q) =>
+                    q.supplierName.trim().toLowerCase() ==
+                    activeAccount.displayName.trim().toLowerCase(),
+              )
+              .length;
+        }
+      }
 
-  return CategoryBusinessOverview(
-    categorySlug: normalized,
-    accountName: activeAccount.displayName,
-    accountType: activeAccount.accountType,
-    showAutomotiveSales: showAutoSales,
-    showAutomotiveMaintenance: showAutoMaint,
-    totalListings: ownItems.length,
-    publishedListings: publishedCount,
-    pendingModerationListings: pendingCount,
-    availableListings: availableCount,
-    totalViews: viewsSum > 0 ? viewsSum : null,
-    incomingInquiriesCount: inquiriesCount,
-    incomingBookingsCount: incomingBookings,
-    upcomingAppointmentsCount: upcomingAppointments,
-    incomingRfqsCount: incomingRfqs,
-    submittedQuotationsCount: submittedQuotations,
-    isLoading: sellerState.isLoading || extraLoading,
-    error: sellerState.error,
-    ownerEndpointGapActive: sellerState.ownerEndpointGapActive,
-  );
-});
+      return CategoryBusinessOverview(
+        categorySlug: normalized,
+        accountName: activeAccount.displayName,
+        accountType: activeAccount.accountType,
+        showAutomotiveSales: showAutoSales,
+        showAutomotiveMaintenance: showAutoMaint,
+        totalListings: ownItems.length,
+        publishedListings: publishedCount,
+        pendingModerationListings: pendingCount,
+        availableListings: availableCount,
+        totalViews: viewsSum > 0 ? viewsSum : null,
+        incomingInquiriesCount: inquiriesCount,
+        incomingBookingsCount: incomingBookings,
+        upcomingAppointmentsCount: upcomingAppointments,
+        incomingRfqsCount: incomingRfqs,
+        submittedQuotationsCount: submittedQuotations,
+        isLoading: sellerState.isLoading || extraLoading,
+        error: sellerState.error,
+        ownerEndpointGapActive: sellerState.ownerEndpointGapActive,
+      );
+    });
