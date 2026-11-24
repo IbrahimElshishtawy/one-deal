@@ -101,18 +101,30 @@ export class ListingsService {
 
     // 5. Database Transaction to insert listing and media items
     return this.prisma.$transaction(async (tx) => {
-      // Find or create account for individual user
-      let account = await tx.account.findFirst({
-        where: { ownerUserId: userId },
+      // Defense-in-depth: Require an active, approved seller account (never auto-create on the fly)
+      const account = await tx.account.findFirst({
+        where: {
+          isActive: true,
+          deletedAt: null,
+          verificationStatus: 'approved',
+          OR: [
+            { ownerUserId: userId },
+            {
+              members: {
+                some: {
+                  userId,
+                  role: { in: ['owner', 'manager', 'lister'] },
+                },
+              },
+            },
+          ],
+        },
       });
       if (!account) {
-        account = await tx.account.create({
-          data: {
-            ownerUserId: userId,
-            accountType: 'individual',
-            displayName: `User ${userId.substring(0, 6)}`,
-            slug: `user-${userId.substring(0, 8)}`,
-          },
+        throw new ForbiddenException({
+          code: 'SELLER_VERIFICATION_REQUIRED',
+          message:
+            'An approved, non-suspended seller account is required to create or publish listings.',
         });
       }
 

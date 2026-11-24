@@ -32,6 +32,9 @@ import {
   CurrentUser,
   AuthenticatedUser,
 } from '../auth/decorators/current-user.decorator';
+import { SellerCapability } from '../../core/enums/domain.enums';
+import { SellerAuthorizationGuard } from '../accounts/guards/seller-authorization.guard';
+import { RequireSellerCapability } from '../accounts/decorators/require-seller-capability.decorator';
 
 @ApiTags('Listings')
 @Controller('listings')
@@ -68,11 +71,13 @@ export class ListingsController {
 
   @Post()
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_CREATE_LISTING)
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Publish a new listing' })
+  @ApiOperation({ summary: 'Publish a new listing (approved sellers only)' })
   @ApiResponse({ status: 201, description: 'Listing created successfully' })
   @ApiResponse({ status: 400, description: 'Validation failed' })
+  @ApiResponse({ status: 403, description: 'Approved seller status required' })
   async createListing(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateListingDto,
@@ -82,11 +87,12 @@ export class ListingsController {
 
   @Put(':id')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_MANAGE_LISTING)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update existing listing details' })
   @ApiResponse({ status: 200, description: 'Listing updated successfully' })
-  @ApiResponse({ status: 403, description: 'Forbidden (Not the owner)' })
+  @ApiResponse({ status: 403, description: 'Forbidden (Not approved seller or owner)' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
   async updateListing(
     @Param('id') id: string,
@@ -98,11 +104,12 @@ export class ListingsController {
 
   @Delete(':id')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_MANAGE_LISTING)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Soft-delete a listing (archived state)' })
   @ApiResponse({ status: 200, description: 'Listing deleted successfully' })
-  @ApiResponse({ status: 403, description: 'Forbidden (Not the owner)' })
+  @ApiResponse({ status: 403, description: 'Forbidden (Not approved seller or owner)' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
   async deleteListing(
     @Param('id') id: string,
@@ -113,7 +120,8 @@ export class ListingsController {
 
   @Patch(':id/availability')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_MANAGE_LISTING)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update listing operational availability status' })
   @ApiResponse({ status: 200, description: 'Availability updated' })
@@ -133,7 +141,8 @@ export class ListingsController {
 
   @Post(':id/submit')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_MANAGE_LISTING)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Submit a draft listing for moderation review' })
   @ApiResponse({ status: 200, description: 'Listing submitted for review' })
@@ -147,13 +156,14 @@ export class ListingsController {
 
   @Patch(':id/status')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_MANAGE_LISTING)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update listing publication status (HIDDEN, PUBLISHED, ARCHIVED)',
   })
   @ApiResponse({ status: 200, description: 'Publication status updated' })
-  @ApiResponse({ status: 403, description: 'Forbidden (Not the owner)' })
+  @ApiResponse({ status: 403, description: 'Forbidden (Not approved seller or owner)' })
   async updateStatus(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,

@@ -6,6 +6,7 @@ export interface AuthenticatedUser {
   email?: string;
   fullName: string;
   role: string;
+  sellerStatus?: string;
   status?: string;
   actorType?: 'user' | 'staff';
   staffId?: string | null;

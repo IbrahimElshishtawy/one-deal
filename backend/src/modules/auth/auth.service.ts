@@ -112,47 +112,17 @@ export class AuthService {
     } | null = null;
 
     if (!user) {
-      // 3. User Registration with automatic Individual Account creation in a single transaction
-      const registration = await this.prisma.$transaction(async (tx) => {
-        const newUser = await tx.user.create({
-          data: {
-            phone: normalizedPhone,
-            fullName: `مستخدم ${normalizedPhone.slice(-4)}`,
-            isPhoneVerified: true,
-            isActive: true,
-          },
-        });
-
-        const slugSeed = `user-${newUser.id.substring(0, 8)}-${Math.random().toString(36).substring(2, 6)}`;
-        const newAccount = await tx.account.create({
-          data: {
-            ownerUserId: newUser.id,
-            accountType: 'individual',
-            displayName: newUser.fullName,
-            slug: slugSeed,
-            verificationStatus: 'approved', // Individual accounts approved upon phone verification
-            isActive: true,
-          },
-        });
-
-        await tx.accountMember.create({
-          data: {
-            accountId: newAccount.id,
-            userId: newUser.id,
-            role: 'owner',
-          },
-        });
-
-        return { user: newUser, account: newAccount };
+      // 3. New User Registration: EVERY new user starts strictly as a BUYER (sellerStatus = NOT_REQUESTED).
+      // Seller accounts and privileges are granted ONLY after mandatory admin verification approval.
+      user = await this.prisma.user.create({
+        data: {
+          phone: normalizedPhone,
+          fullName: `مستخدم ${normalizedPhone.slice(-4)}`,
+          isPhoneVerified: true,
+          isActive: true,
+          sellerStatus: 'NOT_REQUESTED',
+        },
       });
-
-      user = registration.user;
-      primaryAccount = {
-        id: registration.account.id,
-        accountType: registration.account.accountType,
-        displayName: registration.account.displayName,
-        role: 'owner',
-      };
 
       await this.securityAudit.logEvent({
         action: 'USER_REGISTERED_VIA_OTP',
@@ -165,7 +135,8 @@ export class AuthService {
         correlationId,
         metadata: {
           phone: normalizedPhone,
-          defaultAccountId: primaryAccount.id,
+          sellerStatus: 'NOT_REQUESTED',
+          initialRole: 'BUYER',
         },
       });
 
@@ -209,19 +180,29 @@ export class AuthService {
         });
       }
 
-      // Fetch user's primary/owned account
-      const ownedMembership = await this.prisma.accountMember.findFirst({
-        where: { userId: user.id, role: 'owner' },
-        include: { account: true },
-      });
+      // Only expose active approved seller account when user is an APPROVED seller
+      if (user.sellerStatus === 'APPROVED') {
+        const ownedMembership = await this.prisma.accountMember.findFirst({
+          where: {
+            userId: user.id,
+            role: 'owner',
+            account: {
+              isActive: true,
+              deletedAt: null,
+              verificationStatus: 'approved',
+            },
+          },
+          include: { account: true },
+        });
 
-      if (ownedMembership && ownedMembership.account) {
-        primaryAccount = {
-          id: ownedMembership.accountId,
-          accountType: ownedMembership.account.accountType,
-          displayName: ownedMembership.account.displayName,
-          role: ownedMembership.role,
-        };
+        if (ownedMembership && ownedMembership.account) {
+          primaryAccount = {
+            id: ownedMembership.accountId,
+            accountType: ownedMembership.account.accountType,
+            displayName: ownedMembership.account.displayName,
+            role: ownedMembership.role,
+          };
+        }
       }
     }
 
@@ -246,12 +227,18 @@ export class AuthService {
       metadata: { sessionId: tokens.sessionId },
     });
 
+    const sellerStatus = user.sellerStatus ?? 'NOT_REQUESTED';
+    const isApprovedSeller = sellerStatus === 'APPROVED';
+
     return {
       user: {
         id: user.id,
         phone: user.phone,
         fullName: user.fullName,
         role: 'USER',
+        roles: isApprovedSeller ? ['BUYER', 'SELLER'] : ['BUYER'],
+        sellerStatus,
+        canSell: isApprovedSeller,
         avatarUrl: user.avatarUrl,
         isPhoneVerified: user.isPhoneVerified,
       },

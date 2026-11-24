@@ -29,6 +29,9 @@ import {
   CurrentUser,
   AuthenticatedUser,
 } from '../auth/decorators/current-user.decorator';
+import { SellerCapability } from '../../core/enums/domain.enums';
+import { SellerAuthorizationGuard } from './guards/seller-authorization.guard';
+import { RequireSellerCapability } from './decorators/require-seller-capability.decorator';
 
 @ApiTags('Accounts')
 @Controller('accounts')

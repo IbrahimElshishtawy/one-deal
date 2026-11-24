@@ -19,6 +19,10 @@ export class UsersService {
         isEmailVerified: true,
         isActive: true,
         preferredLanguage: true,
+        sellerStatus: true,
+        sellerApprovedAt: true,
+        sellerSuspendedAt: true,
+        sellerSuspensionReason: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -28,9 +32,15 @@ export class UsersService {
       throw new NotFoundException('User profile not found');
     }
 
+    const sellerStatus = user.sellerStatus ?? 'NOT_REQUESTED';
+    const isApprovedSeller = sellerStatus === 'APPROVED';
+
     return {
       ...user,
       role: 'USER',
+      roles: isApprovedSeller ? ['BUYER', 'SELLER'] : ['BUYER'],
+      sellerStatus,
+      canSell: isApprovedSeller,
       status: user.isActive ? 'ACTIVE' : 'SUSPENDED',
     };
   }

@@ -27,6 +27,7 @@ class OtpVerificationController
       normalizedPhone: arg.normalizedPhone,
       displayPhone: arg.displayPhone,
       pendingFullName: arg.pendingFullName,
+      pendingEmail: arg.pendingEmail,
       flowMode: arg.flowMode,
       redirectTo: arg.redirectTo,
       cooldownRemainingSeconds: arg.cooldownSeconds,
@@ -156,6 +157,7 @@ class OtpVerificationController
         normalizedPhone: state.normalizedPhone,
         code: state.code,
         pendingFullName: state.pendingFullName,
+        pendingEmail: state.pendingEmail,
       );
 
       _cancelTimer();

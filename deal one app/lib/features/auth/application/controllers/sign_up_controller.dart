@@ -34,6 +34,15 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
     );
   }
 
+  void updateEmail(String value) {
+    state = state.copyWith(
+      email: value,
+      clearEmailError: true,
+      clearSubmitError: true,
+      clearErrorKind: true,
+    );
+  }
+
   Future<PendingAuthContext?> submit({String? redirectTo}) async {
     if (state.isSubmitting) return null;
 
@@ -41,8 +50,14 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
     final phoneErrorCode = EgyptianPhoneValidator.validateCode(state.phone);
     final nameError = FullNameValidator.validate(state.fullName);
     final phoneError = EgyptianPhoneValidator.validate(state.phone);
+    final trimmedEmail = EmailValidator.normalize(state.email);
+    final emailError = trimmedEmail.isEmpty
+        ? null
+        : EmailValidator.validate(trimmedEmail);
 
-    if (nameErrorCode != null || phoneErrorCode != null) {
+    if (nameErrorCode != null ||
+        phoneErrorCode != null ||
+        emailError != null) {
       state = state.copyWith(
         fullNameError: nameError,
         fullNameErrorCode: nameErrorCode,
@@ -50,6 +65,8 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
         phoneError: phoneError,
         phoneErrorCode: phoneErrorCode,
         clearPhoneError: phoneErrorCode == null,
+        emailError: emailError,
+        clearEmailError: emailError == null,
         clearSubmitError: true,
         clearErrorKind: true,
         clearDeliveryFailure: true,
@@ -83,6 +100,7 @@ class SignUpController extends AutoDisposeNotifier<SignUpState> {
         normalizedPhone: normalizedPhone,
         displayPhone: EgyptianPhoneValidator.formatForDisplay(normalizedPhone),
         pendingFullName: normalizedName,
+        pendingEmail: trimmedEmail.isNotEmpty ? trimmedEmail.toLowerCase() : null,
         flowMode: AuthFlowMode.signUp,
         cooldownSeconds: dispatchResult.cooldownSeconds,
         otpExpirySeconds: dispatchResult.otpExpirySeconds,

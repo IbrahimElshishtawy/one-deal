@@ -136,6 +136,7 @@ class PendingAuthContext {
   final String normalizedPhone;
   final String displayPhone;
   final String? pendingFullName;
+  final String? pendingEmail;
   final AuthFlowMode flowMode;
   final int cooldownSeconds;
   final int otpExpirySeconds;
@@ -145,6 +146,7 @@ class PendingAuthContext {
     required this.normalizedPhone,
     required this.displayPhone,
     this.pendingFullName,
+    this.pendingEmail,
     required this.flowMode,
     this.cooldownSeconds = 60,
     this.otpExpirySeconds = 180,
@@ -155,6 +157,7 @@ class PendingAuthContext {
     String? normalizedPhone,
     String? displayPhone,
     String? pendingFullName,
+    String? pendingEmail,
     AuthFlowMode? flowMode,
     int? cooldownSeconds,
     int? otpExpirySeconds,
@@ -164,6 +167,7 @@ class PendingAuthContext {
       normalizedPhone: normalizedPhone ?? this.normalizedPhone,
       displayPhone: displayPhone ?? this.displayPhone,
       pendingFullName: pendingFullName ?? this.pendingFullName,
+      pendingEmail: pendingEmail ?? this.pendingEmail,
       flowMode: flowMode ?? this.flowMode,
       cooldownSeconds: cooldownSeconds ?? this.cooldownSeconds,
       otpExpirySeconds: otpExpirySeconds ?? this.otpExpirySeconds,
@@ -178,6 +182,7 @@ class PendingAuthContext {
         other.normalizedPhone == normalizedPhone &&
         other.displayPhone == displayPhone &&
         other.pendingFullName == pendingFullName &&
+        other.pendingEmail == pendingEmail &&
         other.flowMode == flowMode &&
         other.cooldownSeconds == cooldownSeconds &&
         other.otpExpirySeconds == otpExpirySeconds &&
@@ -189,6 +194,7 @@ class PendingAuthContext {
     normalizedPhone,
     displayPhone,
     pendingFullName,
+    pendingEmail,
     flowMode,
     cooldownSeconds,
     otpExpirySeconds,

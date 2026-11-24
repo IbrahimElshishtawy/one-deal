@@ -1,3 +1,4 @@
+import 'package:market_space/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:market_space/features/auth/domain/entities/auth_session.dart';
 import 'package:market_space/features/auth/domain/repositories/auth_repository.dart';
 
@@ -23,7 +24,8 @@ class ResendOtpUseCase {
   }
 }
 
-/// Verifies the 6-digit OTP and optionally persists [pendingFullName] on Sign Up.
+/// Verifies the 6-digit OTP, optionally persists [pendingFullName], and
+/// dispatches real email verification for [pendingEmail] when provided.
 class VerifyOtpAndCompleteProfileUseCase {
   final AuthRepository _repository;
 
@@ -33,8 +35,9 @@ class VerifyOtpAndCompleteProfileUseCase {
     required String normalizedPhone,
     required String code,
     String? pendingFullName,
+    String? pendingEmail,
   }) async {
-    final session = await _repository.verifyOtp(normalizedPhone, code);
+    var session = await _repository.verifyOtp(normalizedPhone, code);
     final trimmedName = pendingFullName?.trim();
     if (trimmedName != null &&
         trimmedName.isNotEmpty &&
@@ -43,11 +46,26 @@ class VerifyOtpAndCompleteProfileUseCase {
         final updatedUser = await _repository.updateProfile(
           fullName: trimmedName,
         );
-        return session.copyWith(user: updatedUser);
+        session = session.copyWith(user: updatedUser);
       } catch (_) {
         // Keep authenticated session even if the optional profile name sync fails.
       }
     }
+
+    final trimmedEmail = pendingEmail?.trim().toLowerCase();
+    if (trimmedEmail != null &&
+        trimmedEmail.isNotEmpty &&
+        _repository is AuthRepositoryImpl) {
+      try {
+        await _repository.requestEmailVerification(trimmedEmail);
+        session = session.copyWith(
+          user: session.user.copyWith(email: trimmedEmail),
+        );
+      } catch (_) {
+        // Non-blocking: keep authenticated session if email dispatch is rate-limited.
+      }
+    }
+
     return session;
   }
 }

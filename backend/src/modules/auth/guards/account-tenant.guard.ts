@@ -73,7 +73,8 @@ export class AccountTenantGuard implements CanActivate {
       !membership ||
       !membership.account ||
       !membership.account.isActive ||
-      membership.account.deletedAt
+      membership.account.deletedAt ||
+      membership.account.verificationStatus === 'suspended'
     ) {
       throw new ForbiddenException(
         'Access denied. You are not an active authorized member of the specified account.',

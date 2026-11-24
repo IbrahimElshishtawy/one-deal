@@ -37,10 +37,12 @@ class OnboardingState {
 class SignUpState {
   final String fullName;
   final String phone;
+  final String email;
   final String? fullNameError;
   final FullNameValidationError? fullNameErrorCode;
   final String? phoneError;
   final PhoneValidationError? phoneErrorCode;
+  final String? emailError;
   final String? submitError;
   final AuthErrorKind? errorKind;
   final String? deliveryFailurePhone;
@@ -50,10 +52,12 @@ class SignUpState {
   const SignUpState({
     this.fullName = '',
     this.phone = '',
+    this.email = '',
     this.fullNameError,
     this.fullNameErrorCode,
     this.phoneError,
     this.phoneErrorCode,
+    this.emailError,
     this.submitError,
     this.errorKind,
     this.deliveryFailurePhone,
@@ -67,12 +71,15 @@ class SignUpState {
   SignUpState copyWith({
     String? fullName,
     String? phone,
+    String? email,
     String? fullNameError,
     FullNameValidationError? fullNameErrorCode,
     bool clearFullNameError = false,
     String? phoneError,
     PhoneValidationError? phoneErrorCode,
     bool clearPhoneError = false,
+    String? emailError,
+    bool clearEmailError = false,
     String? submitError,
     bool clearSubmitError = false,
     AuthErrorKind? errorKind,
@@ -86,6 +93,7 @@ class SignUpState {
     return SignUpState(
       fullName: fullName ?? this.fullName,
       phone: phone ?? this.phone,
+      email: email ?? this.email,
       fullNameError: clearFullNameError
           ? null
           : (fullNameError ?? this.fullNameError),
@@ -96,6 +104,7 @@ class SignUpState {
       phoneErrorCode: clearPhoneError
           ? null
           : (phoneErrorCode ?? this.phoneErrorCode),
+      emailError: clearEmailError ? null : (emailError ?? this.emailError),
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
       errorKind: clearErrorKind ? null : (errorKind ?? this.errorKind),
       deliveryFailurePhone: clearDeliveryFailure
@@ -188,6 +197,7 @@ class OtpVerificationState {
   final String normalizedPhone;
   final String displayPhone;
   final String? pendingFullName;
+  final String? pendingEmail;
   final AuthFlowMode flowMode;
   final String? redirectTo;
   final String code;
@@ -205,6 +215,7 @@ class OtpVerificationState {
     required this.normalizedPhone,
     required this.displayPhone,
     this.pendingFullName,
+    this.pendingEmail,
     required this.flowMode,
     this.redirectTo,
     this.code = '',
@@ -268,6 +279,7 @@ class OtpVerificationState {
     String? normalizedPhone,
     String? displayPhone,
     String? pendingFullName,
+    String? pendingEmail,
     AuthFlowMode? flowMode,
     String? redirectTo,
     String? code,
@@ -286,6 +298,7 @@ class OtpVerificationState {
       normalizedPhone: normalizedPhone ?? this.normalizedPhone,
       displayPhone: displayPhone ?? this.displayPhone,
       pendingFullName: pendingFullName ?? this.pendingFullName,
+      pendingEmail: pendingEmail ?? this.pendingEmail,
       flowMode: flowMode ?? this.flowMode,
       redirectTo: redirectTo ?? this.redirectTo,
       code: code ?? this.code,

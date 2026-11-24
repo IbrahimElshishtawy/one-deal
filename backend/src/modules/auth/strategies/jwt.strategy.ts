@@ -56,6 +56,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         fullName: true,
         isActive: true,
         deletedAt: true,
+        sellerStatus: true,
       },
     });
 
@@ -70,6 +71,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       phone: user.phone,
       fullName: user.fullName,
       role: payload.role || 'USER',
+      sellerStatus: user.sellerStatus ?? 'NOT_REQUESTED',
       status: user.isActive ? 'ACTIVE' : 'SUSPENDED',
       sessionId: payload.sid,
     };
