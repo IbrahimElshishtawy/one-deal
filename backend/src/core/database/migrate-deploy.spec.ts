@@ -40,7 +40,7 @@ describe('migrate-deploy script helpers', () => {
     const migrations = migrateDeploy.listLocalMigrations(
       path.join(backendRoot, 'prisma', 'migrations'),
     );
-    expect(migrations).toHaveLength(11);
+    expect(migrations).toHaveLength(12);
     expect(migrations[0]).toBe('20261102232252_init_database_foundation');
     expect(migrations[5]).toBe('20261104230259_add_demo_marker_and_indexes');
     expect(migrations[6]).toBe(
@@ -53,6 +53,9 @@ describe('migrate-deploy script helpers', () => {
     expect(migrations[9]).toBe('20261121213256_add_activity_hub_domains');
     expect(migrations[10]).toBe(
       '20261122000001_stabilize_activity_hub_constraints_and_outbox',
+    );
+    expect(migrations[11]).toBe(
+      '20261124000001_add_seller_verification_system',
     );
   });
 

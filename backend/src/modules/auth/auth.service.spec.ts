@@ -14,6 +14,7 @@ describe('AuthService (Phase 03 Modular Architecture)', () => {
   const mockPrisma = {
     user: {
       findUnique: jest.fn(),
+      create: jest.fn(),
       update: jest.fn(),
     },
     account: {
@@ -104,7 +105,7 @@ describe('AuthService (Phase 03 Modular Architecture)', () => {
   });
 
   describe('verifyOtp', () => {
-    it('should verify OTP and register User + default Individual Account when user is new', async () => {
+    it('should verify OTP and register new User strictly as BUYER (sellerStatus=NOT_REQUESTED, activeAccount=null)', async () => {
       mockOtpService.verifyOtp.mockResolvedValue({
         normalizedPhone: '+201012345678',
       });
@@ -116,25 +117,10 @@ describe('AuthService (Phase 03 Modular Architecture)', () => {
         fullName: 'مستخدم 5678',
         isPhoneVerified: true,
         isActive: true,
+        sellerStatus: 'NOT_REQUESTED',
       };
 
-      const mockNewAccount = {
-        id: 'new-account-uuid',
-        accountType: 'individual',
-        displayName: 'مستخدم 5678',
-        slug: 'user-new-slug',
-        verificationStatus: 'approved',
-      };
-
-      // Mock transaction
-      mockPrisma.$transaction.mockImplementation(async (callback: any) => {
-        const tx = {
-          user: { create: jest.fn().mockResolvedValue(mockNewUser) },
-          account: { create: jest.fn().mockResolvedValue(mockNewAccount) },
-          accountMember: { create: jest.fn().mockResolvedValue({}) },
-        };
-        return callback(tx);
-      });
+      mockPrisma.user.create = jest.fn().mockResolvedValue(mockNewUser);
 
       mockSessionService.createSession.mockResolvedValue({
         accessToken: 'signed.access.token',
@@ -149,16 +135,14 @@ describe('AuthService (Phase 03 Modular Architecture)', () => {
       });
 
       expect(result.user.id).toBe('new-user-uuid');
-      expect(result.activeAccount).toEqual({
-        id: 'new-account-uuid',
-        accountType: 'individual',
-        displayName: 'مستخدم 5678',
-        role: 'owner',
-      });
+      expect(result.user.sellerStatus).toBe('NOT_REQUESTED');
+      expect(result.user.roles).toEqual(['BUYER']);
+      expect(result.user.canSell).toBe(false);
+      expect(result.activeAccount).toBeNull();
       expect(result.tokens.accessToken).toBe('signed.access.token');
     });
 
-    it('should verify OTP and return tokens for existing active user', async () => {
+    it('should verify OTP and return tokens + activeAccount for existing approved seller user', async () => {
       mockOtpService.verifyOtp.mockResolvedValue({
         normalizedPhone: '+201012345678',
       });
@@ -170,6 +154,7 @@ describe('AuthService (Phase 03 Modular Architecture)', () => {
         isPhoneVerified: true,
         isActive: true,
         deletedAt: null,
+        sellerStatus: 'APPROVED',
       });
 
       mockPrisma.accountMember.findFirst.mockResolvedValue({
@@ -179,6 +164,9 @@ describe('AuthService (Phase 03 Modular Architecture)', () => {
           id: 'existing-account-uuid',
           accountType: 'individual',
           displayName: 'Existing User',
+          verificationStatus: 'approved',
+          isActive: true,
+          deletedAt: null,
         },
       });
 
@@ -195,6 +183,7 @@ describe('AuthService (Phase 03 Modular Architecture)', () => {
       });
 
       expect(result.user.id).toBe('existing-user-uuid');
+      expect(result.user.canSell).toBe(true);
       expect(result.activeAccount?.id).toBe('existing-account-uuid');
       expect(result.tokens.accessToken).toBe('existing.access.token');
     });

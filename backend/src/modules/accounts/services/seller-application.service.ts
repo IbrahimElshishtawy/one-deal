@@ -1751,10 +1751,10 @@ export class SellerApplicationService {
         },
       });
 
-      // Mark seller accounts as suspended (without deleting listings or user identity)
+      // Deactivate seller accounts (preserving listings and user identity; respects legacy chk_account_verification_status)
       await tx.account.updateMany({
         where: { ownerUserId: app.userId, deletedAt: null },
-        data: { verificationStatus: VerificationStatus.SUSPENDED },
+        data: { isActive: false },
       });
 
       await tx.sellerApplicationHistory.create({
