@@ -23,6 +23,9 @@ import {
   CurrentUser,
   AuthenticatedUser,
 } from '../auth/decorators/current-user.decorator';
+import { SellerCapability } from '../../core/enums/domain.enums';
+import { SellerAuthorizationGuard } from '../accounts/guards/seller-authorization.guard';
+import { RequireSellerCapability } from '../accounts/decorators/require-seller-capability.decorator';
 
 @ApiTags('Video')
 @Controller()
@@ -31,7 +34,8 @@ export class VideoController {
 
   @Post('media/video/upload-token')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_CREATE_LISTING)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request Cloudflare Stream direct-upload token (30s max limit)',

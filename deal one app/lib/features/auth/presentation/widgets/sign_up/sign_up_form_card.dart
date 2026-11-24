@@ -13,24 +13,30 @@ import 'package:market_space/features/auth/presentation/widgets/common/auth_text
 class SignUpFormCard extends StatefulWidget {
   final TextEditingController fullNameController;
   final TextEditingController phoneController;
+  final TextEditingController? emailController;
   final String? fullNameError;
   final String? phoneError;
+  final String? emailError;
   final String? submitError;
   final bool isSubmitting;
   final ValueChanged<String> onFullNameChanged;
   final ValueChanged<String> onPhoneChanged;
+  final ValueChanged<String>? onEmailChanged;
   final VoidCallback onSubmit;
 
   const SignUpFormCard({
     super.key,
     required this.fullNameController,
     required this.phoneController,
+    this.emailController,
     this.fullNameError,
     this.phoneError,
+    this.emailError,
     this.submitError,
     required this.isSubmitting,
     required this.onFullNameChanged,
     required this.onPhoneChanged,
+    this.onEmailChanged,
     required this.onSubmit,
   });
 
@@ -40,10 +46,12 @@ class SignUpFormCard extends StatefulWidget {
 
 class _SignUpFormCardState extends State<SignUpFormCard> {
   final FocusNode _phoneFocusNode = FocusNode();
+  final FocusNode _emailFocusNode = FocusNode();
 
   @override
   void dispose() {
     _phoneFocusNode.dispose();
+    _emailFocusNode.dispose();
     super.dispose();
   }
 
@@ -97,8 +105,31 @@ class _SignUpFormCardState extends State<SignUpFormCard> {
           ],
           enabled: !widget.isSubmitting,
           onChanged: widget.onPhoneChanged,
-          onSubmitted: (_) => widget.onSubmit(),
+          onSubmitted: (_) => widget.emailController != null
+              ? _emailFocusNode.requestFocus()
+              : widget.onSubmit(),
         ),
+        if (widget.emailController != null) ...[
+          const SizedBox(height: AuthDesignTokens.spaceMd),
+          AuthTextField(
+            key: const Key('signup_email_field'),
+            hintText: context.isRtl
+                ? 'البريد الإلكتروني (اختياري للتحقق)'
+                : 'Email address (optional for verification)',
+            controller: widget.emailController!,
+            focusNode: _emailFocusNode,
+            errorText: widget.emailError,
+            leadingIcon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
+            textDirection: TextDirection.ltr,
+            textAlign: phoneAlign,
+            autofillHints: const [AutofillHints.email],
+            enabled: !widget.isSubmitting,
+            onChanged: widget.onEmailChanged ?? (_) {},
+            onSubmitted: (_) => widget.onSubmit(),
+          ),
+        ],
         const SizedBox(height: AuthDesignTokens.spaceSm),
         Text(
           l10n.signUpWhatsappNote,

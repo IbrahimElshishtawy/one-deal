@@ -40,9 +40,10 @@ export class AccountsController {
 
   @Post()
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Register a new seller account' })
+  @ApiOperation({ summary: 'Register an additional commercial seller account (approved sellers only)' })
   @ApiResponse({ status: 201, description: 'Seller account created' })
   async createAccount(
     @CurrentUser() user: AuthenticatedUser,
@@ -53,7 +54,8 @@ export class AccountsController {
 
   @Post(':id/branches')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Add a branch to seller account' })
   @ApiResponse({ status: 201, description: 'Branch added' })
@@ -96,7 +98,8 @@ export class AccountsController {
 
   @Put(':id/branches/:branchId')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
   @ApiOperation({ summary: 'Update branch details' })
   @ApiResponse({ status: 200, description: 'Branch updated successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -112,7 +115,8 @@ export class AccountsController {
 
   @Delete(':id/branches/:branchId')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
   @ApiOperation({ summary: 'Delete a branch from seller account' })
   @ApiResponse({ status: 200, description: 'Branch deleted successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -127,7 +131,8 @@ export class AccountsController {
 
   @Get(':id/members')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
   @ApiOperation({ summary: 'List all team members of seller account' })
   @ApiResponse({ status: 200, description: 'Members returned successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -140,7 +145,8 @@ export class AccountsController {
 
   @Post(':id/members/invite')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Invite/add team member to seller account' })
   @ApiResponse({ status: 201, description: 'Member invited successfully' })
@@ -156,7 +162,8 @@ export class AccountsController {
 
   @Delete(':id/members/:userId')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
   @ApiOperation({ summary: 'Remove team member from seller account' })
   @ApiResponse({ status: 200, description: 'Member removed successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -178,7 +185,8 @@ export class AccountsController {
 
   @Post(':id/service-areas')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Add or update a service area for seller account' })
   @ApiResponse({ status: 200, description: 'Service area saved' })
@@ -192,7 +200,8 @@ export class AccountsController {
 
   @Delete(':id/service-areas/:serviceAreaId')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
   @ApiOperation({ summary: 'Remove a service area from seller account' })
   @ApiResponse({ status: 200, description: 'Service area removed' })
   async removeServiceArea(

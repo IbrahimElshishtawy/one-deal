@@ -21,6 +21,9 @@ import {
   CurrentUser,
   AuthenticatedUser,
 } from '../auth/decorators/current-user.decorator';
+import { SellerCapability } from '../../core/enums/domain.enums';
+import { SellerAuthorizationGuard } from '../accounts/guards/seller-authorization.guard';
+import { RequireSellerCapability } from '../accounts/decorators/require-seller-capability.decorator';
 
 @ApiTags('Payments & Promotions')
 @Controller('payments')
@@ -36,7 +39,8 @@ export class PaymentsController {
 
   @Post('checkout')
   @ApiBearerAuth('BearerAuth')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_MANAGE_LISTING)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Initiate Paymob payment session for a promotion' })
   @ApiResponse({ status: 200, description: 'Checkout session created' })

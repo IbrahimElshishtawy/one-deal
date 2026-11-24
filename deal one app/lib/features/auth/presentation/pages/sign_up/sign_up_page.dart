@@ -29,11 +29,13 @@ class SignUpPage extends ConsumerStatefulWidget {
 class _SignUpPageState extends ConsumerState<SignUpPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -180,12 +182,15 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
           SignUpFormCard(
             fullNameController: _fullNameController,
             phoneController: _phoneController,
+            emailController: _emailController,
             fullNameError: localizedNameError,
             phoneError: localizedPhoneError,
+            emailError: state.emailError,
             submitError: localizedSubmitError,
             isSubmitting: state.isSubmitting,
             onFullNameChanged: controller.updateFullName,
             onPhoneChanged: controller.updatePhone,
+            onEmailChanged: controller.updateEmail,
             onSubmit: _handleSubmit,
           ),
           const SizedBox(height: AuthDesignTokens.sectionGap),

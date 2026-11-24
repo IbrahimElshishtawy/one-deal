@@ -25,6 +25,9 @@ import {
 } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminJwtAuthGuard } from '../admin-auth/guards/admin-jwt-auth.guard';
+import { SellerCapability } from '../../core/enums/domain.enums';
+import { SellerAuthorizationGuard } from '../accounts/guards/seller-authorization.guard';
+import { RequireSellerCapability } from '../accounts/decorators/require-seller-capability.decorator';
 import { CancelRfqDto } from './dto/cancel-rfq.dto';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { CreateRfqDto } from './dto/create-rfq.dto';
@@ -134,7 +137,8 @@ export class RfqController {
   }
 
   @Post('rfqs/:id/quotations')
-  @UseGuards(JwtAuthGuard, RateLimitGuard)
+  @UseGuards(JwtAuthGuard, SellerAuthorizationGuard, RateLimitGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
   @RateLimit(15, 60)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
