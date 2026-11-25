@@ -12,6 +12,7 @@ import 'package:market_space/core/theme/app_theme_data.dart';
 import 'package:market_space/app/app_dependencies.dart';
 import 'package:market_space/app/app_localization.dart';
 import 'package:market_space/app/app_router.dart';
+import 'package:market_space/app/safe_vertical_caret_actions.dart';
 
 class MarketSpaceApp extends ConsumerStatefulWidget {
   final AppDependencies dependencies;
@@ -122,7 +123,9 @@ class _MarketSpaceAppState extends ConsumerState<MarketSpaceApp> {
                   ? Brightness.light
                   : Brightness.dark,
             ),
-            child: child ?? const SizedBox.shrink(),
+            child: SafeVerticalCaretActions(
+              child: child ?? const SizedBox.shrink(),
+            ),
           );
         },
         localizationsDelegates: AppLocalization.localizationsDelegates,
