@@ -214,6 +214,107 @@ export class CreateSellerApplicationDto {
 
 export class UpdateSellerApplicationDto extends CreateSellerApplicationDto {}
 
+export class CreateBusinessUpgradeDto {
+  @ApiPropertyOptional({
+    enum: [
+      AccountType.COMPANY,
+      AccountType.OFFICE,
+      AccountType.STORE,
+      AccountType.FACTORY,
+    ],
+    default: AccountType.COMPANY,
+    description: 'Target commercial account classification for the business upgrade',
+  })
+  @IsOptional()
+  @IsIn([
+    AccountType.COMPANY,
+    AccountType.OFFICE,
+    AccountType.STORE,
+    AccountType.FACTORY,
+  ])
+  businessType?: AccountType;
+
+  @ApiPropertyOptional({
+    enum: MarketplaceSection,
+    isArray: true,
+    example: [MarketplaceSection.REAL_ESTATE],
+    description: 'Deal One marketplace sections the business operates in',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsEnum(MarketplaceSection, { each: true })
+  marketplaceSections?: MarketplaceSection[];
+
+  @ApiProperty({
+    example: 'El-Nile Real Estate Office',
+    description: 'Registered commercial company or office name',
+  })
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(150)
+  businessName!: string;
+
+  @ApiPropertyOptional({
+    example: 'Licensed real estate brokerage and property management office',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  businessDescription?: string;
+
+  @ApiProperty({ example: 'CR-789012' })
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(100)
+  commercialRegisterNumber!: string;
+
+  @ApiPropertyOptional({ example: 'TAX-123456789' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  taxIdNumber?: string;
+
+  @ApiPropertyOptional({ example: 'Ahmed Hassan' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  authorizedRepresentativeName?: string;
+
+  @ApiPropertyOptional({ example: '29001011234567' })
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  @MaxLength(50)
+  authorizedRepresentativeId?: string;
+
+  @ApiPropertyOptional({ example: '+201012345678' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  contactPhone?: string;
+
+  @ApiPropertyOptional({ example: 'office@example.com' })
+  @IsOptional()
+  @IsEmail()
+  @MaxLength(255)
+  contactEmail?: string;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  cityId?: number;
+
+  @ApiPropertyOptional({ example: '24 Gameat El-Dewal St, Mohandessin, Giza' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  address?: string;
+}
+
 export class RequestVerificationDocUploadUrlDto {
   @ApiProperty({
     enum: SellerDocumentType,

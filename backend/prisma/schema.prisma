@@ -166,38 +166,45 @@ model Otp {
 // -------------------------------------------------------------
 
 model Account {
-  id                 String    @id @default(uuid()) @db.Uuid
-  ownerUserId        String    @map("owner_user_id") @db.Uuid
-  accountType        String    @map("account_type") @db.VarChar(20) // individual, company, factory, office, store
-  displayName        String    @map("display_name") @db.VarChar(150)
-  slug               String    @unique @db.VarChar(160)
-  bio                String?   @db.Text
-  logoUrl            String?   @map("logo_url") @db.VarChar(500)
-  bannerUrl          String?   @map("banner_url") @db.VarChar(500)
-  verificationStatus String    @default("pending") @map("verification_status") @db.VarChar(20) // pending, approved, rejected
-  isActive           Boolean   @default(true) @map("is_active")
-  isDemo             Boolean   @default(false) @map("is_demo")
-  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz
+  id                            String    @id @default(uuid()) @db.Uuid
+  ownerUserId                   String    @map("owner_user_id") @db.Uuid
+  accountType                   String    @map("account_type") @db.VarChar(20) // individual, company, factory, office, store
+  sellerType                    String    @default("INDIVIDUAL") @map("seller_type") @db.VarChar(30) // INDIVIDUAL, BUSINESS, SERVICE_PROVIDER
+  displayName                   String    @map("display_name") @db.VarChar(150)
+  slug                          String    @unique @db.VarChar(160)
+  bio                           String?   @db.Text
+  logoUrl                       String?   @map("logo_url") @db.VarChar(500)
+  bannerUrl                     String?   @map("banner_url") @db.VarChar(500)
+  verificationStatus            String    @default("pending") @map("verification_status") @db.VarChar(20) // not_submitted, pending, approved, rejected, needs_changes, suspended
+  verificationTier              String    @default("NONE") @map("verification_tier") @db.VarChar(30) // NONE, IDENTITY_VERIFIED, BUSINESS_VERIFIED
+  verificationApprovedAt        DateTime? @map("verification_approved_at") @db.Timestamptz
+  verificationReviewedAt        DateTime? @map("verification_reviewed_at") @db.Timestamptz
+  verificationReviewedByStaffId String?   @map("verification_reviewed_by_staff_id") @db.Uuid
+  isActive                      Boolean   @default(true) @map("is_active")
+  isDemo                        Boolean   @default(false) @map("is_demo")
+  createdAt                     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt                     DateTime? @map("deleted_at") @db.Timestamptz
 
-  owner               User                  @relation("AccountOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
-  members             AccountMember[]
-  verifications       AccountVerification[]
-  sellerApplications  SellerApplication[]   @relation("AccountSellerApplications")
-  branches            Branch[]
-  serviceAreas        ServiceArea[]
-  projects            Project[]
-  listings            Listing[]
-  dailyQuotas         DailyQuota[]
-  sellerConversations Conversation[]        @relation("SellerConversations")
-  reportsAgainst      Report[]              @relation("ReportedAccountRelation")
-  providerBookings    Booking[]             @relation("ProviderBookings")
-  supplierQuotations  Quotation[]           @relation("SupplierQuotations")
+  owner                  User                  @relation("AccountOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  verificationReviewedBy StaffUser?            @relation("AccountVerificationReviewer", fields: [verificationReviewedByStaffId], references: [id], onDelete: SetNull)
+  members                AccountMember[]
+  verifications          AccountVerification[]
+  sellerApplications     SellerApplication[]   @relation("AccountSellerApplications")
+  branches               Branch[]
+  serviceAreas           ServiceArea[]
+  projects               Project[]
+  listings               Listing[]
+  dailyQuotas            DailyQuota[]
+  sellerConversations    Conversation[]        @relation("SellerConversations")
+  reportsAgainst         Report[]              @relation("ReportedAccountRelation")
+  providerBookings       Booking[]             @relation("ProviderBookings")
+  supplierQuotations     Quotation[]           @relation("SupplierQuotations")
 
   @@index([isDemo])
   @@index([ownerUserId])
   @@index([verificationStatus, isActive])
+  @@index([verificationStatus, verificationTier, isActive])
   @@map("accounts")
 }
 
@@ -241,9 +248,11 @@ model SellerApplication {
   id                           String    @id @default(uuid()) @db.Uuid
   userId                       String    @map("user_id") @db.Uuid
   accountId                    String?   @map("account_id") @db.Uuid
+  applicationType              String    @default("INITIAL") @map("application_type") @db.VarChar(30) // INITIAL, BUSINESS_UPGRADE
   status                       String    @default("DRAFT") @db.VarChar(25) // DRAFT, PENDING, UNDER_REVIEW, NEEDS_CORRECTION, APPROVED, REJECTED, SUSPENDED, EXPIRED
   sellerType                   String    @default("INDIVIDUAL") @map("seller_type") @db.VarChar(30) // INDIVIDUAL, BUSINESS, SERVICE_PROVIDER
   businessType                 String    @default("individual") @map("business_type") @db.VarChar(20) // individual, company, factory, office, store
+  derivedVerificationTier      String?   @map("derived_verification_tier") @db.VarChar(30) // NONE, IDENTITY_VERIFIED, BUSINESS_VERIFIED
   marketplaceSections          Json      @default("[]") @map("marketplace_sections")
   businessName                 String?   @map("business_name") @db.VarChar(150)
   businessDescription          String?   @map("business_description") @db.Text
@@ -288,6 +297,7 @@ model SellerApplication {
   history         SellerApplicationHistory[]
 
   @@index([userId, isActive])
+  @@index([userId, applicationType, isActive])
   @@index([status, submittedAt])
   @@index([sellerType, status])
   @@index([assignedToStaffId, status])
@@ -382,11 +392,14 @@ model SellerDocumentReview {
 model SellerApplicationHistory {
   id             String   @id @default(uuid()) @db.Uuid
   applicationId  String   @map("application_id") @db.Uuid
+  accountId      String?  @map("account_id") @db.Uuid
   userId         String   @map("user_id") @db.Uuid
   adminId        String?  @map("admin_id") @db.Uuid
   actorType      String   @map("actor_type") @db.VarChar(20) // user, staff, system
   previousStatus String   @map("previous_status") @db.VarChar(25)
   newStatus      String   @map("new_status") @db.VarChar(25)
+  previousTier   String?  @map("previous_tier") @db.VarChar(30)
+  newTier        String?  @map("new_tier") @db.VarChar(30)
   reason         String?  @db.Text
   metadata       Json?    @default("{}")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -755,6 +768,7 @@ model StaffUser {
   loginAttempts           StaffLoginAttempt[]
   passwordResetTokens     StaffPasswordResetToken[]
   reviewedVerifications          AccountVerification[]       @relation("ReviewedVerifications")
+  reviewedAccounts               Account[]                   @relation("AccountVerificationReviewer")
   reviewedSellerApplications     SellerApplication[]         @relation("ReviewedSellerApplications")
   assignedSellerApplications     SellerApplication[]         @relation("AssignedSellerApplications")
   sellerApplicationDecisions     SellerApplicationHistory[]  @relation("AdminSellerApplicationDecisions")

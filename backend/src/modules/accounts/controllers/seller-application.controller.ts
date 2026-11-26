@@ -37,6 +37,7 @@ import {
 } from '../services/seller-application.service';
 import {
   ConfirmVerificationDocumentDto,
+  CreateBusinessUpgradeDto,
   CreateSellerApplicationDto,
   GetVerificationRequirementsQueryDto,
   ReplaceVerificationDocumentDto,
@@ -313,5 +314,101 @@ export class SellerApplicationController {
   @ApiResponse({ status: 403, description: 'Approved seller status required' })
   async getSellerDashboard(@CurrentUser() user: AuthenticatedUser) {
     return this.sellerApplicationService.getSellerDashboard(user.id);
+  }
+
+  // =========================================================================
+  // INDIVIDUAL-TO-BUSINESS UPGRADE WORKFLOW
+  // =========================================================================
+
+  @Post('me/business-upgrade')
+  @UseGuards(SellerAuthorizationGuard, RateLimitGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
+  @RateLimit(10, 3600)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary:
+      'Initiate a safe Individual-to-Business verification upgrade for an existing Identity-Verified seller (preserves account, listings, and conversations)',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Business upgrade application draft created',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Already business-verified or upgrade already in progress',
+  })
+  async requestBusinessUpgrade(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateBusinessUpgradeDto,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.sellerApplicationService.requestBusinessUpgrade(
+      user.id,
+      dto,
+      this.extractContext(req),
+    );
+  }
+
+  @Get('me/business-upgrade')
+  @UseGuards(SellerAuthorizationGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
+  @ApiOperation({
+    summary:
+      'Get current Individual-to-Business upgrade application status, required documents, and completeness',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Business upgrade status returned',
+  })
+  async getMyBusinessUpgrade(@CurrentUser() user: AuthenticatedUser) {
+    return this.sellerApplicationService.getMyBusinessUpgrade(user.id);
+  }
+
+  @Post('me/business-upgrade/submit')
+  @UseGuards(SellerAuthorizationGuard, RateLimitGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
+  @RateLimit(10, 3600)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Submit a complete Business Upgrade application for admin review (preserves active IDENTITY_VERIFIED status while pending)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Business upgrade application submitted (PENDING)',
+  })
+  async submitBusinessUpgrade(
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.sellerApplicationService.submitBusinessUpgrade(
+      user.id,
+      this.extractContext(req),
+    );
+  }
+
+  @Post('me/business-upgrade/resubmit')
+  @UseGuards(SellerAuthorizationGuard, RateLimitGuard)
+  @RequireSellerCapability(SellerCapability.CAN_ACCESS_SELLER_DASHBOARD)
+  @RateLimit(10, 3600)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Resubmit a rejected or NEEDS_CORRECTION Business Upgrade application',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Business upgrade application reopened or resubmitted',
+  })
+  async resubmitBusinessUpgrade(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ResubmitSellerApplicationDto,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.sellerApplicationService.resubmitBusinessUpgrade(
+      user.id,
+      dto,
+      this.extractContext(req),
+    );
   }
 }

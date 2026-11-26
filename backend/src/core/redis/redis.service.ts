@@ -384,6 +384,43 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Deletes all cache keys matching a glob pattern using non-blocking SCAN.
+   */
+  async delByPattern(pattern: string): Promise<void> {
+    if (this.isCacheHealthy && this.cacheClient) {
+      try {
+        let cursor = '0';
+        do {
+          const [nextCursor, keys] = await this.cacheClient.scan(
+            cursor,
+            'MATCH',
+            pattern,
+            'COUNT',
+            100,
+          );
+          cursor = nextCursor;
+          if (keys.length > 0) {
+            await this.cacheClient.del(...keys);
+          }
+        } while (cursor !== '0');
+      } catch (err) {
+        this.logger.error(
+          `Error deleting pattern [${pattern}] from Redis Cache: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    const regex = new RegExp(
+      '^' + pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$',
+    );
+    for (const k of this.inMemoryFallback.keys()) {
+      if (regex.test(k)) {
+        this.inMemoryFallback.delete(k);
+      }
+    }
+  }
+
+  /**
    * Atomically sets a key only if it does not already exist, with a mandatory TTL.
    * Returns true if the key was created, false if it already existed.
    */

@@ -14,11 +14,20 @@ import { SecurityAuditService } from '../../../core/security/security-audit.serv
 import {
   AccountType,
   SellerApplicationStatus,
+  SellerApplicationType,
   SellerDocumentReviewDecision,
   SellerDocumentStatus,
+  SellerDocumentType,
   SellerType,
   VerificationStatus,
+  VerificationTier,
 } from '../../../core/enums/domain.enums';
+import {
+  buildVerificationBadge,
+  deriveVerificationTier,
+  resolveAccountSellerType,
+  resolveEffectiveVerificationTier,
+} from '../verification-tier.helper';
 import {
   assertValidSellerStatusTransition,
   evaluateApplicationCompleteness,
@@ -43,6 +52,7 @@ import {
   AdminSellerApplicationsQueryDto,
   AdminSuspendSellerDto,
   ConfirmVerificationDocumentDto,
+  CreateBusinessUpgradeDto,
   CreateSellerApplicationDto,
   GetVerificationRequirementsQueryDto,
   ReplaceVerificationDocumentDto,
@@ -476,7 +486,8 @@ export class SellerApplicationService {
     ctx: RequestAuditContext = {},
   ) {
     const application = await this.getEditableApplicationForUser(userId);
-    const matchedRequirement = await this.findMatchingRequirement(
+    this.privateStorage.validateFileExtension(dto.fileName, dto.mimeType);
+    const matchedRequirement = await this.assertDocumentTypeCompatible(
       application,
       dto.documentType,
     );
@@ -571,11 +582,15 @@ export class SellerApplicationService {
       });
     }
 
-    const matchedRequirement = await this.findMatchingRequirement(
+    const matchedRequirement = await this.assertDocumentTypeCompatible(
       application,
       dto.documentType,
     );
 
+    this.privateStorage.validateFileExtension(
+      dto.originalFileName,
+      dto.mimeType,
+    );
     this.privateStorage.validateFileMetadata(
       dto.mimeType,
       dto.fileSizeBytes,
@@ -1257,7 +1272,12 @@ export class SellerApplicationService {
     }
 
     const application = await this.prisma.sellerApplication.findFirst({
-      where: { userId, isActive: true, deletedAt: null },
+      where: {
+        userId,
+        isActive: true,
+        deletedAt: null,
+        applicationType: SellerApplicationType.INITIAL,
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         documents: {
@@ -1267,11 +1287,69 @@ export class SellerApplicationService {
       },
     });
 
+    const businessUpgradeApplication =
+      await this.prisma.sellerApplication.findFirst({
+        where: {
+          userId,
+          isActive: true,
+          deletedAt: null,
+          applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          documents: {
+            where: { deletedAt: null },
+            orderBy: [{ documentType: 'asc' }, { version: 'desc' }],
+          },
+        },
+      });
+
+    const primaryAccount = await this.prisma.account.findFirst({
+      where: { ownerUserId: userId, deletedAt: null },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        accountType: true,
+        sellerType: true,
+        verificationStatus: true,
+        verificationTier: true,
+        isActive: true,
+      },
+    });
+
     const isApproved = user.sellerStatus === SellerApplicationStatus.APPROVED;
+    const effectiveTier = primaryAccount
+      ? resolveEffectiveVerificationTier(
+          primaryAccount.verificationStatus,
+          primaryAccount.verificationTier,
+          primaryAccount.isActive,
+        )
+      : VerificationTier.NONE;
+    const verificationBadge = primaryAccount
+      ? buildVerificationBadge(
+          primaryAccount.verificationStatus,
+          effectiveTier,
+          primaryAccount.isActive,
+        )
+      : null;
+
+    const effectiveApplication =
+      businessUpgradeApplication &&
+      businessUpgradeApplication.status === SellerApplicationStatus.APPROVED
+        ? businessUpgradeApplication
+        : application ?? businessUpgradeApplication;
 
     return {
       userId: user.id,
       sellerStatus: user.sellerStatus,
+      sellerType: primaryAccount
+        ? resolveAccountSellerType(
+            primaryAccount.sellerType,
+            primaryAccount.accountType,
+          )
+        : (effectiveApplication?.sellerType ?? null),
+      verificationTier: effectiveTier,
+      verificationBadge,
       roles: isApproved ? ['BUYER', 'SELLER'] : ['BUYER'],
       capabilities: {
         canBuy: true,
@@ -1281,12 +1359,21 @@ export class SellerApplicationService {
         canSubmitSellerApplication:
           user.sellerStatus !== SellerApplicationStatus.APPROVED &&
           user.sellerStatus !== SellerApplicationStatus.SUSPENDED,
+        canUpgradeToBusiness:
+          isApproved &&
+          effectiveTier === VerificationTier.IDENTITY_VERIFIED &&
+          (!businessUpgradeApplication ||
+            businessUpgradeApplication.status ===
+              SellerApplicationStatus.REJECTED),
       },
       sellerApprovedAt: user.sellerApprovedAt,
       sellerSuspendedAt: user.sellerSuspendedAt,
       sellerSuspensionReason: user.sellerSuspensionReason,
-      application: application
-        ? await this.formatApplicationForUser(application)
+      application: effectiveApplication
+        ? await this.formatApplicationForUser(effectiveApplication)
+        : null,
+      businessUpgradeApplication: businessUpgradeApplication
+        ? await this.formatApplicationForUser(businessUpgradeApplication)
         : null,
     };
   }
@@ -1378,7 +1465,10 @@ export class SellerApplicationService {
         displayName: true,
         slug: true,
         accountType: true,
+        sellerType: true,
         verificationStatus: true,
+        verificationTier: true,
+        isActive: true,
         _count: {
           select: {
             listings: { where: { deletedAt: null } },
@@ -1386,6 +1476,24 @@ export class SellerApplicationService {
           },
         },
       },
+    });
+
+    const formattedAccounts = accounts.map((a) => {
+      const effectiveTier = resolveEffectiveVerificationTier(
+        a.verificationStatus,
+        a.verificationTier,
+        a.isActive,
+      );
+      return {
+        ...a,
+        sellerType: resolveAccountSellerType(a.sellerType, a.accountType),
+        verificationTier: effectiveTier,
+        verificationBadge: buildVerificationBadge(
+          a.verificationStatus,
+          effectiveTier,
+          a.isActive,
+        ),
+      };
     });
 
     const accountIds = accounts.map((a) => a.id);
@@ -1415,13 +1523,569 @@ export class SellerApplicationService {
 
     return {
       sellerStatus: SellerApplicationStatus.APPROVED,
-      accounts,
+      accounts: formattedAccounts,
       metrics: {
         publishedListings: publishedCount,
         pendingModerationListings: pendingCount,
         totalViews: totalViews._sum.viewsCount ?? 0,
       },
     };
+  }
+
+  // =========================================================================
+  // INDIVIDUAL-TO-BUSINESS UPGRADE WORKFLOW
+  // =========================================================================
+
+  /**
+   * Initiates a safe Individual-to-Business verification upgrade for an existing
+   * Identity-Verified seller. Links to the EXISTING Account without creating a
+   * second account and without changing sellerType until admin approval.
+   */
+  async requestBusinessUpgrade(
+    userId: string,
+    dto: CreateBusinessUpgradeDto,
+    ctx: RequestAuditContext = {},
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        fullName: true,
+        phone: true,
+        email: true,
+        isActive: true,
+        deletedAt: true,
+        moderationStatus: true,
+        sellerStatus: true,
+      },
+    });
+
+    if (
+      !user ||
+      !user.isActive ||
+      user.deletedAt ||
+      user.moderationStatus !== 'active'
+    ) {
+      throw new ForbiddenException(
+        'Active user account is required to request business verification upgrade',
+      );
+    }
+
+    if (user.sellerStatus !== SellerApplicationStatus.APPROVED) {
+      throw new ForbiddenException({
+        code: 'IDENTITY_VERIFICATION_REQUIRED',
+        message:
+          'Only approved identity-verified sellers can request a business verification upgrade',
+      });
+    }
+
+    const existingAccount = await this.prisma.account.findFirst({
+      where: {
+        ownerUserId: userId,
+        isActive: true,
+        deletedAt: null,
+        verificationStatus: VerificationStatus.APPROVED,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (!existingAccount) {
+      throw new ForbiddenException({
+        code: 'APPROVED_ACCOUNT_REQUIRED',
+        message:
+          'An active approved seller account is required to upgrade to Business Verified',
+      });
+    }
+
+    const currentTier = resolveEffectiveVerificationTier(
+      existingAccount.verificationStatus,
+      existingAccount.verificationTier,
+      existingAccount.isActive,
+    );
+
+    if (currentTier === VerificationTier.BUSINESS_VERIFIED) {
+      throw new ConflictException({
+        code: 'ALREADY_BUSINESS_VERIFIED',
+        message: 'Your seller account is already Business Verified',
+      });
+    }
+
+    if (currentTier !== VerificationTier.IDENTITY_VERIFIED) {
+      throw new ForbiddenException({
+        code: 'IDENTITY_VERIFICATION_REQUIRED',
+        message:
+          'Your seller account must be Identity Verified before requesting a Business Verification upgrade',
+      });
+    }
+
+    const existingUpgrade = await this.prisma.sellerApplication.findFirst({
+      where: {
+        userId,
+        applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+        isActive: true,
+        deletedAt: null,
+        status: { in: ACTIVE_APPLICATION_STATUSES },
+      },
+      select: { id: true, status: true },
+    });
+
+    if (existingUpgrade) {
+      throw new ConflictException({
+        code: 'DUPLICATE_BUSINESS_UPGRADE_APPLICATION',
+        message: `You already have an active business upgrade application in status '${existingUpgrade.status}'`,
+        applicationId: existingUpgrade.id,
+        status: existingUpgrade.status,
+      });
+    }
+
+    const existingRejectedUpgrade =
+      await this.prisma.sellerApplication.findFirst({
+        where: {
+          userId,
+          applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+          isActive: true,
+          deletedAt: null,
+          status: SellerApplicationStatus.REJECTED,
+        },
+        select: { id: true },
+      });
+
+    if (existingRejectedUpgrade) {
+      throw new ConflictException({
+        code: 'UPGRADE_RESUBMISSION_REQUIRED',
+        message:
+          'You have a rejected business upgrade application. Please use the resubmit endpoint to update and resubmit it.',
+        applicationId: existingRejectedUpgrade.id,
+      });
+    }
+
+    const commercialBusinessType =
+      dto.businessType && dto.businessType !== AccountType.INDIVIDUAL
+        ? dto.businessType
+        : AccountType.COMPANY;
+
+    const marketplaceSections = Array.from(
+      new Set((dto.marketplaceSections ?? []).map((s) => String(s).toLowerCase())),
+    );
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      const application = await tx.sellerApplication.create({
+        data: {
+          userId,
+          accountId: existingAccount.id,
+          applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+          status: SellerApplicationStatus.DRAFT,
+          sellerType: SellerType.BUSINESS,
+          businessType: commercialBusinessType,
+          marketplaceSections,
+          businessName: dto.businessName.trim(),
+          businessDescription: dto.businessDescription?.trim() || existingAccount.bio || null,
+          commercialRegisterNumber: dto.commercialRegisterNumber.trim(),
+          taxIdNumber: this.encryptSensitive(dto.taxIdNumber),
+          authorizedRepresentativeName:
+            dto.authorizedRepresentativeName?.trim() || null,
+          authorizedRepresentativeId: this.encryptSensitive(
+            dto.authorizedRepresentativeId,
+          ),
+          contactPhone: dto.contactPhone?.trim() || user.phone,
+          contactEmail: dto.contactEmail?.trim() || user.email || null,
+          cityId: dto.cityId ?? null,
+          address: dto.address?.trim() || null,
+          isActive: true,
+        },
+        include: { documents: { where: { deletedAt: null } } },
+      });
+
+      await tx.sellerApplicationHistory.create({
+        data: {
+          applicationId: application.id,
+          accountId: existingAccount.id,
+          userId,
+          actorType: 'user',
+          previousStatus: SellerApplicationStatus.NOT_REQUESTED,
+          newStatus: SellerApplicationStatus.DRAFT,
+          previousTier: currentTier,
+          newTier: currentTier,
+          reason: 'Identity-verified seller initiated business verification upgrade',
+          metadata: {
+            requestId: ctx.requestId ?? null,
+            applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+            targetSellerType: SellerType.BUSINESS,
+            targetBusinessType: commercialBusinessType,
+          },
+        },
+      });
+
+      return application;
+    });
+
+    await this.securityAudit.logEvent({
+      action: 'SELLER_BUSINESS_UPGRADE_CREATED',
+      actorType: 'user',
+      actorId: userId,
+      targetEntity: 'SellerApplication',
+      targetId: created.id,
+      ipAddress: ctx.ipAddress,
+      userAgent: ctx.userAgent,
+      correlationId: ctx.requestId,
+      metadata: {
+        requestId: ctx.requestId ?? null,
+        userId,
+        accountId: existingAccount.id,
+        applicationId: created.id,
+        previousTier: currentTier,
+        newTier: currentTier,
+        result: 'SUCCESS',
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    return this.formatApplicationForUser(created);
+  }
+
+  async getMyBusinessUpgrade(userId: string) {
+    const account = await this.prisma.account.findFirst({
+      where: { ownerUserId: userId, deletedAt: null },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        accountType: true,
+        sellerType: true,
+        verificationStatus: true,
+        verificationTier: true,
+        isActive: true,
+      },
+    });
+
+    const upgradeApp = await this.prisma.sellerApplication.findFirst({
+      where: {
+        userId,
+        applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+        isActive: true,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        documents: {
+          where: { deletedAt: null },
+          orderBy: [{ documentType: 'asc' }, { version: 'desc' }],
+        },
+      },
+    });
+
+    const currentTier = account
+      ? resolveEffectiveVerificationTier(
+          account.verificationStatus,
+          account.verificationTier,
+          account.isActive,
+        )
+      : VerificationTier.NONE;
+
+    const requirements = this.requirementsService
+      ? await this.requirementsService.getApplicableRequirements(
+          SellerType.BUSINESS,
+          Array.isArray(upgradeApp?.marketplaceSections)
+            ? (upgradeApp.marketplaceSections as string[])
+            : [],
+        )
+      : [];
+
+    return {
+      accountId: account?.id ?? null,
+      currentSellerType: account
+        ? resolveAccountSellerType(account.sellerType, account.accountType)
+        : null,
+      currentVerificationTier: currentTier,
+      currentVerificationBadge: account
+        ? buildVerificationBadge(
+            account.verificationStatus,
+            currentTier,
+            account.isActive,
+          )
+        : null,
+      eligibleForUpgrade: currentTier === VerificationTier.IDENTITY_VERIFIED,
+      businessRequirements: requirements,
+      application: upgradeApp
+        ? await this.formatApplicationForUser(upgradeApp)
+        : null,
+    };
+  }
+
+  async submitBusinessUpgrade(
+    userId: string,
+    ctx: RequestAuditContext = {},
+  ) {
+    const application = await this.prisma.sellerApplication.findFirst({
+      where: {
+        userId,
+        applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+        isActive: true,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { documents: { where: { deletedAt: null } } },
+    });
+
+    if (!application) {
+      throw new NotFoundException(
+        'No business upgrade application draft found. Please initiate a business upgrade first.',
+      );
+    }
+
+    const currentStatus = application.status as SellerApplicationStatus;
+    assertValidSellerStatusTransition(
+      currentStatus,
+      SellerApplicationStatus.PENDING,
+    );
+
+    const completeness = await this.evaluateCompleteness(
+      application,
+      application.documents,
+    );
+
+    if (!completeness.isComplete) {
+      throw new BadRequestException({
+        code: 'INCOMPLETE_SELLER_APPLICATION',
+        message:
+          'Business upgrade application is incomplete. Please provide Commercial Registration, Tax Card, and all required fields before submitting.',
+        missingFields: completeness.missingFields,
+        missingDocuments: completeness.missingDocuments,
+        rejectedDocuments: completeness.rejectedDocuments,
+        expiredDocuments: completeness.expiredDocuments,
+      });
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.sellerApplication.updateMany({
+        where: { id: application.id, status: currentStatus },
+        data: {
+          status: SellerApplicationStatus.PENDING,
+          submittedAt: new Date(),
+          rejectionReason: null,
+        },
+      });
+
+      if (result.count === 0) {
+        throw new ConflictException(
+          'Business upgrade application status changed concurrently. Please refresh and retry.',
+        );
+      }
+
+      // Note: user.sellerStatus and account.sellerType / verificationTier remain unchanged
+      // until an admin explicitly approves the business upgrade!
+      await tx.sellerApplicationHistory.create({
+        data: {
+          applicationId: application.id,
+          accountId: application.accountId,
+          userId,
+          actorType: 'user',
+          previousStatus: currentStatus,
+          newStatus: SellerApplicationStatus.PENDING,
+          previousTier: VerificationTier.IDENTITY_VERIFIED,
+          newTier: VerificationTier.IDENTITY_VERIFIED,
+          reason: 'Business verification upgrade submitted for admin review',
+          metadata: {
+            requestId: ctx.requestId ?? null,
+            applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+            documentCount: application.documents.filter((d) => d.isCurrent)
+              .length,
+          },
+        },
+      });
+
+      return tx.sellerApplication.findUniqueOrThrow({
+        where: { id: application.id },
+        include: { documents: { where: { deletedAt: null } } },
+      });
+    });
+
+    await this.securityAudit.logEvent({
+      action: 'SELLER_BUSINESS_UPGRADE_SUBMITTED',
+      actorType: 'user',
+      actorId: userId,
+      targetEntity: 'SellerApplication',
+      targetId: updated.id,
+      ipAddress: ctx.ipAddress,
+      userAgent: ctx.userAgent,
+      correlationId: ctx.requestId,
+      metadata: {
+        requestId: ctx.requestId ?? null,
+        userId,
+        accountId: application.accountId,
+        applicationId: updated.id,
+        previousStatus: currentStatus,
+        newStatus: SellerApplicationStatus.PENDING,
+        result: 'SUCCESS',
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    await this.notifyUser(
+      userId,
+      'SELLER_BUSINESS_UPGRADE_SUBMITTED',
+      'Business Upgrade Submitted',
+      'Your business verification upgrade request has been submitted and is awaiting admin review. Your existing seller account remains active.',
+      { applicationId: updated.id, status: SellerApplicationStatus.PENDING },
+    );
+
+    return this.formatApplicationForUser(updated);
+  }
+
+  async resubmitBusinessUpgrade(
+    userId: string,
+    dto: ResubmitSellerApplicationDto,
+    ctx: RequestAuditContext = {},
+  ) {
+    const application = await this.prisma.sellerApplication.findFirst({
+      where: {
+        userId,
+        applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+        isActive: true,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { documents: { where: { deletedAt: null } } },
+    });
+
+    if (!application) {
+      throw new NotFoundException('No business upgrade application found');
+    }
+
+    const currentStatus = application.status as SellerApplicationStatus;
+    if (
+      ![
+        SellerApplicationStatus.NEEDS_CORRECTION,
+        SellerApplicationStatus.REJECTED,
+      ].includes(currentStatus)
+    ) {
+      throw new BadRequestException({
+        code: 'INVALID_SELLER_STATUS_TRANSITION',
+        message: `Only NEEDS_CORRECTION or REJECTED business upgrade applications can be resubmitted (current status: '${currentStatus}')`,
+      });
+    }
+
+    const targetStatus =
+      currentStatus === SellerApplicationStatus.NEEDS_CORRECTION
+        ? SellerApplicationStatus.PENDING
+        : dto.submitImmediately
+          ? SellerApplicationStatus.PENDING
+          : SellerApplicationStatus.DRAFT;
+
+    assertValidSellerStatusTransition(currentStatus, targetStatus);
+
+    const mergedBusinessType =
+      dto.businessType && dto.businessType !== AccountType.INDIVIDUAL
+        ? dto.businessType
+        : application.businessType;
+    const mergedBusinessName =
+      dto.businessName !== undefined
+        ? dto.businessName.trim()
+        : application.businessName;
+    const mergedCr =
+      dto.commercialRegisterNumber !== undefined
+        ? dto.commercialRegisterNumber.trim()
+        : application.commercialRegisterNumber;
+    const mergedSections =
+      dto.marketplaceSections !== undefined
+        ? Array.from(
+            new Set(dto.marketplaceSections.map((s) => String(s).toLowerCase())),
+          )
+        : application.marketplaceSections;
+
+    if (targetStatus === SellerApplicationStatus.PENDING) {
+      const completeness = await this.evaluateCompleteness(
+        {
+          ...application,
+          sellerType: SellerType.BUSINESS,
+          businessType: mergedBusinessType,
+          marketplaceSections: mergedSections,
+          businessName: mergedBusinessName,
+          commercialRegisterNumber: mergedCr,
+        },
+        application.documents,
+      );
+
+      if (!completeness.isComplete) {
+        throw new BadRequestException({
+          code: 'INCOMPLETE_SELLER_APPLICATION',
+          message:
+            'Cannot submit incomplete business upgrade application. Please complete all required fields and documents.',
+          missingFields: completeness.missingFields,
+          missingDocuments: completeness.missingDocuments,
+          rejectedDocuments: completeness.rejectedDocuments,
+          expiredDocuments: completeness.expiredDocuments,
+        });
+      }
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const next = await tx.sellerApplication.update({
+        where: { id: application.id },
+        data: {
+          status: targetStatus,
+          sellerType: SellerType.BUSINESS,
+          businessType: mergedBusinessType,
+          marketplaceSections: mergedSections as Prisma.InputJsonValue,
+          businessName: mergedBusinessName,
+          ...(dto.businessDescription !== undefined
+            ? { businessDescription: dto.businessDescription.trim() }
+            : {}),
+          commercialRegisterNumber: mergedCr,
+          ...(dto.taxIdNumber !== undefined
+            ? { taxIdNumber: this.encryptSensitive(dto.taxIdNumber) }
+            : {}),
+          ...(dto.authorizedRepresentativeName !== undefined
+            ? {
+                authorizedRepresentativeName:
+                  dto.authorizedRepresentativeName.trim(),
+              }
+            : {}),
+          ...(dto.authorizedRepresentativeId !== undefined
+            ? {
+                authorizedRepresentativeId: this.encryptSensitive(
+                  dto.authorizedRepresentativeId,
+                ),
+              }
+            : {}),
+          resubmissionCount: { increment: 1 },
+          ...(targetStatus === SellerApplicationStatus.PENDING
+            ? {
+                submittedAt: new Date(),
+                rejectionReason: null,
+                correctionReason: null,
+                correctionFields: [],
+              }
+            : {}),
+        },
+        include: { documents: { where: { deletedAt: null } } },
+      });
+
+      await tx.sellerApplicationHistory.create({
+        data: {
+          applicationId: application.id,
+          accountId: application.accountId,
+          userId,
+          actorType: 'user',
+          previousStatus: currentStatus,
+          newStatus: targetStatus,
+          previousTier: VerificationTier.IDENTITY_VERIFIED,
+          newTier: VerificationTier.IDENTITY_VERIFIED,
+          reason:
+            targetStatus === SellerApplicationStatus.PENDING
+              ? 'Business upgrade application resubmitted for verification'
+              : 'Business upgrade application reopened as draft',
+          metadata: {
+            requestId: ctx.requestId ?? null,
+            applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+            resubmissionCount: next.resubmissionCount,
+          },
+        },
+      });
+
+      return next;
+    });
+
+    return this.formatApplicationForUser(updated);
   }
 
   // =========================================================================
@@ -1869,14 +2533,20 @@ export class SellerApplicationService {
         );
       }
 
-      await tx.user.update({
-        where: { id: app.userId },
-        data: { sellerStatus: SellerApplicationStatus.UNDER_REVIEW },
-      });
+      const isBusinessUpgrade =
+        app.applicationType === SellerApplicationType.BUSINESS_UPGRADE;
+
+      if (!isBusinessUpgrade) {
+        await tx.user.update({
+          where: { id: app.userId },
+          data: { sellerStatus: SellerApplicationStatus.UNDER_REVIEW },
+        });
+      }
 
       await tx.sellerApplicationHistory.create({
         data: {
           applicationId,
+          accountId: app.accountId,
           userId: app.userId,
           ...(resolvedStaffId ? { adminId: resolvedStaffId } : {}),
           actorType: 'staff',
@@ -1886,6 +2556,7 @@ export class SellerApplicationService {
           metadata: {
             requestId: ctx.requestId ?? null,
             actorId: staff.id,
+            applicationType: app.applicationType ?? SellerApplicationType.INITIAL,
           },
         },
       });
@@ -2015,23 +2686,51 @@ export class SellerApplicationService {
         });
       }
 
-      await tx.user.update({
-        where: { id: app.userId },
-        data: { sellerStatus: SellerApplicationStatus.NEEDS_CORRECTION },
-      });
+      const isBusinessUpgrade =
+        app.applicationType === SellerApplicationType.BUSINESS_UPGRADE;
+      const existingTier = isBusinessUpgrade
+        ? VerificationTier.IDENTITY_VERIFIED
+        : VerificationTier.NONE;
+
+      if (!isBusinessUpgrade) {
+        await tx.user.update({
+          where: { id: app.userId },
+          data: { sellerStatus: SellerApplicationStatus.NEEDS_CORRECTION },
+        });
+        if (app.accountId) {
+          await tx.account.updateMany({
+            where: {
+              id: app.accountId,
+              verificationStatus: { not: VerificationStatus.APPROVED },
+            },
+            data: {
+              verificationStatus: VerificationStatus.NEEDS_CHANGES,
+              verificationTier: VerificationTier.NONE,
+              verificationReviewedAt: now,
+              ...(resolvedStaffId
+                ? { verificationReviewedByStaffId: resolvedStaffId }
+                : {}),
+            },
+          });
+        }
+      }
 
       await tx.sellerApplicationHistory.create({
         data: {
           applicationId,
+          accountId: app.accountId,
           userId: app.userId,
           ...(resolvedStaffId ? { adminId: resolvedStaffId } : {}),
           actorType: 'staff',
           previousStatus: currentStatus,
           newStatus: SellerApplicationStatus.NEEDS_CORRECTION,
+          previousTier: existingTier,
+          newTier: existingTier,
           reason,
           metadata: {
             requestId: ctx.requestId ?? null,
             actorId: staff.id,
+            applicationType: app.applicationType ?? SellerApplicationType.INITIAL,
             affectedFields,
             rejectedDocumentIds: rejectedDocIds,
           },
@@ -2059,11 +2758,15 @@ export class SellerApplicationService {
           userAgent: ctx.userAgent?.slice(0, 500),
           diffPayload: {
             requestId: ctx.requestId ?? null,
+            accountId: app.accountId ?? null,
             userId: app.userId,
             adminId: staff.id,
             applicationId,
             previousStatus: currentStatus,
             newStatus: SellerApplicationStatus.NEEDS_CORRECTION,
+            previousTier: existingTier,
+            newTier: existingTier,
+            reason,
             affectedFields,
             rejectedDocumentIds: rejectedDocIds,
             result: 'SUCCESS',
@@ -2154,6 +2857,28 @@ export class SellerApplicationService {
       });
     }
 
+    const resolvedSellerType = resolveSellerType(
+      app.sellerType,
+      app.businessType,
+    );
+    const derivedTier = deriveVerificationTier({
+      sellerType: resolvedSellerType,
+      status: SellerApplicationStatus.APPROVED,
+      documents: app.documents,
+    });
+
+    if (derivedTier === VerificationTier.NONE) {
+      throw new BadRequestException({
+        code: 'VERIFICATION_TIER_DERIVATION_FAILED',
+        message:
+          'Cannot approve seller application: uploaded documents do not satisfy the verification tier requirements for the declared seller type.',
+        sellerType: resolvedSellerType,
+      });
+    }
+
+    const isBusinessUpgrade =
+      app.applicationType === SellerApplicationType.BUSINESS_UPGRADE;
+
     const resolvedStaffId = staff.staffId ?? null;
     const now = new Date();
     const verificationExpiresAt = dto.verificationExpiresAt
@@ -2170,6 +2895,7 @@ export class SellerApplicationService {
         },
         data: {
           status: SellerApplicationStatus.APPROVED,
+          derivedVerificationTier: derivedTier,
           reviewedAt: now,
           verificationExpiresAt,
           expiredAt: null,
@@ -2206,14 +2932,35 @@ export class SellerApplicationService {
             orderBy: { createdAt: 'asc' },
           });
 
+      const previousTier = sellerAccount
+        ? resolveEffectiveVerificationTier(
+            sellerAccount.verificationStatus,
+            sellerAccount.verificationTier,
+            sellerAccount.isActive,
+          )
+        : VerificationTier.NONE;
+
+      const resolvedAccountType =
+        resolvedSellerType === SellerType.BUSINESS &&
+        (!app.businessType || app.businessType === AccountType.INDIVIDUAL)
+          ? AccountType.COMPANY
+          : app.businessType || AccountType.INDIVIDUAL;
+
       if (sellerAccount) {
         sellerAccount = await tx.account.update({
           where: { id: sellerAccount.id },
           data: {
             displayName: app.businessName || sellerAccount.displayName,
-            accountType: app.businessType || sellerAccount.accountType,
+            accountType: resolvedAccountType,
+            sellerType: resolvedSellerType,
             bio: app.businessDescription ?? sellerAccount.bio,
             verificationStatus: VerificationStatus.APPROVED,
+            verificationTier: derivedTier,
+            verificationApprovedAt: now,
+            verificationReviewedAt: now,
+            ...(resolvedStaffId
+              ? { verificationReviewedByStaffId: resolvedStaffId }
+              : {}),
             isActive: true,
           },
         });
@@ -2230,13 +2977,33 @@ export class SellerApplicationService {
         sellerAccount = await tx.account.create({
           data: {
             ownerUserId: app.userId,
-            accountType: app.businessType || AccountType.INDIVIDUAL,
+            accountType: resolvedAccountType,
+            sellerType: resolvedSellerType,
             displayName: app.businessName || app.user.fullName,
             slug,
             bio: app.businessDescription,
             verificationStatus: VerificationStatus.APPROVED,
+            verificationTier: derivedTier,
+            verificationApprovedAt: now,
+            verificationReviewedAt: now,
+            ...(resolvedStaffId
+              ? { verificationReviewedByStaffId: resolvedStaffId }
+              : {}),
             isActive: true,
           },
+        });
+      }
+
+      if (isBusinessUpgrade) {
+        // Retire superseded initial application while preserving full audit history
+        await tx.sellerApplication.updateMany({
+          where: {
+            userId: app.userId,
+            id: { not: applicationId },
+            isActive: true,
+            deletedAt: null,
+          },
+          data: { isActive: false },
         });
       }
 
@@ -2274,16 +3041,26 @@ export class SellerApplicationService {
       await tx.sellerApplicationHistory.create({
         data: {
           applicationId,
+          accountId: sellerAccount.id,
           userId: app.userId,
           ...(resolvedStaffId ? { adminId: resolvedStaffId } : {}),
           actorType: 'staff',
           previousStatus: currentStatus,
           newStatus: SellerApplicationStatus.APPROVED,
-          reason: dto.notes?.trim() || 'Seller application approved',
+          previousTier,
+          newTier: derivedTier,
+          reason:
+            dto.notes?.trim() ||
+            (isBusinessUpgrade
+              ? 'Individual-to-Business verification upgrade approved'
+              : 'Seller application approved'),
           metadata: {
             requestId: ctx.requestId ?? null,
             actorId: staff.id,
             accountId: sellerAccount.id,
+            applicationType: app.applicationType ?? SellerApplicationType.INITIAL,
+            previousTier,
+            newTier: derivedTier,
             verificationExpiresAt: verificationExpiresAt.toISOString(),
           },
         },
@@ -2294,8 +3071,12 @@ export class SellerApplicationService {
           ...(resolvedStaffId ? { staffId: resolvedStaffId } : {}),
           targetType: 'verification',
           targetId: applicationId,
-          action: 'verify',
-          notes: dto.notes?.trim() || 'Seller application approved',
+          action: isBusinessUpgrade ? 'upgrade_verify' : 'verify',
+          notes:
+            dto.notes?.trim() ||
+            (isBusinessUpgrade
+              ? 'Business verification upgrade approved'
+              : 'Seller application approved'),
         },
       });
 
@@ -2303,7 +3084,9 @@ export class SellerApplicationService {
         data: {
           actorType: 'staff',
           actorId: staff.id,
-          action: 'SELLER_APPLICATION_APPROVED',
+          action: isBusinessUpgrade
+            ? 'SELLER_BUSINESS_UPGRADE_APPROVED'
+            : 'SELLER_APPLICATION_APPROVED',
           targetEntity: 'seller_application',
           targetId: applicationId,
           ipAddress: ctx.ipAddress?.slice(0, 50),
@@ -2316,6 +3099,9 @@ export class SellerApplicationService {
             accountId: sellerAccount.id,
             previousStatus: currentStatus,
             newStatus: SellerApplicationStatus.APPROVED,
+            previousTier,
+            newTier: derivedTier,
+            reason: dto.notes?.trim() || 'Seller verification approved',
             result: 'SUCCESS',
             timestamp: now.toISOString(),
           },
@@ -2337,13 +3123,25 @@ export class SellerApplicationService {
             adminId: staff.id,
             applicationId,
             accountId: sellerAccount.id,
+            previousTier,
+            newTier: derivedTier,
             result: 'SUCCESS',
             timestamp: now.toISOString(),
           },
         },
       });
 
-      return { application: updatedApplication, account: sellerAccount };
+      return {
+        application: updatedApplication,
+        account: {
+          ...sellerAccount,
+          verificationBadge: buildVerificationBadge(
+            sellerAccount.verificationStatus,
+            derivedTier,
+            sellerAccount.isActive,
+          ),
+        },
+      };
     });
 
     await this.invalidateAccountCache(app.userId, result.account.id);
@@ -2417,23 +3215,51 @@ export class SellerApplicationService {
         );
       }
 
-      await tx.user.update({
-        where: { id: app.userId },
-        data: { sellerStatus: SellerApplicationStatus.REJECTED },
-      });
+      const isBusinessUpgrade =
+        app.applicationType === SellerApplicationType.BUSINESS_UPGRADE;
+      const existingTier = isBusinessUpgrade
+        ? VerificationTier.IDENTITY_VERIFIED
+        : VerificationTier.NONE;
+
+      if (!isBusinessUpgrade) {
+        await tx.user.update({
+          where: { id: app.userId },
+          data: { sellerStatus: SellerApplicationStatus.REJECTED },
+        });
+        if (app.accountId) {
+          await tx.account.updateMany({
+            where: {
+              id: app.accountId,
+              verificationStatus: { not: VerificationStatus.APPROVED },
+            },
+            data: {
+              verificationStatus: VerificationStatus.REJECTED,
+              verificationTier: VerificationTier.NONE,
+              verificationReviewedAt: now,
+              ...(resolvedStaffId
+                ? { verificationReviewedByStaffId: resolvedStaffId }
+                : {}),
+            },
+          });
+        }
+      }
 
       await tx.sellerApplicationHistory.create({
         data: {
           applicationId,
+          accountId: app.accountId,
           userId: app.userId,
           ...(resolvedStaffId ? { adminId: resolvedStaffId } : {}),
           actorType: 'staff',
           previousStatus: currentStatus,
           newStatus: SellerApplicationStatus.REJECTED,
+          previousTier: existingTier,
+          newTier: existingTier,
           reason,
           metadata: {
             requestId: ctx.requestId ?? null,
             actorId: staff.id,
+            applicationType: app.applicationType ?? SellerApplicationType.INITIAL,
           },
         },
       });
@@ -2452,18 +3278,23 @@ export class SellerApplicationService {
         data: {
           actorType: 'staff',
           actorId: staff.id,
-          action: 'SELLER_APPLICATION_REJECTED',
+          action: isBusinessUpgrade
+            ? 'SELLER_BUSINESS_UPGRADE_REJECTED'
+            : 'SELLER_APPLICATION_REJECTED',
           targetEntity: 'seller_application',
           targetId: applicationId,
           ipAddress: ctx.ipAddress?.slice(0, 50),
           userAgent: ctx.userAgent?.slice(0, 500),
           diffPayload: {
             requestId: ctx.requestId ?? null,
+            accountId: app.accountId ?? null,
             userId: app.userId,
             adminId: staff.id,
             applicationId,
             previousStatus: currentStatus,
             newStatus: SellerApplicationStatus.REJECTED,
+            previousTier: existingTier,
+            newTier: existingTier,
             reason,
             result: 'SUCCESS',
             timestamp: now.toISOString(),
@@ -2525,8 +3356,12 @@ export class SellerApplicationService {
 
     const ownedAccounts = await this.prisma.account.findMany({
       where: { ownerUserId: app.userId, deletedAt: null },
-      select: { id: true },
+      select: { id: true, verificationTier: true },
     });
+    const previousTier =
+      ownedAccounts[0]?.verificationTier ??
+      app.derivedVerificationTier ??
+      VerificationTier.NONE;
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const lockResult = await tx.sellerApplication.updateMany({
@@ -2557,17 +3392,28 @@ export class SellerApplicationService {
 
       await tx.account.updateMany({
         where: { ownerUserId: app.userId, deletedAt: null },
-        data: { isActive: false },
+        data: {
+          isActive: false,
+          verificationStatus: VerificationStatus.SUSPENDED,
+          verificationTier: VerificationTier.NONE,
+          verificationReviewedAt: now,
+          ...(resolvedStaffId
+            ? { verificationReviewedByStaffId: resolvedStaffId }
+            : {}),
+        },
       });
 
       await tx.sellerApplicationHistory.create({
         data: {
           applicationId,
+          accountId: app.accountId ?? ownedAccounts[0]?.id ?? null,
           userId: app.userId,
           ...(resolvedStaffId ? { adminId: resolvedStaffId } : {}),
           actorType: 'staff',
           previousStatus: currentStatus,
           newStatus: SellerApplicationStatus.SUSPENDED,
+          previousTier,
+          newTier: VerificationTier.NONE,
           reason,
           metadata: {
             requestId: ctx.requestId ?? null,
@@ -2597,11 +3443,14 @@ export class SellerApplicationService {
           userAgent: ctx.userAgent?.slice(0, 500),
           diffPayload: {
             requestId: ctx.requestId ?? null,
+            accountId: app.accountId ?? ownedAccounts[0]?.id ?? null,
             userId: app.userId,
             adminId: staff.id,
             applicationId,
             previousStatus: currentStatus,
             newStatus: SellerApplicationStatus.SUSPENDED,
+            previousTier,
+            newTier: VerificationTier.NONE,
             reason,
             buyerPermissionsPreserved: true,
             result: 'SUCCESS',
@@ -2715,17 +3564,24 @@ export class SellerApplicationService {
 
       await tx.account.updateMany({
         where: { ownerUserId: app.userId, deletedAt: null },
-        data: { isActive: false },
+        data: {
+          isActive: false,
+          verificationStatus: VerificationStatus.SUSPENDED,
+          verificationTier: VerificationTier.NONE,
+        },
       });
 
       await tx.sellerApplicationHistory.create({
         data: {
           applicationId,
+          accountId: app.accountId ?? ownedAccounts[0]?.id ?? null,
           userId: app.userId,
           ...(resolvedStaffId ? { adminId: resolvedStaffId } : {}),
           actorType,
           previousStatus: currentStatus,
           newStatus: SellerApplicationStatus.EXPIRED,
+          previousTier: app.derivedVerificationTier ?? VerificationTier.NONE,
+          newTier: VerificationTier.NONE,
           reason,
           metadata: {
             requestId: ctx.requestId ?? null,
@@ -2817,7 +3673,10 @@ export class SellerApplicationService {
   ) {
     const app = await this.prisma.sellerApplication.findUnique({
       where: { id: applicationId },
-      include: { user: { select: { id: true, email: true, phone: true } } },
+      include: {
+        documents: { where: { deletedAt: null } },
+        user: { select: { id: true, email: true, phone: true } },
+      },
     });
 
     if (!app) {
@@ -2832,6 +3691,19 @@ export class SellerApplicationService {
       SellerApplicationStatus.APPROVED,
     );
 
+    const resolvedSellerType = resolveSellerType(
+      app.sellerType,
+      app.businessType,
+    );
+    const derivedTier =
+      deriveVerificationTier({
+        sellerType: resolvedSellerType,
+        status: SellerApplicationStatus.APPROVED,
+        documents: app.documents ?? [],
+      }) ||
+      (app.derivedVerificationTier as VerificationTier) ||
+      VerificationTier.NONE;
+
     const resolvedStaffId = staff.staffId ?? null;
     const now = new Date();
 
@@ -2840,6 +3712,7 @@ export class SellerApplicationService {
         where: { id: applicationId, status: currentStatus },
         data: {
           status: SellerApplicationStatus.APPROVED,
+          derivedVerificationTier: derivedTier,
           suspensionReason: null,
           reviewedAt: now,
           ...(resolvedStaffId ? { reviewedByStaffId: resolvedStaffId } : {}),
@@ -2864,17 +3737,28 @@ export class SellerApplicationService {
 
       await tx.account.updateMany({
         where: { ownerUserId: app.userId, deletedAt: null },
-        data: { verificationStatus: VerificationStatus.APPROVED, isActive: true },
+        data: {
+          verificationStatus: VerificationStatus.APPROVED,
+          verificationTier: derivedTier,
+          verificationReviewedAt: now,
+          ...(resolvedStaffId
+            ? { verificationReviewedByStaffId: resolvedStaffId }
+            : {}),
+          isActive: true,
+        },
       });
 
       await tx.sellerApplicationHistory.create({
         data: {
           applicationId,
+          accountId: app.accountId,
           userId: app.userId,
           ...(resolvedStaffId ? { adminId: resolvedStaffId } : {}),
           actorType: 'staff',
           previousStatus: currentStatus,
           newStatus: SellerApplicationStatus.APPROVED,
+          previousTier: VerificationTier.NONE,
+          newTier: derivedTier,
           reason: dto.notes?.trim() || 'Seller privileges reinstated by admin',
           metadata: {
             requestId: ctx.requestId ?? null,
@@ -2894,11 +3778,14 @@ export class SellerApplicationService {
           userAgent: ctx.userAgent?.slice(0, 500),
           diffPayload: {
             requestId: ctx.requestId ?? null,
+            accountId: app.accountId ?? null,
             userId: app.userId,
             adminId: staff.id,
             applicationId,
             previousStatus: currentStatus,
             newStatus: SellerApplicationStatus.APPROVED,
+            previousTier: VerificationTier.NONE,
+            newTier: derivedTier,
             result: 'SUCCESS',
             timestamp: now.toISOString(),
           },
@@ -3003,7 +3890,69 @@ export class SellerApplicationService {
     return parsed;
   }
 
+  private async assertDocumentTypeCompatible(
+    application: { sellerType?: string; marketplaceSections?: unknown },
+    documentType: string,
+  ) {
+    const sellerType = (
+      application.sellerType || SellerType.INDIVIDUAL
+    ).toUpperCase();
+    const matched = await this.findMatchingRequirement(
+      application,
+      documentType,
+    );
+
+    if (matched) {
+      return matched;
+    }
+
+    // Allow generic additional documents for all seller types
+    if (documentType === SellerDocumentType.ADDITIONAL_DOCUMENT) {
+      return null;
+    }
+
+    // Block commercial-only documents on INDIVIDUAL applications unless configured by admin
+    const commercialOnlyDocs: string[] = [
+      SellerDocumentType.COMMERCIAL_REGISTER,
+      SellerDocumentType.TAX_CARD,
+      SellerDocumentType.LEGAL_REPRESENTATION_PROOF,
+    ];
+    if (
+      sellerType === SellerType.INDIVIDUAL &&
+      commercialOnlyDocs.includes(documentType)
+    ) {
+      throw new BadRequestException({
+        code: 'INCOMPATIBLE_DOCUMENT_TYPE',
+        message: `Document type '${documentType}' is not compatible with seller type '${sellerType}'`,
+      });
+    }
+
+    return null;
+  }
+
   private async getEditableApplicationForUser(userId: string) {
+    const editableStatuses = [
+      SellerApplicationStatus.DRAFT,
+      SellerApplicationStatus.NEEDS_CORRECTION,
+      SellerApplicationStatus.REJECTED,
+      SellerApplicationStatus.EXPIRED,
+    ];
+
+    // Prefer an active editable BUSINESS_UPGRADE application if one exists
+    const editableUpgrade = await this.prisma.sellerApplication.findFirst({
+      where: {
+        userId,
+        applicationType: SellerApplicationType.BUSINESS_UPGRADE,
+        isActive: true,
+        deletedAt: null,
+        status: { in: editableStatuses },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (editableUpgrade) {
+      return editableUpgrade;
+    }
+
     const application = await this.prisma.sellerApplication.findFirst({
       where: { userId, isActive: true, deletedAt: null },
       orderBy: { createdAt: 'desc' },
@@ -3015,14 +3964,7 @@ export class SellerApplicationService {
       );
     }
 
-    if (
-      ![
-        SellerApplicationStatus.DRAFT,
-        SellerApplicationStatus.NEEDS_CORRECTION,
-        SellerApplicationStatus.REJECTED,
-        SellerApplicationStatus.EXPIRED,
-      ].includes(application.status as SellerApplicationStatus)
-    ) {
+    if (!editableStatuses.includes(application.status as SellerApplicationStatus)) {
       throw new BadRequestException(
         `Documents can only be uploaded while application is in DRAFT, NEEDS_CORRECTION, REJECTED, or EXPIRED status (current: '${application.status}')`,
       );
@@ -3082,9 +4024,11 @@ export class SellerApplicationService {
       id: app.id,
       userId: app.userId,
       accountId: app.accountId,
+      applicationType: app.applicationType ?? SellerApplicationType.INITIAL,
       status: app.status,
       sellerType: app.sellerType ?? SellerType.INDIVIDUAL,
       businessType: app.businessType,
+      derivedVerificationTier: app.derivedVerificationTier ?? null,
       marketplaceSections: Array.isArray(app.marketplaceSections)
         ? app.marketplaceSections
         : [],
@@ -3163,8 +4107,12 @@ export class SellerApplicationService {
   }
 
   private async invalidateAccountCache(userId: string, accountId: string) {
-    await this.redis
-      ?.del?.(`account:membership:${userId}:${accountId}`)
-      .catch(() => undefined);
+    await Promise.all([
+      this.redis
+        ?.del?.(`account:membership:${userId}:${accountId}`)
+        .catch(() => undefined),
+      this.redis?.delByPattern?.('listings:feed:*').catch(() => undefined),
+      this.redis?.delByPattern?.(`account:public:${accountId}*`).catch(() => undefined),
+    ]);
   }
 }

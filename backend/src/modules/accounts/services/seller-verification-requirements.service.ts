@@ -91,6 +91,20 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     verificationRules: { maxAgeDays: 90 },
     sortOrder: 30,
   },
+  {
+    sellerType: SellerType.INDIVIDUAL,
+    marketplaceSection: null,
+    documentType: SellerDocumentType.ADDITIONAL_DOCUMENT,
+    displayName: 'Additional Supporting Documents',
+    displayNameAr: 'مستندات إضافية داعمة',
+    description: 'Optional supporting identity or activity documents.',
+    isRequired: false,
+    acceptedMimeTypes: IMAGE_AND_PDF,
+    maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
+    requiresExpiration: false,
+    verificationRules: {},
+    sortOrder: 40,
+  },
 
   // =========================================================================
   // BUSINESS (Global baseline)
@@ -98,22 +112,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
   {
     sellerType: SellerType.BUSINESS,
     marketplaceSection: null,
-    documentType: SellerDocumentType.NATIONAL_ID_FRONT,
-    displayName: 'Authorized Representative National ID',
-    displayNameAr: 'بطاقة الممثل القانوني',
-    description: 'Valid National ID of the business owner or authorized representative.',
-    isRequired: true,
-    acceptedMimeTypes: IMAGE_AND_PDF,
-    maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
-    requiresExpiration: false,
-    verificationRules: { mustBeReadable: true },
-    sortOrder: 10,
-  },
-  {
-    sellerType: SellerType.BUSINESS,
-    marketplaceSection: null,
     documentType: SellerDocumentType.COMMERCIAL_REGISTER,
-    displayName: 'Commercial Register',
+    displayName: 'Commercial Registration Certificate',
     displayNameAr: 'السجل التجاري',
     description: 'Valid commercial registration certificate issued by the competent authority.',
     isRequired: true,
@@ -121,7 +121,7 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
     requiresExpiration: false,
     verificationRules: { requireActiveRegistration: true },
-    sortOrder: 20,
+    sortOrder: 10,
   },
   {
     sellerType: SellerType.BUSINESS,
@@ -135,6 +135,20 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
     requiresExpiration: false,
     verificationRules: { requireActiveTaxStatus: true },
+    sortOrder: 20,
+  },
+  {
+    sellerType: SellerType.BUSINESS,
+    marketplaceSection: null,
+    documentType: SellerDocumentType.NATIONAL_ID_FRONT,
+    displayName: 'Legal Representative National ID',
+    displayNameAr: 'بطاقة الممثل القانوني',
+    description: 'Valid National ID of the business owner or authorized legal representative (configurable by admin).',
+    isRequired: false,
+    acceptedMimeTypes: IMAGE_AND_PDF,
+    maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
+    requiresExpiration: false,
+    verificationRules: { mustBeReadable: true, configurableByAdmin: true },
     sortOrder: 30,
   },
   {
@@ -151,9 +165,51 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     verificationRules: { requiredWhenRepresentativeDiffers: true },
     sortOrder: 40,
   },
+  {
+    sellerType: SellerType.BUSINESS,
+    marketplaceSection: null,
+    documentType: SellerDocumentType.PROOF_OF_ADDRESS,
+    displayName: 'Proof of Business Address',
+    displayNameAr: 'إثبات عنوان المقر التجاري',
+    description: 'Optional utility bill or commercial lease agreement for the business premises.',
+    isRequired: false,
+    acceptedMimeTypes: IMAGE_AND_PDF,
+    maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
+    requiresExpiration: false,
+    verificationRules: { maxAgeDays: 90 },
+    sortOrder: 50,
+  },
+  {
+    sellerType: SellerType.BUSINESS,
+    marketplaceSection: null,
+    documentType: SellerDocumentType.BUSINESS_LICENSE,
+    displayName: 'Business Operating License',
+    displayNameAr: 'رخصة مزاولة النشاط التجاري',
+    description: 'Optional sector-specific commercial operating license.',
+    isRequired: false,
+    acceptedMimeTypes: IMAGE_AND_PDF,
+    maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
+    requiresExpiration: false,
+    verificationRules: {},
+    sortOrder: 60,
+  },
+  {
+    sellerType: SellerType.BUSINESS,
+    marketplaceSection: null,
+    documentType: SellerDocumentType.ADDITIONAL_DOCUMENT,
+    displayName: 'Additional Business Documents',
+    displayNameAr: 'مستندات تجارية إضافية',
+    description: 'Optional supporting commercial or regulatory documents.',
+    isRequired: false,
+    acceptedMimeTypes: IMAGE_AND_PDF,
+    maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
+    requiresExpiration: false,
+    verificationRules: {},
+    sortOrder: 70,
+  },
 
   // =========================================================================
-  // SERVICE_PROVIDER (Global baseline)
+  // SERVICE_PROVIDER (Global baseline — follows INDIVIDUAL identity requirements by default)
   // =========================================================================
   {
     sellerType: SellerType.SERVICE_PROVIDER,
@@ -189,8 +245,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.QUALIFICATION_CERTIFICATE,
     displayName: 'Qualification / Trade Certificate',
     displayNameAr: 'شهادة المؤهل أو الخبرة المهنية',
-    description: 'Professional degree, syndicate card, or accredited trade qualification.',
-    isRequired: true,
+    description: 'Optional professional degree, syndicate card, or accredited trade qualification (may be required by specific service sections).',
+    isRequired: false,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
     requiresExpiration: false,
@@ -210,6 +266,20 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     requiresExpiration: false,
     verificationRules: {},
     sortOrder: 40,
+  },
+  {
+    sellerType: SellerType.SERVICE_PROVIDER,
+    marketplaceSection: null,
+    documentType: SellerDocumentType.ADDITIONAL_DOCUMENT,
+    displayName: 'Additional Supporting Documents',
+    displayNameAr: 'مستندات إضافية داعمة',
+    description: 'Optional supporting identity or service accreditation documents.',
+    isRequired: false,
+    acceptedMimeTypes: IMAGE_AND_PDF,
+    maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
+    requiresExpiration: false,
+    verificationRules: {},
+    sortOrder: 50,
   },
 
   // =========================================================================
@@ -262,6 +332,20 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
   },
 
   // 3. Home & Engineering Services
+  {
+    sellerType: SellerType.SERVICE_PROVIDER,
+    marketplaceSection: MarketplaceSection.SERVICES,
+    documentType: SellerDocumentType.QUALIFICATION_CERTIFICATE,
+    displayName: 'Qualification / Trade Certificate (Services)',
+    displayNameAr: 'شهادة المؤهل أو الخبرة المهنية (قسم الخدمات)',
+    description: 'Professional degree, syndicate card, or accredited trade qualification for Home & Engineering Services.',
+    isRequired: true,
+    acceptedMimeTypes: IMAGE_AND_PDF,
+    maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
+    requiresExpiration: false,
+    verificationRules: { requireAccreditedIssuer: false },
+    sortOrder: 30,
+  },
   {
     sellerType: SellerType.SERVICE_PROVIDER,
     marketplaceSection: MarketplaceSection.SERVICES,
@@ -386,23 +470,41 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
   }
 
   /**
-   * Idempotently seeds baseline verification requirements if the table is empty.
+   * Idempotently seeds missing default verification requirements without
+   * ever overwriting existing customized admin requirements.
    */
   async ensureDefaultRequirementsSeeded(): Promise<void> {
     if (this.seeded) return;
     if (!this.prisma?.sellerVerificationRequirement) return;
 
-    const existingCount =
-      await this.prisma.sellerVerificationRequirement.count({
-        where: { deletedAt: null },
+    const existingRows =
+      await this.prisma.sellerVerificationRequirement.findMany({
+        select: {
+          sellerType: true,
+          marketplaceSection: true,
+          documentType: true,
+        },
       });
-    if (existingCount > 0) {
+
+    const existingKeys = new Set(
+      existingRows.map(
+        (r) =>
+          `${String(r.sellerType).toUpperCase()}::${r.marketplaceSection ?? ''}::${String(r.documentType).toLowerCase()}`,
+      ),
+    );
+
+    const missingSpecs = DEFAULT_VERIFICATION_REQUIREMENTS.filter((spec) => {
+      const key = `${String(spec.sellerType).toUpperCase()}::${spec.marketplaceSection ?? ''}::${String(spec.documentType).toLowerCase()}`;
+      return !existingKeys.has(key);
+    });
+
+    if (missingSpecs.length === 0) {
       this.seeded = true;
       return;
     }
 
     await this.prisma.sellerVerificationRequirement.createMany({
-      data: DEFAULT_VERIFICATION_REQUIREMENTS.map((spec) => ({
+      data: missingSpecs.map((spec) => ({
         sellerType: spec.sellerType,
         marketplaceSection: spec.marketplaceSection,
         documentType: spec.documentType,
@@ -422,7 +524,7 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
 
     this.seeded = true;
     this.logger.log(
-      `Seeded ${DEFAULT_VERIFICATION_REQUIREMENTS.length} default seller verification requirements`,
+      `Seeded ${missingSpecs.length} missing default seller verification requirements (existing customized rows preserved)`,
     );
   }
 

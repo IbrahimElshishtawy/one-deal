@@ -4,6 +4,7 @@ import {
   sanitizeAvatarUrl,
   sanitizeMediaList,
 } from '../../core/utils/media-url.util';
+import { formatPublicSellerVerification } from '../accounts/verification-tier.helper';
 import { SearchQueryDto } from './dto/search-query.dto';
 import {
   generateArabicSearchVariants,
@@ -316,9 +317,13 @@ export class SearchService {
             select: {
               id: true,
               displayName: true,
+              slug: true,
               accountType: true,
+              sellerType: true,
               logoUrl: true,
               verificationStatus: true,
+              verificationTier: true,
+              isActive: true,
             },
           },
         },
@@ -331,6 +336,15 @@ export class SearchService {
         const catSlug = item.category?.slug ?? null;
         const cleanMedia = sanitizeMediaList(item.media, catSlug);
         const primaryUrl = cleanMedia[0]?.publicUrl ?? null;
+        const cleanLogoUrl = item.account
+          ? sanitizeAvatarUrl(item.account.logoUrl, catSlug)
+          : null;
+        const seller = item.account
+          ? formatPublicSellerVerification({
+              ...item.account,
+              logoUrl: cleanLogoUrl,
+            })
+          : null;
         return {
           id: item.id,
           title: item.title,
@@ -358,15 +372,22 @@ export class SearchService {
             ? {
                 id: item.account.id,
                 displayName: item.account.displayName,
+                slug: item.account.slug ?? null,
                 accountType: item.account.accountType,
-                logoUrl: sanitizeAvatarUrl(item.account.logoUrl, catSlug),
+                sellerType: seller!.sellerType,
+                logoUrl: cleanLogoUrl,
                 verificationStatus: item.account.verificationStatus,
+                verificationTier: seller!.verificationTier,
+                verificationBadge: seller!.verificationBadge,
               }
             : null,
+          seller,
           sellerName: item.account?.displayName ?? '',
           sellerPhone: null,
           sellerType: item.account?.accountType ?? 'individual',
-          isVerified: item.account?.verificationStatus === 'approved',
+          verificationTier: seller?.verificationTier ?? 'NONE',
+          verificationBadge: seller?.verificationBadge ?? null,
+          isVerified: seller?.verificationBadge !== null && seller !== null,
           isDemo: item.isDemo,
           refreshedAt: item.refreshedAt,
           createdAt: item.createdAt,

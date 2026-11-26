@@ -5,7 +5,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
-import { AccountMemberRole } from '../../core/enums/domain.enums';
+import {
+  AccountMemberRole,
+  VerificationTier,
+} from '../../core/enums/domain.enums';
+import {
+  buildVerificationBadge,
+  formatPublicSellerVerification,
+  resolveAccountSellerType,
+  resolveEffectiveVerificationTier,
+} from './verification-tier.helper';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
@@ -47,11 +56,13 @@ export class AccountsService {
           ownerUserId: userId,
           displayName: dto.displayName,
           accountType: dto.accountType,
+          sellerType: resolveAccountSellerType(null, dto.accountType),
           slug,
           bio: dto.bio,
           logoUrl: dto.logoUrl,
           bannerUrl: dto.bannerUrl,
           verificationStatus: 'pending',
+          verificationTier: VerificationTier.NONE,
           isActive: true,
         },
       });
@@ -116,11 +127,13 @@ export class AccountsService {
           select: {
             id: true,
             accountType: true,
+            sellerType: true,
             displayName: true,
             slug: true,
             bio: true,
             logoUrl: true,
             verificationStatus: true,
+            verificationTier: true,
             isActive: true,
             createdAt: true,
           },
@@ -129,11 +142,28 @@ export class AccountsService {
       orderBy: { createdAt: 'asc' },
     });
 
-    return memberships.map((m) => ({
-      ...m.account,
-      role: m.role,
-      joinedAt: m.createdAt,
-    }));
+    return memberships.map((m) => {
+      const effectiveTier = resolveEffectiveVerificationTier(
+        m.account.verificationStatus,
+        m.account.verificationTier,
+        m.account.isActive,
+      );
+      return {
+        ...m.account,
+        sellerType: resolveAccountSellerType(
+          m.account.sellerType,
+          m.account.accountType,
+        ),
+        verificationTier: effectiveTier,
+        verificationBadge: buildVerificationBadge(
+          m.account.verificationStatus,
+          effectiveTier,
+          m.account.isActive,
+        ),
+        role: m.role,
+        joinedAt: m.createdAt,
+      };
+    });
   }
 
   /**
@@ -164,15 +194,21 @@ export class AccountsService {
       throw new NotFoundException('Seller account not found');
     }
 
+    const seller = formatPublicSellerVerification(account);
+
     return {
       id: account.id,
       displayName: account.displayName,
       slug: account.slug,
       accountType: account.accountType,
+      sellerType: seller.sellerType,
       bio: account.bio,
       logoUrl: account.logoUrl,
       bannerUrl: account.bannerUrl,
       verificationStatus: account.verificationStatus,
+      verificationTier: seller.verificationTier,
+      verificationBadge: seller.verificationBadge,
+      seller,
       branchesCount: account._count.branches,
       activeListingsCount: account._count.listings,
       branches: account.branches,

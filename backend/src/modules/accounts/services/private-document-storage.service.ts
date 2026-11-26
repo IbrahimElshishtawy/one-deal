@@ -128,6 +128,37 @@ export class PrivateDocumentStorageService {
   }
 
   /**
+   * Validates that a provided filename has a permitted extension that matches
+   * the declared MIME type (blocks double-extension / disguised executable uploads).
+   */
+  validateFileExtension(fileName: string, mimeType: string): void {
+    const trimmed = (fileName || '').trim();
+    const lastDot = trimmed.lastIndexOf('.');
+    if (lastDot <= 0 || lastDot === trimmed.length - 1) {
+      throw new BadRequestException({
+        code: 'INVALID_DOCUMENT_EXTENSION',
+        message: 'Verification document filename must include a valid file extension',
+      });
+    }
+
+    const ext = trimmed.slice(lastDot + 1).toLowerCase();
+    const allowedByMime: Record<string, string[]> = {
+      'application/pdf': ['pdf'],
+      'image/jpeg': ['jpg', 'jpeg'],
+      'image/png': ['png'],
+      'image/webp': ['webp'],
+    };
+
+    const allowedExtensions = allowedByMime[mimeType];
+    if (!allowedExtensions || !allowedExtensions.includes(ext)) {
+      throw new BadRequestException({
+        code: 'FILE_EXTENSION_MIME_MISMATCH',
+        message: `File extension '.${ext}' does not match declared MIME type '${mimeType}'`,
+      });
+    }
+  }
+
+  /**
    * Validates actual file magic bytes against the declared MIME type to block
    * spoofed/renamed executable or polyglot payloads.
    */

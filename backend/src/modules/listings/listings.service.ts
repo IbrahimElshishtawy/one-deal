@@ -20,6 +20,7 @@ import {
   sanitizeAvatarUrl,
   sanitizeMediaList,
 } from '../../core/utils/media-url.util';
+import { formatPublicSellerVerification } from '../accounts/verification-tier.helper';
 import { normalizeArabicText } from '../search/arabic-normalizer';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
@@ -548,8 +549,11 @@ export class ListingsService {
             displayName: true,
             slug: true,
             accountType: true,
+            sellerType: true,
             logoUrl: true,
             verificationStatus: true,
+            verificationTier: true,
+            isActive: true,
           },
         },
         _count: {
@@ -574,6 +578,11 @@ export class ListingsService {
       const cleanMedia = sanitizeMediaList(item.media, catSlug);
       const primaryUrl = cleanMedia[0]?.publicUrl ?? null;
       const thumbUrl = cleanMedia[0]?.thumbnailUrl ?? primaryUrl;
+      const cleanLogoUrl = sanitizeAvatarUrl(item.account.logoUrl, catSlug);
+      const seller = formatPublicSellerVerification({
+        ...item.account,
+        logoUrl: cleanLogoUrl,
+      });
       return {
         id: item.id,
         title: item.title,
@@ -607,13 +616,19 @@ export class ListingsService {
           displayName: item.account.displayName,
           slug: item.account.slug,
           accountType: item.account.accountType,
-          logoUrl: sanitizeAvatarUrl(item.account.logoUrl, catSlug),
+          sellerType: seller.sellerType,
+          logoUrl: cleanLogoUrl,
           verificationStatus: item.account.verificationStatus,
+          verificationTier: seller.verificationTier,
+          verificationBadge: seller.verificationBadge,
         },
+        seller,
         sellerName: item.account.displayName,
         sellerPhone: null,
         sellerType: item.account.accountType,
-        isVerified: item.account.verificationStatus === 'approved',
+        verificationTier: seller.verificationTier,
+        verificationBadge: seller.verificationBadge,
+        isVerified: seller.verificationBadge !== null,
         refreshedAt: item.refreshedAt,
         createdAt: item.createdAt,
       };
@@ -690,8 +705,36 @@ export class ListingsService {
     const attrs = (listing.attributes as any) || {};
     const catSlug = listing.category?.slug ?? null;
     const cleanMedia = sanitizeMediaList(listing.media, catSlug);
+    const seller = listing.account
+      ? formatPublicSellerVerification({
+          ...listing.account,
+          logoUrl: sanitizeAvatarUrl(listing.account.logoUrl, catSlug),
+        })
+      : null;
+    const safeAccount = listing.account
+      ? {
+          id: listing.account.id,
+          ownerUserId: listing.account.ownerUserId,
+          displayName: listing.account.displayName,
+          slug: listing.account.slug,
+          accountType: listing.account.accountType,
+          sellerType: seller!.sellerType,
+          bio: listing.account.bio,
+          logoUrl: seller!.logoUrl,
+          bannerUrl: listing.account.bannerUrl,
+          verificationStatus: listing.account.verificationStatus,
+          verificationTier: seller!.verificationTier,
+          verificationBadge: seller!.verificationBadge,
+          isActive: listing.account.isActive,
+          createdAt: listing.account.createdAt,
+          owner: listing.account.owner,
+        }
+      : null;
+
     return {
       ...listing,
+      account: safeAccount,
+      seller,
       media: cleanMedia,
       price: Number(listing.price),
       condition: attrs.condition || 'USED',
@@ -707,7 +750,9 @@ export class ListingsService {
         : '',
       sellerName: listing.account?.displayName ?? '',
       sellerType: listing.account?.accountType ?? 'individual',
-      isVerified: listing.account?.verificationStatus === 'approved',
+      verificationTier: seller?.verificationTier ?? 'NONE',
+      verificationBadge: seller?.verificationBadge ?? null,
+      isVerified: seller?.verificationBadge !== null && seller !== null,
       primaryImageUrl: cleanMedia[0]?.publicUrl ?? null,
     };
   }

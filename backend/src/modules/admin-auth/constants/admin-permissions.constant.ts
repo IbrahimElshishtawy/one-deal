@@ -195,6 +195,15 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     isSensitive: true,
   },
   {
+    key: 'verification.review',
+    module: 'verification',
+    labelEn: 'Review Verification Submissions',
+    labelAr: 'مراجعة طلبات ومستندات التوثيق',
+    descriptionEn:
+      'Claim and review seller verification submissions and individual documents',
+    descriptionAr: 'بدء مراجعة طلبات التوثيق وفحص المستندات الفردية',
+  },
+  {
     key: 'verification.approve',
     module: 'verification',
     labelEn: 'Approve & Assign Verifications',
@@ -210,6 +219,25 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
     descriptionEn:
       'Reject verification requests or request document resubmission',
     descriptionAr: 'رفض طلبات التوثيق أو طلب استكمال المستندات',
+  },
+  {
+    key: 'verification.require_changes',
+    module: 'verification',
+    labelEn: 'Request Verification Changes',
+    labelAr: 'طلب تعديلات على طلب التوثيق',
+    descriptionEn:
+      'Request targeted corrections or document replacements on seller verification submissions',
+    descriptionAr: 'طلب تعديل بيانات أو استبدال مستندات محددة في طلب التوثيق',
+  },
+  {
+    key: 'verification.suspend',
+    module: 'verification',
+    labelEn: 'Suspend Seller Verification',
+    labelAr: 'تعليق توثيق البائع',
+    descriptionEn:
+      'Suspend an approved seller verification and revoke active verification badges',
+    descriptionAr: 'تعليق توثيق البائع المعتمد وإلغاء شارة التوثيق النشطة',
+    isSensitive: true,
   },
   {
     key: 'verification.requirements.manage',
@@ -562,9 +590,12 @@ export const INITIAL_ADMIN_ROLES: SeedRoleSpec[] = [
       'analytics.read',
       'users.read',
       'verification.read',
+      'verification.review',
       'verification.documents.read',
       'verification.approve',
       'verification.reject',
+      'verification.require_changes',
+      'verification.suspend',
       'audit_logs.read',
     ],
   },

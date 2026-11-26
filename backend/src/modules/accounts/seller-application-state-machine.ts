@@ -135,7 +135,6 @@ export function getRequiredDocumentTypes(
     case AccountType.OFFICE:
     case AccountType.STORE:
       return [
-        SellerDocumentType.NATIONAL_ID_FRONT,
         SellerDocumentType.COMMERCIAL_REGISTER,
         SellerDocumentType.TAX_CARD,
       ];

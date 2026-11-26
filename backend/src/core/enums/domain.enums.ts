@@ -34,10 +34,23 @@ export enum AccountMemberRole {
 }
 
 export enum VerificationStatus {
+  NOT_SUBMITTED = 'not_submitted',
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
+  NEEDS_CHANGES = 'needs_changes',
   SUSPENDED = 'suspended',
+}
+
+export enum VerificationTier {
+  NONE = 'NONE',
+  IDENTITY_VERIFIED = 'IDENTITY_VERIFIED',
+  BUSINESS_VERIFIED = 'BUSINESS_VERIFIED',
+}
+
+export enum SellerApplicationType {
+  INITIAL = 'INITIAL',
+  BUSINESS_UPGRADE = 'BUSINESS_UPGRADE',
 }
 
 export enum SellerType {
@@ -78,6 +91,7 @@ export enum SellerDocumentType {
   PROOF_OF_ADDRESS = 'proof_of_address',
   PORTFOLIO_DOCUMENT = 'portfolio_document',
   BUSINESS_LICENSE = 'business_license',
+  ADDITIONAL_DOCUMENT = 'additional_document',
 }
 
 export enum SellerDocumentReviewDecision {

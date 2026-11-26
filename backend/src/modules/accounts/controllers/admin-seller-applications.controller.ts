@@ -219,7 +219,7 @@ export class AdminSellerApplicationsController {
   }
 
   @Post(':id/documents/:documentId/review')
-  @AnyPermissions('verification.approve', 'verification.reject')
+  @AnyPermissions('verification.review', 'verification.approve', 'verification.reject')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Accept or reject an individual submitted verification document',
@@ -244,7 +244,7 @@ export class AdminSellerApplicationsController {
   }
 
   @Post(':id/review')
-  @AnyPermissions('verification.approve', 'verification.reject')
+  @AnyPermissions('verification.review', 'verification.approve', 'verification.reject')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Transition a PENDING seller application to UNDER_REVIEW',
@@ -266,7 +266,7 @@ export class AdminSellerApplicationsController {
   }
 
   @Post(':id/request-correction')
-  @AnyPermissions('verification.reject', 'verification.approve')
+  @AnyPermissions('verification.require_changes', 'verification.reject', 'verification.approve')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -334,7 +334,7 @@ export class AdminSellerApplicationsController {
   }
 
   @Post(':id/suspend')
-  @AnyPermissions('verification.reject', 'users.suspend')
+  @AnyPermissions('verification.suspend', 'verification.reject', 'users.suspend')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:

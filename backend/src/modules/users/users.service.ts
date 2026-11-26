@@ -1,5 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
+import { VerificationTier } from '../../core/enums/domain.enums';
+import {
+  buildVerificationBadge,
+  resolveAccountSellerType,
+  resolveEffectiveVerificationTier,
+} from '../accounts/verification-tier.helper';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
@@ -25,6 +31,19 @@ export class UsersService {
         sellerSuspensionReason: true,
         createdAt: true,
         updatedAt: true,
+        ownedAccounts: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: 'asc' },
+          take: 1,
+          select: {
+            id: true,
+            accountType: true,
+            sellerType: true,
+            verificationStatus: true,
+            verificationTier: true,
+            isActive: true,
+          },
+        },
       },
     });
 
@@ -34,12 +53,37 @@ export class UsersService {
 
     const sellerStatus = user.sellerStatus ?? 'NOT_REQUESTED';
     const isApprovedSeller = sellerStatus === 'APPROVED';
+    const primaryAccount = user.ownedAccounts?.[0] ?? null;
+    const verificationTier = primaryAccount
+      ? resolveEffectiveVerificationTier(
+          primaryAccount.verificationStatus,
+          primaryAccount.verificationTier,
+          primaryAccount.isActive,
+        )
+      : VerificationTier.NONE;
+    const verificationBadge = primaryAccount
+      ? buildVerificationBadge(
+          primaryAccount.verificationStatus,
+          verificationTier,
+          primaryAccount.isActive,
+        )
+      : null;
+
+    const { ownedAccounts: _ignored, ...safeUser } = user;
 
     return {
-      ...user,
+      ...safeUser,
       role: 'USER',
       roles: isApprovedSeller ? ['BUYER', 'SELLER'] : ['BUYER'],
       sellerStatus,
+      sellerType: primaryAccount
+        ? resolveAccountSellerType(
+            primaryAccount.sellerType,
+            primaryAccount.accountType,
+          )
+        : null,
+      verificationTier,
+      verificationBadge,
       canSell: isApprovedSeller,
       status: user.isActive ? 'ACTIVE' : 'SUSPENDED',
     };
