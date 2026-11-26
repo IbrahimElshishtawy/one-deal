@@ -40,6 +40,7 @@ export enum VerificationStatus {
   REJECTED = 'rejected',
   NEEDS_CHANGES = 'needs_changes',
   SUSPENDED = 'suspended',
+  EXPIRED = 'expired',
 }
 
 export enum VerificationTier {
@@ -51,6 +52,7 @@ export enum VerificationTier {
 export enum SellerApplicationType {
   INITIAL = 'INITIAL',
   BUSINESS_UPGRADE = 'BUSINESS_UPGRADE',
+  RENEWAL = 'RENEWAL',
 }
 
 export enum SellerType {
@@ -76,6 +78,7 @@ export enum SellerApplicationStatus {
   NEEDS_CORRECTION = 'NEEDS_CORRECTION',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
+  WITHDRAWN = 'WITHDRAWN',
   SUSPENDED = 'SUSPENDED',
   EXPIRED = 'EXPIRED',
 }
@@ -105,6 +108,7 @@ export enum SellerDocumentStatus {
   UPLOADED = 'UPLOADED',
   VERIFIED = 'VERIFIED',
   REJECTED = 'REJECTED',
+  PURGED = 'PURGED',
 }
 
 export enum SellerCapability {

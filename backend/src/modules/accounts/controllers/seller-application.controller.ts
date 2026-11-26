@@ -43,7 +43,9 @@ import {
   ReplaceVerificationDocumentDto,
   RequestVerificationDocUploadUrlDto,
   ResubmitSellerApplicationDto,
+  StartVerificationRenewalDto,
   UpdateSellerApplicationDto,
+  WithdrawSellerApplicationDto,
 } from '../dto/seller-application.dto';
 
 @ApiTags('Seller Applications')
@@ -283,6 +285,24 @@ export class SellerApplicationController {
     );
   }
 
+  @Post('me/dev-approve')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Development-only instant approval for current user seller application (disabled outside development)',
+  })
+  @ApiResponse({ status: 200, description: 'Application approved in development mode' })
+  @ApiResponse({ status: 403, description: 'Disabled outside development mode' })
+  async devApproveMyApplication(
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.sellerApplicationService.devApproveMyApplication(
+      user.id,
+      this.extractContext(req),
+    );
+  }
+
   @Post('me/resubmit')
   @UseGuards(SellerAuthorizationGuard, RateLimitGuard)
   @RequireSellerCapability(SellerCapability.CAN_SUBMIT_SELLER_APPLICATION)
@@ -298,6 +318,50 @@ export class SellerApplicationController {
     @Req() req: FastifyRequest,
   ) {
     return this.sellerApplicationService.resubmitApplication(
+      user.id,
+      dto,
+      this.extractContext(req),
+    );
+  }
+
+  @Post('me/withdraw')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 3600)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Withdraw an active DRAFT, PENDING, or NEEDS_CORRECTION seller application (preserves existing verified account if withdrawing a business upgrade)',
+  })
+  @ApiResponse({ status: 200, description: 'Application withdrawn (WITHDRAWN)' })
+  @ApiResponse({ status: 400, description: 'Application cannot be withdrawn in current state' })
+  async withdrawApplication(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: WithdrawSellerApplicationDto,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.sellerApplicationService.withdrawApplication(
+      user.id,
+      dto,
+      this.extractContext(req),
+    );
+  }
+
+  @Post('me/renew')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 3600)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Start verification renewal for an EXPIRED verification on the same Account (preserves listings, branches, members, and conversations)',
+  })
+  @ApiResponse({ status: 200, description: 'Renewal application draft opened' })
+  @ApiResponse({ status: 400, description: 'Verification is not eligible for renewal' })
+  async startVerificationRenewal(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: StartVerificationRenewalDto,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.sellerApplicationService.startVerificationRenewal(
       user.id,
       dto,
       this.extractContext(req),

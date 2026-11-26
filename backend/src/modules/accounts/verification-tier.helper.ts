@@ -193,10 +193,12 @@ export function mapApplicationStatusToAccountVerificationStatus(
     case SellerApplicationStatus.NEEDS_CORRECTION:
       return VerificationStatus.NEEDS_CHANGES;
     case SellerApplicationStatus.SUSPENDED:
-    case SellerApplicationStatus.EXPIRED:
       return VerificationStatus.SUSPENDED;
+    case SellerApplicationStatus.EXPIRED:
+      return VerificationStatus.EXPIRED;
     case SellerApplicationStatus.NOT_REQUESTED:
     case SellerApplicationStatus.DRAFT:
+    case SellerApplicationStatus.WITHDRAWN:
       return VerificationStatus.NOT_SUBMITTED;
     case SellerApplicationStatus.PENDING:
     case SellerApplicationStatus.UNDER_REVIEW:

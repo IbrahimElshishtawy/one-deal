@@ -63,6 +63,8 @@ abstract class SellerVerificationRepository {
 
   Future<SellerApplicationEntity> submitApplication();
 
+  Future<VerificationStatusSnapshot> devApproveMyApplication();
+
   Future<SellerApplicationEntity> resubmitApplication(
     Map<String, dynamic> payload,
   );

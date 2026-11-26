@@ -33,6 +33,26 @@ export interface PrivateAccessTarget {
   expiresInSeconds: number;
 }
 
+export interface UploadedObjectVerificationResult {
+  verified: boolean;
+  skippedReason?: 'NO_R2_CREDENTIALS';
+  contentType?: string | null;
+  contentLength?: number | null;
+  etag?: string | null;
+}
+
+export interface StorageDeleteResult {
+  deleted: boolean;
+  skippedReason?: 'NO_R2_CREDENTIALS';
+  statusCode?: number;
+}
+
+export interface MalwareScanResult {
+  status: 'CLEAN' | 'INFECTED' | 'SCANNER_NOT_CONFIGURED';
+  provider: string;
+  detail?: string;
+}
+
 /**
  * Private Verification Document Storage Service.
  *
@@ -365,8 +385,130 @@ export class PrivateDocumentStorageService {
     }
   }
 
+  /**
+   * Server-side object verification via AWS SigV4 signed HEAD request against Cloudflare R2.
+   * Confirms the uploaded object actually exists, is non-empty, within maxSizeBytes,
+   * and matches the declared content-type when real R2 credentials are configured.
+   * In local/test environments without R2 credentials, returns `skippedReason: 'NO_R2_CREDENTIALS'`.
+   */
+  async verifyUploadedObject(
+    storageKey: string,
+    expectedMimeType: string,
+    maxSizeBytes = MAX_VERIFICATION_DOC_SIZE_BYTES,
+  ): Promise<UploadedObjectVerificationResult> {
+    this.assertPrivateStorageKeyFormat(storageKey);
+
+    if (!this.hasRealR2Credentials()) {
+      return { verified: true, skippedReason: 'NO_R2_CREDENTIALS' };
+    }
+
+    const headUrl = this.signR2PresignedUrl('HEAD', storageKey, 60);
+    let response: Response;
+    try {
+      response = await fetch(headUrl, { method: 'HEAD' });
+    } catch (err: any) {
+      this.logger.error(
+        `[PrivateDocumentStorage] R2 HEAD request failed: ${err?.message ?? err}`,
+      );
+      throw new InternalServerErrorException({
+        code: 'DOCUMENT_STORAGE_VERIFICATION_FAILED',
+        message: 'Could not verify uploaded verification document in private storage',
+      });
+    }
+
+    if (response.status === 404) {
+      throw new BadRequestException({
+        code: 'DOCUMENT_NOT_UPLOADED',
+        message:
+          'Uploaded document was not found in private storage. Please upload the file before confirming.',
+      });
+    }
+
+    if (!response.ok) {
+      throw new InternalServerErrorException({
+        code: 'DOCUMENT_STORAGE_VERIFICATION_FAILED',
+        message: `Private storage verification failed with status ${response.status}`,
+      });
+    }
+
+    const contentLengthHeader = response.headers.get('content-length');
+    const contentLength = contentLengthHeader ? Number(contentLengthHeader) : null;
+    const rawContentType = response.headers.get('content-type');
+    const normalizedContentType = rawContentType
+      ? rawContentType.split(';')[0].trim().toLowerCase()
+      : null;
+
+    if (
+      contentLength !== null &&
+      (!Number.isFinite(contentLength) ||
+        contentLength <= 0 ||
+        contentLength > maxSizeBytes)
+    ) {
+      throw new BadRequestException({
+        code: 'DOCUMENT_SIZE_EXCEEDED',
+        message: `Uploaded object size (${contentLength} bytes) exceeds maximum allowed limit (${maxSizeBytes} bytes)`,
+      });
+    }
+
+    if (
+      normalizedContentType &&
+      normalizedContentType !== 'application/octet-stream' &&
+      normalizedContentType !== expectedMimeType.toLowerCase()
+    ) {
+      throw new BadRequestException({
+        code: 'FILE_CONTENT_MIME_MISMATCH',
+        message: `Uploaded object content-type '${normalizedContentType}' does not match declared MIME type '${expectedMimeType}'`,
+      });
+    }
+
+    return {
+      verified: true,
+      contentType: normalizedContentType,
+      contentLength,
+      etag: response.headers.get('etag'),
+    };
+  }
+
+  /**
+   * Permanently deletes a private verification document object from Cloudflare R2
+   * using an AWS SigV4 signed DELETE request (used by retention & orphan cleanup workers).
+   * Treats 404 as already deleted (idempotent).
+   */
+  async deleteObject(storageKey: string): Promise<StorageDeleteResult> {
+    this.assertPrivateStorageKeyFormat(storageKey);
+
+    if (!this.hasRealR2Credentials()) {
+      return { deleted: true, skippedReason: 'NO_R2_CREDENTIALS' };
+    }
+
+    const deleteUrl = this.signR2PresignedUrl('DELETE', storageKey, 60);
+    const response = await fetch(deleteUrl, { method: 'DELETE' });
+
+    if (response.status === 204 || response.status === 200 || response.status === 404) {
+      return { deleted: true, statusCode: response.status };
+    }
+
+    throw new InternalServerErrorException(
+      `Failed to delete private document object from R2 (HTTP ${response.status})`,
+    );
+  }
+
+  /**
+   * Malware scanning integration boundary.
+   * Currently no external AV/malware engine (e.g. ClamAV / Cloudflare R2 Security Scan)
+   * is provisioned in this environment; returns SCANNER_NOT_CONFIGURED transparently.
+   */
+  async scanDocumentBoundary(_storageKey: string): Promise<MalwareScanResult> {
+    return {
+      status: 'SCANNER_NOT_CONFIGURED',
+      provider: 'none',
+      detail:
+        'External malware scanner is not configured; MIME, extension, size, and magic-byte signature checks were enforced.',
+    };
+  }
+
   private signR2PresignedUrl(
-    method: 'PUT' | 'GET',
+    method: 'PUT' | 'GET' | 'HEAD' | 'DELETE',
     storageKey: string,
     expiresSeconds: number,
     contentType?: string,

@@ -29,19 +29,30 @@ export const SELLER_APPLICATION_TRANSITIONS: Readonly<
   Record<SellerApplicationStatus, ReadonlyArray<SellerApplicationStatus>>
 > = {
   [SellerApplicationStatus.NOT_REQUESTED]: [SellerApplicationStatus.DRAFT],
-  [SellerApplicationStatus.DRAFT]: [SellerApplicationStatus.PENDING],
+  [SellerApplicationStatus.DRAFT]: [
+    SellerApplicationStatus.PENDING,
+    SellerApplicationStatus.WITHDRAWN,
+  ],
   [SellerApplicationStatus.PENDING]: [
     SellerApplicationStatus.UNDER_REVIEW,
     SellerApplicationStatus.APPROVED,
     SellerApplicationStatus.REJECTED,
+    SellerApplicationStatus.WITHDRAWN,
   ],
   [SellerApplicationStatus.UNDER_REVIEW]: [
     SellerApplicationStatus.NEEDS_CORRECTION,
     SellerApplicationStatus.APPROVED,
     SellerApplicationStatus.REJECTED,
   ],
-  [SellerApplicationStatus.NEEDS_CORRECTION]: [SellerApplicationStatus.PENDING],
+  [SellerApplicationStatus.NEEDS_CORRECTION]: [
+    SellerApplicationStatus.PENDING,
+    SellerApplicationStatus.WITHDRAWN,
+  ],
   [SellerApplicationStatus.REJECTED]: [
+    SellerApplicationStatus.DRAFT,
+    SellerApplicationStatus.PENDING,
+  ],
+  [SellerApplicationStatus.WITHDRAWN]: [
     SellerApplicationStatus.DRAFT,
     SellerApplicationStatus.PENDING,
   ],

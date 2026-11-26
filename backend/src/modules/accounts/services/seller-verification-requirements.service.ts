@@ -591,14 +591,56 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
   }
 
   /**
+   * Builds an immutable snapshot of applicable requirements at submission time
+   * so mid-review admin edits to requirement rules do not invalidate in-flight applications.
+   */
+  async buildRequirementsSnapshot(
+    sellerType: string,
+    marketplaceSections: string[] = [],
+  ): Promise<{
+    requirementsVersion: number;
+    snapshot: Array<{
+      id: string;
+      documentType: string;
+      displayName: string;
+      isRequired: boolean;
+      requiresExpiration: boolean;
+      acceptedMimeTypes: unknown;
+      maxFileSizeBytes: number;
+      version: number;
+    }>;
+  }> {
+    const reqs = await this.getApplicableRequirements(
+      sellerType,
+      marketplaceSections,
+    );
+    const maxVersion = reqs.reduce((acc, r) => Math.max(acc, r.version ?? 1), 1);
+    return {
+      requirementsVersion: maxVersion,
+      snapshot: reqs.map((r) => ({
+        id: r.id,
+        documentType: r.documentType,
+        displayName: r.displayName,
+        isRequired: r.isRequired,
+        requiresExpiration: r.requiresExpiration,
+        acceptedMimeTypes: r.acceptedMimeTypes,
+        maxFileSizeBytes: r.maxFileSizeBytes,
+        version: r.version ?? 1,
+      })),
+    };
+  }
+
+  /**
    * Evaluates full application completeness against BOTH seller-type profile rules
-   * and dynamic DB-backed document requirements (including expiration & rejection checks).
+   * and dynamic DB-backed document requirements (or the application's locked
+   * requirementsSnapshot when already submitted).
    */
   async evaluateCompleteness(
     application: {
       sellerType: string;
       businessType: string;
       marketplaceSections?: unknown;
+      requirementsSnapshot?: unknown;
       businessName?: string | null;
       nationalIdNumber?: string | null;
       commercialRegisterNumber?: string | null;
@@ -620,10 +662,18 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
       ? (application.marketplaceSections as string[])
       : [];
 
-    const requirements = await this.getApplicableRequirements(
-      application.sellerType,
-      sections,
-    );
+    const snapshotItems = Array.isArray(application.requirementsSnapshot)
+      ? (application.requirementsSnapshot as Array<{
+          documentType: string;
+          isRequired: boolean;
+          requiresExpiration?: boolean;
+        }>)
+      : null;
+
+    const requirements =
+      snapshotItems && snapshotItems.length > 0
+        ? snapshotItems
+        : await this.getApplicableRequirements(application.sellerType, sections);
 
     const missingFields: string[] = [];
     if (!application.businessName || application.businessName.trim().length < 2) {
@@ -634,8 +684,10 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
 
     if (sellerType === SellerType.BUSINESS) {
       if (
-        !application.commercialRegisterNumber ||
-        application.commercialRegisterNumber.trim().length < 3
+        !this.cryptoService.hasMinimumLength(
+          application.commercialRegisterNumber,
+          3,
+        )
       ) {
         missingFields.push('commercialRegisterNumber');
       }

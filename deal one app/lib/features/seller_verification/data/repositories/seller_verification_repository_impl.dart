@@ -183,6 +183,11 @@ class SellerVerificationRepositoryImpl implements SellerVerificationRepository {
   }
 
   @override
+  Future<VerificationStatusSnapshot> devApproveMyApplication() {
+    return remoteDataSource.devApproveMyApplication();
+  }
+
+  @override
   Future<SellerApplicationEntity> resubmitApplication(
     Map<String, dynamic> payload,
   ) {

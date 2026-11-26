@@ -303,7 +303,22 @@ export const envSchema = z.object({
   R2_ACCESS_KEY_ID: z.string().optional().default(''),
   R2_SECRET_ACCESS_KEY: z.string().optional().default(''),
   R2_BUCKET_NAME: z.string().default('marketspace-media'),
+  R2_PRIVATE_BUCKET_NAME: z.string().optional().default(''),
   R2_PUBLIC_DOMAIN: z.string().url().default('https://cdn.marketspace.eg'),
+
+  // Seller Verification Security, Key Rotation, Four-Eyes & Retention Policies
+  SELLER_PII_ENCRYPTION_KEY: z.string().optional().default(''),
+  SELLER_PII_ENCRYPTION_KEYS: z.string().optional().default(''),
+  SELLER_PII_ENCRYPTION_KEY_VERSION: z.string().optional().default('v1'),
+  ENABLE_FOUR_EYES_VERIFICATION_REVIEW: boolFlag(false),
+  VERIFICATION_VALIDITY_DAYS: z.coerce.number().int().positive().default(365),
+  VERIFICATION_RENEWAL_REMINDER_DAYS: z.coerce.number().int().positive().default(30),
+  VERIFICATION_DOC_RETENTION_REJECTED_DAYS: z.coerce.number().int().nonnegative().default(90),
+  VERIFICATION_DOC_RETENTION_WITHDRAWN_DAYS: z.coerce.number().int().nonnegative().default(30),
+  VERIFICATION_DOC_RETENTION_EXPIRED_DAYS: z.coerce.number().int().nonnegative().default(180),
+  VERIFICATION_DOC_RETENTION_SUPERSEDED_DAYS: z.coerce.number().int().nonnegative().default(90),
+  VERIFICATION_DOC_RETENTION_APPROVED_DAYS: z.coerce.number().int().nonnegative().default(0),
+  VERIFICATION_ORPHAN_UPLOAD_TTL_HOURS: z.coerce.number().int().positive().default(24),
 
   // Video (Cloudflare Stream)
   CLOUDFLARE_STREAM_API_TOKEN: z.string().optional().default(''),

@@ -1,0 +1,226 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1684.2340000000002 814.3333333333333" width="1684.2340000000002" height="814.3333333333333" style="--bg:#18181B;--fg:#F4F4F5;--line:#71717A;--muted:#A1A1AA;--surface:#27272A;--border:#3F3F46;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+</defs>
+<polyline class="er-relationship" data-entity1="User" data-entity2="Account" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="owns" points="180,650.6666666666666 190,650.6666666666666 190,494.3333333333333 394.598,494.3333333333333" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="User" data-entity2="SellerApplication" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="submits" points="180,669.3333333333334 966.1400000000001,669.3333333333334" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="Account" data-entity2="SellerApplication" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="linked_to" points="706.398,557.3333333333333 886.1400000000001,557.3333333333333 886.1400000000001,606.6666666666666 966.1400000000001,606.6666666666666" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="Account" data-entity2="Listing" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="publishes" points="706.398,431.3333333333333 716.398,431.3333333333333 716.398,68 966.1400000000001,68" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="Account" data-entity2="Branch" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="has_branches" points="706.398,515.3333333333333 736.398,515.3333333333333 736.398,446 966.1400000000001,446" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="Account" data-entity2="AccountMember" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="has_team" points="706.398,473.3333333333333 726.398,473.3333333333333 726.398,320 966.1400000000001,320" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="SellerApplication" data-entity2="SellerApplicationDocument" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="has_docs" points="1218.5400000000002,606.6666666666666 1228.5400000000002,606.6666666666666 1228.5400000000002,475.66666666666663 1455.7100000000003,475.66666666666663" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="SellerApplication" data-entity2="SellerApplicationHistory" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="audit_trail" points="1218.5400000000002,669.3333333333334 1455.7100000000003,669.3333333333334" fill="none" stroke="var(--_line)" stroke-width="1" />
+<polyline class="er-relationship" data-entity1="SellerVerificationRequirement" data-entity2="SellerApplicationDocument" data-cardinality1="one" data-cardinality2="zero-many" data-identifying="true" data-label="validates" points="1218.5400000000002,194 1375.7100000000003,194 1375.7100000000003,457 1455.7100000000003,457" fill="none" stroke="var(--_line)" stroke-width="1" />
+<g class="entity" data-id="User" data-label="User">
+  <rect x="40" y="632" width="140" height="56" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="40" y="632" width="140" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="110" y="649" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">User</text>
+  <line x1="40" y1="666" x2="180" y2="666" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="110" y="677" text-anchor="middle" dy="0.35em" font-size="11" fill="var(--_text-faint)" font-style="italic">(no attributes)</text>
+</g>
+<g class="entity" data-id="Account" data-label="Account">
+  <rect x="394.598" y="389.3333333333333" width="311.8" height="210" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="394.598" y="389.3333333333333" width="311.8" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="550.498" y="406.3333333333333" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">Account</text>
+  <line x1="394.598" y1="423.3333333333333" x2="706.398" y2="423.3333333333333" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <rect x="400.598" y="427.3333333333333" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="411.753" y="434.3333333333333" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+  <text x="430.908" y="434.3333333333333" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="698.398" y="434.3333333333333" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">id</tspan></text>
+  <text x="402.598" y="456.3333333333333" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="698.398" y="456.3333333333333" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">account_type</tspan></text>
+  <text x="402.598" y="478.3333333333333" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="698.398" y="478.3333333333333" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">seller_type</tspan></text>
+  <text x="402.598" y="500.3333333333333" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="698.398" y="500.3333333333333" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">verification_status</tspan></text>
+  <text x="402.598" y="522.3333333333333" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="698.398" y="522.3333333333333" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">verification_tier</tspan></text>
+  <text x="402.598" y="544.3333333333333" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">timestamptz</tspan></text>
+  <text x="698.398" y="544.3333333333333" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">verification_approved_at</tspan></text>
+  <text x="402.598" y="566.3333333333333" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">timestamptz</tspan></text>
+  <text x="698.398" y="566.3333333333333" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">verification_reviewed_at</tspan></text>
+  <rect x="400.598" y="581.3333333333333" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="411.753" y="588.3333333333333" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="430.908" y="588.3333333333333" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="698.398" y="588.3333333333333" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">verification_reviewed_by_staff_id</tspan></text>
+</g>
+<g class="entity" data-id="SellerApplication" data-label="SellerApplication">
+  <rect x="966.1400000000001" y="544" width="252.4" height="188" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="966.1400000000001" y="544" width="252.4" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1092.3400000000001" y="561" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">SellerApplication</text>
+  <line x1="966.1400000000001" y1="578" x2="1218.5400000000002" y2="578" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <rect x="972.1400000000001" y="582" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="983.2950000000001" y="589" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+  <text x="1002.45" y="589" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1210.5400000000002" y="589" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">id</tspan></text>
+  <rect x="972.1400000000001" y="604" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="983.2950000000001" y="611" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="1002.45" y="611" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1210.5400000000002" y="611" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">user_id</tspan></text>
+  <rect x="972.1400000000001" y="626" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="983.2950000000001" y="633" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="1002.45" y="633" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1210.5400000000002" y="633" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">account_id</tspan></text>
+  <text x="974.1400000000001" y="655" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="1210.5400000000002" y="655" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">application_type</tspan></text>
+  <text x="974.1400000000001" y="677" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="1210.5400000000002" y="677" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">status</tspan></text>
+  <text x="974.1400000000001" y="699" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="1210.5400000000002" y="699" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">seller_type</tspan></text>
+  <text x="974.1400000000001" y="721" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="1210.5400000000002" y="721" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">derived_verification_tier</tspan></text>
+</g>
+<g class="entity" data-id="Listing" data-label="Listing">
+  <rect x="966.1400000000001" y="40" width="140" height="56" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="966.1400000000001" y="40" width="140" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1036.14" y="57" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">Listing</text>
+  <line x1="966.1400000000001" y1="74" x2="1106.14" y2="74" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1036.14" y="85" text-anchor="middle" dy="0.35em" font-size="11" fill="var(--_text-faint)" font-style="italic">(no attributes)</text>
+</g>
+<g class="entity" data-id="Branch" data-label="Branch">
+  <rect x="966.1400000000001" y="418" width="140" height="56" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="966.1400000000001" y="418" width="140" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1036.14" y="435" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">Branch</text>
+  <line x1="966.1400000000001" y1="452" x2="1106.14" y2="452" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1036.14" y="463" text-anchor="middle" dy="0.35em" font-size="11" fill="var(--_text-faint)" font-style="italic">(no attributes)</text>
+</g>
+<g class="entity" data-id="AccountMember" data-label="AccountMember">
+  <rect x="966.1400000000001" y="292" width="140" height="56" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="966.1400000000001" y="292" width="140" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1036.14" y="309" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">AccountMember</text>
+  <line x1="966.1400000000001" y1="326" x2="1106.14" y2="326" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1036.14" y="337" text-anchor="middle" dy="0.35em" font-size="11" fill="var(--_text-faint)" font-style="italic">(no attributes)</text>
+</g>
+<g class="entity" data-id="SellerApplicationDocument" data-label="SellerApplicationDocument">
+  <rect x="1455.7100000000003" y="438.3333333333333" width="188.52399999999997" height="56" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="1455.7100000000003" y="438.3333333333333" width="188.52399999999997" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1549.9720000000002" y="455.3333333333333" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">SellerApplicationDocument</text>
+  <line x1="1455.7100000000003" y1="472.3333333333333" x2="1644.2340000000002" y2="472.3333333333333" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1549.9720000000002" y="483.3333333333333" text-anchor="middle" dy="0.35em" font-size="11" fill="var(--_text-faint)" font-style="italic">(no attributes)</text>
+</g>
+<g class="entity" data-id="SellerApplicationHistory" data-label="SellerApplicationHistory">
+  <rect x="1455.7100000000003" y="564.3333333333334" width="186.4" height="210" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="1455.7100000000003" y="564.3333333333334" width="186.4" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1548.9100000000003" y="581.3333333333334" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">SellerApplicationHistory</text>
+  <line x1="1455.7100000000003" y1="598.3333333333334" x2="1642.1100000000004" y2="598.3333333333334" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <rect x="1461.7100000000003" y="602.3333333333334" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="1472.8650000000002" y="609.3333333333334" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+  <text x="1492.0200000000002" y="609.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1634.1100000000004" y="609.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">id</tspan></text>
+  <rect x="1461.7100000000003" y="624.3333333333334" width="22.31" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+  <text x="1472.8650000000002" y="631.3333333333334" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+  <text x="1492.0200000000002" y="631.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1634.1100000000004" y="631.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">application_id</tspan></text>
+  <text x="1463.7100000000003" y="653.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">uuid</tspan></text>
+  <text x="1634.1100000000004" y="653.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">account_id</tspan></text>
+  <text x="1463.7100000000003" y="675.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="1634.1100000000004" y="675.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">previous_status</tspan></text>
+  <text x="1463.7100000000003" y="697.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="1634.1100000000004" y="697.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">new_status</tspan></text>
+  <text x="1463.7100000000003" y="719.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="1634.1100000000004" y="719.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">previous_tier</tspan></text>
+  <text x="1463.7100000000003" y="741.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">varchar</tspan></text>
+  <text x="1634.1100000000004" y="741.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">new_tier</tspan></text>
+  <text x="1463.7100000000003" y="763.3333333333334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">text</tspan></text>
+  <text x="1634.1100000000004" y="763.3333333333334" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">reason</tspan></text>
+</g>
+<g class="entity" data-id="SellerVerificationRequirement" data-label="SellerVerificationRequirement">
+  <rect x="1012.2320000000002" y="166" width="206.30799999999996" height="56" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="1012.2320000000002" y="166" width="206.30799999999996" height="34" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1115.3860000000002" y="183" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">SellerVerificationRequirement</text>
+  <line x1="1012.2320000000002" y1="200" x2="1218.5400000000002" y2="200" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1115.3860000000002" y="211" text-anchor="middle" dy="0.35em" font-size="11" fill="var(--_text-faint)" font-style="italic">(no attributes)</text>
+</g>
+<line x1="184" y1="644.6666666666666" x2="184" y2="656.6666666666666" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="188" y1="644.6666666666666" x2="188" y2="656.6666666666666" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="390.598" y1="501.3333333333333" x2="378.598" y2="494.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="390.598" y1="494.3333333333333" x2="378.598" y2="494.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="390.598" y1="487.3333333333333" x2="378.598" y2="494.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="374.598" cy="494.3333333333333" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="184" y1="663.3333333333334" x2="184" y2="675.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="188" y1="663.3333333333334" x2="188" y2="675.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="676.3333333333334" x2="950.1400000000001" y2="669.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="669.3333333333334" x2="950.1400000000001" y2="669.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="662.3333333333334" x2="950.1400000000001" y2="669.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="946.1400000000001" cy="669.3333333333334" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="710.398" y1="551.3333333333333" x2="710.398" y2="563.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="714.398" y1="551.3333333333333" x2="714.398" y2="563.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="613.6666666666666" x2="950.1400000000001" y2="606.6666666666666" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="606.6666666666666" x2="950.1400000000001" y2="606.6666666666666" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="599.6666666666666" x2="950.1400000000001" y2="606.6666666666666" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="946.1400000000001" cy="606.6666666666666" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="710.398" y1="425.3333333333333" x2="710.398" y2="437.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="714.398" y1="425.3333333333333" x2="714.398" y2="437.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="75" x2="950.1400000000001" y2="68" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="68" x2="950.1400000000001" y2="68" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="61" x2="950.1400000000001" y2="68" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="946.1400000000001" cy="68" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="710.398" y1="509.33333333333326" x2="710.398" y2="521.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="714.398" y1="509.33333333333326" x2="714.398" y2="521.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="453" x2="950.1400000000001" y2="446" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="446" x2="950.1400000000001" y2="446" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="439" x2="950.1400000000001" y2="446" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="946.1400000000001" cy="446" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="710.398" y1="467.3333333333333" x2="710.398" y2="479.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="714.398" y1="467.3333333333333" x2="714.398" y2="479.3333333333333" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="327" x2="950.1400000000001" y2="320" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="320" x2="950.1400000000001" y2="320" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="962.1400000000001" y1="313" x2="950.1400000000001" y2="320" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="946.1400000000001" cy="320" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1222.5400000000002" y1="600.6666666666666" x2="1222.5400000000002" y2="612.6666666666666" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1226.5400000000002" y1="600.6666666666666" x2="1226.5400000000002" y2="612.6666666666666" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1451.7100000000003" y1="482.66666666666663" x2="1439.7100000000003" y2="475.66666666666663" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1451.7100000000003" y1="475.66666666666663" x2="1439.7100000000003" y2="475.66666666666663" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1451.7100000000003" y1="468.66666666666663" x2="1439.7100000000003" y2="475.66666666666663" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="1435.7100000000003" cy="475.66666666666663" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1222.5400000000002" y1="663.3333333333334" x2="1222.5400000000002" y2="675.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1226.5400000000002" y1="663.3333333333334" x2="1226.5400000000002" y2="675.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1451.7100000000003" y1="676.3333333333334" x2="1439.7100000000003" y2="669.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1451.7100000000003" y1="669.3333333333334" x2="1439.7100000000003" y2="669.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1451.7100000000003" y1="662.3333333333334" x2="1439.7100000000003" y2="669.3333333333334" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="1435.7100000000003" cy="669.3333333333334" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1222.5400000000002" y1="188" x2="1222.5400000000002" y2="200" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1226.5400000000002" y1="188" x2="1226.5400000000002" y2="200" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1451.7100000000003" y1="464" x2="1439.7100000000003" y2="457" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1451.7100000000003" y1="457" x2="1439.7100000000003" y2="457" stroke="var(--_line)" stroke-width="1.25" />
+<line x1="1451.7100000000003" y1="450" x2="1439.7100000000003" y2="457" stroke="var(--_line)" stroke-width="1.25" />
+<circle cx="1435.7100000000003" cy="457" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1.25" />
+<rect x="191.83333333333334" y="484.18333333333334" width="34.598" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="209.13233333333335" y="494.3333333333333" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">owns</text>
+<rect x="550.4250000000001" y="659.1833333333334" width="45.290000000000006" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="573.07" y="669.3333333333334" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">submits</text>
+<rect x="834.7266666666667" y="547.1833333333333" width="52.418000000000006" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="860.9356666666667" y="557.3333333333333" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">linked_to</text>
+<rect x="688.407" y="119.64566666666659" width="55.982" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="716.398" y="129.7956666666666" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">publishes</text>
+<rect x="761.7313333333335" y="435.85" width="79.74200000000002" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="801.6023333333335" y="446" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">has_branches</text>
+<rect x="732.2053333333333" y="309.85" width="54.794000000000004" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="759.6023333333334" y="320" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">has_team</text>
+<rect x="1243.0400000000002" y="465.51666666666665" width="57.17" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="1271.6250000000002" y="475.66666666666663" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">has_docs</text>
+<rect x="1309.1340000000002" y="659.1833333333334" width="55.982000000000006" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="1337.1250000000002" y="669.3333333333334" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">audit_trail</text>
+<rect x="1349.5010000000002" y="276.765" width="52.418000000000006" height="20.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="1375.7100000000003" y="286.91499999999996" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">validates</text>
+</svg>

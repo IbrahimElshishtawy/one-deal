@@ -108,6 +108,7 @@ class SellerVerificationWizardState {
   final double overallUploadProgress;
   final String? submissionErrorMessage;
   final SellerApplicationEntity? submittedApplication;
+  final bool isDevApproving;
 
   const SellerVerificationWizardState({
     this.currentStep = 1,
@@ -134,6 +135,7 @@ class SellerVerificationWizardState {
     this.overallUploadProgress = 0.0,
     this.submissionErrorMessage,
     this.submittedApplication,
+    this.isDevApproving = false,
   });
 
   bool get isSubmitting =>
@@ -192,6 +194,7 @@ class SellerVerificationWizardState {
     String? submissionErrorMessage,
     bool clearSubmissionError = false,
     SellerApplicationEntity? submittedApplication,
+    bool? isDevApproving,
   }) {
     return SellerVerificationWizardState(
       currentStep: currentStep ?? this.currentStep,
@@ -225,6 +228,7 @@ class SellerVerificationWizardState {
           ? null
           : (submissionErrorMessage ?? this.submissionErrorMessage),
       submittedApplication: submittedApplication ?? this.submittedApplication,
+      isDevApproving: isDevApproving ?? this.isDevApproving,
     );
   }
 }
@@ -567,6 +571,31 @@ class SellerVerificationWizardNotifier
         submissionStage: WizardSubmissionStage.idle,
         clearSubmissionError: true,
       );
+    }
+  }
+
+  /// Development-only helper to immediately approve the current pending seller
+  /// application via `POST /seller-applications/me/dev-approve` so developers
+  /// can test unlocked seller features right away.
+  Future<bool> devApproveForTesting() async {
+    if (!kDebugMode || state.isDevApproving) return false;
+    state = state.copyWith(isDevApproving: true, clearSubmissionError: true);
+    try {
+      final freshSnapshot = await repository.devApproveMyApplication();
+      state = state.copyWith(
+        isDevApproving: false,
+        statusSnapshot: freshSnapshot,
+        submittedApplication: freshSnapshot.application,
+        currentStep: 3,
+      );
+      return true;
+    } catch (error) {
+      final failure = ErrorMapper.map(error);
+      state = state.copyWith(
+        isDevApproving: false,
+        submissionErrorMessage: failure.userFriendlyMessage,
+      );
+      return false;
     }
   }
 

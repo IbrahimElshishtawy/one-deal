@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1707.1774999999998 930.45" width="1707.1774999999998" height="930.45" style="--bg:#18181B;--fg:#F4F4F5;--line:#71717A;--muted:#A1A1AA;--surface:#27272A;--border:#3F3F46;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="seq-arrow" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto-start-reverse">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" />
+  </marker>
+  <marker id="seq-arrow-open" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto-start-reverse">
+    <polyline points="0 0, 8 2.5, 0 5" fill="none" stroke="var(--_arrow)" stroke-width="1" />
+  </marker>
+</defs>
+<line class="lifeline" data-actor="User" x1="109.21549999999999" y1="92.45" x2="109.21549999999999" y2="900.45" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="API" x1="395.47349999999994" y1="70" x2="395.47349999999994" y2="900.45" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="Req" x1="785.6814999999999" y1="70" x2="785.6814999999999" y2="900.45" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="R2" x1="979.6734999999999" y1="70" x2="979.6734999999999" y2="900.45" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="Admin" x1="1210.7154999999998" y1="70" x2="1210.7154999999998" y2="900.45" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="DB" x1="1448.7969999999998" y1="70" x2="1448.7969999999998" y2="900.45" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="Redis" x1="1622.7819999999997" y1="70" x2="1622.7819999999997" y2="900.45" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<g class="block" data-type="loop" data-label="لكل مستند مطلوب أو اختياري">
+  <rect x="30" y="300.45" width="1508.3864999999998" height="260.00000000000006" rx="0" ry="0" fill="none" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="30" y="300.45" width="231" height="20" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="38" y="310.45" font-size="11" font-weight="600" fill="var(--_text-sec)" dy="3.8499999999999996">loop [لكل مستند مطلوب أو اختياري]</text>
+</g>
+<g class="message" data-from="User" data-to="API" data-label="GET /seller-applications/requirements?sellerType=..." data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="109.21549999999999" y1="112.45" x2="395.47349999999994" y2="112.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="110.34449999999998" y="94.3" width="284" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="252.34449999999998" y="102.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">GET /seller-applications/requirements?sellerType=...</text>
+</g>
+<g class="message" data-from="API" data-to="Req" data-label="جلب المستندات المطلوبة ديناميكياً من قاعدة البيانات" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="395.47349999999994" y1="152.45" x2="785.6814999999999" y2="152.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="433.5774999999999" y="134.29999999999998" width="314" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="590.5774999999999" y="142.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">جلب المستندات المطلوبة ديناميكياً من قاعدة البيانات</text>
+</g>
+<g class="message" data-from="Req" data-to="User" data-label="قائمة المستندات المطلوبة والاختيارية" data-line-style="dashed" data-arrow-head="filled" data-self="false">
+  <line x1="785.6814999999999" y1="192.45" x2="109.21549999999999" y2="192.45" stroke="var(--_line)" stroke-width="1" stroke-dasharray="6 4" marker-end="url(#seq-arrow)" />
+  <rect x="332.44849999999997" y="174.29999999999998" width="230" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="447.44849999999997" y="182.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">قائمة المستندات المطلوبة والاختيارية</text>
+</g>
+<g class="message" data-from="User" data-to="API" data-label="POST /seller-applications (إنشاء مسودة DRAFT)" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="109.21549999999999" y1="232.45" x2="395.47349999999994" y2="232.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="123.34449999999998" y="214.29999999999998" width="258" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="252.34449999999998" y="222.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">POST /seller-applications (إنشاء مسودة DRAFT)</text>
+</g>
+<g class="message" data-from="API" data-to="DB" data-label="حفظ الطلب وتشفير الرقم القومي والضريبي (AES-256-GCM)" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="395.47349999999994" y1="272.45" x2="1448.7969999999998" y2="272.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="763.6352499999998" y="254.29999999999998" width="317" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="922.1352499999998" y="262.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">حفظ الطلب وتشفير الرقم القومي والضريبي (AES-256-GCM)</text>
+</g>
+<g class="message" data-from="User" data-to="API" data-label="POST /me/documents/upload-url" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="109.21549999999999" y1="340.45" x2="395.47349999999994" y2="340.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="164.84449999999998" y="322.3" width="175" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="252.34449999999998" y="330.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">POST /me/documents/upload-url</text>
+</g>
+<g class="message" data-from="API" data-to="R2" data-label="التحقق من الصيغة والحجم والامتداد وتوليد رابط رفع خاص مؤقت" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="395.47349999999994" y1="380.45" x2="979.6734999999999" y2="380.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="514.5735" y="362.3" width="346" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="687.5735" y="370.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">التحقق من الصيغة والحجم والامتداد وتوليد رابط رفع خاص مؤقت</text>
+</g>
+<g class="message" data-from="R2" data-to="User" data-label="رابط PUT مؤقت (15 دقيقة)" data-line-style="dashed" data-arrow-head="filled" data-self="false">
+  <line x1="979.6734999999999" y1="420.45" x2="109.21549999999999" y2="420.45" stroke="var(--_line)" stroke-width="1" stroke-dasharray="6 4" marker-end="url(#seq-arrow)" />
+  <rect x="474.44449999999995" y="402.3" width="140" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="544.4445" y="410.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">رابط PUT مؤقت (15 دقيقة)</text>
+</g>
+<g class="message" data-from="User" data-to="R2" data-label="رفع الملف مباشرة في الباكيت الخاص" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="109.21549999999999" y1="460.45" x2="979.6734999999999" y2="460.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="443.94449999999995" y="442.3" width="201" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="544.4445" y="450.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">رفع الملف مباشرة في الباكيت الخاص</text>
+</g>
+<g class="message" data-from="User" data-to="API" data-label="POST /me/documents (تأكيد الرفع + فحص Magic Bytes)" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="109.21549999999999" y1="500.45" x2="395.47349999999994" y2="500.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="106.84449999999998" y="482.3" width="291" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="252.34449999999998" y="490.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">POST /me/documents (تأكيد الرفع + فحص Magic Bytes)</text>
+</g>
+<g class="message" data-from="API" data-to="DB" data-label="حفظ نسخة المستند في seller_application_documents" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="395.47349999999994" y1="540.45" x2="1448.7969999999998" y2="540.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="784.1352499999998" y="522.3000000000001" width="276" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="922.1352499999998" y="530.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">حفظ نسخة المستند في seller_application_documents</text>
+</g>
+<g class="message" data-from="User" data-to="API" data-label="POST /me/submit" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="109.21549999999999" y1="580.45" x2="395.47349999999994" y2="580.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="204.84449999999998" y="562.3000000000001" width="95" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="252.34449999999998" y="570.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">POST /me/submit</text>
+</g>
+<g class="message" data-from="API" data-to="Req" data-label="التأكد من اكتمال المستندات المطلوبة فقط (الاختيارية لا تمنع الإرسال)" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="395.47349999999994" y1="620.45" x2="785.6814999999999" y2="620.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="388.0774999999999" y="602.3000000000001" width="405" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="590.5774999999999" y="610.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">التأكد من اكتمال المستندات المطلوبة فقط (الاختيارية لا تمنع الإرسال)</text>
+</g>
+<g class="message" data-from="API" data-to="DB" data-label="تحويل الحالة من DRAFT إلى PENDING" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="395.47349999999994" y1="660.45" x2="1448.7969999999998" y2="660.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="816.1352499999998" y="642.3000000000001" width="212" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="922.1352499999998" y="650.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">تحويل الحالة من DRAFT إلى PENDING</text>
+</g>
+<g class="message" data-from="Admin" data-to="API" data-label="GET /admin/seller-applications/:id/documents/:docId" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="1210.7154999999998" y1="700.45" x2="395.47349999999994" y2="700.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="665.0944999999999" y="682.3000000000001" width="276" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="803.0944999999999" y="690.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">GET /admin/seller-applications/:id/documents/:docId</text>
+</g>
+<g class="message" data-from="API" data-to="Admin" data-label="رابط مشاهدة مؤقت ومسجل في AuditLog" data-line-style="dashed" data-arrow-head="filled" data-self="false">
+  <line x1="395.47349999999994" y1="740.45" x2="1210.7154999999998" y2="740.45" stroke="var(--_line)" stroke-width="1" stroke-dasharray="6 4" marker-end="url(#seq-arrow)" />
+  <rect x="702.0944999999999" y="722.3000000000001" width="202" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="803.0944999999999" y="730.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">رابط مشاهدة مؤقت ومسجل في AuditLog</text>
+</g>
+<g class="message" data-from="Admin" data-to="API" data-label="POST /admin/seller-applications/:id/approve" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="1210.7154999999998" y1="780.45" x2="395.47349999999994" y2="780.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="684.5944999999999" y="762.3000000000001" width="237" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="803.0944999999999" y="770.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">POST /admin/seller-applications/:id/approve</text>
+</g>
+<g class="message" data-from="API" data-to="DB" data-label="Transaction: حساب verificationTier + تحديث Account + تسجيل History &amp; AuditLog" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="395.47349999999994" y1="820.45" x2="1448.7969999999998" y2="820.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="715.6352499999998" y="802.3000000000001" width="413" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="922.1352499999998" y="810.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Transaction: حساب verificationTier + تحديث Account + تسجيل History &amp; AuditLog</text>
+</g>
+<g class="message" data-from="API" data-to="Redis" data-label="مسح كاش الحساب وكاش الإعلانات (listings:feed:*)" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="395.47349999999994" y1="860.45" x2="1622.7819999999997" y2="860.45" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <rect x="879.6277499999999" y="842.3000000000001" width="259" height="16.3" rx="2" ry="2" fill="var(--bg)" />
+  <text x="1009.1277499999999" y="850.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">مسح كاش الحساب وكاش الإعلانات (listings:feed:*)</text>
+</g>
+<g class="actor" data-id="User" data-label="المشتري / البائع" data-type="actor">
+  <g transform="translate(91.21549999999999,32) scale(1.5)">
+    <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" fill="none" stroke="var(--_line)" stroke-width="0.6666666666666666" />
+    <path d="M15 10C15 11.6569 13.6569 13 12 13C10.3431 13 9 11.6569 9 10C9 8.34315 10.3431 7 12 7C13.6569 7 15 8.34315 15 10Z" fill="none" stroke="var(--_line)" stroke-width="0.6666666666666666" />
+    <path d="M5.62842 18.3563C7.08963 17.0398 9.39997 16 12 16C14.6 16 16.9104 17.0398 18.3716 18.3563" fill="none" stroke="var(--_line)" stroke-width="0.6666666666666666" />
+  </g>
+  <text x="109.21549999999999" y="84" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">المشتري / البائع</text>
+</g>
+<g class="actor" data-id="API" data-label="SellerApplicationController" data-type="participant">
+  <rect x="298.47049999999996" y="30" width="194.00599999999994" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="395.47349999999994" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">SellerApplicationController</text>
+</g>
+<g class="actor" data-id="Req" data-label="RequirementsService" data-type="participant">
+  <rect x="704.2394999999999" y="30" width="162.884" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="785.6814999999999" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">RequirementsService</text>
+</g>
+<g class="actor" data-id="R2" data-label="Private R2 Storage" data-type="participant">
+  <rect x="907.1234999999999" y="30" width="145.10000000000002" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="979.6734999999999" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">Private R2 Storage</text>
+</g>
+<g class="actor" data-id="Admin" data-label="AdminSellerApplicationsController" data-type="participant">
+  <rect x="1092.2234999999998" y="30" width="236.98399999999992" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1210.7154999999998" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">AdminSellerApplicationsController</text>
+</g>
+<g class="actor" data-id="DB" data-label="PostgreSQL (Prisma)" data-type="participant">
+  <rect x="1369.2074999999998" y="30" width="159.17899999999997" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1448.7969999999998" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">PostgreSQL (Prisma)</text>
+</g>
+<g class="actor" data-id="Redis" data-label="Redis Cache" data-type="participant">
+  <rect x="1568.3864999999996" y="30" width="108.79099999999998" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1622.7819999999997" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">Redis Cache</text>
+</g>
+</svg>

@@ -225,6 +225,14 @@ class SellerVerificationRemoteDataSource {
     return SellerApplicationModel.fromJson(_unwrapDataMap(response.data));
   }
 
+  Future<VerificationStatusSnapshot> devApproveMyApplication() async {
+    final response = await apiClient.post<dynamic>(
+      ApiEndpoints.sellerApplicationMeDevApprove,
+      data: const <String, dynamic>{},
+    );
+    return VerificationStatusModel.fromJson(_unwrapDataMap(response.data));
+  }
+
   Future<SellerApplicationEntity> resubmitApplication(
     Map<String, dynamic> payload,
   ) async {

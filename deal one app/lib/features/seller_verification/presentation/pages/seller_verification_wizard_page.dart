@@ -225,6 +225,43 @@ class _SellerVerificationWizardPageState
                                                 RouteNames
                                                     .sellerVerificationTracking,
                                               ),
+                                              onDevApproveTap: () async {
+                                                final ok = await notifier
+                                                    .devApproveForTesting();
+                                                if (ok && context.mounted) {
+                                                  ref.invalidate(
+                                                    sellerVerificationBadgeProvider,
+                                                  );
+                                                  ref.invalidate(
+                                                    myAccountsProvider,
+                                                  );
+                                                  ref.invalidate(
+                                                    activeAccountProvider,
+                                                  );
+                                                  _scrollToTop();
+                                                } else if (context.mounted) {
+                                                  final err = ref
+                                                      .read(
+                                                        sellerVerificationWizardProvider,
+                                                      )
+                                                      .submissionErrorMessage;
+                                                  if (err != null) {
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    ).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(err),
+                                                        backgroundColor:
+                                                            WizardTheme.danger(
+                                                          context,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                              isDevApproving:
+                                                  wizardState.isDevApproving,
                                               onEditResubmitTap: () {
                                                 notifier
                                                     .startEditingFromStatus();

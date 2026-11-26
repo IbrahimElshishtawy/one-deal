@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:market_space/features/seller_verification/domain/algorithms/seller_verification_algorithms.dart';
 import 'package:market_space/features/seller_verification/domain/entities/seller_verification_entities.dart';
@@ -18,6 +19,8 @@ class VerificationStep3StatusView extends StatelessWidget {
   final VoidCallback onTrackTap;
   final VoidCallback onEditResubmitTap;
   final VoidCallback onReturnHomeTap;
+  final VoidCallback? onDevApproveTap;
+  final bool isDevApproving;
 
   const VerificationStep3StatusView({
     super.key,
@@ -29,6 +32,8 @@ class VerificationStep3StatusView extends StatelessWidget {
     required this.onTrackTap,
     required this.onEditResubmitTap,
     required this.onReturnHomeTap,
+    this.onDevApproveTap,
+    this.isDevApproving = false,
   });
 
   @override
@@ -220,6 +225,42 @@ class VerificationStep3StatusView extends StatelessWidget {
               : 'Your identity documents are stored in encrypted private storage and are never shared publicly.',
         ),
         const SizedBox(height: 22),
+        if (kDebugMode && status.isInReview && onDevApproveTap != null) ...[
+          SizedBox(
+            height: 50,
+            child: OutlinedButton.icon(
+              key: const Key('wizard_dev_approve_btn'),
+              onPressed: isDevApproving ? null : onDevApproveTap,
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: WizardTheme.success(context)),
+                foregroundColor: WizardTheme.success(context),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: isDevApproving
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: WizardTheme.success(context),
+                      ),
+                    )
+                  : const Icon(Icons.verified_outlined, size: 20),
+              label: Text(
+                isArabic
+                    ? 'تفعيل حساب البائع فوراً للتجربة (Dev Mode)'
+                    : 'Activate Seller Account Now (Dev Mode)',
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         if (needsAction) ...[
           VerificationPrimaryCtaButton(
             key: const Key('wizard_edit_resubmit_btn'),

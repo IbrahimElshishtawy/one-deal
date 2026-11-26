@@ -179,6 +179,12 @@ class _InMemorySellerVerificationRepository
   }
 
   @override
+  Future<VerificationStatusSnapshot> devApproveMyApplication() async {
+    simulateAdminApproveInitial();
+    return getMyVerificationStatus(forceRefresh: true);
+  }
+
+  @override
   Future<SellerApplicationEntity> resubmitApplication(
     Map<String, dynamic> payload,
   ) =>

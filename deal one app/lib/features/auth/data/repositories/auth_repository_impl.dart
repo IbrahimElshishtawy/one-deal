@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:market_space/core/errors/app_exception.dart';
 import 'package:market_space/core/network/api_client.dart';
 import 'package:market_space/core/security/token_provider.dart';
@@ -27,7 +28,9 @@ class AuthRepositoryImpl implements AuthRepository {
       SendOtpRequestDto(phone: phone),
     );
     _assertDispatchSucceeded(dto);
-    return AuthMapper.toOtpDispatchEntity(dto);
+    final result = AuthMapper.toOtpDispatchEntity(dto);
+    _logDevOtpToTerminal(phone, result.devOtp, isResend: false);
+    return result;
   }
 
   @override
@@ -36,7 +39,25 @@ class AuthRepositoryImpl implements AuthRepository {
       SendOtpRequestDto(phone: phone),
     );
     _assertDispatchSucceeded(dto);
-    return AuthMapper.toOtpDispatchEntity(dto);
+    final result = AuthMapper.toOtpDispatchEntity(dto);
+    _logDevOtpToTerminal(phone, result.devOtp, isResend: true);
+    return result;
+  }
+
+  void _logDevOtpToTerminal(
+    String phone,
+    String? devOtp, {
+    required bool isResend,
+  }) {
+    if (kReleaseMode || devOtp == null || devOtp.isEmpty) return;
+    final action = isResend ? 'RESEND' : 'SEND';
+    debugPrint(
+      '\n╔══════════════════════════════════════════════════════════╗\n'
+      '║ [DEV SMS OTP - $action]\n'
+      '║ Phone    : $phone\n'
+      '║ OTP CODE : $devOtp\n'
+      '╚══════════════════════════════════════════════════════════╝',
+    );
   }
 
   void _assertDispatchSucceeded(OtpDispatchResponseDto dto) {

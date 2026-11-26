@@ -175,11 +175,14 @@ model Account {
   bio                           String?   @db.Text
   logoUrl                       String?   @map("logo_url") @db.VarChar(500)
   bannerUrl                     String?   @map("banner_url") @db.VarChar(500)
-  verificationStatus            String    @default("pending") @map("verification_status") @db.VarChar(20) // not_submitted, pending, approved, rejected, needs_changes, suspended
+  verificationStatus            String    @default("pending") @map("verification_status") @db.VarChar(20) // not_submitted, pending, approved, rejected, needs_changes, suspended, expired
   verificationTier              String    @default("NONE") @map("verification_tier") @db.VarChar(30) // NONE, IDENTITY_VERIFIED, BUSINESS_VERIFIED
   verificationApprovedAt        DateTime? @map("verification_approved_at") @db.Timestamptz
   verificationReviewedAt        DateTime? @map("verification_reviewed_at") @db.Timestamptz
   verificationReviewedByStaffId String?   @map("verification_reviewed_by_staff_id") @db.Uuid
+  verificationExpiresAt         DateTime? @map("verification_expires_at") @db.Timestamptz
+  verificationSuspendedAt       DateTime? @map("verification_suspended_at") @db.Timestamptz
+  verificationSuspensionReason  String?   @map("verification_suspension_reason") @db.Text
   isActive                      Boolean   @default(true) @map("is_active")
   isDemo                        Boolean   @default(false) @map("is_demo")
   createdAt                     DateTime  @default(now()) @map("created_at") @db.Timestamptz
@@ -205,6 +208,7 @@ model Account {
   @@index([ownerUserId])
   @@index([verificationStatus, isActive])
   @@index([verificationStatus, verificationTier, isActive])
+  @@index([verificationExpiresAt])
   @@map("accounts")
 }
 
@@ -248,17 +252,19 @@ model SellerApplication {
   id                           String    @id @default(uuid()) @db.Uuid
   userId                       String    @map("user_id") @db.Uuid
   accountId                    String?   @map("account_id") @db.Uuid
-  applicationType              String    @default("INITIAL") @map("application_type") @db.VarChar(30) // INITIAL, BUSINESS_UPGRADE
-  status                       String    @default("DRAFT") @db.VarChar(25) // DRAFT, PENDING, UNDER_REVIEW, NEEDS_CORRECTION, APPROVED, REJECTED, SUSPENDED, EXPIRED
+  applicationType              String    @default("INITIAL") @map("application_type") @db.VarChar(30) // INITIAL, BUSINESS_UPGRADE, RENEWAL
+  status                       String    @default("DRAFT") @db.VarChar(25) // DRAFT, PENDING, UNDER_REVIEW, NEEDS_CORRECTION, APPROVED, REJECTED, WITHDRAWN, SUSPENDED, EXPIRED
   sellerType                   String    @default("INDIVIDUAL") @map("seller_type") @db.VarChar(30) // INDIVIDUAL, BUSINESS, SERVICE_PROVIDER
   businessType                 String    @default("individual") @map("business_type") @db.VarChar(20) // individual, company, factory, office, store
   derivedVerificationTier      String?   @map("derived_verification_tier") @db.VarChar(30) // NONE, IDENTITY_VERIFIED, BUSINESS_VERIFIED
   marketplaceSections          Json      @default("[]") @map("marketplace_sections")
+  requirementsVersion          Int       @default(1) @map("requirements_version")
+  requirementsSnapshot         Json?     @map("requirements_snapshot")
   businessName                 String?   @map("business_name") @db.VarChar(150)
   businessDescription          String?   @map("business_description") @db.Text
   nationalIdNumber             String?   @map("national_id_number") @db.Text
   taxIdNumber                  String?   @map("tax_id_number") @db.Text
-  commercialRegisterNumber     String?   @map("commercial_register_number") @db.VarChar(100)
+  commercialRegisterNumber     String?   @map("commercial_register_number") @db.Text
   authorizedRepresentativeName String?   @map("authorized_representative_name") @db.VarChar(150)
   authorizedRepresentativeId   String?   @map("authorized_representative_id") @db.Text
   serviceCategory              String?   @map("service_category") @db.VarChar(120)
@@ -273,16 +279,22 @@ model SellerApplication {
   submittedAt                  DateTime? @map("submitted_at") @db.Timestamptz
   reviewedAt                   DateTime? @map("reviewed_at") @db.Timestamptz
   reviewedByStaffId            String?   @map("reviewed_by_staff_id") @db.Uuid
+  firstReviewedByStaffId       String?   @map("first_reviewed_by_staff_id") @db.Uuid
+  firstReviewedAt              DateTime? @map("first_reviewed_at") @db.Timestamptz
   assignedToStaffId            String?   @map("assigned_to_staff_id") @db.Uuid
   rejectionReason              String?   @map("rejection_reason") @db.Text
   suspensionReason             String?   @map("suspension_reason") @db.Text
+  withdrawnAt                  DateTime? @map("withdrawn_at") @db.Timestamptz
+  withdrawalReason             String?   @map("withdrawal_reason") @db.Text
   correctionFields             Json      @default("[]") @map("correction_fields")
   correctionReason             String?   @map("correction_reason") @db.Text
   correctionRequestedAt        DateTime? @map("correction_requested_at") @db.Timestamptz
   verificationExpiresAt        DateTime? @map("verification_expires_at") @db.Timestamptz
+  renewalReminderSentAt        DateTime? @map("renewal_reminder_sent_at") @db.Timestamptz
   expiredAt                    DateTime? @map("expired_at") @db.Timestamptz
   adminNotes                   String?   @map("admin_notes") @db.Text
   resubmissionCount            Int       @default(0) @map("resubmission_count")
+  version                      Int       @default(1)
   isActive                     Boolean   @default(true) @map("is_active")
   createdAt                    DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
@@ -345,12 +357,16 @@ model SellerApplicationDocument {
   mimeType             String    @map("mime_type") @db.VarChar(100)
   fileSizeBytes        Int       @map("file_size_bytes")
   checksumSha256       String?   @map("checksum_sha256") @db.VarChar(64)
-  status               String    @default("UPLOADED") @db.VarChar(20) // PENDING_UPLOAD, UPLOADED, VERIFIED, REJECTED
+  status               String    @default("UPLOADED") @db.VarChar(20) // PENDING_UPLOAD, UPLOADED, VERIFIED, REJECTED, PURGED
   version              Int       @default(1)
   isCurrent            Boolean   @default(true) @map("is_current")
   replacedByDocumentId String?   @map("replaced_by_document_id") @db.Uuid
   expiresAt            DateTime? @map("expires_at") @db.Timestamptz
   rejectionReason      String?   @map("rejection_reason") @db.Text
+  reviewedAt           DateTime? @map("reviewed_at") @db.Timestamptz
+  reviewedByStaffId    String?   @map("reviewed_by_staff_id") @db.Uuid
+  retentionExpiresAt   DateTime? @map("retention_expires_at") @db.Timestamptz
+  purgedAt             DateTime? @map("purged_at") @db.Timestamptz
   uploadedAt           DateTime? @map("uploaded_at") @db.Timestamptz
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
@@ -365,6 +381,7 @@ model SellerApplicationDocument {
   @@index([applicationId, documentType, isCurrent])
   @@index([userId])
   @@index([expiresAt])
+  @@index([retentionExpiresAt, purgedAt])
   @@map("seller_application_documents")
 }
 
@@ -396,6 +413,7 @@ model SellerApplicationHistory {
   userId         String   @map("user_id") @db.Uuid
   adminId        String?  @map("admin_id") @db.Uuid
   actorType      String   @map("actor_type") @db.VarChar(20) // user, staff, system
+  action         String?  @db.VarChar(60)
   previousStatus String   @map("previous_status") @db.VarChar(25)
   newStatus      String   @map("new_status") @db.VarChar(25)
   previousTier   String?  @map("previous_tier") @db.VarChar(30)

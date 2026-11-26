@@ -162,6 +162,23 @@ class _MockWizardRepository implements SellerVerificationRepository {
   }
 
   @override
+  Future<VerificationStatusSnapshot> devApproveMyApplication() async {
+    status = VerificationStatus.approved;
+    savedApp = SellerApplicationEntity(
+      id: savedApp!.id,
+      userId: savedApp!.userId,
+      accountId: 'acc-dev-001',
+      status: VerificationStatus.approved,
+      sellerType: savedApp!.sellerType,
+      businessType: savedApp!.businessType,
+      businessName: savedApp!.businessName,
+      documents: List.unmodifiable(uploadedDocs),
+      submittedAt: savedApp!.submittedAt ?? DateTime.now(),
+    );
+    return getMyVerificationStatus(forceRefresh: true);
+  }
+
+  @override
   Future<SellerApplicationEntity> resubmitApplication(
     Map<String, dynamic> payload,
   ) =>
@@ -467,6 +484,13 @@ void main() {
       );
       expect(repo.status, VerificationStatus.pending);
       expect(repo.uploadedDocs.length, 2);
+
+      // Dev-mode instant seller activation unlocks APPROVED state
+      await tester.ensureVisible(find.byKey(const Key('wizard_dev_approve_btn')));
+      await tester.tap(find.byKey(const Key('wizard_dev_approve_btn')));
+      await tester.pumpAndSettle();
+      expect(repo.status, VerificationStatus.approved);
+      expect(find.text('تم توثيق حسابك بنجاح'), findsOneWidget);
     });
 
     testWidgets('Renders cleanly in Dark Mode and displays shimmer on loading', (tester) async {

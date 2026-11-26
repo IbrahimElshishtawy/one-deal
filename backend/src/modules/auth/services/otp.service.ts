@@ -223,15 +223,24 @@ export class OtpService {
     const channelLabel =
       delivery.provider === 'WHATSAPP_CLOUD' ? 'WhatsApp' : 'SMS';
 
-    const isLocalDevMock =
-      this.configService.get<string>('NODE_ENV') === 'development' &&
-      delivery.provider === 'MOCK_DEV_GATEWAY';
+    const isDevEnv =
+      this.configService.get<string>('NODE_ENV') === 'development';
+
+    if (isDevEnv) {
+      // Clear development-only terminal box so OTP is visible while SMS API is pending
+      console.log(
+        `\n╔══════════════════════════════════════════════════════════╗\n` +
+          `║ [DEV OTP CODE] Purpose: ${purpose} | Phone: ${normalizedPhone}\n` +
+          `║ CODE : ${code}  (valid ${this.otpExpirySeconds}s)\n` +
+          `╚══════════════════════════════════════════════════════════╝\n`,
+      );
+    }
 
     return {
       success: true,
       message: `OTP verification code dispatched successfully via ${channelLabel}.`,
       cooldownSeconds: this.resendCooldownSeconds,
-      ...(isLocalDevMock ? { devOtp: code } : {}),
+      ...(isDevEnv ? { devOtp: code } : {}),
     };
   }
 

@@ -8,6 +8,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { RedisService } from '../../../core/redis/redis.service';
 import { SecurityAuditService } from '../../../core/security/security-audit.service';
@@ -58,7 +59,9 @@ import {
   ReplaceVerificationDocumentDto,
   RequestVerificationDocUploadUrlDto,
   ResubmitSellerApplicationDto,
+  StartVerificationRenewalDto,
   UpdateSellerApplicationDto,
+  WithdrawSellerApplicationDto,
 } from '../dto/seller-application.dto';
 import { AuthenticatedStaff } from '../../admin-auth/types/authenticated-staff.type';
 
@@ -93,7 +96,63 @@ export class SellerApplicationService {
     @Optional()
     private readonly requirementsService?: SellerVerificationRequirementsService,
     @Optional() private readonly notifications?: NotificationsService,
+    @Optional() private readonly configService?: ConfigService,
   ) {}
+
+  private isFourEyesEnabled(): boolean {
+    const val = this.configService?.get<boolean | string>(
+      'ENABLE_FOUR_EYES_VERIFICATION_REVIEW',
+    );
+    if (typeof val === 'boolean') return val;
+    if (typeof val === 'string') return val.toLowerCase() === 'true';
+    return process.env.ENABLE_FOUR_EYES_VERIFICATION_REVIEW === 'true';
+  }
+
+  private getVerificationValidityDays(): number {
+    const configured = Number(
+      this.configService?.get<number>('VERIFICATION_VALIDITY_DAYS') ??
+        DEFAULT_VERIFICATION_VALIDITY_DAYS,
+    );
+    return Number.isFinite(configured) && configured > 0
+      ? configured
+      : DEFAULT_VERIFICATION_VALIDITY_DAYS;
+  }
+
+  private computeDocumentRetentionDate(
+    category: 'rejected' | 'withdrawn' | 'expired' | 'superseded' | 'approved',
+    now = new Date(),
+  ): Date | null {
+    const envMap: Record<typeof category, { key: string; fallback: number }> = {
+      rejected: {
+        key: 'VERIFICATION_DOC_RETENTION_REJECTED_DAYS',
+        fallback: 90,
+      },
+      withdrawn: {
+        key: 'VERIFICATION_DOC_RETENTION_WITHDRAWN_DAYS',
+        fallback: 30,
+      },
+      expired: {
+        key: 'VERIFICATION_DOC_RETENTION_EXPIRED_DAYS',
+        fallback: 180,
+      },
+      superseded: {
+        key: 'VERIFICATION_DOC_RETENTION_SUPERSEDED_DAYS',
+        fallback: 90,
+      },
+      approved: {
+        key: 'VERIFICATION_DOC_RETENTION_APPROVED_DAYS',
+        fallback: 0,
+      },
+    };
+    const spec = envMap[category];
+    const days = Number(
+      this.configService?.get<number>(spec.key) ?? spec.fallback,
+    );
+    if (!Number.isFinite(days) || days <= 0) {
+      return null;
+    }
+    return new Date(now.getTime() + days * 86_400_000);
+  }
 
   // =========================================================================
   // REQUIREMENTS ENGINE (USER-FACING)
@@ -1009,6 +1068,55 @@ export class SellerApplicationService {
     );
 
     return this.formatApplicationForUser(updated);
+  }
+
+  /**
+   * Development-only instant approval helper so local developers can test the
+   * complete Buyer -> Pending Seller -> Approved Seller flow immediately.
+   * Strictly disabled outside NODE_ENV=development.
+   */
+  async devApproveMyApplication(
+    userId: string,
+    ctx: RequestAuditContext = {},
+  ) {
+    if (process.env.NODE_ENV !== 'development') {
+      throw new ForbiddenException(
+        'Development-only instant approval endpoint is disabled outside development mode',
+      );
+    }
+
+    const app = await this.prisma.sellerApplication.findFirst({
+      where: { userId, isActive: true, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!app) {
+      throw new NotFoundException(
+        'No active seller application found to approve',
+      );
+    }
+
+    if (app.status !== SellerApplicationStatus.APPROVED) {
+      const devStaff: AuthenticatedStaff = {
+        id: 'dev-auto-approver',
+        staffId: null,
+        actorType: 'staff',
+        email: 'dev@dealone.local',
+        fullName: 'Deal One Dev Approver',
+        roleId: null,
+        role: 'super_admin',
+        permissions: ['*'],
+        mfaVerified: true,
+      };
+      await this.approveApplication(
+        app.id,
+        devStaff,
+        { notes: 'Auto-approved via local development helper' },
+        ctx,
+      );
+    }
+
+    return this.getMyApplication(userId);
   }
 
   /**

@@ -68,6 +68,8 @@ class ApiEndpoints {
       '/seller-applications/me/documents/$documentId';
   static const String sellerApplicationMeSubmit =
       '/seller-applications/me/submit';
+  static const String sellerApplicationMeDevApprove =
+      '/seller-applications/me/dev-approve';
   static const String sellerApplicationMeResubmit =
       '/seller-applications/me/resubmit';
   static const String sellerApplicationDashboard =
