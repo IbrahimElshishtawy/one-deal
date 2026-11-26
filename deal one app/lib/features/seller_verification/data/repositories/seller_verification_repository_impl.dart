@@ -37,12 +37,10 @@ class SellerVerificationRepositoryImpl implements SellerVerificationRepository {
     final key = _requirementsCacheKey(sellerType, marketplaceSections);
 
     if (!forceRefresh && cache != null) {
-      final cached = cache!.get<List<SellerVerificationRequirementEntity>>(
-        key: key,
-        ttl: _requirementsTtl,
-        fromJson: (json) {
-          final items = json['items'];
-          if (items is! List) return const [];
+      final cached = await cache!.read(key);
+      if (cached != null && cached.isFresh) {
+        final items = cached.payload['items'];
+        if (items is List && items.isNotEmpty) {
           return items
               .whereType<Map>()
               .map(
@@ -51,10 +49,7 @@ class SellerVerificationRepositoryImpl implements SellerVerificationRepository {
                 ),
               )
               .toList(growable: false);
-        },
-      );
-      if (cached != null && !cached.isExpired && cached.data.isNotEmpty) {
-        return cached.data;
+        }
       }
     }
 
@@ -64,14 +59,14 @@ class SellerVerificationRepositoryImpl implements SellerVerificationRepository {
     );
 
     if (cache != null && fresh.isNotEmpty) {
-      await cache!.put(
-        key: key,
-        data: fresh,
-        toJson: {
+      await cache!.write(
+        key,
+        {
           'items': fresh
               .map(SellerVerificationRequirementModel.toJson)
               .toList(growable: false),
         },
+        ttl: _requirementsTtl,
       );
     }
 

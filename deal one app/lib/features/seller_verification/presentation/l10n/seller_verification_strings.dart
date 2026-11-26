@@ -10,9 +10,8 @@ class SellerVerificationStrings {
 
   factory SellerVerificationStrings.of(BuildContext context) {
     final locale = Localizations.maybeLocaleOf(context);
-    final isAr = locale != null
-        ? locale.languageCode.toLowerCase() == 'ar'
-        : Directionality.of(context) == TextDirection.rtl;
+    final isAr = (locale != null && locale.languageCode.toLowerCase() == 'ar') ||
+        Directionality.of(context) == TextDirection.rtl;
     return SellerVerificationStrings._(isAr);
   }
 

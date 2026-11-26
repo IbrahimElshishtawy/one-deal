@@ -65,7 +65,7 @@ class PlatformDocumentPickerService implements DocumentPickerService {
       }
 
       if (path != null && path.isNotEmpty) {
-        return readFromFilePath(path);
+        return await readFromFilePath(path);
       }
 
       return null;

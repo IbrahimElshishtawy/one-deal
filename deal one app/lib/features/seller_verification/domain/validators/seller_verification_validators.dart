@@ -1,5 +1,4 @@
 import 'package:market_space/features/seller_verification/domain/entities/seller_verification_entities.dart';
-import 'package:market_space/features/seller_verification/domain/enums/seller_verification_enums.dart';
 
 /// Client-side input & file validators aligned with backend validation rules.
 class SellerVerificationValidators {

@@ -1,4 +1,4 @@
-/// Authoritative Seller Verification domain enums aligned 1:1 with the Deal One backend.
+// Authoritative Seller Verification domain enums aligned 1:1 with the Deal One backend.
 
 enum SellerType {
   individual('INDIVIDUAL'),
