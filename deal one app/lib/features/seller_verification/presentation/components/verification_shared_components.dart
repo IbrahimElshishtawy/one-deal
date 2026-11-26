@@ -4,6 +4,7 @@ import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/theme/app_radii.dart';
 import 'package:market_space/core/theme/app_spacing.dart';
 import 'package:market_space/features/seller_verification/presentation/l10n/seller_verification_strings.dart';
+import 'package:market_space/shared/widgets/app_loading_indicator.dart';
 
 /// Consistent verification flow app bar supporting RTL/LTR and dark/light themes.
 class VerificationAppBar extends StatelessWidget
@@ -178,14 +179,7 @@ class ContinueButton extends StatelessWidget {
           shape: const RoundedRectangleBorder(borderRadius: AppRadii.md),
         ),
         child: isLoading
-            ? SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  valueColor: AlwaysStoppedAnimation<Color>(fg),
-                ),
-              )
+            ? DealOneDotLoader(color: fg, dotSize: 7.5, spacing: 6)
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,

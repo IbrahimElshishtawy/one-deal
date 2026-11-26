@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:market_space/features/auth/presentation/theme/auth_design_tokens.dart';
+import 'package:market_space/shared/widgets/app_loading_indicator.dart';
 
 /// Full-width Dark Navy primary action CTA matching the Deal One auth screens.
 class AuthPrimaryButton extends StatelessWidget {
@@ -41,14 +42,7 @@ class AuthPrimaryButton extends StatelessWidget {
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
         child: isLoading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
+            ? const DealOneDotLoader(color: Colors.white, dotSize: 7.5, spacing: 6)
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,

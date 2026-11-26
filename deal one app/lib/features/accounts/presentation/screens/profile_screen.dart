@@ -27,6 +27,7 @@ import 'package:market_space/features/notifications/presentation/providers/user_
 import 'package:market_space/features/seller_verification/application/providers/seller_verification_providers.dart';
 import 'package:market_space/features/seller_verification/domain/enums/seller_verification_enums.dart';
 import 'package:market_space/features/seller_verification/presentation/widgets/badges/verification_badges.dart';
+import 'package:market_space/shared/widgets/app_loading_indicator.dart';
 
 /// Profile Screen matching `Profile.png` and connected to real Deal One backend endpoints:
 /// `GET /users/me`, `GET /accounts/my-accounts`, `GET /favorites`, `GET /bookings`.
@@ -156,7 +157,7 @@ class ProfileScreen extends ConsumerWidget {
                               height: 92,
                               decoration: DealOneTokens.cardDecoration(context),
                               child: const Center(
-                                child: CircularProgressIndicator.adaptive(),
+                                child: DealOneDotLoader(dotSize: 8.5),
                               ),
                             ),
                             error: (err, _) => DealOneErrorStateView(
