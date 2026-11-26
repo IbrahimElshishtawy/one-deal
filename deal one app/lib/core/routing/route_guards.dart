@@ -30,6 +30,16 @@ class SessionRouteGuard implements RouteGuard {
     RouteNames.homeServicesBookingWizard,
     RouteNames.homeServicesBookingDetail,
     RouteNames.homeServicesTechnicianTracking,
+    RouteNames.sellerVerification,
+    RouteNames.sellerVerificationType,
+    RouteNames.sellerVerificationInfo,
+    RouteNames.sellerVerificationRequirements,
+    RouteNames.sellerVerificationUpload,
+    RouteNames.sellerVerificationReview,
+    RouteNames.sellerVerificationSuccess,
+    RouteNames.sellerVerificationTracking,
+    RouteNames.sellerVerificationProfile,
+    RouteNames.sellerVerificationUpgrade,
   };
 
   /// Authentication entry routes redirected away once authenticated.

@@ -47,6 +47,38 @@ class ApiEndpoints {
   static String accountVerifications(String id) =>
       '/accounts/$id/verifications';
 
+  // Seller Verification & Business Upgrade
+  static const String sellerApplicationRequirements =
+      '/seller-applications/requirements';
+  static const String sellerApplications = '/seller-applications';
+  static const String sellerApplicationMe = '/seller-applications/me';
+  static const String sellerApplicationMeCorrections =
+      '/seller-applications/me/corrections';
+  static const String sellerApplicationMeHistory =
+      '/seller-applications/me/history';
+  static const String sellerApplicationMeDocumentUploadUrl =
+      '/seller-applications/me/documents/upload-url';
+  static const String sellerApplicationMeDocuments =
+      '/seller-applications/me/documents';
+  static String sellerApplicationMeDocumentReplace(String documentId) =>
+      '/seller-applications/me/documents/$documentId/replace';
+  static String sellerApplicationMeDocumentAccess(String documentId) =>
+      '/seller-applications/me/documents/$documentId/access';
+  static String sellerApplicationMeDocumentDelete(String documentId) =>
+      '/seller-applications/me/documents/$documentId';
+  static const String sellerApplicationMeSubmit =
+      '/seller-applications/me/submit';
+  static const String sellerApplicationMeResubmit =
+      '/seller-applications/me/resubmit';
+  static const String sellerApplicationDashboard =
+      '/seller-applications/dashboard';
+  static const String sellerBusinessUpgrade =
+      '/seller-applications/me/business-upgrade';
+  static const String sellerBusinessUpgradeSubmit =
+      '/seller-applications/me/business-upgrade/submit';
+  static const String sellerBusinessUpgradeResubmit =
+      '/seller-applications/me/business-upgrade/resubmit';
+
   // Categories & Dynamic Attributes
   static const String categories = '/categories';
   static String categoryBySlug(String slug) => '/categories/$slug';

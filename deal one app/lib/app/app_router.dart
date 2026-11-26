@@ -40,6 +40,16 @@ import 'package:market_space/features/real_estate/presentation/pages/real_estate
 import 'package:market_space/features/real_estate/presentation/pages/real_estate_map_page.dart';
 import 'package:market_space/features/real_estate/presentation/pages/real_estate_reels_page.dart';
 import 'package:market_space/features/search/presentation/screens/search_screen.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/business_upgrade_page.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/document_requirements_page.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/document_upload_page.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/seller_information_form_page.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/seller_onboarding_entry_page.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/seller_type_selection_page.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/submission_success_page.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/verification_review_page.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/verification_tracking_page.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/verified_seller_profile_page.dart';
 import 'package:market_space/features/services_engineering/presentation/pages/services_engineering_home_page.dart';
 
 class AppRouter {
@@ -534,6 +544,117 @@ class AppRouter {
                 child: const LegalDocumentPage(
                   documentType: LegalDocumentType.privacyPolicy,
                 ),
+              ),
+        ),
+        // Seller Verification & Business Upgrade Routes
+        GoRoute(
+          path: RouteNames.sellerVerification,
+          name: RouteNames.sellerVerificationName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const SellerOnboardingEntryPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.sellerVerificationType,
+          name: RouteNames.sellerVerificationTypeName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const SellerTypeSelectionPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.sellerVerificationInfo,
+          name: RouteNames.sellerVerificationInfoName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const SellerInformationFormPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.sellerVerificationRequirements,
+          name: RouteNames.sellerVerificationRequirementsName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const DocumentRequirementsPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.sellerVerificationUpload,
+          name: RouteNames.sellerVerificationUploadName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const DocumentUploadPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.sellerVerificationReview,
+          name: RouteNames.sellerVerificationReviewName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const VerificationReviewPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.sellerVerificationSuccess,
+          name: RouteNames.sellerVerificationSuccessName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.reveal,
+                child: const SubmissionSuccessPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.sellerVerificationTracking,
+          name: RouteNames.sellerVerificationTrackingName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const VerificationTrackingPage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.sellerVerificationProfile,
+          name: RouteNames.sellerVerificationProfileName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const VerifiedSellerProfilePage(),
+              ),
+        ),
+        GoRoute(
+          path: RouteNames.sellerVerificationUpgrade,
+          name: RouteNames.sellerVerificationUpgradeName,
+          pageBuilder: (context, state) =>
+              AppPageTransitions.buildCinematicPage(
+                context: context,
+                state: state,
+                style: CinematicTransitionStyle.glide,
+                child: const BusinessUpgradePage(),
               ),
         ),
       ],

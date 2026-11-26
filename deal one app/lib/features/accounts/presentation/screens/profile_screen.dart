@@ -24,6 +24,9 @@ import 'package:market_space/features/conversations/presentation/providers/conve
 import 'package:market_space/features/favorites/presentation/providers/favorites_providers.dart';
 import 'package:market_space/features/locations/presentation/providers/locations_providers.dart';
 import 'package:market_space/features/notifications/presentation/providers/user_notifications_providers.dart';
+import 'package:market_space/features/seller_verification/application/providers/seller_verification_providers.dart';
+import 'package:market_space/features/seller_verification/domain/enums/seller_verification_enums.dart';
+import 'package:market_space/features/seller_verification/presentation/widgets/badges/verification_badges.dart';
 
 /// Profile Screen matching `Profile.png` and connected to real Deal One backend endpoints:
 /// `GET /users/me`, `GET /accounts/my-accounts`, `GET /favorites`, `GET /bookings`.
@@ -206,11 +209,35 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: AppSpacing.lg),
 
-                          // 3. Create Business Account Banner
-                          ProfileBusinessBanner(
-                            accounts: accountsAsync.valueOrNull ?? const [],
-                            onStartNow: () =>
-                                showCreateBusinessAccountSheet(context),
+                          // 3. Seller Verification & Business Account Banner
+                          Builder(
+                            builder: (_) {
+                              final verificationAsync =
+                                  ref.watch(sellerVerificationBadgeProvider);
+                              final vSnap = verificationAsync.valueOrNull;
+                              if (vSnap != null &&
+                                  vSnap.sellerStatus !=
+                                      VerificationStatus.notSubmitted) {
+                                return SellerVerificationSummary(
+                                  snapshot: vSnap,
+                                  onTrackTap: () => context.push(
+                                    RouteNames.sellerVerificationTracking,
+                                  ),
+                                  onUpgradeTap:
+                                      vSnap.capabilities.canUpgradeToBusiness
+                                          ? () => context.push(
+                                                RouteNames
+                                                    .sellerVerificationUpgrade,
+                                              )
+                                          : null,
+                                );
+                              }
+                              return ProfileBusinessBanner(
+                                accounts: accountsAsync.valueOrNull ?? const [],
+                                onStartNow: () => context
+                                    .push(RouteNames.sellerVerification),
+                              );
+                            },
                           ),
                           const SizedBox(height: AppSpacing.lg),
 

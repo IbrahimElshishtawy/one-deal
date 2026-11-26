@@ -113,6 +113,23 @@ class RouteNames {
   static const String globalNotifications = '/notifications';
   static const String notFound = '/not-found';
 
+  // Seller Verification & Business Upgrade Flow
+  static const String sellerVerification = '/seller-verification';
+  static const String sellerVerificationType = '/seller-verification/type';
+  static const String sellerVerificationInfo = '/seller-verification/info';
+  static const String sellerVerificationRequirements =
+      '/seller-verification/requirements';
+  static const String sellerVerificationUpload = '/seller-verification/upload';
+  static const String sellerVerificationReview = '/seller-verification/review';
+  static const String sellerVerificationSuccess =
+      '/seller-verification/success';
+  static const String sellerVerificationTracking =
+      '/seller-verification/tracking';
+  static const String sellerVerificationProfile =
+      '/seller-verification/profile';
+  static const String sellerVerificationUpgrade =
+      '/seller-verification/upgrade';
+
   static const String searchName = 'search';
   static const String listingDetailName = 'listing_detail';
   static const String onboardingName = 'onboarding';
@@ -188,4 +205,22 @@ class RouteNames {
   static const String realEstateReelsName = 'real_estate_reels';
   static const String globalNotificationsName = 'global_notifications';
   static const String notFoundName = 'not_found';
+
+  static const String sellerVerificationName = 'seller_verification';
+  static const String sellerVerificationTypeName = 'seller_verification_type';
+  static const String sellerVerificationInfoName = 'seller_verification_info';
+  static const String sellerVerificationRequirementsName =
+      'seller_verification_requirements';
+  static const String sellerVerificationUploadName =
+      'seller_verification_upload';
+  static const String sellerVerificationReviewName =
+      'seller_verification_review';
+  static const String sellerVerificationSuccessName =
+      'seller_verification_success';
+  static const String sellerVerificationTrackingName =
+      'seller_verification_tracking';
+  static const String sellerVerificationProfileName =
+      'seller_verification_profile';
+  static const String sellerVerificationUpgradeName =
+      'seller_verification_upgrade';
 }
