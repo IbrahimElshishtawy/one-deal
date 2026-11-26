@@ -9,6 +9,8 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -36,6 +38,8 @@ import {
 import {
   ConfirmVerificationDocumentDto,
   CreateSellerApplicationDto,
+  GetVerificationRequirementsQueryDto,
+  ReplaceVerificationDocumentDto,
   RequestVerificationDocUploadUrlDto,
   ResubmitSellerApplicationDto,
   UpdateSellerApplicationDto,
@@ -57,6 +61,23 @@ export class SellerApplicationController {
       ipAddress: req.ip,
       userAgent: (req.headers['user-agent'] as string) || '',
     };
+  }
+
+  @Get('requirements')
+  @ApiOperation({
+    summary:
+      'Get configurable seller verification requirements by seller type and marketplace section(s)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Applicable verification requirements returned',
+  })
+  async getVerificationRequirements(
+    @Query() query: GetVerificationRequirementsQueryDto,
+  ) {
+    return this.sellerApplicationService.getVerificationRequirementsForUser(
+      query,
+    );
   }
 
   @Post()
@@ -83,11 +104,20 @@ export class SellerApplicationController {
 
   @Get('me')
   @ApiOperation({
-    summary: 'Get current user seller status, capabilities, and active application',
+    summary: 'Get current user seller status, capabilities, and active application details',
   })
   @ApiResponse({ status: 200, description: 'Seller application status returned' })
   async getMyApplication(@CurrentUser() user: AuthenticatedUser) {
     return this.sellerApplicationService.getMyApplication(user.id);
+  }
+
+  @Get('me/corrections')
+  @ApiOperation({
+    summary: 'Get active correction requests (affected fields and rejected documents)',
+  })
+  @ApiResponse({ status: 200, description: 'Correction requests returned' })
+  async getMyCorrections(@CurrentUser() user: AuthenticatedUser) {
+    return this.sellerApplicationService.getMyCorrections(user.id);
   }
 
   @Get('me/history')
@@ -103,8 +133,10 @@ export class SellerApplicationController {
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 3600)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Update current user seller application draft' })
-  @ApiResponse({ status: 200, description: 'Seller application draft updated' })
+  @ApiOperation({
+    summary: 'Update current user seller application draft (or affected fields when NEEDS_CORRECTION)',
+  })
+  @ApiResponse({ status: 200, description: 'Seller application updated' })
   async updateDraft(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateSellerApplicationDto,
@@ -164,6 +196,30 @@ export class SellerApplicationController {
     );
   }
 
+  @Put('me/documents/:documentId/replace')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(20, 3600)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Replace a verification document (preserves previous version in audit history; enforces affected-doc restriction during NEEDS_CORRECTION)',
+  })
+  @ApiParam({ name: 'documentId', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Verification document replaced with new version' })
+  async replaceDocument(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @Body() dto: ReplaceVerificationDocumentDto,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.sellerApplicationService.replaceDocument(
+      user.id,
+      documentId,
+      dto,
+      this.extractContext(req),
+    );
+  }
+
   @Get('me/documents/:documentId/access')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 3600)
@@ -190,10 +246,10 @@ export class SellerApplicationController {
   @RateLimit(20, 3600)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Delete an uploaded verification document while editable',
+    summary: 'Remove an uploaded verification document from an editable draft',
   })
   @ApiParam({ name: 'documentId', format: 'uuid' })
-  @ApiResponse({ status: 200, description: 'Document deleted' })
+  @ApiResponse({ status: 200, description: 'Document removed' })
   async deleteDocument(
     @CurrentUser() user: AuthenticatedUser,
     @Param('documentId', ParseUUIDPipe) documentId: string,
@@ -232,7 +288,7 @@ export class SellerApplicationController {
   @RateLimit(10, 3600)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Reopen or resubmit a rejected seller application',
+    summary: 'Resubmit a corrected (NEEDS_CORRECTION), rejected, or expired seller application',
   })
   @ApiResponse({ status: 200, description: 'Application reopened or resubmitted' })
   async resubmitApplication(

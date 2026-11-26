@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -31,12 +33,19 @@ import {
   RequestAuditContext,
   SellerApplicationService,
 } from '../services/seller-application.service';
+import { SellerVerificationRequirementsService } from '../services/seller-verification-requirements.service';
 import {
   AdminApproveSellerApplicationDto,
+  AdminCreateRequirementDto,
+  AdminExpireSellerDto,
+  AdminListRequirementsQueryDto,
   AdminRejectSellerApplicationDto,
+  AdminRequestCorrectionDto,
+  AdminReviewDocumentDto,
   AdminReviewSellerApplicationDto,
   AdminSellerApplicationsQueryDto,
   AdminSuspendSellerDto,
+  AdminUpdateRequirementDto,
 } from '../dto/seller-application.dto';
 
 @ApiTags('Admin / Seller Verification')
@@ -46,6 +55,7 @@ import {
 export class AdminSellerApplicationsController {
   constructor(
     private readonly sellerApplicationService: SellerApplicationService,
+    private readonly requirementsService: SellerVerificationRequirementsService,
   ) {}
 
   private extractContext(req: FastifyRequest): RequestAuditContext {
@@ -57,10 +67,90 @@ export class AdminSellerApplicationsController {
     };
   }
 
+  // =========================================================================
+  // VERIFICATION REQUIREMENTS ENGINE MANAGEMENT
+  // =========================================================================
+
+  @Get('requirements')
+  @Permissions('verification.read')
+  @ApiOperation({
+    summary: 'List configurable seller verification requirements',
+  })
+  @ApiResponse({ status: 200, description: 'Verification requirements returned' })
+  async listRequirements(@Query() query: AdminListRequirementsQueryDto) {
+    return this.requirementsService.listRequirementsForAdmin(query);
+  }
+
+  @Post('requirements')
+  @AnyPermissions('verification.requirements.manage', 'settings.update')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create a configurable seller verification requirement',
+  })
+  @ApiResponse({ status: 201, description: 'Verification requirement created' })
+  async createRequirement(
+    @Body() dto: AdminCreateRequirementDto,
+    @CurrentStaff() staff: AuthenticatedStaff,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.requirementsService.createRequirement(
+      dto,
+      staff,
+      this.extractContext(req),
+    );
+  }
+
+  @Patch('requirements/:requirementId')
+  @AnyPermissions('verification.requirements.manage', 'settings.update')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update a verification requirement (automatically increments version)',
+  })
+  @ApiParam({ name: 'requirementId', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Verification requirement updated' })
+  async updateRequirement(
+    @Param('requirementId', ParseUUIDPipe) requirementId: string,
+    @Body() dto: AdminUpdateRequirementDto,
+    @CurrentStaff() staff: AuthenticatedStaff,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.requirementsService.updateRequirement(
+      requirementId,
+      dto,
+      staff,
+      this.extractContext(req),
+    );
+  }
+
+  @Delete('requirements/:requirementId')
+  @AnyPermissions('verification.requirements.manage', 'settings.update')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Deactivate (soft-delete) a verification requirement',
+  })
+  @ApiParam({ name: 'requirementId', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Verification requirement deactivated' })
+  async deactivateRequirement(
+    @Param('requirementId', ParseUUIDPipe) requirementId: string,
+    @CurrentStaff() staff: AuthenticatedStaff,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.requirementsService.deactivateRequirement(
+      requirementId,
+      staff,
+      this.extractContext(req),
+    );
+  }
+
+  // =========================================================================
+  // SELLER APPLICATIONS REVIEW & DECISIONS
+  // =========================================================================
+
   @Get()
   @Permissions('verification.read')
   @ApiOperation({
-    summary: 'List seller applications with status filtering and pagination',
+    summary:
+      'List seller applications with status, seller type, and marketplace section filtering',
   })
   @ApiResponse({ status: 200, description: 'Seller applications returned' })
   async listApplications(
@@ -79,7 +169,8 @@ export class AdminSellerApplicationsController {
   @Get(':id')
   @Permissions('verification.read')
   @ApiOperation({
-    summary: 'Get seller application details, completeness, documents, and history',
+    summary:
+      'Get seller application details, completeness, missing documents, document versions/reviews, and history',
   })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Application detail returned' })
@@ -127,6 +218,31 @@ export class AdminSellerApplicationsController {
     );
   }
 
+  @Post(':id/documents/:documentId/review')
+  @AnyPermissions('verification.approve', 'verification.reject')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Accept or reject an individual submitted verification document',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'documentId', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Document review decision recorded' })
+  async reviewDocument(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @CurrentStaff() staff: AuthenticatedStaff,
+    @Body() dto: AdminReviewDocumentDto,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.sellerApplicationService.reviewDocument(
+      id,
+      documentId,
+      staff,
+      dto,
+      this.extractContext(req),
+    );
+  }
+
   @Post(':id/review')
   @AnyPermissions('verification.approve', 'verification.reject')
   @HttpCode(HttpStatus.OK)
@@ -142,6 +258,29 @@ export class AdminSellerApplicationsController {
     @Req() req: FastifyRequest,
   ) {
     return this.sellerApplicationService.startReview(
+      id,
+      staff,
+      dto,
+      this.extractContext(req),
+    );
+  }
+
+  @Post(':id/request-correction')
+  @AnyPermissions('verification.reject', 'verification.approve')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Request corrections on an UNDER_REVIEW application (UNDER_REVIEW -> NEEDS_CORRECTION)',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Correction request issued' })
+  async requestCorrection(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentStaff() staff: AuthenticatedStaff,
+    @Body() dto: AdminRequestCorrectionDto,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.sellerApplicationService.requestCorrection(
       id,
       staff,
       dto,
@@ -210,6 +349,29 @@ export class AdminSellerApplicationsController {
     @Req() req: FastifyRequest,
   ) {
     return this.sellerApplicationService.suspendSeller(
+      id,
+      staff,
+      dto,
+      this.extractContext(req),
+    );
+  }
+
+  @Post(':id/expire')
+  @AnyPermissions('verification.reject', 'verification.approve')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Expire an approved seller verification (revokes seller-only permissions while preserving buyer permissions and data)',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Seller verification marked EXPIRED' })
+  async expireSeller(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentStaff() staff: AuthenticatedStaff,
+    @Body() dto: AdminExpireSellerDto,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.sellerApplicationService.expireSellerVerification(
       id,
       staff,
       dto,

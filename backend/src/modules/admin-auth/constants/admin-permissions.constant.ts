@@ -211,6 +211,16 @@ export const ADMIN_PERMISSION_CATALOG: PermissionCatalogItem[] = [
       'Reject verification requests or request document resubmission',
     descriptionAr: 'رفض طلبات التوثيق أو طلب استكمال المستندات',
   },
+  {
+    key: 'verification.requirements.manage',
+    module: 'verification',
+    labelEn: 'Manage Seller Verification Requirements',
+    labelAr: 'إدارة متطلبات توثيق البائعين',
+    descriptionEn:
+      'Create, update, version, and deactivate configurable seller verification document requirements',
+    descriptionAr: 'إنشاء وتعديل وإصدار وتعطيل متطلبات مستندات توثيق البائعين',
+    isSensitive: true,
+  },
 
   // Messaging Oversight
   {

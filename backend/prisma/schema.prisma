@@ -238,66 +238,145 @@ model AccountVerification {
 }
 
 model SellerApplication {
-  id                       String    @id @default(uuid()) @db.Uuid
-  userId                   String    @map("user_id") @db.Uuid
-  accountId                String?   @map("account_id") @db.Uuid
-  status                   String    @default("DRAFT") @db.VarChar(25) // DRAFT, PENDING, UNDER_REVIEW, APPROVED, REJECTED, SUSPENDED
-  businessType             String    @default("individual") @map("business_type") @db.VarChar(20) // individual, company, factory, office, store
-  businessName             String?   @map("business_name") @db.VarChar(150)
-  businessDescription      String?   @map("business_description") @db.Text
-  nationalIdNumber         String?   @map("national_id_number") @db.VarChar(50)
-  taxIdNumber              String?   @map("tax_id_number") @db.VarChar(50)
-  commercialRegisterNumber String?   @map("commercial_register_number") @db.VarChar(100)
-  contactPhone             String?   @map("contact_phone") @db.VarChar(20)
-  contactEmail             String?   @map("contact_email") @db.VarChar(255)
-  cityId                   Int?      @map("city_id")
-  address                  String?   @db.Text
-  submittedAt              DateTime? @map("submitted_at") @db.Timestamptz
-  reviewedAt               DateTime? @map("reviewed_at") @db.Timestamptz
-  reviewedByStaffId        String?   @map("reviewed_by_staff_id") @db.Uuid
-  assignedToStaffId        String?   @map("assigned_to_staff_id") @db.Uuid
-  rejectionReason          String?   @map("rejection_reason") @db.Text
-  suspensionReason         String?   @map("suspension_reason") @db.Text
-  adminNotes               String?   @map("admin_notes") @db.Text
-  resubmissionCount        Int       @default(0) @map("resubmission_count")
-  isActive                 Boolean   @default(true) @map("is_active")
-  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  id                           String    @id @default(uuid()) @db.Uuid
+  userId                       String    @map("user_id") @db.Uuid
+  accountId                    String?   @map("account_id") @db.Uuid
+  status                       String    @default("DRAFT") @db.VarChar(25) // DRAFT, PENDING, UNDER_REVIEW, NEEDS_CORRECTION, APPROVED, REJECTED, SUSPENDED, EXPIRED
+  sellerType                   String    @default("INDIVIDUAL") @map("seller_type") @db.VarChar(30) // INDIVIDUAL, BUSINESS, SERVICE_PROVIDER
+  businessType                 String    @default("individual") @map("business_type") @db.VarChar(20) // individual, company, factory, office, store
+  marketplaceSections          Json      @default("[]") @map("marketplace_sections")
+  businessName                 String?   @map("business_name") @db.VarChar(150)
+  businessDescription          String?   @map("business_description") @db.Text
+  nationalIdNumber             String?   @map("national_id_number") @db.Text
+  taxIdNumber                  String?   @map("tax_id_number") @db.Text
+  commercialRegisterNumber     String?   @map("commercial_register_number") @db.VarChar(100)
+  authorizedRepresentativeName String?   @map("authorized_representative_name") @db.VarChar(150)
+  authorizedRepresentativeId   String?   @map("authorized_representative_id") @db.Text
+  serviceCategory              String?   @map("service_category") @db.VarChar(120)
+  yearsOfExperience            Int?      @map("years_of_experience")
+  qualifications               String?   @db.Text
+  professionalLicenseNumber    String?   @map("professional_license_number") @db.VarChar(100)
+  portfolioUrl                 String?   @map("portfolio_url") @db.VarChar(500)
+  contactPhone                 String?   @map("contact_phone") @db.VarChar(20)
+  contactEmail                 String?   @map("contact_email") @db.VarChar(255)
+  cityId                       Int?      @map("city_id")
+  address                      String?   @db.Text
+  submittedAt                  DateTime? @map("submitted_at") @db.Timestamptz
+  reviewedAt                   DateTime? @map("reviewed_at") @db.Timestamptz
+  reviewedByStaffId            String?   @map("reviewed_by_staff_id") @db.Uuid
+  assignedToStaffId            String?   @map("assigned_to_staff_id") @db.Uuid
+  rejectionReason              String?   @map("rejection_reason") @db.Text
+  suspensionReason             String?   @map("suspension_reason") @db.Text
+  correctionFields             Json      @default("[]") @map("correction_fields")
+  correctionReason             String?   @map("correction_reason") @db.Text
+  correctionRequestedAt        DateTime? @map("correction_requested_at") @db.Timestamptz
+  verificationExpiresAt        DateTime? @map("verification_expires_at") @db.Timestamptz
+  expiredAt                    DateTime? @map("expired_at") @db.Timestamptz
+  adminNotes                   String?   @map("admin_notes") @db.Text
+  resubmissionCount            Int       @default(0) @map("resubmission_count")
+  isActive                     Boolean   @default(true) @map("is_active")
+  createdAt                    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt                    DateTime? @map("deleted_at") @db.Timestamptz
 
-  user       User                        @relation("UserSellerApplications", fields: [userId], references: [id], onDelete: Restrict)
-  account    Account?                    @relation("AccountSellerApplications", fields: [accountId], references: [id], onDelete: SetNull)
-  reviewedBy StaffUser?                  @relation("ReviewedSellerApplications", fields: [reviewedByStaffId], references: [id], onDelete: SetNull)
-  assignedTo StaffUser?                  @relation("AssignedSellerApplications", fields: [assignedToStaffId], references: [id], onDelete: SetNull)
-  documents  SellerApplicationDocument[]
-  history    SellerApplicationHistory[]
+  user            User                        @relation("UserSellerApplications", fields: [userId], references: [id], onDelete: Restrict)
+  account         Account?                    @relation("AccountSellerApplications", fields: [accountId], references: [id], onDelete: SetNull)
+  reviewedBy      StaffUser?                  @relation("ReviewedSellerApplications", fields: [reviewedByStaffId], references: [id], onDelete: SetNull)
+  assignedTo      StaffUser?                  @relation("AssignedSellerApplications", fields: [assignedToStaffId], references: [id], onDelete: SetNull)
+  documents       SellerApplicationDocument[]
+  documentReviews SellerDocumentReview[]
+  history         SellerApplicationHistory[]
 
   @@index([userId, isActive])
   @@index([status, submittedAt])
+  @@index([sellerType, status])
   @@index([assignedToStaffId, status])
+  @@index([verificationExpiresAt])
   @@map("seller_applications")
 }
 
-model SellerApplicationDocument {
-  id               String    @id @default(uuid()) @db.Uuid
-  applicationId    String    @map("application_id") @db.Uuid
-  userId           String    @map("user_id") @db.Uuid
-  documentType     String    @map("document_type") @db.VarChar(50)
-  storageKey       String    @unique @map("storage_key") @db.VarChar(500)
-  originalFileName String    @map("original_file_name") @db.VarChar(255)
-  mimeType         String    @map("mime_type") @db.VarChar(100)
-  fileSizeBytes    Int       @map("file_size_bytes")
-  checksumSha256   String?   @map("checksum_sha256") @db.VarChar(64)
-  status           String    @default("UPLOADED") @db.VarChar(20) // PENDING_UPLOAD, UPLOADED, VERIFIED, REJECTED
-  uploadedAt       DateTime? @map("uploaded_at") @db.Timestamptz
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+model SellerVerificationRequirement {
+  id                 String    @id @default(uuid()) @db.Uuid
+  sellerType         String    @map("seller_type") @db.VarChar(30) // INDIVIDUAL, BUSINESS, SERVICE_PROVIDER, ALL
+  marketplaceSection String?   @map("marketplace_section") @db.VarChar(60) // null = all sections, or real-estate, building-materials, services, home-appliances, cars, fashion
+  documentType       String    @map("document_type") @db.VarChar(50)
+  displayName        String    @map("display_name") @db.VarChar(150)
+  displayNameAr      String?   @map("display_name_ar") @db.VarChar(150)
+  description        String?   @db.Text
+  isRequired         Boolean   @default(true) @map("is_required")
+  acceptedMimeTypes  Json      @default("[\"application/pdf\",\"image/jpeg\",\"image/png\",\"image/webp\"]") @map("accepted_mime_types")
+  maxFileSizeBytes   Int       @default(10485760) @map("max_file_size_bytes")
+  requiresExpiration Boolean   @default(false) @map("requires_expiration")
+  verificationRules  Json      @default("{}") @map("verification_rules")
+  isActive           Boolean   @default(true) @map("is_active")
+  version            Int       @default(1)
+  sortOrder          Int       @default(0) @map("sort_order")
+  createdByStaffId   String?   @map("created_by_staff_id") @db.Uuid
+  updatedByStaffId   String?   @map("updated_by_staff_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz
 
-  application SellerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  user        User              @relation("UserSellerApplicationDocuments", fields: [userId], references: [id], onDelete: Restrict)
+  documents SellerApplicationDocument[]
+
+  @@index([sellerType, marketplaceSection, isActive])
+  @@index([documentType, isActive])
+  @@map("seller_verification_requirements")
+}
+
+model SellerApplicationDocument {
+  id                   String    @id @default(uuid()) @db.Uuid
+  applicationId        String    @map("application_id") @db.Uuid
+  userId               String    @map("user_id") @db.Uuid
+  requirementId        String?   @map("requirement_id") @db.Uuid
+  documentType         String    @map("document_type") @db.VarChar(50)
+  storageKey           String    @unique @map("storage_key") @db.VarChar(500)
+  originalFileName     String    @map("original_file_name") @db.VarChar(255)
+  mimeType             String    @map("mime_type") @db.VarChar(100)
+  fileSizeBytes        Int       @map("file_size_bytes")
+  checksumSha256       String?   @map("checksum_sha256") @db.VarChar(64)
+  status               String    @default("UPLOADED") @db.VarChar(20) // PENDING_UPLOAD, UPLOADED, VERIFIED, REJECTED
+  version              Int       @default(1)
+  isCurrent            Boolean   @default(true) @map("is_current")
+  replacedByDocumentId String?   @map("replaced_by_document_id") @db.Uuid
+  expiresAt            DateTime? @map("expires_at") @db.Timestamptz
+  rejectionReason      String?   @map("rejection_reason") @db.Text
+  uploadedAt           DateTime? @map("uploaded_at") @db.Timestamptz
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz
+
+  application SellerApplication              @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user        User                           @relation("UserSellerApplicationDocuments", fields: [userId], references: [id], onDelete: Restrict)
+  requirement SellerVerificationRequirement? @relation(fields: [requirementId], references: [id], onDelete: SetNull)
+  reviews     SellerDocumentReview[]
 
   @@index([applicationId, documentType])
+  @@index([applicationId, documentType, isCurrent])
   @@index([userId])
+  @@index([expiresAt])
   @@map("seller_application_documents")
+}
+
+model SellerDocumentReview {
+  id            String   @id @default(uuid()) @db.Uuid
+  applicationId String   @map("application_id") @db.Uuid
+  documentId    String   @map("document_id") @db.Uuid
+  adminId       String?  @map("admin_id") @db.Uuid
+  decision      String   @db.VarChar(30) // APPROVED, REJECTED, CORRECTION_REQUIRED
+  reason        String?  @db.Text
+  notes         String?  @db.Text
+  reviewedAt    DateTime @default(now()) @map("reviewed_at") @db.Timestamptz
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  application SellerApplication         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  document    SellerApplicationDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  admin       StaffUser?                @relation("AdminSellerDocumentReviews", fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId, reviewedAt(sort: Desc)])
+  @@index([documentId, reviewedAt(sort: Desc)])
+  @@index([adminId, reviewedAt(sort: Desc)])
+  @@map("seller_document_reviews")
 }
 
 model SellerApplicationHistory {
@@ -679,6 +758,7 @@ model StaffUser {
   reviewedSellerApplications     SellerApplication[]         @relation("ReviewedSellerApplications")
   assignedSellerApplications     SellerApplication[]         @relation("AssignedSellerApplications")
   sellerApplicationDecisions     SellerApplicationHistory[]  @relation("AdminSellerApplicationDecisions")
+  sellerDocumentReviews          SellerDocumentReview[]      @relation("AdminSellerDocumentReviews")
   resolvedReports                Report[]                    @relation("ResolvedReports")
   assignedReports         Report[]                  @relation("AssignedReports")
   platformSettingsUpdates PlatformSetting[]         @relation("StaffPlatformSettings")

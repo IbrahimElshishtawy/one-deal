@@ -206,6 +206,21 @@ export class SecurityAuditService implements OnModuleInit, OnModuleDestroy {
       'api_key',
       'privatekey',
       'private_key',
+      'nationalid',
+      'national_id',
+      'taxid',
+      'tax_id',
+      'representativeid',
+      'representative_id',
+      'accessurl',
+      'access_url',
+      'uploadurl',
+      'upload_url',
+      'signedurl',
+      'signed_url',
+      'documentcontent',
+      'filecontent',
+      'fileheaderbase64',
     ];
 
     const isSensitiveKey = (key: string): boolean => {

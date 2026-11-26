@@ -4,22 +4,26 @@ import {
   SellerApplicationStatus,
   SellerDocumentStatus,
   SellerDocumentType,
+  SellerType,
 } from '../../core/enums/domain.enums';
 
 /**
  * Authoritative Seller Application Lifecycle State Machine.
  *
  * Allowed transitions:
- *   NOT_REQUESTED -> DRAFT
- *   DRAFT         -> PENDING
- *   PENDING       -> UNDER_REVIEW | APPROVED | REJECTED
- *   UNDER_REVIEW  -> APPROVED | REJECTED
- *   REJECTED      -> DRAFT | PENDING
- *   APPROVED      -> SUSPENDED
- *   SUSPENDED     -> APPROVED
+ *   NOT_REQUESTED    -> DRAFT
+ *   DRAFT            -> PENDING
+ *   PENDING          -> UNDER_REVIEW | APPROVED | REJECTED
+ *   UNDER_REVIEW     -> NEEDS_CORRECTION | APPROVED | REJECTED
+ *   NEEDS_CORRECTION -> PENDING
+ *   REJECTED         -> DRAFT | PENDING
+ *   APPROVED         -> SUSPENDED | EXPIRED
+ *   SUSPENDED        -> APPROVED
+ *   EXPIRED          -> DRAFT | PENDING
  *
  * Arbitrary transitions (e.g., DRAFT -> APPROVED, REJECTED -> APPROVED,
- * NOT_REQUESTED -> APPROVED, APPROVED -> DRAFT) are strictly prohibited.
+ * NOT_REQUESTED -> APPROVED, APPROVED -> DRAFT, NEEDS_CORRECTION -> APPROVED)
+ * are strictly prohibited.
  */
 export const SELLER_APPLICATION_TRANSITIONS: Readonly<
   Record<SellerApplicationStatus, ReadonlyArray<SellerApplicationStatus>>
@@ -32,16 +36,69 @@ export const SELLER_APPLICATION_TRANSITIONS: Readonly<
     SellerApplicationStatus.REJECTED,
   ],
   [SellerApplicationStatus.UNDER_REVIEW]: [
+    SellerApplicationStatus.NEEDS_CORRECTION,
     SellerApplicationStatus.APPROVED,
     SellerApplicationStatus.REJECTED,
   ],
+  [SellerApplicationStatus.NEEDS_CORRECTION]: [SellerApplicationStatus.PENDING],
   [SellerApplicationStatus.REJECTED]: [
     SellerApplicationStatus.DRAFT,
     SellerApplicationStatus.PENDING,
   ],
-  [SellerApplicationStatus.APPROVED]: [SellerApplicationStatus.SUSPENDED],
+  [SellerApplicationStatus.APPROVED]: [
+    SellerApplicationStatus.SUSPENDED,
+    SellerApplicationStatus.EXPIRED,
+  ],
   [SellerApplicationStatus.SUSPENDED]: [SellerApplicationStatus.APPROVED],
+  [SellerApplicationStatus.EXPIRED]: [
+    SellerApplicationStatus.DRAFT,
+    SellerApplicationStatus.PENDING,
+  ],
 };
+
+export function resolveSellerType(
+  sellerType?: SellerType | string | null,
+  businessType?: AccountType | string | null,
+): SellerType {
+  if (sellerType) {
+    const normalized = String(sellerType).toUpperCase();
+    if (
+      normalized === SellerType.INDIVIDUAL ||
+      normalized === SellerType.BUSINESS ||
+      normalized === SellerType.SERVICE_PROVIDER
+    ) {
+      return normalized as SellerType;
+    }
+  }
+  if (
+    businessType &&
+    [
+      AccountType.COMPANY,
+      AccountType.FACTORY,
+      AccountType.OFFICE,
+      AccountType.STORE,
+    ].includes(businessType as AccountType)
+  ) {
+    return SellerType.BUSINESS;
+  }
+  return SellerType.INDIVIDUAL;
+}
+
+export function resolveBusinessType(
+  businessType?: AccountType | string | null,
+  sellerType?: SellerType | string | null,
+): AccountType {
+  if (
+    businessType &&
+    Object.values(AccountType).includes(businessType as AccountType)
+  ) {
+    return businessType as AccountType;
+  }
+  if (sellerType === SellerType.BUSINESS) {
+    return AccountType.COMPANY;
+  }
+  return AccountType.INDIVIDUAL;
+}
 
 export function isValidSellerStatusTransition(
   from: SellerApplicationStatus,

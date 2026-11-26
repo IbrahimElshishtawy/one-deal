@@ -5,12 +5,15 @@ import { SellerApplicationController } from './controllers/seller-application.co
 import { AdminSellerApplicationsController } from './controllers/admin-seller-applications.controller';
 import { SellerApplicationService } from './services/seller-application.service';
 import { PrivateDocumentStorageService } from './services/private-document-storage.service';
+import { SensitiveDataCryptoService } from './services/sensitive-data-crypto.service';
+import { SellerVerificationRequirementsService } from './services/seller-verification-requirements.service';
 import { SellerAuthorizationGuard } from './guards/seller-authorization.guard';
 import { AuthModule } from '../auth/auth.module';
 import { AdminAuthModule } from '../admin-auth/admin-auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [AuthModule, AdminAuthModule],
+  imports: [AuthModule, AdminAuthModule, NotificationsModule],
   controllers: [
     AccountsController,
     SellerApplicationController,
@@ -20,12 +23,16 @@ import { AdminAuthModule } from '../admin-auth/admin-auth.module';
     AccountsService,
     SellerApplicationService,
     PrivateDocumentStorageService,
+    SensitiveDataCryptoService,
+    SellerVerificationRequirementsService,
     SellerAuthorizationGuard,
   ],
   exports: [
     AccountsService,
     SellerApplicationService,
     PrivateDocumentStorageService,
+    SensitiveDataCryptoService,
+    SellerVerificationRequirementsService,
     SellerAuthorizationGuard,
   ],
 })

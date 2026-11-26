@@ -87,25 +87,120 @@ export class PrivateDocumentStorageService {
     );
   }
 
-  validateFileMetadata(mimeType: string, fileSizeBytes: number): void {
-    if (
-      !ALLOWED_VERIFICATION_MIME_TYPES.includes(
-        mimeType as AllowedVerificationMimeType,
-      )
-    ) {
-      throw new BadRequestException(
-        `Unsupported verification document type '${mimeType}'. Allowed types: ${ALLOWED_VERIFICATION_MIME_TYPES.join(', ')}`,
-      );
+  validateFileMetadata(
+    mimeType: string,
+    fileSizeBytes: number,
+    options?: {
+      acceptedMimeTypes?: readonly string[];
+      maxFileSizeBytes?: number;
+    },
+  ): void {
+    const allowedMimes =
+      options?.acceptedMimeTypes && options.acceptedMimeTypes.length > 0
+        ? options.acceptedMimeTypes
+        : ALLOWED_VERIFICATION_MIME_TYPES;
+
+    if (!allowedMimes.includes(mimeType)) {
+      throw new BadRequestException({
+        code: 'INVALID_DOCUMENT_MIME_TYPE',
+        message: `Unsupported verification document type '${mimeType}'. Allowed types: ${allowedMimes.join(', ')}`,
+      });
     }
+
+    const effectiveMaxSize = Math.min(
+      options?.maxFileSizeBytes && options.maxFileSizeBytes > 0
+        ? options.maxFileSizeBytes
+        : MAX_VERIFICATION_DOC_SIZE_BYTES,
+      25 * 1024 * 1024, // hard global safety ceiling: 25 MB
+    );
 
     if (
       !Number.isInteger(fileSizeBytes) ||
       fileSizeBytes <= 0 ||
-      fileSizeBytes > MAX_VERIFICATION_DOC_SIZE_BYTES
+      fileSizeBytes > effectiveMaxSize
     ) {
-      throw new BadRequestException(
-        `Verification document size must be between 1 byte and ${MAX_VERIFICATION_DOC_SIZE_BYTES / (1024 * 1024)} MB`,
-      );
+      throw new BadRequestException({
+        code: 'DOCUMENT_SIZE_EXCEEDED',
+        message: `Verification document size must be between 1 byte and ${(effectiveMaxSize / (1024 * 1024)).toFixed(2).replace(/\.00$/, '')} MB`,
+        maxSizeBytes: effectiveMaxSize,
+      });
+    }
+  }
+
+  /**
+   * Validates actual file magic bytes against the declared MIME type to block
+   * spoofed/renamed executable or polyglot payloads.
+   */
+  validateFileContentSignature(
+    mimeType: string,
+    fileHeaderBase64?: string | null,
+  ): void {
+    if (!fileHeaderBase64) {
+      return;
+    }
+
+    let buf: Buffer;
+    try {
+      buf = Buffer.from(fileHeaderBase64.trim(), 'base64');
+    } catch {
+      throw new BadRequestException({
+        code: 'INVALID_FILE_CONTENT',
+        message: 'Invalid base64 file header provided for content verification',
+      });
+    }
+
+    if (buf.length < 4) {
+      throw new BadRequestException({
+        code: 'INVALID_FILE_CONTENT',
+        message: 'File content header is too short to verify file signature',
+      });
+    }
+
+    let valid = false;
+    switch (mimeType) {
+      case 'application/pdf':
+        // %PDF-
+        valid =
+          buf.length >= 5 &&
+          buf[0] === 0x25 &&
+          buf[1] === 0x50 &&
+          buf[2] === 0x44 &&
+          buf[3] === 0x46 &&
+          buf[4] === 0x2d;
+        break;
+      case 'image/jpeg':
+        // FF D8 FF
+        valid = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+        break;
+      case 'image/png':
+        // 89 50 4E 47 0D 0A 1A 0A
+        valid =
+          buf.length >= 8 &&
+          buf[0] === 0x89 &&
+          buf[1] === 0x50 &&
+          buf[2] === 0x4e &&
+          buf[3] === 0x47 &&
+          buf[4] === 0x0d &&
+          buf[5] === 0x0a &&
+          buf[6] === 0x1a &&
+          buf[7] === 0x0a;
+        break;
+      case 'image/webp':
+        // RIFF....WEBP
+        valid =
+          buf.length >= 12 &&
+          buf.toString('ascii', 0, 4) === 'RIFF' &&
+          buf.toString('ascii', 8, 12) === 'WEBP';
+        break;
+      default:
+        valid = false;
+    }
+
+    if (!valid) {
+      throw new BadRequestException({
+        code: 'FILE_CONTENT_MIME_MISMATCH',
+        message: `Uploaded file content signature does not match declared MIME type '${mimeType}'`,
+      });
     }
   }
 
@@ -114,8 +209,12 @@ export class PrivateDocumentStorageService {
     applicationId: string,
     mimeType: string,
     fileSizeBytes: number,
+    options?: {
+      acceptedMimeTypes?: readonly string[];
+      maxFileSizeBytes?: number;
+    },
   ): PrivateUploadTarget {
-    this.validateFileMetadata(mimeType, fileSizeBytes);
+    this.validateFileMetadata(mimeType, fileSizeBytes, options);
 
     const hasCredentials = this.hasRealR2Credentials();
     if (!hasCredentials && this.nodeEnv === 'production') {
@@ -140,7 +239,7 @@ export class PrivateDocumentStorageService {
       uploadUrl,
       expiresInSeconds,
       contentType: mimeType,
-      maxSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
+      maxSizeBytes: options?.maxFileSizeBytes ?? MAX_VERIFICATION_DOC_SIZE_BYTES,
     };
   }
 

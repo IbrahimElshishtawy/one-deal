@@ -40,14 +40,31 @@ export enum VerificationStatus {
   SUSPENDED = 'suspended',
 }
 
+export enum SellerType {
+  INDIVIDUAL = 'INDIVIDUAL',
+  BUSINESS = 'BUSINESS',
+  SERVICE_PROVIDER = 'SERVICE_PROVIDER',
+}
+
+export enum MarketplaceSection {
+  REAL_ESTATE = 'real-estate',
+  BUILDING_MATERIALS = 'building-materials',
+  SERVICES = 'services',
+  HOME_APPLIANCES = 'home-appliances',
+  CARS = 'cars',
+  FASHION = 'fashion',
+}
+
 export enum SellerApplicationStatus {
   NOT_REQUESTED = 'NOT_REQUESTED',
   DRAFT = 'DRAFT',
   PENDING = 'PENDING',
   UNDER_REVIEW = 'UNDER_REVIEW',
+  NEEDS_CORRECTION = 'NEEDS_CORRECTION',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
   SUSPENDED = 'SUSPENDED',
+  EXPIRED = 'EXPIRED',
 }
 
 export enum SellerDocumentType {
@@ -55,8 +72,18 @@ export enum SellerDocumentType {
   NATIONAL_ID_BACK = 'national_id_back',
   COMMERCIAL_REGISTER = 'commercial_register',
   TAX_CARD = 'tax_card',
+  LEGAL_REPRESENTATION_PROOF = 'legal_representation_proof',
+  PROFESSIONAL_LICENSE = 'professional_license',
+  QUALIFICATION_CERTIFICATE = 'qualification_certificate',
   PROOF_OF_ADDRESS = 'proof_of_address',
+  PORTFOLIO_DOCUMENT = 'portfolio_document',
   BUSINESS_LICENSE = 'business_license',
+}
+
+export enum SellerDocumentReviewDecision {
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  CORRECTION_REQUIRED = 'CORRECTION_REQUIRED',
 }
 
 export enum SellerDocumentStatus {

@@ -166,17 +166,25 @@ export class SellerAuthorizationGuard implements CanActivate {
           'Your seller application is pending admin verification. Seller features are locked until approval.',
         [SellerApplicationStatus.UNDER_REVIEW]:
           'Your seller application is under admin review. Seller features are locked until approval.',
+        [SellerApplicationStatus.NEEDS_CORRECTION]:
+          'Your seller application requires corrections. Please update the requested items and resubmit.',
         [SellerApplicationStatus.REJECTED]:
           'Your seller application was rejected. Please review the reason and resubmit.',
         [SellerApplicationStatus.SUSPENDED]:
           'Your seller privileges have been suspended. Buyer features remain active.',
+        [SellerApplicationStatus.EXPIRED]:
+          'Your seller verification has expired. Please renew your verification to resume selling. Buyer features remain active.',
+      };
+
+      const codeByStatus: Record<string, string> = {
+        [SellerApplicationStatus.SUSPENDED]: 'SELLER_SUSPENDED',
+        [SellerApplicationStatus.EXPIRED]: 'SELLER_VERIFICATION_EXPIRED',
+        [SellerApplicationStatus.NEEDS_CORRECTION]: 'SELLER_CORRECTION_REQUIRED',
       };
 
       throw new ForbiddenException({
         code:
-          dbUser.sellerStatus === SellerApplicationStatus.SUSPENDED
-            ? 'SELLER_SUSPENDED'
-            : 'SELLER_VERIFICATION_REQUIRED',
+          codeByStatus[dbUser.sellerStatus] || 'SELLER_VERIFICATION_REQUIRED',
         sellerStatus: dbUser.sellerStatus,
         message:
           messageByStatus[dbUser.sellerStatus] ||
