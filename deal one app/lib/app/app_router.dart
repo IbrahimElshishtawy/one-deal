@@ -44,8 +44,8 @@ import 'package:market_space/features/seller_verification/presentation/pages/bus
 import 'package:market_space/features/seller_verification/presentation/pages/document_requirements_page.dart';
 import 'package:market_space/features/seller_verification/presentation/pages/document_upload_page.dart';
 import 'package:market_space/features/seller_verification/presentation/pages/seller_information_form_page.dart';
-import 'package:market_space/features/seller_verification/presentation/pages/seller_onboarding_entry_page.dart';
 import 'package:market_space/features/seller_verification/presentation/pages/seller_type_selection_page.dart';
+import 'package:market_space/features/seller_verification/presentation/pages/seller_verification_wizard_page.dart';
 import 'package:market_space/features/seller_verification/presentation/pages/submission_success_page.dart';
 import 'package:market_space/features/seller_verification/presentation/pages/verification_review_page.dart';
 import 'package:market_space/features/seller_verification/presentation/pages/verification_tracking_page.dart';
@@ -555,7 +555,7 @@ class AppRouter {
                 context: context,
                 state: state,
                 style: CinematicTransitionStyle.glide,
-                child: const SellerOnboardingEntryPage(),
+                child: const SellerVerificationWizardPage(),
               ),
         ),
         GoRoute(

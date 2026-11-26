@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/features/seller_verification/application/notifiers/seller_verification_notifiers.dart';
+import 'package:market_space/features/seller_verification/application/notifiers/seller_verification_wizard_notifier.dart';
 import 'package:market_space/features/seller_verification/data/datasources/seller_verification_remote_datasource.dart';
 import 'package:market_space/features/seller_verification/data/repositories/seller_verification_repository_impl.dart';
 import 'package:market_space/features/seller_verification/domain/entities/seller_verification_entities.dart';
@@ -117,3 +118,18 @@ final sellerVerificationBadgeProvider =
   final repository = ref.watch(sellerVerificationRepositoryProvider);
   return repository.getMyVerificationStatus(forceRefresh: true);
 });
+
+/// Provider powering the modular 3-step Seller Conversion & Verification Wizard.
+final sellerVerificationWizardProvider = StateNotifierProvider.autoDispose<
+    SellerVerificationWizardNotifier, SellerVerificationWizardState>(
+  (ref) {
+    final repository = ref.watch(sellerVerificationRepositoryProvider);
+    final picker = ref.watch(documentPickerServiceProvider);
+    final upload = ref.watch(documentUploadServiceProvider);
+    return SellerVerificationWizardNotifier(
+      repository: repository,
+      pickerService: picker,
+      uploadService: upload,
+    );
+  },
+);
