@@ -33,6 +33,15 @@ ALTER TABLE "accounts"
     "verification_tier" IN ('NONE', 'IDENTITY_VERIFIED', 'BUSINESS_VERIFIED')
   );
 
+-- Extend verification_status check constraint to support full verification lifecycle
+ALTER TABLE "accounts"
+  DROP CONSTRAINT IF EXISTS "chk_account_verification_status";
+
+ALTER TABLE "accounts"
+  ADD CONSTRAINT "chk_account_verification_status" CHECK (
+    "verification_status" IN ('not_submitted', 'pending', 'approved', 'rejected', 'needs_changes', 'suspended')
+  );
+
 CREATE INDEX IF NOT EXISTS "accounts_verification_status_tier_active_idx"
   ON "accounts" ("verification_status", "verification_tier", "is_active");
 
@@ -164,3 +173,22 @@ WHERE sa."account_id" = a."id"
   );
 
 -- Ambiguous legacy accounts without verified supporting documents remain at verification_tier = 'NONE' until reviewed.
+
+-- 6. Align untouched default verification requirements with new configurable policy
+--    (ONLY modifies untouched system defaults where updated_by_staff_id IS NULL AND version = 1;
+--     NEVER overwrites admin-customized requirements.)
+UPDATE "seller_verification_requirements"
+SET "is_required" = false
+WHERE "seller_type" = 'BUSINESS'
+  AND "marketplace_section" IS NULL
+  AND "document_type" = 'national_id_front'
+  AND "updated_by_staff_id" IS NULL
+  AND "version" = 1;
+
+UPDATE "seller_verification_requirements"
+SET "is_required" = false
+WHERE "seller_type" = 'SERVICE_PROVIDER'
+  AND "marketplace_section" IS NULL
+  AND "document_type" = 'qualification_certificate'
+  AND "updated_by_staff_id" IS NULL
+  AND "version" = 1;

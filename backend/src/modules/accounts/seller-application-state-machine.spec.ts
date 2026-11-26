@@ -105,9 +105,8 @@ describe('SellerApplicationStateMachine', () => {
       expect(complete.missingDocuments).toEqual([]);
     });
 
-    it('requires commercial register, tax card, and national ID front for company sellers', () => {
+    it('requires commercial register and tax card for company sellers (legal rep ID is configurable)', () => {
       expect(getRequiredDocumentTypes(AccountType.COMPANY)).toEqual([
-        SellerDocumentType.NATIONAL_ID_FRONT,
         SellerDocumentType.COMMERCIAL_REGISTER,
         SellerDocumentType.TAX_CARD,
       ]);
@@ -120,7 +119,7 @@ describe('SellerApplicationStateMachine', () => {
       });
       expect(incomplete.isComplete).toBe(false);
       expect(incomplete.missingFields).toContain('commercialRegisterNumber');
-      expect(incomplete.missingDocuments).toHaveLength(3);
+      expect(incomplete.missingDocuments).toHaveLength(2);
     });
   });
 });

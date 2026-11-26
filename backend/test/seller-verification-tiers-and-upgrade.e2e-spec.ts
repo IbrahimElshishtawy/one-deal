@@ -190,17 +190,17 @@ describe('Deal One — Seller Identity & Business Verification Tiers + Upgrade (
     });
     adminStaffId = adminStaff.id;
 
-    const adminSession = await staffSessionService.createSession({
-      staffId: adminStaff.id,
-      email: adminStaff.email,
-      fullName: adminStaff.fullName,
-      roleId: fullRole.id,
-      roleName: fullRole.name,
-      permissions: [...ADMIN_PERMISSIONS],
-      ipAddress: '127.0.0.1',
-      userAgent: 'jest-tier-e2e',
-      mfaVerified: true,
-    });
+    const adminSession = await staffSessionService.createSession(
+      {
+        id: adminStaff.id,
+        email: adminStaff.email,
+        roleId: fullRole.id,
+        role: { name: fullRole.name },
+      },
+      true,
+      'jest-tier-e2e',
+      '127.0.0.1',
+    );
     adminToken = adminSession.accessToken;
 
     const roRole = await prisma.staffRole.create({
@@ -225,17 +225,17 @@ describe('Deal One — Seller Identity & Business Verification Tiers + Upgrade (
     });
     readOnlyAdminStaffId = roStaff.id;
 
-    const roSession = await staffSessionService.createSession({
-      staffId: roStaff.id,
-      email: roStaff.email,
-      fullName: roStaff.fullName,
-      roleId: roRole.id,
-      roleName: roRole.name,
-      permissions: ['verification.read'],
-      ipAddress: '127.0.0.1',
-      userAgent: 'jest-tier-ro',
-      mfaVerified: true,
-    });
+    const roSession = await staffSessionService.createSession(
+      {
+        id: roStaff.id,
+        email: roStaff.email,
+        roleId: roRole.id,
+        role: { name: roRole.name },
+      },
+      true,
+      'jest-tier-ro',
+      '127.0.0.1',
+    );
     readOnlyAdminToken = roSession.accessToken;
 
     const cat = await prisma.category.findFirst({ where: { isActive: true } });
@@ -244,15 +244,15 @@ describe('Deal One — Seller Identity & Business Verification Tiers + Upgrade (
     testAreaId = area!.id;
 
     const indReg = await registerViaOtp(indPhone, 11);
-    indToken = indReg.accessToken;
+    indToken = indReg.tokens?.accessToken ?? indReg.accessToken;
     indUserId = indReg.user.id;
 
     const bizReg = await registerViaOtp(bizPhone, 12);
-    bizToken = bizReg.accessToken;
+    bizToken = bizReg.tokens?.accessToken ?? bizReg.accessToken;
     bizUserId = bizReg.user.id;
 
     const buyerReg = await registerViaOtp(buyerPhone, 13);
-    buyerToken = buyerReg.accessToken;
+    buyerToken = buyerReg.tokens?.accessToken ?? buyerReg.accessToken;
     buyerUserId = buyerReg.user.id;
   }, 60_000);
 
