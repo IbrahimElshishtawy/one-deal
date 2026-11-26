@@ -157,7 +157,8 @@ export class PrivateDocumentStorageService {
     if (lastDot <= 0 || lastDot === trimmed.length - 1) {
       throw new BadRequestException({
         code: 'INVALID_DOCUMENT_EXTENSION',
-        message: 'Verification document filename must include a valid file extension',
+        message:
+          'Verification document filename must include a valid file extension',
       });
     }
 
@@ -290,7 +291,8 @@ export class PrivateDocumentStorageService {
       uploadUrl,
       expiresInSeconds,
       contentType: mimeType,
-      maxSizeBytes: options?.maxFileSizeBytes ?? MAX_VERIFICATION_DOC_SIZE_BYTES,
+      maxSizeBytes:
+        options?.maxFileSizeBytes ?? MAX_VERIFICATION_DOC_SIZE_BYTES,
     };
   }
 
@@ -362,11 +364,15 @@ export class PrivateDocumentStorageService {
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(ownerUserId) || !uuidRegex.test(applicationId)) {
-      throw new ForbiddenException('Invalid owner or application identifier in storage key');
+      throw new ForbiddenException(
+        'Invalid owner or application identifier in storage key',
+      );
     }
 
     if (!/^[a-zA-Z0-9_-]{1,128}\.(pdf|jpg|jpeg|png|webp)$/i.test(fileName)) {
-      throw new ForbiddenException('Invalid verification document filename or extension');
+      throw new ForbiddenException(
+        'Invalid verification document filename or extension',
+      );
     }
 
     return { userId: ownerUserId, applicationId, fileName };
@@ -412,7 +418,8 @@ export class PrivateDocumentStorageService {
       );
       throw new InternalServerErrorException({
         code: 'DOCUMENT_STORAGE_VERIFICATION_FAILED',
-        message: 'Could not verify uploaded verification document in private storage',
+        message:
+          'Could not verify uploaded verification document in private storage',
       });
     }
 
@@ -432,7 +439,9 @@ export class PrivateDocumentStorageService {
     }
 
     const contentLengthHeader = response.headers.get('content-length');
-    const contentLength = contentLengthHeader ? Number(contentLengthHeader) : null;
+    const contentLength = contentLengthHeader
+      ? Number(contentLengthHeader)
+      : null;
     const rawContentType = response.headers.get('content-type');
     const normalizedContentType = rawContentType
       ? rawContentType.split(';')[0].trim().toLowerCase()
@@ -484,7 +493,11 @@ export class PrivateDocumentStorageService {
     const deleteUrl = this.signR2PresignedUrl('DELETE', storageKey, 60);
     const response = await fetch(deleteUrl, { method: 'DELETE' });
 
-    if (response.status === 204 || response.status === 200 || response.status === 404) {
+    if (
+      response.status === 204 ||
+      response.status === 200 ||
+      response.status === 404
+    ) {
       return { deleted: true, statusCode: response.status };
     }
 

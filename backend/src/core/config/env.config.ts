@@ -312,13 +312,41 @@ export const envSchema = z.object({
   SELLER_PII_ENCRYPTION_KEY_VERSION: z.string().optional().default('v1'),
   ENABLE_FOUR_EYES_VERIFICATION_REVIEW: boolFlag(false),
   VERIFICATION_VALIDITY_DAYS: z.coerce.number().int().positive().default(365),
-  VERIFICATION_RENEWAL_REMINDER_DAYS: z.coerce.number().int().positive().default(30),
-  VERIFICATION_DOC_RETENTION_REJECTED_DAYS: z.coerce.number().int().nonnegative().default(90),
-  VERIFICATION_DOC_RETENTION_WITHDRAWN_DAYS: z.coerce.number().int().nonnegative().default(30),
-  VERIFICATION_DOC_RETENTION_EXPIRED_DAYS: z.coerce.number().int().nonnegative().default(180),
-  VERIFICATION_DOC_RETENTION_SUPERSEDED_DAYS: z.coerce.number().int().nonnegative().default(90),
-  VERIFICATION_DOC_RETENTION_APPROVED_DAYS: z.coerce.number().int().nonnegative().default(0),
-  VERIFICATION_ORPHAN_UPLOAD_TTL_HOURS: z.coerce.number().int().positive().default(24),
+  VERIFICATION_RENEWAL_REMINDER_DAYS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(30),
+  VERIFICATION_DOC_RETENTION_REJECTED_DAYS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(90),
+  VERIFICATION_DOC_RETENTION_WITHDRAWN_DAYS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(30),
+  VERIFICATION_DOC_RETENTION_EXPIRED_DAYS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(180),
+  VERIFICATION_DOC_RETENTION_SUPERSEDED_DAYS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(90),
+  VERIFICATION_DOC_RETENTION_APPROVED_DAYS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(0),
+  VERIFICATION_ORPHAN_UPLOAD_TTL_HOURS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(24),
 
   // Video (Cloudflare Stream)
   CLOUDFLARE_STREAM_API_TOKEN: z.string().optional().default(''),

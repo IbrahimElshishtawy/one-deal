@@ -279,7 +279,9 @@ export class SellerApplicationService {
     const sellerType = resolveSellerType(dto.sellerType, dto.businessType);
     const businessType = resolveBusinessType(dto.businessType, sellerType);
     const marketplaceSections = Array.from(
-      new Set((dto.marketplaceSections ?? []).map((s) => String(s).toLowerCase())),
+      new Set(
+        (dto.marketplaceSections ?? []).map((s) => String(s).toLowerCase()),
+      ),
     );
 
     try {
@@ -295,8 +297,9 @@ export class SellerApplicationService {
             businessDescription: dto.businessDescription?.trim() || null,
             nationalIdNumber: this.encryptSensitive(dto.nationalIdNumber),
             taxIdNumber: this.encryptSensitive(dto.taxIdNumber),
-            commercialRegisterNumber:
-              dto.commercialRegisterNumber?.trim() || null,
+            commercialRegisterNumber: this.encryptSensitive(
+              dto.commercialRegisterNumber,
+            ),
             authorizedRepresentativeName:
               dto.authorizedRepresentativeName?.trim() || null,
             authorizedRepresentativeId: this.encryptSensitive(
@@ -471,7 +474,11 @@ export class SellerApplicationService {
           ? { taxIdNumber: this.encryptSensitive(dto.taxIdNumber) }
           : {}),
         ...(dto.commercialRegisterNumber !== undefined
-          ? { commercialRegisterNumber: dto.commercialRegisterNumber.trim() }
+          ? {
+              commercialRegisterNumber: this.encryptSensitive(
+                dto.commercialRegisterNumber,
+              ),
+            }
           : {}),
         ...(dto.authorizedRepresentativeName !== undefined
           ? {
@@ -673,11 +680,19 @@ export class SellerApplicationService {
       application.id,
       dto.storageKey,
     );
+    await this.privateStorage.verifyUploadedObject(
+      dto.storageKey,
+      dto.mimeType,
+      matchedRequirement?.maxFileSizeBytes,
+    );
 
     const parsedExpiresAt = this.validateDocumentExpiration(
       dto.expiresAt,
       matchedRequirement?.requiresExpiration ?? false,
     );
+
+    const supersededRetentionAt =
+      this.computeDocumentRetentionDate('superseded');
 
     // Preserve previous document versions in audit history instead of destroying them
     const document = await this.prisma.$transaction(async (tx) => {
@@ -691,7 +706,9 @@ export class SellerApplicationService {
       });
 
       const nextVersion =
-        existingVersions.length > 0 ? (existingVersions[0].version ?? 1) + 1 : 1;
+        existingVersions.length > 0
+          ? (existingVersions[0].version ?? 1) + 1
+          : 1;
 
       const created = await tx.sellerApplicationDocument.create({
         data: {
@@ -722,6 +739,9 @@ export class SellerApplicationService {
             data: {
               isCurrent: false,
               replacedByDocumentId: created.id,
+              ...(supersededRetentionAt
+                ? { retentionExpiresAt: supersededRetentionAt }
+                : {}),
             },
           });
         }
@@ -996,6 +1016,15 @@ export class SellerApplicationService {
       });
     }
 
+    const reqSnapshot = this.requirementsService
+      ? await this.requirementsService.buildRequirementsSnapshot(
+          application.sellerType,
+          Array.isArray(application.marketplaceSections)
+            ? (application.marketplaceSections as string[])
+            : [],
+        )
+      : null;
+
     const updated = await this.prisma.$transaction(async (tx) => {
       const result = await tx.sellerApplication.updateMany({
         where: { id: application.id, status: currentStatus },
@@ -1003,6 +1032,14 @@ export class SellerApplicationService {
           status: SellerApplicationStatus.PENDING,
           submittedAt: new Date(),
           rejectionReason: null,
+          version: { increment: 1 },
+          ...(reqSnapshot
+            ? {
+                requirementsVersion: reqSnapshot.requirementsVersion,
+                requirementsSnapshot:
+                  reqSnapshot.snapshot as unknown as Prisma.InputJsonValue,
+              }
+            : {}),
         },
       });
 
@@ -1022,11 +1059,13 @@ export class SellerApplicationService {
           applicationId: application.id,
           userId,
           actorType: 'user',
+          action: 'APPLICATION_SUBMITTED',
           previousStatus: currentStatus,
           newStatus: SellerApplicationStatus.PENDING,
           reason: 'Seller application submitted for admin verification',
           metadata: {
             requestId: ctx.requestId ?? null,
+            requirementsVersion: reqSnapshot?.requirementsVersion ?? 1,
             documentCount: application.documents.filter((d) => d.isCurrent)
               .length,
           },
@@ -1075,10 +1114,7 @@ export class SellerApplicationService {
    * complete Buyer -> Pending Seller -> Approved Seller flow immediately.
    * Strictly disabled outside NODE_ENV=development.
    */
-  async devApproveMyApplication(
-    userId: string,
-    ctx: RequestAuditContext = {},
-  ) {
+  async devApproveMyApplication(userId: string, ctx: RequestAuditContext = {}) {
     if (process.env.NODE_ENV !== 'development') {
       throw new ForbiddenException(
         'Development-only instant approval endpoint is disabled outside development mode',
@@ -1188,7 +1224,7 @@ export class SellerApplicationService {
         : application.nationalIdNumber;
     const mergedCr =
       dto.commercialRegisterNumber !== undefined
-        ? dto.commercialRegisterNumber.trim()
+        ? this.encryptSensitive(dto.commercialRegisterNumber)
         : application.commercialRegisterNumber;
     const mergedServiceCategory =
       dto.serviceCategory !== undefined
@@ -1197,7 +1233,9 @@ export class SellerApplicationService {
     const mergedSections =
       dto.marketplaceSections !== undefined
         ? Array.from(
-            new Set(dto.marketplaceSections.map((s) => String(s).toLowerCase())),
+            new Set(
+              dto.marketplaceSections.map((s) => String(s).toLowerCase()),
+            ),
           )
         : application.marketplaceSections;
 
@@ -1268,8 +1306,7 @@ export class SellerApplicationService {
             : {}),
           ...(dto.professionalLicenseNumber !== undefined
             ? {
-                professionalLicenseNumber:
-                  dto.professionalLicenseNumber.trim(),
+                professionalLicenseNumber: dto.professionalLicenseNumber.trim(),
               }
             : {}),
           ...(dto.portfolioUrl !== undefined
@@ -1282,9 +1319,7 @@ export class SellerApplicationService {
             ? { contactEmail: dto.contactEmail.trim() }
             : {}),
           ...(dto.cityId !== undefined ? { cityId: dto.cityId } : {}),
-          ...(dto.address !== undefined
-            ? { address: dto.address.trim() }
-            : {}),
+          ...(dto.address !== undefined ? { address: dto.address.trim() } : {}),
           resubmissionCount: { increment: 1 },
           ...(targetStatus === SellerApplicationStatus.PENDING
             ? {
@@ -1445,7 +1480,7 @@ export class SellerApplicationService {
       businessUpgradeApplication &&
       businessUpgradeApplication.status === SellerApplicationStatus.APPROVED
         ? businessUpgradeApplication
-        : application ?? businessUpgradeApplication;
+        : (application ?? businessUpgradeApplication);
 
     return {
       userId: user.id,
@@ -1773,7 +1808,9 @@ export class SellerApplicationService {
         : AccountType.COMPANY;
 
     const marketplaceSections = Array.from(
-      new Set((dto.marketplaceSections ?? []).map((s) => String(s).toLowerCase())),
+      new Set(
+        (dto.marketplaceSections ?? []).map((s) => String(s).toLowerCase()),
+      ),
     );
 
     const created = await this.prisma.$transaction(async (tx) => {
@@ -1787,8 +1824,11 @@ export class SellerApplicationService {
           businessType: commercialBusinessType,
           marketplaceSections,
           businessName: dto.businessName.trim(),
-          businessDescription: dto.businessDescription?.trim() || existingAccount.bio || null,
-          commercialRegisterNumber: dto.commercialRegisterNumber.trim(),
+          businessDescription:
+            dto.businessDescription?.trim() || existingAccount.bio || null,
+          commercialRegisterNumber: this.encryptSensitive(
+            dto.commercialRegisterNumber,
+          ),
           taxIdNumber: this.encryptSensitive(dto.taxIdNumber),
           authorizedRepresentativeName:
             dto.authorizedRepresentativeName?.trim() || null,
@@ -1814,7 +1854,8 @@ export class SellerApplicationService {
           newStatus: SellerApplicationStatus.DRAFT,
           previousTier: currentTier,
           newTier: currentTier,
-          reason: 'Identity-verified seller initiated business verification upgrade',
+          reason:
+            'Identity-verified seller initiated business verification upgrade',
           metadata: {
             requestId: ctx.requestId ?? null,
             applicationType: SellerApplicationType.BUSINESS_UPGRADE,
@@ -1919,10 +1960,7 @@ export class SellerApplicationService {
     };
   }
 
-  async submitBusinessUpgrade(
-    userId: string,
-    ctx: RequestAuditContext = {},
-  ) {
+  async submitBusinessUpgrade(userId: string, ctx: RequestAuditContext = {}) {
     const application = await this.prisma.sellerApplication.findFirst({
       where: {
         userId,
@@ -1963,6 +2001,15 @@ export class SellerApplicationService {
       });
     }
 
+    const reqSnapshot = this.requirementsService
+      ? await this.requirementsService.buildRequirementsSnapshot(
+          SellerType.BUSINESS,
+          Array.isArray(application.marketplaceSections)
+            ? (application.marketplaceSections as string[])
+            : [],
+        )
+      : null;
+
     const updated = await this.prisma.$transaction(async (tx) => {
       const result = await tx.sellerApplication.updateMany({
         where: { id: application.id, status: currentStatus },
@@ -1970,6 +2017,14 @@ export class SellerApplicationService {
           status: SellerApplicationStatus.PENDING,
           submittedAt: new Date(),
           rejectionReason: null,
+          version: { increment: 1 },
+          ...(reqSnapshot
+            ? {
+                requirementsVersion: reqSnapshot.requirementsVersion,
+                requirementsSnapshot:
+                  reqSnapshot.snapshot as unknown as Prisma.InputJsonValue,
+              }
+            : {}),
         },
       });
 
@@ -1987,6 +2042,7 @@ export class SellerApplicationService {
           accountId: application.accountId,
           userId,
           actorType: 'user',
+          action: 'BUSINESS_UPGRADE_SUBMITTED',
           previousStatus: currentStatus,
           newStatus: SellerApplicationStatus.PENDING,
           previousTier: VerificationTier.IDENTITY_VERIFIED,
@@ -2091,12 +2147,14 @@ export class SellerApplicationService {
         : application.businessName;
     const mergedCr =
       dto.commercialRegisterNumber !== undefined
-        ? dto.commercialRegisterNumber.trim()
+        ? this.encryptSensitive(dto.commercialRegisterNumber)
         : application.commercialRegisterNumber;
     const mergedSections =
       dto.marketplaceSections !== undefined
         ? Array.from(
-            new Set(dto.marketplaceSections.map((s) => String(s).toLowerCase())),
+            new Set(
+              dto.marketplaceSections.map((s) => String(s).toLowerCase()),
+            ),
           )
         : application.marketplaceSections;
 
@@ -2293,11 +2351,14 @@ export class SellerApplicationService {
       }),
     ]);
 
-    // Never expose raw national ID numbers in list responses
+    // Never expose raw sensitive identity or commercial register numbers in list responses
     const items = rawItems.map((app) => ({
       ...app,
       nationalIdNumber: this.maskSensitive(app.nationalIdNumber),
       taxIdNumber: this.maskSensitive(app.taxIdNumber),
+      commercialRegisterNumber: this.maskSensitive(
+        app.commercialRegisterNumber,
+      ),
       authorizedRepresentativeId: this.maskSensitive(
         app.authorizedRepresentativeId,
       ),
@@ -2399,6 +2460,9 @@ export class SellerApplicationService {
         ...app,
         nationalIdNumber: this.maskSensitive(app.nationalIdNumber),
         taxIdNumber: this.maskSensitive(app.taxIdNumber),
+        commercialRegisterNumber: this.maskSensitive(
+          app.commercialRegisterNumber,
+        ),
         authorizedRepresentativeId: this.maskSensitive(
           app.authorizedRepresentativeId,
         ),
@@ -2561,12 +2625,30 @@ export class SellerApplicationService {
         where: { id: documentId },
         data: {
           status: nextDocStatus,
+          reviewedAt: new Date(),
+          ...(resolvedStaffId ? { reviewedByStaffId: resolvedStaffId } : {}),
           rejectionReason:
             nextDocStatus === SellerDocumentStatus.REJECTED
               ? dto.reason?.trim() || null
               : null,
+          ...(nextDocStatus === SellerDocumentStatus.REJECTED
+            ? {
+                retentionExpiresAt:
+                  this.computeDocumentRetentionDate('rejected'),
+              }
+            : {}),
         },
       });
+
+      if (resolvedStaffId && !app.firstReviewedByStaffId) {
+        await tx.sellerApplication.updateMany({
+          where: { id: applicationId, firstReviewedByStaffId: null },
+          data: {
+            firstReviewedByStaffId: resolvedStaffId,
+            firstReviewedAt: new Date(),
+          },
+        });
+      }
 
       return { review, document: updatedDoc };
     });
@@ -2626,11 +2708,19 @@ export class SellerApplicationService {
     const resolvedStaffId = staff.staffId ?? null;
 
     const updated = await this.prisma.$transaction(async (tx) => {
+      const now = new Date();
       const res = await tx.sellerApplication.updateMany({
         where: { id: applicationId, status: currentStatus },
         data: {
           status: SellerApplicationStatus.UNDER_REVIEW,
+          version: { increment: 1 },
           ...(resolvedStaffId ? { assignedToStaffId: resolvedStaffId } : {}),
+          ...(resolvedStaffId && !app.firstReviewedByStaffId
+            ? {
+                firstReviewedByStaffId: resolvedStaffId,
+                firstReviewedAt: now,
+              }
+            : {}),
           ...(dto.notes ? { adminNotes: dto.notes.trim() } : {}),
         },
       });
@@ -2664,7 +2754,8 @@ export class SellerApplicationService {
           metadata: {
             requestId: ctx.requestId ?? null,
             actorId: staff.id,
-            applicationType: app.applicationType ?? SellerApplicationType.INITIAL,
+            applicationType:
+              app.applicationType ?? SellerApplicationType.INITIAL,
           },
         },
       });
@@ -2838,7 +2929,8 @@ export class SellerApplicationService {
           metadata: {
             requestId: ctx.requestId ?? null,
             actorId: staff.id,
-            applicationType: app.applicationType ?? SellerApplicationType.INITIAL,
+            applicationType:
+              app.applicationType ?? SellerApplicationType.INITIAL,
             affectedFields,
             rejectedDocumentIds: rejectedDocIds,
           },
@@ -2988,25 +3080,57 @@ export class SellerApplicationService {
       app.applicationType === SellerApplicationType.BUSINESS_UPGRADE;
 
     const resolvedStaffId = staff.staffId ?? null;
+
+    // Configurable Four-Eyes Separation of Duties:
+    // When ENABLE_FOUR_EYES_VERIFICATION_REVIEW=true:
+    // 1) Application MUST have undergone an initial review (firstReviewedByStaffId set)
+    // 2) Approving admin MUST differ from firstReviewedByStaffId
+    // Enforced both pre-check AND atomically in the transaction WHERE clause.
+    const fourEyesEnabled = this.isFourEyesEnabled();
+    if (fourEyesEnabled) {
+      if (!app.firstReviewedByStaffId) {
+        throw new ForbiddenException({
+          code: 'FOUR_EYES_REVIEW_REQUIRED',
+          message:
+            'Four-eyes verification review is enabled: an administrator must first review this application before another administrator can approve it.',
+        });
+      }
+      if (resolvedStaffId && app.firstReviewedByStaffId === resolvedStaffId) {
+        throw new ForbiddenException({
+          code: 'FOUR_EYES_APPROVAL_REQUIRED',
+          message:
+            'Four-eyes verification review is enabled: a different administrator must approve an application you placed under review.',
+        });
+      }
+    }
+
     const now = new Date();
+    const validityDays = this.getVerificationValidityDays();
     const verificationExpiresAt = dto.verificationExpiresAt
       ? new Date(dto.verificationExpiresAt)
-      : new Date(
-          now.getTime() + DEFAULT_VERIFICATION_VALIDITY_DAYS * 86_400_000,
-        );
+      : new Date(now.getTime() + validityDays * 86_400_000);
 
     const result = await this.prisma.$transaction(async (tx) => {
       const lockResult = await tx.sellerApplication.updateMany({
         where: {
           id: applicationId,
           status: currentStatus,
+          ...(fourEyesEnabled
+            ? {
+                firstReviewedByStaffId: resolvedStaffId
+                  ? { not: null, notIn: [resolvedStaffId] }
+                  : { not: null },
+              }
+            : {}),
         },
         data: {
           status: SellerApplicationStatus.APPROVED,
           derivedVerificationTier: derivedTier,
           reviewedAt: now,
           verificationExpiresAt,
+          renewalReminderSentAt: null,
           expiredAt: null,
+          version: { increment: 1 },
           ...(resolvedStaffId ? { reviewedByStaffId: resolvedStaffId } : {}),
           rejectionReason: null,
           suspensionReason: null,
@@ -3023,6 +3147,10 @@ export class SellerApplicationService {
         });
       }
 
+      const approvedRetentionAt = this.computeDocumentRetentionDate(
+        'approved',
+        now,
+      );
       await tx.sellerApplicationDocument.updateMany({
         where: {
           applicationId,
@@ -3030,7 +3158,14 @@ export class SellerApplicationService {
           deletedAt: null,
           status: SellerDocumentStatus.UPLOADED,
         },
-        data: { status: SellerDocumentStatus.VERIFIED },
+        data: {
+          status: SellerDocumentStatus.VERIFIED,
+          reviewedAt: now,
+          ...(resolvedStaffId ? { reviewedByStaffId: resolvedStaffId } : {}),
+          ...(approvedRetentionAt
+            ? { retentionExpiresAt: approvedRetentionAt }
+            : {}),
+        },
       });
 
       let sellerAccount = app.accountId
@@ -3066,6 +3201,9 @@ export class SellerApplicationService {
             verificationTier: derivedTier,
             verificationApprovedAt: now,
             verificationReviewedAt: now,
+            verificationExpiresAt,
+            verificationSuspendedAt: null,
+            verificationSuspensionReason: null,
             ...(resolvedStaffId
               ? { verificationReviewedByStaffId: resolvedStaffId }
               : {}),
@@ -3094,6 +3232,7 @@ export class SellerApplicationService {
             verificationTier: derivedTier,
             verificationApprovedAt: now,
             verificationReviewedAt: now,
+            verificationExpiresAt,
             ...(resolvedStaffId
               ? { verificationReviewedByStaffId: resolvedStaffId }
               : {}),
@@ -3166,7 +3305,8 @@ export class SellerApplicationService {
             requestId: ctx.requestId ?? null,
             actorId: staff.id,
             accountId: sellerAccount.id,
-            applicationType: app.applicationType ?? SellerApplicationType.INITIAL,
+            applicationType:
+              app.applicationType ?? SellerApplicationType.INITIAL,
             previousTier,
             newTier: derivedTier,
             verificationExpiresAt: verificationExpiresAt.toISOString(),
@@ -3367,7 +3507,8 @@ export class SellerApplicationService {
           metadata: {
             requestId: ctx.requestId ?? null,
             actorId: staff.id,
-            applicationType: app.applicationType ?? SellerApplicationType.INITIAL,
+            applicationType:
+              app.applicationType ?? SellerApplicationType.INITIAL,
           },
         },
       });
@@ -3410,10 +3551,29 @@ export class SellerApplicationService {
         },
       });
 
+      const rejectedRetentionAt = this.computeDocumentRetentionDate(
+        'rejected',
+        now,
+      );
+      if (rejectedRetentionAt) {
+        await tx.sellerApplicationDocument.updateMany({
+          where: {
+            applicationId,
+            deletedAt: null,
+            purgedAt: null,
+          },
+          data: { retentionExpiresAt: rejectedRetentionAt },
+        });
+      }
+
       return tx.sellerApplication.findUniqueOrThrow({
         where: { id: applicationId },
       });
     });
+
+    if (app.accountId) {
+      await this.invalidateAccountCache(app.userId, app.accountId);
+    }
 
     await this.notifyUser(
       app.userId,
@@ -3505,6 +3665,8 @@ export class SellerApplicationService {
           verificationStatus: VerificationStatus.SUSPENDED,
           verificationTier: VerificationTier.NONE,
           verificationReviewedAt: now,
+          verificationSuspendedAt: now,
+          verificationSuspensionReason: reason,
           ...(resolvedStaffId
             ? { verificationReviewedByStaffId: resolvedStaffId }
             : {}),
@@ -3674,10 +3836,26 @@ export class SellerApplicationService {
         where: { ownerUserId: app.userId, deletedAt: null },
         data: {
           isActive: false,
-          verificationStatus: VerificationStatus.SUSPENDED,
+          verificationStatus: VerificationStatus.EXPIRED,
           verificationTier: VerificationTier.NONE,
+          verificationExpiresAt: now,
         },
       });
+
+      const expiredRetentionAt = this.computeDocumentRetentionDate(
+        'expired',
+        now,
+      );
+      if (expiredRetentionAt) {
+        await tx.sellerApplicationDocument.updateMany({
+          where: {
+            applicationId,
+            deletedAt: null,
+            purgedAt: null,
+          },
+          data: { retentionExpiresAt: expiredRetentionAt },
+        });
+      }
 
       await tx.sellerApplicationHistory.create({
         data: {
@@ -3849,6 +4027,11 @@ export class SellerApplicationService {
           verificationStatus: VerificationStatus.APPROVED,
           verificationTier: derivedTier,
           verificationReviewedAt: now,
+          verificationSuspendedAt: null,
+          verificationSuspensionReason: null,
+          ...(app.verificationExpiresAt
+            ? { verificationExpiresAt: app.verificationExpiresAt }
+            : {}),
           ...(resolvedStaffId
             ? { verificationReviewedByStaffId: resolvedStaffId }
             : {}),
@@ -3942,7 +4125,9 @@ export class SellerApplicationService {
       nationalIdNumber:
         this.cryptoService?.decrypt(app.nationalIdNumber) ??
         app.nationalIdNumber,
-      commercialRegisterNumber: app.commercialRegisterNumber,
+      commercialRegisterNumber:
+        this.cryptoService?.decrypt(app.commercialRegisterNumber) ??
+        app.commercialRegisterNumber,
       documents: activeDocs,
     });
     return {
@@ -4072,7 +4257,9 @@ export class SellerApplicationService {
       );
     }
 
-    if (!editableStatuses.includes(application.status as SellerApplicationStatus)) {
+    if (
+      !editableStatuses.includes(application.status as SellerApplicationStatus)
+    ) {
       throw new BadRequestException(
         `Documents can only be uploaded while application is in DRAFT, NEEDS_CORRECTION, REJECTED, or EXPIRED status (current: '${application.status}')`,
       );
@@ -4144,7 +4331,9 @@ export class SellerApplicationService {
       businessDescription: app.businessDescription,
       nationalIdNumber: this.maskSensitive(app.nationalIdNumber),
       taxIdNumber: this.maskSensitive(app.taxIdNumber),
-      commercialRegisterNumber: app.commercialRegisterNumber,
+      commercialRegisterNumber: this.maskSensitive(
+        app.commercialRegisterNumber,
+      ),
       authorizedRepresentativeName: app.authorizedRepresentativeName ?? null,
       authorizedRepresentativeId: this.maskSensitive(
         app.authorizedRepresentativeId,
@@ -4219,8 +4408,318 @@ export class SellerApplicationService {
       this.redis
         ?.del?.(`account:membership:${userId}:${accountId}`)
         .catch(() => undefined),
+      this.redis?.incr?.('listings:feed:ver').catch(() => undefined),
+      this.redis?.incr?.('home:feed:ver').catch(() => undefined),
       this.redis?.delByPattern?.('listings:feed:*').catch(() => undefined),
-      this.redis?.delByPattern?.(`account:public:${accountId}*`).catch(() => undefined),
+      this.redis
+        ?.delByPattern?.(`account:public:${accountId}*`)
+        .catch(() => undefined),
+      this.redis
+        ?.delByPattern?.(`account:profile:${accountId}*`)
+        .catch(() => undefined),
+      this.redis
+        ?.delByPattern?.(`seller:profile:${accountId}*`)
+        .catch(() => undefined),
+      this.redis
+        ?.delByPattern?.(`seller:eligibility:${userId}*`)
+        .catch(() => undefined),
     ]);
+  }
+
+  // =========================================================================
+  // SELLER WITHDRAW & RENEWAL WORKFLOWS
+  // =========================================================================
+
+  /**
+   * Allows a seller to withdraw an active DRAFT, PENDING, or NEEDS_CORRECTION
+   * application. If withdrawing a BUSINESS_UPGRADE, the seller's existing
+   * approved Account and IDENTITY_VERIFIED status remain completely untouched.
+   */
+  async withdrawApplication(
+    userId: string,
+    dto: WithdrawSellerApplicationDto = {},
+    ctx: RequestAuditContext = {},
+  ) {
+    const withdrawableStatuses = [
+      SellerApplicationStatus.DRAFT,
+      SellerApplicationStatus.PENDING,
+      SellerApplicationStatus.NEEDS_CORRECTION,
+    ];
+
+    const application = await this.prisma.sellerApplication.findFirst({
+      where: {
+        userId,
+        isActive: true,
+        deletedAt: null,
+        ...(dto.applicationType
+          ? { applicationType: dto.applicationType }
+          : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!application) {
+      throw new NotFoundException(
+        'No active seller application found to withdraw',
+      );
+    }
+
+    const currentStatus = application.status as SellerApplicationStatus;
+    if (!withdrawableStatuses.includes(currentStatus)) {
+      throw new BadRequestException({
+        code: 'INVALID_SELLER_STATUS_TRANSITION',
+        message: `Cannot withdraw seller application in status '${currentStatus}'. Only DRAFT, PENDING, or NEEDS_CORRECTION applications can be withdrawn.`,
+      });
+    }
+
+    assertValidSellerStatusTransition(
+      currentStatus,
+      SellerApplicationStatus.WITHDRAWN,
+    );
+
+    const now = new Date();
+    const reason = dto.reason?.trim() || 'Withdrawn by seller';
+    const isBusinessUpgrade =
+      application.applicationType === SellerApplicationType.BUSINESS_UPGRADE;
+    const withdrawnRetentionAt = this.computeDocumentRetentionDate(
+      'withdrawn',
+      now,
+    );
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const lockResult = await tx.sellerApplication.updateMany({
+        where: { id: application.id, status: currentStatus },
+        data: {
+          status: SellerApplicationStatus.WITHDRAWN,
+          withdrawnAt: now,
+          withdrawalReason: reason,
+          isActive: false,
+          version: { increment: 1 },
+        },
+      });
+
+      if (lockResult.count === 0) {
+        throw new ConflictException(
+          'Seller application status was modified concurrently',
+        );
+      }
+
+      if (!isBusinessUpgrade) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { sellerStatus: SellerApplicationStatus.NOT_REQUESTED },
+        });
+      }
+
+      if (withdrawnRetentionAt) {
+        await tx.sellerApplicationDocument.updateMany({
+          where: {
+            applicationId: application.id,
+            deletedAt: null,
+            purgedAt: null,
+          },
+          data: { retentionExpiresAt: withdrawnRetentionAt },
+        });
+      }
+
+      await tx.sellerApplicationHistory.create({
+        data: {
+          applicationId: application.id,
+          accountId: application.accountId,
+          userId,
+          actorType: 'user',
+          action: 'APPLICATION_WITHDRAWN',
+          previousStatus: currentStatus,
+          newStatus: SellerApplicationStatus.WITHDRAWN,
+          reason,
+          metadata: {
+            requestId: ctx.requestId ?? null,
+            applicationType: application.applicationType,
+          },
+        },
+      });
+
+      return tx.sellerApplication.findUniqueOrThrow({
+        where: { id: application.id },
+        include: { documents: { where: { deletedAt: null } } },
+      });
+    });
+
+    if (application.accountId) {
+      await this.invalidateAccountCache(userId, application.accountId);
+    }
+
+    await this.securityAudit.logEvent({
+      action: 'SELLER_APPLICATION_WITHDRAWN',
+      actorType: 'user',
+      actorId: userId,
+      targetEntity: 'SellerApplication',
+      targetId: application.id,
+      ipAddress: ctx.ipAddress,
+      userAgent: ctx.userAgent,
+      correlationId: ctx.requestId,
+      metadata: {
+        applicationId: application.id,
+        applicationType: application.applicationType,
+        previousStatus: currentStatus,
+        newStatus: SellerApplicationStatus.WITHDRAWN,
+        reason,
+        timestamp: now.toISOString(),
+      },
+    });
+
+    await this.notifyUser(
+      userId,
+      'SELLER_APPLICATION_WITHDRAWN',
+      'Seller Application Withdrawn',
+      'Your seller verification application has been withdrawn. You may start a new application at any time.',
+      {
+        applicationId: application.id,
+        status: SellerApplicationStatus.WITHDRAWN,
+      },
+    );
+
+    return this.formatApplicationForUser(updated);
+  }
+
+  /**
+   * Initiates verification renewal for an EXPIRED verification on the SAME Account,
+   * preserving all listings, branches, account members, and conversations.
+   * Reuses valid non-expired documents by default unless `reuseValidDocuments=false`.
+   */
+  async startVerificationRenewal(
+    userId: string,
+    dto: StartVerificationRenewalDto = {},
+    ctx: RequestAuditContext = {},
+  ) {
+    const expiredApp = await this.prisma.sellerApplication.findFirst({
+      where: {
+        userId,
+        status: SellerApplicationStatus.EXPIRED,
+        deletedAt: null,
+      },
+      orderBy: { updatedAt: 'desc' },
+      include: { documents: { where: { deletedAt: null, isCurrent: true } } },
+    });
+
+    if (!expiredApp) {
+      throw new BadRequestException({
+        code: 'RENEWAL_NOT_ELIGIBLE',
+        message:
+          'No expired seller verification found. Renewal is available once verification has expired.',
+      });
+    }
+
+    assertValidSellerStatusTransition(
+      SellerApplicationStatus.EXPIRED,
+      SellerApplicationStatus.DRAFT,
+    );
+
+    const now = new Date();
+    const reuseValid = dto.reuseValidDocuments !== false;
+
+    const renewed = await this.prisma.$transaction(async (tx) => {
+      const lockResult = await tx.sellerApplication.updateMany({
+        where: { id: expiredApp.id, status: SellerApplicationStatus.EXPIRED },
+        data: {
+          status: SellerApplicationStatus.DRAFT,
+          isActive: true,
+          expiredAt: null,
+          renewalReminderSentAt: null,
+          resubmissionCount: { increment: 1 },
+          version: { increment: 1 },
+        },
+      });
+
+      if (lockResult.count === 0) {
+        throw new ConflictException(
+          'Seller verification renewal was modified concurrently',
+        );
+      }
+
+      if (!reuseValid) {
+        await tx.sellerApplicationDocument.updateMany({
+          where: {
+            applicationId: expiredApp.id,
+            isCurrent: true,
+            deletedAt: null,
+          },
+          data: {
+            isCurrent: false,
+            retentionExpiresAt: this.computeDocumentRetentionDate(
+              'superseded',
+              now,
+            ),
+          },
+        });
+      } else {
+        // Mark any expired documents as non-current so seller must re-upload only expired ones
+        await tx.sellerApplicationDocument.updateMany({
+          where: {
+            applicationId: expiredApp.id,
+            isCurrent: true,
+            deletedAt: null,
+            expiresAt: { lte: now },
+          },
+          data: {
+            isCurrent: false,
+            retentionExpiresAt: this.computeDocumentRetentionDate(
+              'expired',
+              now,
+            ),
+          },
+        });
+      }
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { sellerStatus: SellerApplicationStatus.DRAFT },
+      });
+
+      await tx.sellerApplicationHistory.create({
+        data: {
+          applicationId: expiredApp.id,
+          accountId: expiredApp.accountId,
+          userId,
+          actorType: 'user',
+          action: 'VERIFICATION_RENEWAL_STARTED',
+          previousStatus: SellerApplicationStatus.EXPIRED,
+          newStatus: SellerApplicationStatus.DRAFT,
+          reason: dto.notes?.trim() || 'Seller initiated verification renewal',
+          metadata: {
+            requestId: ctx.requestId ?? null,
+            reuseValidDocuments: reuseValid,
+          },
+        },
+      });
+
+      return tx.sellerApplication.findUniqueOrThrow({
+        where: { id: expiredApp.id },
+        include: { documents: { where: { deletedAt: null } } },
+      });
+    });
+
+    if (expiredApp.accountId) {
+      await this.invalidateAccountCache(userId, expiredApp.accountId);
+    }
+
+    await this.securityAudit.logEvent({
+      action: 'SELLER_VERIFICATION_RENEWAL_STARTED',
+      actorType: 'user',
+      actorId: userId,
+      targetEntity: 'SellerApplication',
+      targetId: expiredApp.id,
+      ipAddress: ctx.ipAddress,
+      userAgent: ctx.userAgent,
+      correlationId: ctx.requestId,
+      metadata: {
+        applicationId: expiredApp.id,
+        accountId: expiredApp.accountId ?? null,
+        reuseValidDocuments: reuseValid,
+        timestamp: now.toISOString(),
+      },
+    });
+
+    return this.formatApplicationForUser(renewed);
   }
 }

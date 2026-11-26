@@ -64,7 +64,8 @@ export class CreateSellerApplicationDto {
   @ApiPropertyOptional({
     enum: SellerType,
     default: SellerType.INDIVIDUAL,
-    description: 'Configurable seller type (INDIVIDUAL, BUSINESS, SERVICE_PROVIDER)',
+    description:
+      'Configurable seller type (INDIVIDUAL, BUSINESS, SERVICE_PROVIDER)',
   })
   @IsOptional()
   @IsEnum(SellerType)
@@ -73,7 +74,8 @@ export class CreateSellerApplicationDto {
   @ApiPropertyOptional({
     enum: AccountType,
     default: AccountType.INDIVIDUAL,
-    description: 'Account classification (individual, company, factory, office, store)',
+    description:
+      'Account classification (individual, company, factory, office, store)',
   })
   @IsOptional()
   @IsEnum(AccountType)
@@ -83,7 +85,8 @@ export class CreateSellerApplicationDto {
     enum: MarketplaceSection,
     isArray: true,
     example: [MarketplaceSection.REAL_ESTATE],
-    description: 'Deal One marketplace sections the seller intends to operate in',
+    description:
+      'Deal One marketplace sections the seller intends to operate in',
   })
   @IsOptional()
   @IsArray()
@@ -157,7 +160,8 @@ export class CreateSellerApplicationDto {
 
   @ApiPropertyOptional({
     example: 7,
-    description: 'Years of professional experience (for SERVICE_PROVIDER sellers)',
+    description:
+      'Years of professional experience (for SERVICE_PROVIDER sellers)',
   })
   @IsOptional()
   @Type(() => Number)
@@ -223,7 +227,8 @@ export class CreateBusinessUpgradeDto {
       AccountType.FACTORY,
     ],
     default: AccountType.COMPANY,
-    description: 'Target commercial account classification for the business upgrade',
+    description:
+      'Target commercial account classification for the business upgrade',
   })
   @IsOptional()
   @IsIn([
@@ -359,8 +364,7 @@ export class ConfirmVerificationDocumentDto {
   documentType!: SellerDocumentType;
 
   @ApiProperty({
-    example:
-      'private/seller-verification/user-uuid/app-uuid/doc-uuid.jpg',
+    example: 'private/seller-verification/user-uuid/app-uuid/doc-uuid.jpg',
   })
   @IsNotEmpty()
   @IsString()
@@ -407,7 +411,8 @@ export class ConfirmVerificationDocumentDto {
 
   @ApiPropertyOptional({
     example: '2028-12-31T23:59:59.000Z',
-    description: 'Document expiration date (mandatory when requirement requires expiration)',
+    description:
+      'Document expiration date (mandatory when requirement requires expiration)',
   })
   @IsOptional()
   @IsDateString()
@@ -518,13 +523,16 @@ export class AdminSellerApplicationsQueryDto {
 
   @ApiPropertyOptional({
     enum: MarketplaceSection,
-    description: 'Filter applications targeting a specific Deal One marketplace section',
+    description:
+      'Filter applications targeting a specific Deal One marketplace section',
   })
   @IsOptional()
   @IsEnum(MarketplaceSection)
   marketplaceSection?: MarketplaceSection;
 
-  @ApiPropertyOptional({ description: 'Search by business name, user name, or phone' })
+  @ApiPropertyOptional({
+    description: 'Search by business name, user name, or phone',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -566,7 +574,8 @@ export class AdminReviewDocumentDto {
 
 export class AdminRequestCorrectionDto {
   @ApiProperty({
-    example: 'Please upload a clearer photo of your National ID front and update your address.',
+    example:
+      'Please upload a clearer photo of your National ID front and update your address.',
     description: 'Mandatory user-facing correction reason',
   })
   @IsNotEmpty()
@@ -587,7 +596,8 @@ export class AdminRequestCorrectionDto {
 
   @ApiPropertyOptional({
     type: [String],
-    description: 'IDs of submitted documents that are rejected and must be replaced',
+    description:
+      'IDs of submitted documents that are rejected and must be replaced',
   })
   @IsOptional()
   @IsArray()
@@ -610,7 +620,8 @@ export class AdminApproveSellerApplicationDto {
 
   @ApiPropertyOptional({
     example: '2027-11-26T00:00:00.000Z',
-    description: 'Optional verification expiration timestamp (defaults to 365 days)',
+    description:
+      'Optional verification expiration timestamp (defaults to 365 days)',
   })
   @IsOptional()
   @IsDateString()
@@ -619,7 +630,8 @@ export class AdminApproveSellerApplicationDto {
 
 export class AdminRejectSellerApplicationDto {
   @ApiProperty({
-    example: 'National ID image is blurry and unreadable. Please upload a clear photo.',
+    example:
+      'National ID image is blurry and unreadable. Please upload a clear photo.',
     description: 'Mandatory rejection reason communicated to the applicant',
   })
   @IsNotEmpty()
@@ -716,7 +728,9 @@ export class AdminCreateRequirementDto {
   @MaxLength(150)
   displayNameAr?: string;
 
-  @ApiPropertyOptional({ example: 'Valid brokerage license issued by local authority' })
+  @ApiPropertyOptional({
+    example: 'Valid brokerage license issued by local authority',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(1000)
@@ -832,4 +846,44 @@ export class AdminUpdateRequirementDto {
   @Min(0)
   @Max(10000)
   sortOrder?: number;
+}
+
+export class WithdrawSellerApplicationDto {
+  @ApiPropertyOptional({
+    example: 'Decided to apply later with updated commercial documents',
+    description:
+      'Optional reason for withdrawing the active verification application',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+
+  @ApiPropertyOptional({
+    enum: ['INITIAL', 'BUSINESS_UPGRADE', 'RENEWAL'],
+    description:
+      'Optional application type to withdraw (defaults to active editable/pending application)',
+  })
+  @IsOptional()
+  @IsIn(['INITIAL', 'BUSINESS_UPGRADE', 'RENEWAL'])
+  applicationType?: 'INITIAL' | 'BUSINESS_UPGRADE' | 'RENEWAL';
+}
+
+export class StartVerificationRenewalDto {
+  @ApiPropertyOptional({
+    default: true,
+    description:
+      'Whether to retain still-valid, non-expired verified documents on the renewal draft',
+  })
+  @IsOptional()
+  @IsBoolean()
+  reuseValidDocuments?: boolean;
+
+  @ApiPropertyOptional({
+    example: 'Renewing annual business verification credentials',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  notes?: string;
 }

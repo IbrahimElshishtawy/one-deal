@@ -27,7 +27,10 @@ import {
   AuthenticatedUser,
   CurrentUser,
 } from '../../auth/decorators/current-user.decorator';
-import { RateLimit, RateLimitGuard } from '../../../core/guards/rate-limit.guard';
+import {
+  RateLimit,
+  RateLimitGuard,
+} from '../../../core/guards/rate-limit.guard';
 import { SellerCapability } from '../../../core/enums/domain.enums';
 import { SellerAuthorizationGuard } from '../guards/seller-authorization.guard';
 import { RequireSellerCapability } from '../decorators/require-seller-capability.decorator';
@@ -60,7 +63,9 @@ export class SellerApplicationController {
   private extractContext(req: FastifyRequest): RequestAuditContext {
     return {
       requestId:
-        (req.headers['x-request-id'] as string) || (req.id as string) || undefined,
+        (req.headers['x-request-id'] as string) ||
+        (req.id as string) ||
+        undefined,
       ipAddress: req.ip,
       userAgent: (req.headers['user-agent'] as string) || '',
     };
@@ -92,7 +97,10 @@ export class SellerApplicationController {
     summary: 'Request buyer-to-seller conversion (creates DRAFT application)',
   })
   @ApiResponse({ status: 201, description: 'Seller application draft created' })
-  @ApiResponse({ status: 409, description: 'Duplicate active seller application' })
+  @ApiResponse({
+    status: 409,
+    description: 'Duplicate active seller application',
+  })
   async requestSellerConversion(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateSellerApplicationDto,
@@ -107,16 +115,21 @@ export class SellerApplicationController {
 
   @Get('me')
   @ApiOperation({
-    summary: 'Get current user seller status, capabilities, and active application details',
+    summary:
+      'Get current user seller status, capabilities, and active application details',
   })
-  @ApiResponse({ status: 200, description: 'Seller application status returned' })
+  @ApiResponse({
+    status: 200,
+    description: 'Seller application status returned',
+  })
   async getMyApplication(@CurrentUser() user: AuthenticatedUser) {
     return this.sellerApplicationService.getMyApplication(user.id);
   }
 
   @Get('me/corrections')
   @ApiOperation({
-    summary: 'Get active correction requests (affected fields and rejected documents)',
+    summary:
+      'Get active correction requests (affected fields and rejected documents)',
   })
   @ApiResponse({ status: 200, description: 'Correction requests returned' })
   async getMyCorrections(@CurrentUser() user: AuthenticatedUser) {
@@ -125,7 +138,8 @@ export class SellerApplicationController {
 
   @Get('me/history')
   @ApiOperation({
-    summary: 'Get chronological status history of current user seller applications',
+    summary:
+      'Get chronological status history of current user seller applications',
   })
   @ApiResponse({ status: 200, description: 'Application history returned' })
   async getMyApplicationHistory(@CurrentUser() user: AuthenticatedUser) {
@@ -137,7 +151,8 @@ export class SellerApplicationController {
   @RateLimit(30, 3600)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Update current user seller application draft (or affected fields when NEEDS_CORRECTION)',
+    summary:
+      'Update current user seller application draft (or affected fields when NEEDS_CORRECTION)',
   })
   @ApiResponse({ status: 200, description: 'Seller application updated' })
   async updateDraft(
@@ -208,7 +223,10 @@ export class SellerApplicationController {
       'Replace a verification document (preserves previous version in audit history; enforces affected-doc restriction during NEEDS_CORRECTION)',
   })
   @ApiParam({ name: 'documentId', format: 'uuid' })
-  @ApiResponse({ status: 200, description: 'Verification document replaced with new version' })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification document replaced with new version',
+  })
   async replaceDocument(
     @CurrentUser() user: AuthenticatedUser,
     @Param('documentId', ParseUUIDPipe) documentId: string,
@@ -271,10 +289,14 @@ export class SellerApplicationController {
   @RateLimit(10, 3600)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Submit complete seller application for mandatory admin verification',
+    summary:
+      'Submit complete seller application for mandatory admin verification',
   })
   @ApiResponse({ status: 200, description: 'Application submitted (PENDING)' })
-  @ApiResponse({ status: 400, description: 'Incomplete application or invalid state' })
+  @ApiResponse({
+    status: 400,
+    description: 'Incomplete application or invalid state',
+  })
   async submitApplication(
     @CurrentUser() user: AuthenticatedUser,
     @Req() req: FastifyRequest,
@@ -291,8 +313,14 @@ export class SellerApplicationController {
     summary:
       'Development-only instant approval for current user seller application (disabled outside development)',
   })
-  @ApiResponse({ status: 200, description: 'Application approved in development mode' })
-  @ApiResponse({ status: 403, description: 'Disabled outside development mode' })
+  @ApiResponse({
+    status: 200,
+    description: 'Application approved in development mode',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Disabled outside development mode',
+  })
   async devApproveMyApplication(
     @CurrentUser() user: AuthenticatedUser,
     @Req() req: FastifyRequest,
@@ -309,9 +337,13 @@ export class SellerApplicationController {
   @RateLimit(10, 3600)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Resubmit a corrected (NEEDS_CORRECTION), rejected, or expired seller application',
+    summary:
+      'Resubmit a corrected (NEEDS_CORRECTION), rejected, or expired seller application',
   })
-  @ApiResponse({ status: 200, description: 'Application reopened or resubmitted' })
+  @ApiResponse({
+    status: 200,
+    description: 'Application reopened or resubmitted',
+  })
   async resubmitApplication(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ResubmitSellerApplicationDto,
@@ -332,8 +364,14 @@ export class SellerApplicationController {
     summary:
       'Withdraw an active DRAFT, PENDING, or NEEDS_CORRECTION seller application (preserves existing verified account if withdrawing a business upgrade)',
   })
-  @ApiResponse({ status: 200, description: 'Application withdrawn (WITHDRAWN)' })
-  @ApiResponse({ status: 400, description: 'Application cannot be withdrawn in current state' })
+  @ApiResponse({
+    status: 200,
+    description: 'Application withdrawn (WITHDRAWN)',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Application cannot be withdrawn in current state',
+  })
   async withdrawApplication(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: WithdrawSellerApplicationDto,
@@ -355,7 +393,10 @@ export class SellerApplicationController {
       'Start verification renewal for an EXPIRED verification on the same Account (preserves listings, branches, members, and conversations)',
   })
   @ApiResponse({ status: 200, description: 'Renewal application draft opened' })
-  @ApiResponse({ status: 400, description: 'Verification is not eligible for renewal' })
+  @ApiResponse({
+    status: 400,
+    description: 'Verification is not eligible for renewal',
+  })
   async startVerificationRenewal(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: StartVerificationRenewalDto,
@@ -374,7 +415,10 @@ export class SellerApplicationController {
   @ApiOperation({
     summary: 'Seller dashboard summary (approved non-suspended sellers only)',
   })
-  @ApiResponse({ status: 200, description: 'Seller dashboard metrics returned' })
+  @ApiResponse({
+    status: 200,
+    description: 'Seller dashboard metrics returned',
+  })
   @ApiResponse({ status: 403, description: 'Approved seller status required' })
   async getSellerDashboard(@CurrentUser() user: AuthenticatedUser) {
     return this.sellerApplicationService.getSellerDashboard(user.id);

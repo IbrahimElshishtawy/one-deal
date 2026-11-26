@@ -55,7 +55,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.NATIONAL_ID_FRONT,
     displayName: 'National ID (Front)',
     displayNameAr: 'البطاقة الشخصية (الوجه الأمامي)',
-    description: 'Clear photo or scan of the front side of a valid Egyptian National ID.',
+    description:
+      'Clear photo or scan of the front side of a valid Egyptian National ID.',
     isRequired: true,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -69,7 +70,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.NATIONAL_ID_BACK,
     displayName: 'National ID (Back)',
     displayNameAr: 'البطاقة الشخصية (الوجه الخلفي)',
-    description: 'Clear photo or scan of the back side of a valid Egyptian National ID.',
+    description:
+      'Clear photo or scan of the back side of a valid Egyptian National ID.',
     isRequired: true,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -83,7 +85,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.PROOF_OF_ADDRESS,
     displayName: 'Proof of Address',
     displayNameAr: 'إثبات محل الإقامة',
-    description: 'Recent utility bill or lease agreement (optional unless required by section).',
+    description:
+      'Recent utility bill or lease agreement (optional unless required by section).',
     isRequired: false,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -115,7 +118,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.COMMERCIAL_REGISTER,
     displayName: 'Commercial Registration Certificate',
     displayNameAr: 'السجل التجاري',
-    description: 'Valid commercial registration certificate issued by the competent authority.',
+    description:
+      'Valid commercial registration certificate issued by the competent authority.',
     isRequired: true,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -143,7 +147,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.NATIONAL_ID_FRONT,
     displayName: 'Legal Representative National ID',
     displayNameAr: 'بطاقة الممثل القانوني',
-    description: 'Valid National ID of the business owner or authorized legal representative (configurable by admin).',
+    description:
+      'Valid National ID of the business owner or authorized legal representative (configurable by admin).',
     isRequired: false,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -157,7 +162,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.LEGAL_REPRESENTATION_PROOF,
     displayName: 'Proof of Legal Representation',
     displayNameAr: 'إثبات الصفة القانونية / التفويض',
-    description: 'Power of attorney or authorization letter when applicant is not the listed owner.',
+    description:
+      'Power of attorney or authorization letter when applicant is not the listed owner.',
     isRequired: false,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -171,7 +177,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.PROOF_OF_ADDRESS,
     displayName: 'Proof of Business Address',
     displayNameAr: 'إثبات عنوان المقر التجاري',
-    description: 'Optional utility bill or commercial lease agreement for the business premises.',
+    description:
+      'Optional utility bill or commercial lease agreement for the business premises.',
     isRequired: false,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -245,7 +252,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.QUALIFICATION_CERTIFICATE,
     displayName: 'Qualification / Trade Certificate',
     displayNameAr: 'شهادة المؤهل أو الخبرة المهنية',
-    description: 'Optional professional degree, syndicate card, or accredited trade qualification (may be required by specific service sections).',
+    description:
+      'Optional professional degree, syndicate card, or accredited trade qualification (may be required by specific service sections).',
     isRequired: false,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -273,7 +281,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.ADDITIONAL_DOCUMENT,
     displayName: 'Additional Supporting Documents',
     displayNameAr: 'مستندات إضافية داعمة',
-    description: 'Optional supporting identity or service accreditation documents.',
+    description:
+      'Optional supporting identity or service accreditation documents.',
     isRequired: false,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -306,7 +315,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.PROOF_OF_ADDRESS,
     displayName: 'Proof of Address (Real Estate)',
     displayNameAr: 'إثبات العنوان (قسم العقارات)',
-    description: 'Mandatory address verification for individual real estate sellers.',
+    description:
+      'Mandatory address verification for individual real estate sellers.',
     isRequired: true,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -322,7 +332,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.PROOF_OF_ADDRESS,
     displayName: 'Warehouse / Storefront Address Proof',
     displayNameAr: 'إثبات عنوان المخزن أو المعرض',
-    description: 'Utility bill or lease contract for building materials supply location.',
+    description:
+      'Utility bill or lease contract for building materials supply location.',
     isRequired: true,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -338,7 +349,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.QUALIFICATION_CERTIFICATE,
     displayName: 'Qualification / Trade Certificate (Services)',
     displayNameAr: 'شهادة المؤهل أو الخبرة المهنية (قسم الخدمات)',
-    description: 'Professional degree, syndicate card, or accredited trade qualification for Home & Engineering Services.',
+    description:
+      'Professional degree, syndicate card, or accredited trade qualification for Home & Engineering Services.',
     isRequired: true,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -352,7 +364,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.PROFESSIONAL_LICENSE,
     displayName: 'Engineering / Professional Practice License',
     displayNameAr: 'ترخيص مزاولة المهنة / كارنيه النقابة',
-    description: 'Valid professional syndicate card or licensed contractor permit.',
+    description:
+      'Valid professional syndicate card or licensed contractor permit.',
     isRequired: true,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -384,7 +397,8 @@ export const DEFAULT_VERIFICATION_REQUIREMENTS: RequirementSeedSpec[] = [
     documentType: SellerDocumentType.BUSINESS_LICENSE,
     displayName: 'Automotive Dealership License',
     displayNameAr: 'ترخيص معرض سيارات',
-    description: 'Valid showroom or dealership operating license for Cars section.',
+    description:
+      'Valid showroom or dealership operating license for Cars section.',
     isRequired: true,
     acceptedMimeTypes: IMAGE_AND_PDF,
     maxFileSizeBytes: MAX_VERIFICATION_DOC_SIZE_BYTES,
@@ -539,7 +553,9 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
   ) {
     await this.ensureDefaultRequirementsSeeded();
 
-    const normalizedSellerType = (sellerType || SellerType.INDIVIDUAL).toUpperCase();
+    const normalizedSellerType = (
+      sellerType || SellerType.INDIVIDUAL
+    ).toUpperCase();
     const normalizedSections = Array.from(
       new Set(
         (marketplaceSections || [])
@@ -614,7 +630,10 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
       sellerType,
       marketplaceSections,
     );
-    const maxVersion = reqs.reduce((acc, r) => Math.max(acc, r.version ?? 1), 1);
+    const maxVersion = reqs.reduce(
+      (acc, r) => Math.max(acc, r.version ?? 1),
+      1,
+    );
     return {
       requirementsVersion: maxVersion,
       snapshot: reqs.map((r) => ({
@@ -673,14 +692,22 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
     const requirements =
       snapshotItems && snapshotItems.length > 0
         ? snapshotItems
-        : await this.getApplicableRequirements(application.sellerType, sections);
+        : await this.getApplicableRequirements(
+            application.sellerType,
+            sections,
+          );
 
     const missingFields: string[] = [];
-    if (!application.businessName || application.businessName.trim().length < 2) {
+    if (
+      !application.businessName ||
+      application.businessName.trim().length < 2
+    ) {
       missingFields.push('businessName');
     }
 
-    const sellerType = (application.sellerType || SellerType.INDIVIDUAL).toUpperCase();
+    const sellerType = (
+      application.sellerType || SellerType.INDIVIDUAL
+    ).toUpperCase();
 
     if (sellerType === SellerType.BUSINESS) {
       if (
@@ -692,15 +719,22 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
         missingFields.push('commercialRegisterNumber');
       }
     } else if (sellerType === SellerType.SERVICE_PROVIDER) {
-      if (!this.cryptoService.hasMinimumLength(application.nationalIdNumber, 6)) {
+      if (
+        !this.cryptoService.hasMinimumLength(application.nationalIdNumber, 6)
+      ) {
         missingFields.push('nationalIdNumber');
       }
-      if (!application.serviceCategory || application.serviceCategory.trim().length < 2) {
+      if (
+        !application.serviceCategory ||
+        application.serviceCategory.trim().length < 2
+      ) {
         missingFields.push('serviceCategory');
       }
     } else {
       // INDIVIDUAL
-      if (!this.cryptoService.hasMinimumLength(application.nationalIdNumber, 6)) {
+      if (
+        !this.cryptoService.hasMinimumLength(application.nationalIdNumber, 6)
+      ) {
         missingFields.push('nationalIdNumber');
       }
     }
@@ -735,7 +769,9 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
       );
 
       if (!validDoc) {
-        if (matchingDocs.some((d) => d.status === SellerDocumentStatus.REJECTED)) {
+        if (
+          matchingDocs.some((d) => d.status === SellerDocumentStatus.REJECTED)
+        ) {
           rejectedDocuments.push(req.documentType);
         } else {
           missingDocuments.push(req.documentType);
@@ -785,12 +821,18 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
       ...(filters?.marketplaceSection
         ? { marketplaceSection: filters.marketplaceSection.toLowerCase() }
         : {}),
-      ...(filters?.isActive !== undefined ? { isActive: filters.isActive } : {}),
+      ...(filters?.isActive !== undefined
+        ? { isActive: filters.isActive }
+        : {}),
     };
 
     const items = await this.prisma.sellerVerificationRequirement.findMany({
       where,
-      orderBy: [{ sellerType: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
+      orderBy: [
+        { sellerType: 'asc' },
+        { sortOrder: 'asc' },
+        { createdAt: 'asc' },
+      ],
     });
 
     return { items, total: items.length };
@@ -801,7 +843,12 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
     staff: AuthenticatedStaff,
     ctx: { requestId?: string; ipAddress?: string; userAgent?: string } = {},
   ) {
-    const allowedSellerTypes = ['INDIVIDUAL', 'BUSINESS', 'SERVICE_PROVIDER', 'ALL'];
+    const allowedSellerTypes = [
+      'INDIVIDUAL',
+      'BUSINESS',
+      'SERVICE_PROVIDER',
+      'ALL',
+    ];
     const sellerType = dto.sellerType.toUpperCase();
     if (!allowedSellerTypes.includes(sellerType)) {
       throw new BadRequestException(`Invalid sellerType '${dto.sellerType}'`);
@@ -810,7 +857,8 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
     const created = await this.prisma.sellerVerificationRequirement.create({
       data: {
         sellerType,
-        marketplaceSection: dto.marketplaceSection?.trim().toLowerCase() || null,
+        marketplaceSection:
+          dto.marketplaceSection?.trim().toLowerCase() || null,
         documentType: dto.documentType.trim().toLowerCase(),
         displayName: dto.displayName.trim(),
         displayNameAr: dto.displayNameAr?.trim() || null,
@@ -820,9 +868,11 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
           dto.acceptedMimeTypes && dto.acceptedMimeTypes.length > 0
             ? dto.acceptedMimeTypes
             : IMAGE_AND_PDF,
-        maxFileSizeBytes: dto.maxFileSizeBytes ?? MAX_VERIFICATION_DOC_SIZE_BYTES,
+        maxFileSizeBytes:
+          dto.maxFileSizeBytes ?? MAX_VERIFICATION_DOC_SIZE_BYTES,
         requiresExpiration: dto.requiresExpiration ?? false,
-        verificationRules: (dto.verificationRules ?? {}) as Prisma.InputJsonValue,
+        verificationRules: (dto.verificationRules ??
+          {}) as Prisma.InputJsonValue,
         isActive: dto.isActive ?? true,
         version: 1,
         sortOrder: dto.sortOrder ?? 100,
@@ -889,8 +939,7 @@ export class SellerVerificationRequirementsService implements OnModuleInit {
           : {}),
         ...(dto.verificationRules !== undefined
           ? {
-              verificationRules:
-                dto.verificationRules as Prisma.InputJsonValue,
+              verificationRules: dto.verificationRules as Prisma.InputJsonValue,
             }
           : {}),
         ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),

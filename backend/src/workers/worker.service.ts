@@ -13,6 +13,7 @@ import { MediaCleanupProcessor } from './media-cleanup.processor';
 import { PaymentReconciliationProcessor } from './payment-reconciliation.processor';
 import { OutboxPublisherProcessor } from './outbox-publisher.processor';
 import { RfqExpiryProcessor } from './rfq-expiry.processor';
+import { SellerVerificationMaintenanceProcessor } from './seller-verification-maintenance.processor';
 import {
   NotificationProcessor,
   PushNotificationJobData,
@@ -45,6 +46,8 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly redisService?: RedisService,
     @Optional() private readonly configService?: ConfigService,
     @Optional() private readonly rfqExpiry?: RfqExpiryProcessor,
+    @Optional()
+    private readonly sellerVerificationMaintenance?: SellerVerificationMaintenanceProcessor,
   ) {}
 
   async onModuleInit() {
@@ -100,6 +103,12 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
               return await this.outboxPublisher?.publishPendingEvents();
             case 'rfq-expiry':
               return await this.rfqExpiry?.processExpiredRfqsAndQuotations();
+            case 'verification-expiry':
+              return await this.sellerVerificationMaintenance?.processOverdueVerifications();
+            case 'verification-renewal-reminders':
+              return await this.sellerVerificationMaintenance?.processRenewalReminders();
+            case 'verification-doc-retention':
+              return await this.sellerVerificationMaintenance?.processDocumentRetentionCleanup();
             default:
               return null;
           }
@@ -152,6 +161,30 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
         'rfq-expiry',
         {},
         { repeat: { every: 30 * 60 * 1000 }, jobId: 'repeat:rfq-expiry' },
+      ),
+      this.maintenanceQueue.add(
+        'verification-expiry',
+        {},
+        {
+          repeat: { every: 60 * 60 * 1000 },
+          jobId: 'repeat:verification-expiry',
+        },
+      ),
+      this.maintenanceQueue.add(
+        'verification-renewal-reminders',
+        {},
+        {
+          repeat: { every: 12 * 60 * 60 * 1000 },
+          jobId: 'repeat:verification-renewal-reminders',
+        },
+      ),
+      this.maintenanceQueue.add(
+        'verification-doc-retention',
+        {},
+        {
+          repeat: { every: 6 * 60 * 60 * 1000 },
+          jobId: 'repeat:verification-doc-retention',
+        },
       ),
     ]);
   }
@@ -248,6 +281,54 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
         });
       },
       30 * 60 * 1000,
+    );
+
+    // Seller verification expiration every 1 hour
+    registerInterval(
+      () => {
+        runWithLock('worker:verification-expiry', 300, () =>
+          this.sellerVerificationMaintenance
+            ? this.sellerVerificationMaintenance.processOverdueVerifications()
+            : Promise.resolve(),
+        ).catch((err) => {
+          this.logger.error(
+            `Error in seller verification expiry job: ${err.message}`,
+          );
+        });
+      },
+      60 * 60 * 1000,
+    );
+
+    // Seller verification renewal reminders every 12 hours
+    registerInterval(
+      () => {
+        runWithLock('worker:verification-renewal-reminders', 300, () =>
+          this.sellerVerificationMaintenance
+            ? this.sellerVerificationMaintenance.processRenewalReminders()
+            : Promise.resolve(),
+        ).catch((err) => {
+          this.logger.error(
+            `Error in seller verification renewal reminder job: ${err.message}`,
+          );
+        });
+      },
+      12 * 60 * 60 * 1000,
+    );
+
+    // Seller verification private document retention & orphan cleanup every 6 hours
+    registerInterval(
+      () => {
+        runWithLock('worker:verification-doc-retention', 600, () =>
+          this.sellerVerificationMaintenance
+            ? this.sellerVerificationMaintenance.processDocumentRetentionCleanup()
+            : Promise.resolve(),
+        ).catch((err) => {
+          this.logger.error(
+            `Error in seller verification document retention job: ${err.message}`,
+          );
+        });
+      },
+      6 * 60 * 60 * 1000,
     );
   }
 

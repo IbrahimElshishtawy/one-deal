@@ -33,20 +33,24 @@ Deal One enforces a strict separation between **Seller Classification (`sellerTy
 stateDiagram-v2
     [*] --> NOT_REQUESTED
     NOT_REQUESTED --> DRAFT : User initiates seller application
-    DRAFT --> PENDING : User submits complete application
-    PENDING --> UNDER_REVIEW : Admin claims for review
+    DRAFT --> PENDING : User submits complete application (requirements snapshot locked)
+    DRAFT --> WITHDRAWN : User withdraws draft
+    PENDING --> UNDER_REVIEW : Admin claims for review (firstReviewer recorded)
     PENDING --> APPROVED : Admin approves complete application
     PENDING --> REJECTED : Admin rejects with mandatory reason
+    PENDING --> WITHDRAWN : User withdraws pending application
     UNDER_REVIEW --> NEEDS_CORRECTION : Admin requests targeted changes
-    UNDER_REVIEW --> APPROVED : Admin approves complete application
+    UNDER_REVIEW --> APPROVED : Admin approves (four-eyes enforced if enabled)
     UNDER_REVIEW --> REJECTED : Admin rejects with mandatory reason
     NEEDS_CORRECTION --> PENDING : User updates affected fields/docs & resubmits
+    NEEDS_CORRECTION --> WITHDRAWN : User withdraws application
     REJECTED --> DRAFT : User reopens draft
     REJECTED --> PENDING : User resubmits immediately
+    WITHDRAWN --> DRAFT : User starts fresh draft
     APPROVED --> SUSPENDED : Admin suspends seller verification
-    APPROVED --> EXPIRED : Verification validity expires
+    APPROVED --> EXPIRED : Scheduled worker or admin expires overdue verification
     SUSPENDED --> APPROVED : Admin reinstates verification
-    EXPIRED --> DRAFT : User starts renewal draft
+    EXPIRED --> DRAFT : User initiates renewal on same Account
     EXPIRED --> PENDING : User submits renewal directly
 ```
 
@@ -66,26 +70,28 @@ sequenceDiagram
     API->>ReqEngine: Resolve active requirements (global + section)
     ReqEngine-->>Seller: Dynamic required & optional documents
 
-    Seller->>API: POST /seller-applications (sellerType, profile fields)
+    Seller->>API: POST /seller-applications (sellerType, encrypted PII fields)
     API->>DB: Create DRAFT SellerApplication + History
 
     loop For each required/optional document
         Seller->>API: POST /seller-applications/me/documents/upload-url
         API->>Storage: Validate MIME, size, extension & doc compatibility
-        Storage-->>Seller: Short-lived private presigned PUT URL
-        Seller->>Storage: Direct upload to private bucket
+        Storage-->>Seller: Short-lived private R2 SigV4 presigned PUT URL (15m)
+        Seller->>Storage: Direct PUT to private R2 bucket
         Seller->>API: POST /seller-applications/me/documents (confirm + magic bytes)
-        API->>DB: Save versioned SellerApplicationDocument
+        API->>Storage: Server-side R2 SigV4 HEAD check (existence, size, content-type)
+        API->>DB: Save versioned SellerApplicationDocument + supersede old version
     end
 
     Seller->>API: POST /seller-applications/me/submit
-    API->>ReqEngine: Evaluate completeness
-    API->>DB: Transition DRAFT -> PENDING
+    API->>ReqEngine: Evaluate completeness & capture immutable requirementsSnapshot
+    API->>DB: Atomic DRAFT -> PENDING (version++) + History + AuditLog
 
+    AdminAPI->>DB: POST /admin/seller-applications/:id/review (records firstReviewedByStaffId)
     AdminAPI->>DB: GET /admin/seller-applications/:id/documents/:docId (audited signed GET URL)
-    AdminAPI->>DB: POST /admin/seller-applications/:id/approve (atomic tx)
-    Note over AdminAPI,DB: Derives verificationTier, updates Account,<br/>marks docs VERIFIED, records History + AuditLog
-    AdminAPI->>Cache: Invalidate account & listings:feed:* caches
+    AdminAPI->>DB: POST /admin/seller-applications/:id/approve (atomic tx, optional Four-Eyes check)
+    Note over AdminAPI,DB: Derives verificationTier, updates Account + verificationExpiresAt,<br/>marks docs VERIFIED, records History + AuditLog
+    AdminAPI->>Cache: Invalidate account/profile/eligibility + bump listings:feed:ver & home:feed:ver
 ```
 
 ---
@@ -306,3 +312,57 @@ sequenceDiagram
 - **Unit Tests:** `src/modules/accounts/verification-tier-and-upgrade.spec.ts`, `src/modules/accounts/services/seller-application.service.spec.ts`, `src/modules/accounts/services/seller-verification-security.spec.ts`, `src/modules/accounts/seller-application-state-machine.spec.ts`, `src/modules/accounts/guards/seller-authorization.guard.spec.ts`.
 - **Integration & Security E2E Tests:** `test/seller-verification-tiers-and-upgrade.e2e-spec.ts`, `test/seller-verification.e2e-spec.ts`, `test/seller-verification-identity-review.e2e-spec.ts`.
 - **Swagger / OpenAPI:** Automatically generated from NestJS `@ApiOperation`, `@ApiResponse`, `@ApiProperty` decorators at `/api/docs` when `ENABLE_SWAGGER=true`.
+
+
+---
+
+## 9. Hardening Controls (Encryption, Four-Eyes, Retention, Scheduled Jobs & Cache)
+
+### 9.1 AES-256-GCM Encryption & Versioned Key Rotation (`SensitiveDataCryptoService`)
+- **Encrypted fields at rest:** `nationalIdNumber`, `taxIdNumber`, `commercialRegisterNumber`, and `authorizedRepresentativeId`.
+- **Ciphertext format:** `enc:<keyVersion>:<12-byte-iv-hex>:<16-byte-gcm-tag-hex>:<ciphertext-hex>` (unique random 96-bit IV per encryption).
+- **Key Rotation:** Configure `SELLER_PII_ENCRYPTION_KEYS="v1:<oldKey>,v2:<newKey>"` and `SELLER_PII_ENCRYPTION_KEY_VERSION="v2"`. Existing `v1` records and legacy plaintext rows remain decryptable while all new writes encrypt with `v2`. Use `needsReencryption()` / `reencrypt()` for offline re-encryption.
+- **Zero PII Leakage:** Raw values, keys, and ciphertexts are never logged. Standard API responses return masked values (`**********4567`, or `********` on unknown key version).
+
+### 9.2 Configurable Four-Eyes Review (`ENABLE_FOUR_EYES_VERIFICATION_REVIEW`)
+- Self-approval is **always** blocked (`403 SELF_APPROVAL_FORBIDDEN`).
+- When `ENABLE_FOUR_EYES_VERIFICATION_REVIEW=true`, the staff member who starts review or reviews the first document (`firstReviewedByStaffId`) cannot perform the final approval (`403 FOUR_EYES_APPROVAL_REQUIRED`); a second authorized admin must approve.
+
+### 9.3 Authoritative State Transition Matrix & Account Mapping
+
+| From State | Allowed To States | Actor | Account `verificationStatus` | Account `verificationTier` |
+| :--- | :--- | :--- | :--- | :--- |
+| `DRAFT` | `PENDING`, `WITHDRAWN` | Seller | `not_submitted` | `NONE` |
+| `PENDING` | `UNDER_REVIEW`, `APPROVED`, `REJECTED`, `WITHDRAWN` | Admin / Seller | `pending` | `NONE` |
+| `UNDER_REVIEW` | `NEEDS_CORRECTION`, `APPROVED`, `REJECTED` | Admin | `pending` | `NONE` |
+| `NEEDS_CORRECTION` | `PENDING`, `WITHDRAWN` | Seller | `needs_changes` | `NONE` |
+| `REJECTED` | `DRAFT`, `PENDING` | Seller | `rejected` | `NONE` |
+| `WITHDRAWN` | `DRAFT`, `PENDING` | Seller | `not_submitted` *(preserved on upgrade)* | `NONE` *(preserved on upgrade)* |
+| `APPROVED` | `SUSPENDED`, `EXPIRED` | Admin / Worker | `approved` | `IDENTITY_VERIFIED` / `BUSINESS_VERIFIED` |
+| `SUSPENDED` | `APPROVED` | Admin | `suspended` | `NONE` |
+| `EXPIRED` | `DRAFT`, `PENDING` | Seller | `expired` | `NONE` |
+
+### 9.4 Configurable Document Retention & Purge Policy
+
+| Document Category | Env Variable | Default | Notes |
+| :--- | :--- | :--- | :--- |
+| Rejected application / document | `VERIFICATION_DOC_RETENTION_REJECTED_DAYS` | `90` days | Purges R2 object & redacts filename; preserves audit row |
+| Withdrawn application | `VERIFICATION_DOC_RETENTION_WITHDRAWN_DAYS` | `30` days | Purges R2 object & redacts filename |
+| Expired verification | `VERIFICATION_DOC_RETENTION_EXPIRED_DAYS` | `180` days | Purges R2 object & redacts filename |
+| Superseded document version | `VERIFICATION_DOC_RETENTION_SUPERSEDED_DAYS` | `90` days | Purges replaced version after retention window |
+| Approved verification | `VERIFICATION_DOC_RETENTION_APPROVED_DAYS` | `0` (keep) | Configurable when legal retention period is finalized |
+| Orphan `PENDING_UPLOAD` | `VERIFICATION_ORPHAN_UPLOAD_TTL_HOURS` | `24` hours | Deletes unconfirmed R2 uploads |
+
+> **Safety Invariant:** Documents belonging to applications in `PENDING`, `UNDER_REVIEW`, or `NEEDS_CORRECTION` status are **never** purged by retention cleanup.
+
+### 9.5 Scheduled Maintenance Jobs (`SellerVerificationMaintenanceProcessor`)
+Registered in `WorkerService` using **BullMQ repeatable jobs** (with Redis distributed-lock interval fallback when BullMQ is offline):
+1. `verification-expiry` (every 1h): Expires overdue `APPROVED` verifications (`verificationExpiresAt <= now`), sets `Account.verificationStatus = 'expired'`, `verificationTier = 'NONE'`, revokes badge, invalidates Redis caches, notifies seller.
+2. `verification-renewal-reminders` (every 12h): Sends idempotent `SELLER_VERIFICATION_EXPIRING_SOON` push notifications `VERIFICATION_RENEWAL_REMINDER_DAYS` (default 30) before expiry.
+3. `verification-doc-retention` (every 6h): Deletes expired & orphaned private R2 objects via SigV4 `DELETE`, marks `status = 'PURGED'`, `purgedAt = now`, redacts filename, preserves audit trail.
+
+### 9.6 Redis Cache Invalidation
+Every verification state transition calls `invalidateAccountCache(userId, accountId)`:
+- `DEL account:membership:<userId>:<accountId>`
+- `INCR listings:feed:ver` and `INCR home:feed:ver`
+- Non-blocking `SCAN` (`delByPattern`) for `listings:feed:*`, `account:public:<accountId>*`, `account:profile:<accountId>*`, `seller:profile:<accountId>*`, `seller:eligibility:<userId>*`.

@@ -70,10 +70,7 @@ export class SensitiveDataCryptoService {
       .trim()
       .toLowerCase();
 
-    if (
-      configuredActiveVersion &&
-      this.keyRing.has(configuredActiveVersion)
-    ) {
+    if (configuredActiveVersion && this.keyRing.has(configuredActiveVersion)) {
       this.activeKeyVersion = configuredActiveVersion;
     } else {
       // Pick the highest configured key version (e.g. v2 > v1)
