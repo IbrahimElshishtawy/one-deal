@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:market_space/features/seller_verification/domain/enums/seller_verification_enums.dart';
 
@@ -6,21 +8,33 @@ class EgyptianNationalIdResult {
   final bool isValid;
   final String normalizedDigits;
   final DateTime? birthDate;
+  final int? ageYears;
   final String? governorateNameAr;
   final String? governorateNameEn;
+  final String? genderAr;
+  final String? genderEn;
   final String? errorMessage;
 
   const EgyptianNationalIdResult({
     required this.isValid,
     required this.normalizedDigits,
     this.birthDate,
+    this.ageYears,
     this.governorateNameAr,
     this.governorateNameEn,
+    this.genderAr,
+    this.genderEn,
     this.errorMessage,
   });
 
   String? localizedGovernorate(bool isArabic) =>
       isArabic ? governorateNameAr : governorateNameEn;
+
+  String? localizedGender(bool isArabic) => isArabic ? genderAr : genderEn;
+
+  String? get formattedBirthDate => birthDate == null
+      ? null
+      : '${birthDate!.year}-${birthDate!.month.toString().padLeft(2, '0')}-${birthDate!.day.toString().padLeft(2, '0')}';
 }
 
 /// Result of analyzing and normalizing an Egyptian mobile phone number.
@@ -326,13 +340,98 @@ class SellerVerificationAlgorithms {
       );
     }
 
+    // Reject obviously fabricated trailing serials (e.g. 00000)
+    final serialPart = normalized.substring(9, 14);
+    if (serialPart == '00000') {
+      return EgyptianNationalIdResult(
+        isValid: false,
+        normalizedDigits: normalized,
+        errorMessage: isArabic
+            ? 'الرقم القومي غير صالح (تسلسل الأرقام غير صحيح)'
+            : 'National ID serial sequence is invalid',
+      );
+    }
+
+    // Digit 13 (index 12): odd = Male, even = Female in Egyptian National ID standard
+    final genderDigit = int.parse(normalized[12]);
+    final isMale = genderDigit.isOdd;
+    var ageYears = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      ageYears--;
+    }
+
     return EgyptianNationalIdResult(
       isValid: true,
       normalizedDigits: normalized,
       birthDate: birthDate,
+      ageYears: ageYears,
       governorateNameAr: govEntry.$1,
       governorateNameEn: govEntry.$2,
+      genderAr: isMale ? 'ذكر' : 'أنثى',
+      genderEn: isMale ? 'Male' : 'Female',
     );
+  }
+
+  /// Validates real file magic bytes client-side before uploading to prevent
+  /// corrupted, empty, or disguised files from failing late at server confirm.
+  static String? validateMagicBytesAndQuality({
+    required Uint8List bytes,
+    required String mimeType,
+    required bool isArabic,
+  }) {
+    if (bytes.length < 12) {
+      return isArabic
+          ? 'الملف المختار فارغ أو تالف. يرجى اختيار صورة واضحة للبطاقة.'
+          : 'Selected file is empty or corrupted. Please pick a clear photo.';
+    }
+    final normalizedMime = mimeType.toLowerCase().trim();
+    bool validSignature = false;
+    if (normalizedMime == 'image/jpeg') {
+      validSignature =
+          bytes[0] == 0xff && bytes[1] == 0xd8 && bytes[2] == 0xff;
+    } else if (normalizedMime == 'image/png') {
+      validSignature = bytes[0] == 0x89 &&
+          bytes[1] == 0x50 &&
+          bytes[2] == 0x4e &&
+          bytes[3] == 0x47;
+    } else if (normalizedMime == 'image/webp') {
+      validSignature = bytes[0] == 0x52 &&
+          bytes[1] == 0x49 &&
+          bytes[2] == 0x46 &&
+          bytes[3] == 0x46 &&
+          bytes[8] == 0x57 &&
+          bytes[9] == 0x45 &&
+          bytes[10] == 0x42 &&
+          bytes[11] == 0x50;
+    } else if (normalizedMime == 'application/pdf') {
+      validSignature = bytes[0] == 0x25 &&
+          bytes[1] == 0x50 &&
+          bytes[2] == 0x44 &&
+          bytes[3] == 0x46 &&
+          bytes[4] == 0x2d;
+    }
+
+    if (!validSignature) {
+      return isArabic
+          ? 'صيغة الملف لا تطابق محتواه الفعلي. يرجى رفع صورة أصلية (JPG/PNG/WEBP) أو PDF سليم.'
+          : 'File content does not match its declared format. Please upload a valid image or PDF.';
+    }
+    return null;
+  }
+
+  /// Detects if the user accidentally picked the exact same photo for both
+  /// National ID Front and Back (only applies to real images >= 256 bytes).
+  static bool areDuplicateDocumentBytes(Uint8List a, Uint8List b) {
+    if (a.length < 256 || a.length != b.length) return false;
+    final sampleCount = a.length < 64 ? a.length : 64;
+    for (var i = 0; i < sampleCount; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    for (var i = 1; i <= sampleCount; i++) {
+      if (a[a.length - i] != b[b.length - i]) return false;
+    }
+    return true;
   }
 
   /// Validates and normalizes an Egyptian mobile number (`010/011/012/015`).

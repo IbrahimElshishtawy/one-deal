@@ -520,10 +520,35 @@ class SellerVerificationWizardNotifier
       final picked = await pickerService.pickDocument(source);
       if (picked == null) return null;
 
-      final validationError = SellerVerificationValidators.validateDocumentFile(
+      String? validationError = SellerVerificationValidators.validateDocumentFile(
         picked,
         isArabic: isArabic,
       );
+
+      validationError ??= SellerVerificationAlgorithms.validateMagicBytesAndQuality(
+        bytes: picked.bytes,
+        mimeType: picked.mimeType,
+        isArabic: isArabic,
+      );
+
+      // Prevent accidentally uploading the exact same photo for ID Front and Back
+      if (validationError == null &&
+          (documentType == 'national_id_front' ||
+              documentType == 'national_id_back')) {
+        final otherType = documentType == 'national_id_front'
+            ? 'national_id_back'
+            : 'national_id_front';
+        final otherFile = state.slotFor(otherType).localFile;
+        if (otherFile != null &&
+            SellerVerificationAlgorithms.areDuplicateDocumentBytes(
+              picked.bytes,
+              otherFile.bytes,
+            )) {
+          validationError = isArabic
+              ? 'تم اختيار نفس الصورة لوجه وظهر البطاقة. يرجى رفع صورة مختلفة لكل وجه.'
+              : 'You selected the exact same image for ID Front and Back. Please upload both sides separately.';
+        }
+      }
 
       final nextSlots = Map<String, WizardDocumentSlot>.from(state.documentSlots);
       final nextErrors = Map<String, String>.from(state.fieldErrors)

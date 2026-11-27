@@ -459,6 +459,77 @@ class _SellerVerificationWizardPageState
             helperStatusValid: nidAnalysis?.isValid == true,
             onChanged: notifier.setNationalId,
           ),
+          if (nidAnalysis?.isValid == true) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.35),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.verified_user_rounded,
+                        size: 16,
+                        color: Color(0xFF10B981),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          isArabic
+                              ? 'تم فحص بيانات البطاقة تلقائياً — تأكد من مطابقتها للصورة:'
+                              : 'ID data verified — confirm it matches your card photo:',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF10B981),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
+                    children: [
+                      if (nidAnalysis!.localizedGovernorate(isArabic) != null)
+                        Text(
+                          '${isArabic ? 'المحافظة:' : 'Gov:'} ${nidAnalysis.localizedGovernorate(isArabic)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      if (nidAnalysis.formattedBirthDate != null)
+                        Text(
+                          '${isArabic ? 'الميلاد:' : 'DOB:'} ${nidAnalysis.formattedBirthDate}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      if (nidAnalysis.localizedGender(isArabic) != null)
+                        Text(
+                          '${isArabic ? 'النوع:' : 'Gender:'} ${nidAnalysis.localizedGender(isArabic)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 18),
           _buildDocumentsPairHeader(
             context,
