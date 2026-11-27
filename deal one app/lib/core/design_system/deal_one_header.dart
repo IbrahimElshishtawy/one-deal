@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:market_space/core/design_system/deal_one_logo.dart';
+import 'package:market_space/features/accounts/presentation/providers/user_profile_providers.dart';
 import 'package:market_space/features/listings/presentation/widgets/location_selector_sheet.dart';
 import 'package:market_space/features/locations/presentation/providers/locations_providers.dart';
 import 'package:market_space/core/providers/app_settings_providers.dart';
@@ -13,7 +14,7 @@ import 'package:market_space/core/utils/responsive_utils.dart';
 
 /// Shared Deal One Marketplace Header matching all 7 Home reference PNGs:
 /// - Warm circular portrait avatar with bottom overlapping Deal One handshake logo badge (`assets/image/logo.png`).
-/// - User Name (`مصطفي هيكل` or authenticated user) + Location pin (`الغربية - طنطا` or selected location).
+/// - Authenticated user's real full name (loaded from `userProfileProvider` / `activeUserDisplayNameProvider`) + Location pin.
 /// - Two white rounded-square (`12dp`) icon buttons on the opposite side (Basket & Menu/Back).
 class DealOneHomeHeader extends ConsumerWidget {
   final bool showBackToHub;
@@ -33,8 +34,20 @@ class DealOneHomeHeader extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSmall = context.isSmallPhone;
     final hPad = context.horizontalScreenPadding;
-    final userName = ref.watch(activeUserDisplayNameProvider) ??
-        (isArabic ? 'مصطفي هيكل' : 'Mostafa Heikal');
+    final session = ref.watch(sessionProvider);
+    final profile = session.isAuthenticated
+        ? ref.watch(userProfileProvider).valueOrNull
+        : null;
+    final cachedName = ref.watch(activeUserDisplayNameProvider)?.trim();
+    final profileName = profile?.fullName.trim();
+    final userName = (profileName != null && profileName.isNotEmpty)
+        ? profileName
+        : (cachedName != null && cachedName.isNotEmpty)
+            ? cachedName
+            : (session.isAuthenticated
+                ? (isArabic ? 'مستخدم Deal One' : 'Deal One User')
+                : (isArabic ? 'مرحباً بك' : 'Welcome Guest'));
+    final avatarUrl = profile?.avatarUrl;
     final selectedGov = ref.watch(selectedGovernorateProvider);
     final selectedCity = ref.watch(selectedCityProvider);
 
@@ -75,10 +88,22 @@ class DealOneHomeHeader extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  child: Icon(
-                    Icons.person_rounded,
-                    size: isSmall ? 26 : 30,
-                    color: DealOneDesignColors.navy,
+                  child: ClipOval(
+                    child: avatarUrl != null && avatarUrl.isNotEmpty
+                        ? Image.network(
+                            avatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(
+                              Icons.person_rounded,
+                              size: isSmall ? 26 : 30,
+                              color: DealOneDesignColors.navy,
+                            ),
+                          )
+                        : Icon(
+                            Icons.person_rounded,
+                            size: isSmall ? 26 : 30,
+                            color: DealOneDesignColors.navy,
+                          ),
                   ),
                 ),
                 Positioned(

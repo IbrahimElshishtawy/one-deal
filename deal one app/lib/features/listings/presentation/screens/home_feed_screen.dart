@@ -5,6 +5,7 @@ import 'package:market_space/core/providers/app_settings_providers.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
+import 'package:market_space/features/accounts/presentation/providers/user_profile_providers.dart';
 import 'package:market_space/features/categories/domain/entities/category_entity.dart';
 import 'package:market_space/features/categories/presentation/providers/categories_providers.dart';
 import 'package:market_space/features/listings/domain/entities/listing_entity.dart';
@@ -86,8 +87,16 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
   Widget build(BuildContext context) {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final userName = ref.watch(activeUserDisplayNameProvider) ??
-        (isArabic ? 'مصطفى هيكل' : 'Deal One Guest');
+    final session = ref.watch(sessionProvider);
+    final profileName = session.isAuthenticated
+        ? ref.watch(userProfileProvider).valueOrNull?.fullName.trim()
+        : null;
+    final cachedName = ref.watch(activeUserDisplayNameProvider)?.trim();
+    final userName = (profileName != null && profileName.isNotEmpty)
+        ? profileName
+        : (cachedName != null && cachedName.isNotEmpty)
+            ? cachedName
+            : (isArabic ? 'مرحباً بك' : 'Deal One Guest');
     final selectedGov = ref.watch(selectedGovernorateProvider);
     final selectedCity = ref.watch(selectedCityProvider);
     final categoriesAsync = ref.watch(categoryTreeProvider);
