@@ -58,6 +58,7 @@ class RecentlyViewedEntry {
   factory RecentlyViewedEntry.fromListing(
     ListingItem item, {
     required String sectionSlug,
+    String localeCode = 'ar',
   }) {
     return RecentlyViewedEntry(
       id: item.id,
@@ -65,7 +66,7 @@ class RecentlyViewedEntry {
       price: item.price,
       currency: item.currency,
       imageUrl: item.primaryImageUrl,
-      location: item.localizedLocation('ar'),
+      location: item.localizedLocation(localeCode),
       categorySlug: MapCategoryRegistry.normalizeSlug(sectionSlug),
       viewedAt: DateTime.now(),
     );
@@ -101,17 +102,39 @@ class RecentlyViewedNotifier
               .toList();
         }
       }
-      if (mounted) {
-        state = restored;
+      if (!mounted) return;
+      // Merge restored entries with any views recorded before _restore() finished
+      // so fast navigations never lose the most recent view.
+      final merged = Map<String, List<RecentlyViewedEntry>>.from(restored);
+      for (final currentEntry in state.entries) {
+        final combined = List<RecentlyViewedEntry>.from(currentEntry.value);
+        for (final oldItem in merged[currentEntry.key] ?? const <RecentlyViewedEntry>[]) {
+          if (!combined.any((e) => e.id == oldItem.id)) {
+            combined.add(oldItem);
+          }
+        }
+        if (combined.length > _maxPerCategory) {
+          combined.removeRange(_maxPerCategory, combined.length);
+        }
+        merged[currentEntry.key] = combined;
       }
+      state = merged;
     } catch (_) {
       // Fail safely on corrupt local preferences without disrupting Home.
     }
   }
 
-  Future<void> recordView(ListingItem item, {required String sectionSlug}) async {
+  Future<void> recordView(
+    ListingItem item, {
+    required String sectionSlug,
+    String localeCode = 'ar',
+  }) async {
     final normalized = MapCategoryRegistry.normalizeSlug(sectionSlug);
-    final entry = RecentlyViewedEntry.fromListing(item, sectionSlug: normalized);
+    final entry = RecentlyViewedEntry.fromListing(
+      item,
+      sectionSlug: normalized,
+      localeCode: localeCode,
+    );
     final current = List<RecentlyViewedEntry>.from(state[normalized] ?? const []);
     current.removeWhere((e) => e.id == item.id);
     current.insert(0, entry);

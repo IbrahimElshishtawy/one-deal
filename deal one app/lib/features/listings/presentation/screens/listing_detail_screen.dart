@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:market_space/app/app_localization.dart';
 import 'package:market_space/core/errors/error_presenter.dart';
+import 'package:market_space/core/home/providers/recently_viewed_provider.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_colors.dart';
@@ -32,15 +33,24 @@ class ListingDetailScreen extends ConsumerWidget {
 
     return detailAsync.when(
       data: (item) {
-        // Persist in last-viewed cache without blocking UI
-        ref.read(hybridCacheManagerProvider).recordViewedListing(
-              id: item.id,
-              title: item.title,
-              price: item.price,
-              currency: item.currency,
-              imageUrl: item.primaryImageUrl,
-              categorySlug: item.categorySlug,
-            );
+        final localeCode =
+            Directionality.of(context) == TextDirection.rtl ? 'ar' : 'en';
+        // Persist in both hybrid cache and recentlyViewedProvider post-frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(hybridCacheManagerProvider).recordViewedListing(
+                id: item.id,
+                title: item.title,
+                price: item.price,
+                currency: item.currency,
+                imageUrl: item.primaryImageUrl,
+                categorySlug: item.categorySlug,
+              );
+          ref.read(recentlyViewedProvider.notifier).recordView(
+                item,
+                sectionSlug: item.categorySlug,
+                localeCode: localeCode,
+              );
+        });
         if (MarketplaceSectorCategory.fromCategorySlug(item.categorySlug) ==
             MarketplaceSectorCategory.realEstate) {
           return RealEstateDetailsPage(
