@@ -41,6 +41,7 @@ import 'package:market_space/features/activity_hub/domain/entities/booking_entit
 import 'package:market_space/features/real_estate/presentation/pages/active_previews_page.dart';
 import 'package:market_space/features/real_estate/presentation/pages/preview_route_page.dart';
 import 'package:market_space/features/real_estate/presentation/pages/real_estate_map_page.dart';
+import 'package:market_space/features/seller_center/presentation/pages/seller_center_page.dart';
 import 'package:market_space/features/real_estate/presentation/pages/real_estate_reels_page.dart';
 import 'package:market_space/features/search/presentation/screens/search_screen.dart';
 import 'package:market_space/features/seller_verification/presentation/pages/business_upgrade_page.dart';
@@ -383,6 +384,19 @@ class AppRouter {
               state: state,
               style: CinematicTransitionStyle.glide,
               child: SectionCategoriesPage(categorySlug: slug),
+            );
+          },
+        ),
+        GoRoute(
+          path: RouteNames.sellerCenter,
+          name: RouteNames.sellerCenterName,
+          pageBuilder: (context, state) {
+            final tab = int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0;
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.glide,
+              child: SellerCenterPage(initialTabIndex: tab),
             );
           },
         ),

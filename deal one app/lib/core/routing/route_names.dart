@@ -131,6 +131,7 @@ class RouteNames {
       '/seller-verification/profile';
   static const String sellerVerificationUpgrade =
       '/seller-verification/upgrade';
+  static const String sellerCenter = '/seller-center';
 
   static const String searchName = 'search';
   static const String listingDetailName = 'listing_detail';
@@ -227,4 +228,5 @@ class RouteNames {
       'seller_verification_profile';
   static const String sellerVerificationUpgradeName =
       'seller_verification_upgrade';
+  static const String sellerCenterName = 'seller_center';
 }

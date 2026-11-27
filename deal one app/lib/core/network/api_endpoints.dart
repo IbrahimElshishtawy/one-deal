@@ -76,6 +76,16 @@ class ApiEndpoints {
       '/seller-applications/me/withdraw';
   static const String sellerApplicationMeRenew =
       '/seller-applications/me/renew';
+
+  // Seller Center (Verified Sellers Only)
+  static const String sellerCenterDashboard = '/seller-center/dashboard';
+  static const String sellerCenterListings = '/seller-center/listings';
+  static const String sellerCenterInteractions = '/seller-center/interactions';
+  static const String sellerCenterConversations =
+      '/seller-center/conversations';
+  static const String sellerCenterDeals = '/seller-center/deals';
+  static String sellerCenterDealById(String id) => '/seller-center/deals/$id';
+  static const String sellerCenterAnalytics = '/seller-center/analytics';
   static const String sellerApplicationDashboard =
       '/seller-applications/dashboard';
   static const String sellerBusinessUpgrade =

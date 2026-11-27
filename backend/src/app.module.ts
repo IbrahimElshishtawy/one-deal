@@ -30,6 +30,7 @@ import { StaffModule } from './modules/staff/staff.module';
 import { EmailModule } from './modules/email/email.module';
 import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
 import { AdminOperationsModule } from './modules/admin-operations/admin-operations.module';
+import { SellerCenterModule } from './modules/seller-center/seller-center.module';
 
 import { RedisModule } from './core/redis/redis.module';
 import { MetricsModule } from './core/metrics/metrics.module';
@@ -71,6 +72,7 @@ const isPaymentsEnabled = process.env.ENABLE_V2_PAYMENTS === 'true';
     StaffModule,
     AdminAuthModule,
     AdminOperationsModule,
+    SellerCenterModule,
     ...(isPaymentsEnabled ? [PaymentsModule] : []),
   ],
   controllers: [HealthController],

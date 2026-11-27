@@ -232,18 +232,62 @@ class ProfileScreen extends ConsumerWidget {
                               if (vSnap != null &&
                                   vSnap.sellerStatus !=
                                       VerificationStatus.notSubmitted) {
-                                return SellerVerificationSummary(
-                                  snapshot: vSnap,
-                                  onTrackTap: () => context.push(
-                                    RouteNames.sellerVerificationTracking,
-                                  ),
-                                  onUpgradeTap:
-                                      vSnap.capabilities.canUpgradeToBusiness
+                                final canOpenCenter =
+                                    vSnap.sellerStatus ==
+                                            VerificationStatus.approved &&
+                                        vSnap.capabilities
+                                            .canAccessSellerDashboard;
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    if (canOpenCenter) ...[
+                                      ElevatedButton.icon(
+                                        key: const Key(
+                                          'profile_seller_center_entry',
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: DealOneTokens.navy,
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 14,
+                                          ),
+                                          shape: const RoundedRectangleBorder(
+                                            borderRadius: AppRadii.lg,
+                                          ),
+                                        ),
+                                        onPressed: () => context
+                                            .push(RouteNames.sellerCenter),
+                                        icon: const Icon(
+                                          Icons.storefront_rounded,
+                                        ),
+                                        label: Text(
+                                          isArabic
+                                              ? 'دخول مركز البائع (إدارة الإعلانات والمبيعات)'
+                                              : 'Open Seller Center',
+                                          style: const TextStyle(
+                                            fontSize: 14.5,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: AppSpacing.md),
+                                    ],
+                                    SellerVerificationSummary(
+                                      snapshot: vSnap,
+                                      onTrackTap: () => context.push(
+                                        RouteNames.sellerVerificationTracking,
+                                      ),
+                                      onUpgradeTap: vSnap
+                                              .capabilities.canUpgradeToBusiness
                                           ? () => context.push(
                                                 RouteNames
                                                     .sellerVerificationUpgrade,
                                               )
                                           : null,
+                                    ),
+                                  ],
                                 );
                               }
                               return ProfileBusinessBanner(

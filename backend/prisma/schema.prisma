@@ -203,6 +203,7 @@ model Account {
   reportsAgainst         Report[]              @relation("ReportedAccountRelation")
   providerBookings       Booking[]             @relation("ProviderBookings")
   supplierQuotations     Quotation[]           @relation("SupplierQuotations")
+  sellerDeals            SellerDeal[]          @relation("AccountSellerDeals")
 
   @@index([isDemo])
   @@index([ownerUserId])
@@ -578,6 +579,7 @@ model Listing {
   bookings      Booking[]
   rfqItems      RfqItem[]
   cartItems     CartItem[]
+  sellerDeals   SellerDeal[]
 
   @@index([moderationStatus, publicationStatus, availabilityStatus, categoryId, refreshedAt(sort: Desc)], name: "idx_listings_search")
   @@index([accountId])
@@ -1255,3 +1257,32 @@ enum FieldType {
   BOOLEAN
 }
 
+
+
+model SellerDeal {
+  id                 String    @id @default(uuid()) @db.Uuid
+  sellerAccountId    String    @map("seller_account_id") @db.Uuid
+  createdByUserId    String    @map("created_by_user_id") @db.Uuid
+  listingId          String    @map("listing_id") @db.Uuid
+  customerUserId     String?   @map("customer_user_id") @db.Uuid
+  customerName       String    @map("customer_name") @db.VarChar(150)
+  customerReference  String?   @map("customer_reference") @db.VarChar(150)
+  conversationId     String?   @map("conversation_id") @db.Uuid
+  initialPrice       Decimal   @map("initial_price") @db.Decimal(14, 2)
+  agreedPrice        Decimal?  @map("agreed_price") @db.Decimal(14, 2)
+  currency           String    @default("EGP") @db.VarChar(3)
+  status             String    @default("NEW_INQUIRY") @db.VarChar(30) // NEW_INQUIRY, CONTACTED, NEGOTIATING, AGREED, COMPLETED, CANCELLED
+  sellerReportedOnly Boolean   @default(true) @map("seller_reported_only")
+  notes              String?   @db.Text
+  completedAt        DateTime? @map("completed_at") @db.Timestamptz
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  sellerAccount Account @relation("AccountSellerDeals", fields: [sellerAccountId], references: [id], onDelete: Cascade)
+  listing       Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([sellerAccountId, status, updatedAt(sort: Desc)], name: "idx_seller_deals_account_status_updated")
+  @@index([listingId], name: "idx_seller_deals_listing")
+  @@index([createdByUserId], name: "idx_seller_deals_creator")
+  @@map("seller_deals")
+}
