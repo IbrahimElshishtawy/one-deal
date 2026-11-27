@@ -190,6 +190,40 @@ class _InMemorySellerVerificationRepository
   ) =>
       submitApplication();
 
+  @override
+  Future<SellerApplicationEntity> withdrawApplication({
+    String? reason,
+    String? applicationType,
+  }) async {
+    status = VerificationStatus.withdrawn;
+    activeApp = SellerApplicationEntity(
+      id: activeApp?.id ?? 'app-1',
+      userId: activeApp?.userId ?? 'user-1',
+      status: status,
+      sellerType: sellerType,
+      businessName: activeApp?.businessName,
+    );
+    return activeApp!;
+  }
+
+  @override
+  Future<SellerApplicationEntity> startVerificationRenewal({
+    bool reuseValidDocuments = true,
+    String? notes,
+  }) async {
+    status = VerificationStatus.draft;
+    activeApp = SellerApplicationEntity(
+      id: activeApp?.id ?? 'app-1',
+      userId: activeApp?.userId ?? 'user-1',
+      accountId: accountId,
+      status: status,
+      sellerType: sellerType,
+      businessName: activeApp?.businessName,
+      documents: reuseValidDocuments ? List.unmodifiable(docs) : const [],
+    );
+    return activeApp!;
+  }
+
   void simulateAdminApproveInitial() {
     status = VerificationStatus.approved;
     tier = sellerType == SellerType.business

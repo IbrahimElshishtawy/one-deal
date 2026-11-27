@@ -48,8 +48,9 @@ class _FakeConversationsRepository implements ConversationsRepository {
   @override
   Future<ChatMessageEntity> sendMessage(
     String conversationId,
-    String text,
-  ) async {
+    String text, {
+    String? clientMessageId,
+  }) async {
     sentTexts.add(text);
     final created = ChatMessageEntity(
       id: 'msg-${messages.length + 1}',

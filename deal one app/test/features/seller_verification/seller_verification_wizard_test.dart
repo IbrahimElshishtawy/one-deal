@@ -162,6 +162,41 @@ class _MockWizardRepository implements SellerVerificationRepository {
   }
 
   @override
+  Future<SellerApplicationEntity> withdrawApplication({
+    String? reason,
+    String? applicationType,
+  }) async {
+    status = VerificationStatus.withdrawn;
+    savedApp = SellerApplicationEntity(
+      id: savedApp?.id ?? 'app-wizard-001',
+      userId: savedApp?.userId ?? 'user-wizard-1',
+      status: VerificationStatus.withdrawn,
+      sellerType: savedApp?.sellerType ?? SellerType.individual,
+      businessType: savedApp?.businessType ?? BusinessAccountType.individual,
+      businessName: savedApp?.businessName,
+    );
+    return savedApp!;
+  }
+
+  @override
+  Future<SellerApplicationEntity> startVerificationRenewal({
+    bool reuseValidDocuments = true,
+    String? notes,
+  }) async {
+    status = VerificationStatus.draft;
+    savedApp = SellerApplicationEntity(
+      id: savedApp?.id ?? 'app-wizard-001',
+      userId: savedApp?.userId ?? 'user-wizard-1',
+      status: VerificationStatus.draft,
+      sellerType: savedApp?.sellerType ?? SellerType.individual,
+      businessType: savedApp?.businessType ?? BusinessAccountType.individual,
+      businessName: savedApp?.businessName,
+      documents: reuseValidDocuments ? List.unmodifiable(uploadedDocs) : const [],
+    );
+    return savedApp!;
+  }
+
+  @override
   Future<VerificationStatusSnapshot> devApproveMyApplication() async {
     status = VerificationStatus.approved;
     savedApp = SellerApplicationEntity(
