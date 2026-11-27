@@ -70,9 +70,72 @@ const SENSITIVE_KEY_PATTERN =
   /password|passcode|token|authorization|secret|otp|codehash|cookie|cvv|card|credit|apikey|privatekey|messagecontent|chatbody|nationalid|taxid|commercialregister|authorizedrepresentative|uploadurl|accessurl|presigned|signedurl|x-amz-signature|x-amz-credential|fileheaderbase64/i;
 
 /**
- * Recursively redacts sensitive fields from objects before logging.
+ * Sanitizes arbitrary log strings (error messages, URLs, stack traces, external service outputs)
+ * to strip Bearer tokens, presigned URL signatures, connection string credentials,
+ * encrypted ciphertexts, and inline sensitive key=value pairs.
  */
-export function redactSensitiveData(value: unknown, depth = 0): unknown {
+export function sanitizeLogString(value: string, maxLength = 1000): string {
+  if (!value || typeof value !== 'string') {
+    return '';
+  }
+
+  let sanitized = value;
+
+  // 1. Standalone or embedded Bearer tokens
+  sanitized = sanitized.replace(
+    /\bBearer\s+[A-Za-z0-9._~+/=-]+/gi,
+    'Bearer [REDACTED]',
+  );
+
+  // 2. Presigned URLs (R2 / S3 SigV4 or local signed fallback)
+  if (
+    /X-Amz-Signature=|X-Amz-Credential=|X-Amz-Security-Token=|&sig=[0-9a-f]{16,}/i.test(
+      sanitized,
+    )
+  ) {
+    sanitized = sanitized.replace(
+      /https?:\/\/[^\s"'<>]*?(?:X-Amz-Signature=|X-Amz-Credential=|X-Amz-Security-Token=|&sig=[0-9a-f]{16,})[^\s"'<>]*/gi,
+      '[REDACTED_SIGNED_URL]',
+    );
+    // Catch relative URLs / query fragments containing signatures
+    sanitized = sanitized.replace(
+      /(X-Amz-Signature|X-Amz-Credential|X-Amz-Security-Token|sig)=[^&\s"'<>]+/gi,
+      '$1=[REDACTED]',
+    );
+  }
+
+  // 3. Connection string credentials (redis://user:pass@host, postgres://user:pass@host)
+  sanitized = sanitized.replace(
+    /\b(rediss?|postgres(?:ql)?|amqps?|mongodb(?:\+srv)?):\/\/[^@\s"'<>]+@/gi,
+    '$1://[REDACTED]@',
+  );
+
+  // 4. Encrypted PII ciphertexts (enc:v1:iv:tag:ciphertext)
+  sanitized = sanitized.replace(
+    /\benc:v\d+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]*/gi,
+    '[REDACTED_CIPHERTEXT]',
+  );
+
+  // 5. Inline sensitive key=value or key: value patterns
+  sanitized = sanitized.replace(
+    /\b(password|passcode|access_?token|refresh_?token|api_?key|secret|national_?id(?:_?number)?|tax_?id(?:_?number)?|commercial_?register(?:_?number)?)\s*([:=])\s*["']?[^\s,"'&;}\]]+["']?/gi,
+    '$1$2[REDACTED]',
+  );
+
+  return sanitized.length > maxLength
+    ? `${sanitized.slice(0, maxLength)}...[truncated]`
+    : sanitized;
+}
+
+/**
+ * Recursively redacts sensitive fields from objects before logging.
+ * Safe against circular references and Error objects; never throws.
+ */
+export function redactSensitiveData(
+  value: unknown,
+  depth = 0,
+  seen = new WeakSet<object>(),
+): unknown {
   if (value === null || value === undefined || depth > 5) {
     return value;
   }
@@ -80,20 +143,36 @@ export function redactSensitiveData(value: unknown, depth = 0): unknown {
     if (/^bearer\s+/i.test(value)) {
       return 'Bearer [REDACTED]';
     }
-    if (/X-Amz-Signature=|X-Amz-Credential=|&sig=[0-9a-f]{16,}/i.test(value)) {
+    if (
+      /^https?:\/\/.*(?:X-Amz-Signature=|X-Amz-Credential=|&sig=[0-9a-f]{16,})/i.test(
+        value,
+      )
+    ) {
       return '[REDACTED_SIGNED_URL]';
     }
     if (/^enc:v\d+:[0-9a-f]+:[0-9a-f]+:/i.test(value)) {
       return '[REDACTED_CIPHERTEXT]';
     }
-    return value.length > 300 ? `${value.slice(0, 300)}...[truncated]` : value;
-  }
-  if (Array.isArray(value)) {
-    return value
-      .slice(0, 20)
-      .map((item) => redactSensitiveData(item, depth + 1));
+    return sanitizeLogString(value, 300);
   }
   if (typeof value === 'object') {
+    if (seen.has(value as object)) {
+      return '[CIRCULAR]';
+    }
+    seen.add(value as object);
+
+    if (value instanceof Error) {
+      return {
+        name: value.name,
+        message: sanitizeLogString(value.message, 500),
+      };
+    }
+    if (Array.isArray(value)) {
+      return value
+        .slice(0, 20)
+        .map((item) => redactSensitiveData(item, depth + 1, seen));
+    }
+
     const output: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
       if (SENSITIVE_KEY_PATTERN.test(key)) {
@@ -103,7 +182,7 @@ export function redactSensitiveData(value: unknown, depth = 0): unknown {
       } else if (key.toLowerCase() === 'phone' && typeof val === 'string') {
         output[key] = maskPhone(val);
       } else {
-        output[key] = redactSensitiveData(val, depth + 1);
+        output[key] = redactSensitiveData(val, depth + 1, seen);
       }
     }
     return output;

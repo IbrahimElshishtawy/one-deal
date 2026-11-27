@@ -6,7 +6,7 @@ class AppConfig {
   static const String defaultProductionApiBaseUrl =
       'https://one-deal-cjjt-production.up.railway.app/api/v1';
   static const String defaultLocalDevApiBaseUrl =
-      'http://127.0.0.1:3000/api/v1';
+      'http://192.168.1.8:3000/api/v1';
 
   final AppEnvironment environment;
   final String apiBaseUrl;

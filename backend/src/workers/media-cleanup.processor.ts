@@ -54,15 +54,29 @@ export class MediaCleanupProcessor {
       });
 
       for (const media of candidates) {
-        if (
-          !media.storageKey ||
-          !media.storageKey.startsWith('uploads/images/')
-        ) {
+        if (!this.isValidPublicMediaKey(media.storageKey)) {
           skippedCount++;
           this.logger.warn(
             `⚠️ [Worker: MediaCleanup] Skipping media ${media.id} due to invalid storageKey format`,
           );
           continue;
+        }
+
+        // Extra defense: never delete an R2 object if another media record still references it
+        if (typeof (this.prisma.listingMedia as any)?.count === 'function') {
+          const otherRefs = await this.prisma.listingMedia.count({
+            where: {
+              storageKey: media.storageKey,
+              id: { not: media.id },
+            },
+          });
+          if (otherRefs > 0) {
+            skippedCount++;
+            this.logger.warn(
+              `⚠️ [Worker: MediaCleanup] Skipping media ${media.id} because storageKey is still referenced by ${otherRefs} other record(s)`,
+            );
+            continue;
+          }
         }
 
         try {
@@ -91,5 +105,35 @@ export class MediaCleanupProcessor {
       );
       return { purgedCount, failedCount, skippedCount };
     }
+  }
+
+  private isValidPublicMediaKey(storageKey?: string | null): boolean {
+    if (!storageKey || typeof storageKey !== 'string') {
+      return false;
+    }
+    if (
+      storageKey !== storageKey.trim() ||
+      storageKey.startsWith('/') ||
+      storageKey.includes('..') ||
+      storageKey.includes('\\') ||
+      storageKey.includes('?') ||
+      storageKey.includes('#') ||
+      storageKey.includes('\0') ||
+      /%2e|%2f|%5c/i.test(storageKey)
+    ) {
+      return false;
+    }
+    const segments = storageKey.split('/');
+    if (segments.length !== 5) {
+      return false;
+    }
+    const [root, resourceType, datePrefix, ownerSegment, fileName] = segments;
+    return (
+      root === 'uploads' &&
+      resourceType === 'images' &&
+      /^\d{4}-(0[1-9]|1[0-2])$/.test(datePrefix) &&
+      ownerSegment.length > 0 &&
+      /^[a-zA-Z0-9_-]{1,128}\.(jpg|jpeg|png|webp)$/i.test(fileName)
+    );
   }
 }

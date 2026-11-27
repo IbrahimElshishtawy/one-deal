@@ -11,7 +11,7 @@
 
 ## G. Recursive PII & Presigned URL Log Redaction (`SEC-003`)
 
-- **File:** `backend/src/core/observability/request-context.ts`
+- **Files:** `backend/src/core/observability/request-context.ts`, `structured-flow.logger.ts`, `backend/src/core/filters/http-exception.filter.ts`, `backend/src/core/interceptors/logging.interceptor.ts`
 - **Redacted Keys:** `nationalIdNumber`, `taxIdNumber`, `commercialRegisterNumber`, `authorizedRepresentativeId`, `uploadUrl`, `accessUrl`, `presigned*`, `signedUrl`, `X-Amz-Signature`, `X-Amz-Credential`, `fileHeaderBase64`, plus existing auth/token/password/OTP keys.
-- **Redacted String Values:** Any string matching `Bearer ...`, `X-Amz-Signature=`, `X-Amz-Credential=`, `&sig=...`, or `enc:v<N>:...` ciphertext is replaced with `[REDACTED_SIGNED_URL]` / `[REDACTED_CIPHERTEXT]` regardless of key name.
+- **Redacted String Values (`sanitizeLogString`):** Any string matching `Bearer ...`, `X-Amz-Signature=`, `X-Amz-Credential=`, `X-Amz-Security-Token=`, `&sig=...`, `redis(s)://user:pass@`, `postgres(ql)://user:pass@`, inline `password=/token=/nationalId=`, or `enc:v<N>:...` ciphertext is sanitized across `StructuredFlowLogger`, `HttpExceptionFilter`, and `LoggingInterceptor`. Circular objects and `Error` instances are handled safely without throwing.
 - **Test Evidence:** Verified in `backend/src/workers/phase2-hardening.spec.ts` and `backend/src/modules/accounts/services/seller-verification-hardening.spec.ts`.

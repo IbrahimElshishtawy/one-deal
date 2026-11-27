@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrivateDocumentStorageService } from '../modules/accounts/services/private-document-storage.service';
@@ -9,7 +10,11 @@ import { RedisService } from '../core/redis/redis.service';
 import { MediaCleanupProcessor } from './media-cleanup.processor';
 import { ChatService } from '../modules/chat/chat.service';
 import { PaymentsService } from '../modules/payments/payments.service';
-import { redactSensitiveData } from '../core/observability/request-context';
+import {
+  redactSensitiveData,
+  sanitizeLogString,
+} from '../core/observability/request-context';
+import { StructuredFlowLogger } from '../core/observability/structured-flow.logger';
 import { PaymentStatus } from '../core/enums/domain.enums';
 
 function makeConfig(values: Record<string, any>): ConfigService {
@@ -150,6 +155,53 @@ describe('Phase 2 Production Hardening Suite (Workstreams A–G)', () => {
         storage.verifyUploadedObject(validKey, 'application/pdf', 10_000),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('rejects spoofed extension, unauthorized storage key, HEAD 404, ranged GET 404, and HEAD timeout', async () => {
+      const storage = new PrivateDocumentStorageService(r2Config);
+
+      // Spoofed extension (.exe claiming image/jpeg)
+      expect(() =>
+        storage.validateFileExtension('invoice.exe', 'image/jpeg'),
+      ).toThrow(BadRequestException);
+
+      // Unauthorized storage key (another user's key)
+      expect(() =>
+        storage.validatePrivateDocumentOwnership(
+          '99999999-9999-4999-8999-999999999999',
+          '22222222-2222-4222-8222-222222222222',
+          validKey,
+        ),
+      ).toThrow(ForbiddenException);
+
+      // HEAD timeout -> 500
+      jest
+        .spyOn(global, 'fetch')
+        .mockRejectedValueOnce(
+          new Error('The operation was aborted due to timeout'),
+        );
+      await expect(
+        storage.verifyUploadedObject(validKey, 'application/pdf', 10_000),
+      ).rejects.toThrow(InternalServerErrorException);
+
+      // Ranged GET 404 (object vanished between HEAD and GET) -> 400
+      jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValueOnce({
+          status: 200,
+          ok: true,
+          headers: new Headers({
+            'content-length': '512',
+            'content-type': 'application/pdf',
+          }),
+        } as Response)
+        .mockResolvedValueOnce({
+          status: 404,
+          ok: false,
+        } as Response);
+      await expect(
+        storage.verifyUploadedObject(validKey, 'application/pdf', 10_000),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   // =========================================================================
@@ -166,9 +218,13 @@ describe('Phase 2 Production Hardening Suite (Workstreams A–G)', () => {
       expect(svc.getTopologyStatus()).toEqual(
         expect.objectContaining({ mode: 'dual_isolated', separated: true }),
       );
+      // Verify queue connection options point exclusively to queue-host:6380
+      expect(svc.getQueueConnectionOptions()).toEqual(
+        expect.objectContaining({ host: 'queue-host', port: 6380 }),
+      );
     });
 
-    it('reports single_shared when both fall back to the same REDIS_URL', () => {
+    it('reports single_shared when both fall back to the same REDIS_URL or normalize to the same endpoint', () => {
       const svc = new RedisService(
         makeConfig({
           REDIS_URL: 'redis://shared-railway:6379',
@@ -177,6 +233,48 @@ describe('Phase 2 Production Hardening Suite (Workstreams A–G)', () => {
       expect(svc.getTopologyStatus()).toEqual(
         expect.objectContaining({ mode: 'single_shared', separated: false }),
       );
+
+      // Trailing slash / default port normalization must NOT falsely claim dual_isolated
+      const sameEndpointSvc = new RedisService(
+        makeConfig({
+          REDIS_CACHE_URL: 'redis://user:pass@same-host:6379',
+          REDIS_QUEUE_URL: 'redis://user:pass@same-host/',
+        }),
+      );
+      expect(sameEndpointSvc.getTopologyStatus()).toEqual(
+        expect.objectContaining({ mode: 'single_shared', separated: false }),
+      );
+    });
+
+    it('validates missing production Redis config and invalid URLs without leaking credentials', () => {
+      const missingProd = new RedisService(
+        makeConfig({
+          NODE_ENV: 'production',
+        }),
+      );
+      const missingRes = missingProd.validateStartupConfiguration();
+      expect(missingRes.valid).toBe(false);
+      expect(missingRes.issues[0]).toContain('No Redis configuration');
+
+      const invalidUrl = new RedisService(
+        makeConfig({
+          REDIS_CACHE_URL: 'http://secretuser:supersecret@bad-host:6379',
+        }),
+      );
+      const invalidRes = invalidUrl.validateStartupConfiguration();
+      expect(invalidRes.valid).toBe(false);
+      expect(invalidRes.issues.join(' ')).not.toContain('supersecret');
+    });
+
+    it('reports unhealthy pings cleanly on connection failure', async () => {
+      const svc = new RedisService(
+        makeConfig({
+          REDIS_CACHE_URL: 'redis://cache-host:6379',
+          REDIS_QUEUE_URL: 'redis://queue-host:6380',
+        }),
+      );
+      expect(await svc.pingCache()).toBe(false);
+      expect(await svc.pingQueue()).toBe(false);
     });
 
     it('reports local_split when local host/ports differ (6379 vs 6380)', () => {
@@ -247,6 +345,67 @@ describe('Phase 2 Production Hardening Suite (Workstreams A–G)', () => {
           }),
         }),
       );
+    });
+
+    it('treats R2 404 as idempotently deleted, skips path traversal & shared keys, and succeeds on retry', async () => {
+      const mockPrisma: any = {
+        listingMedia: {
+          findMany: jest
+            .fn()
+            .mockResolvedValueOnce([
+              {
+                id: 'media-404',
+                storageKey: 'uploads/images/2026-11/user1/gone.jpg',
+              },
+              {
+                id: 'media-traversal',
+                storageKey: 'uploads/images/2026-11/../../private/secret.jpg',
+              },
+              {
+                id: 'media-shared',
+                storageKey: 'uploads/images/2026-11/user1/shared.jpg',
+              },
+              {
+                id: 'media-retry',
+                storageKey: 'uploads/images/2026-11/user1/retry.jpg',
+              },
+            ])
+            .mockResolvedValueOnce([
+              {
+                id: 'media-retry',
+                storageKey: 'uploads/images/2026-11/user1/retry.jpg',
+              },
+            ]),
+          count: jest.fn(async ({ where }: any) =>
+            where.storageKey.includes('shared.jpg') ? 1 : 0,
+          ),
+          delete: jest.fn().mockResolvedValue({}),
+        },
+      };
+
+      const mockMediaService: any = {
+        deletePublicObject: jest
+          .fn()
+          .mockResolvedValueOnce({ deleted: true, statusCode: 404 })
+          .mockRejectedValueOnce(new Error('Transient R2 timeout'))
+          .mockResolvedValueOnce({ deleted: true, statusCode: 204 }),
+      };
+
+      const processor = new MediaCleanupProcessor(mockPrisma, mockMediaService);
+      const run1 = await processor.processAbandonedMedia();
+      expect(run1).toEqual({
+        purgedCount: 1, // media-404
+        failedCount: 1, // media-retry
+        skippedCount: 2, // media-traversal + media-shared
+      });
+
+      const run2 = await processor.processAbandonedMedia();
+      expect(run2).toEqual({
+        purgedCount: 1, // media-retry succeeded on retry
+        failedCount: 0,
+        skippedCount: 0,
+      });
+      expect(mockPrisma.listingMedia.delete).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -355,6 +514,45 @@ describe('Phase 2 Production Hardening Suite (Workstreams A–G)', () => {
         }),
       );
     });
+
+    it('recovers cleanly from P2002 concurrent race by returning existing message', async () => {
+      const existingMsg = {
+        id: 'msg-raced',
+        conversationId: 'conv-1',
+        senderUserId: 'buyer-1',
+        clientMessageId: 'idem-race',
+        body: 'Race message',
+      };
+      const mockPrisma: any = {
+        conversation: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'conv-1',
+            buyerUserId: 'buyer-1',
+            sellerAccount: { ownerUserId: 'seller-1' },
+          }),
+        },
+        message: {
+          findFirst: jest
+            .fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(existingMsg),
+        },
+        $transaction: jest
+          .fn()
+          .mockRejectedValueOnce(
+            Object.assign(new Error('Unique'), { code: 'P2002' }),
+          ),
+      };
+
+      const chat = new ChatService(mockPrisma);
+      const res = await chat.sendMessage(
+        'conv-1',
+        'buyer-1',
+        'Race message',
+        'idem-race',
+      );
+      expect(res).toEqual(existingMsg);
+    });
   });
 
   // =========================================================================
@@ -403,17 +601,59 @@ describe('Phase 2 Production Hardening Suite (Workstreams A–G)', () => {
       expect(listingUpdate).not.toHaveBeenCalled();
       expect(outboxCreate).not.toHaveBeenCalled();
     });
+
+    it('guards failed webhook updates with status: PENDING so delayed failures cannot overwrite SUCCESS', async () => {
+      const updateMany = jest.fn().mockResolvedValue({ count: 0 });
+      const mockPrisma: any = {
+        payment: {
+          findFirst: jest
+            .fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce({
+              id: '11111111-1111-4111-8111-111111111111',
+              listingId: 'list-1',
+              status: PaymentStatus.SUCCESS,
+            }),
+          updateMany,
+        },
+      };
+
+      const payments = new PaymentsService(
+        mockPrisma,
+        makeConfig({
+          NODE_ENV: 'test',
+          PAYMOB_HMAC_SECRET: 'test_hmac_secret',
+        }),
+      );
+
+      await payments.handlePaymobWebhook({
+        id: 'tx-late-fail',
+        success: false,
+        order_id: '11111111-1111-4111-8111-111111111111',
+      });
+
+      expect(updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            id: '11111111-1111-4111-8111-111111111111',
+            status: PaymentStatus.PENDING,
+          },
+        }),
+      );
+    });
   });
 
   // =========================================================================
   // WORKSTREAM G: Recursive PII & Presigned URL Log Redaction (SEC-003)
   // =========================================================================
-  describe('Workstream G: redactSensitiveData', () => {
-    it('redacts KYC identifiers, presigned URLs, ciphertexts, and tokens recursively', () => {
-      const sanitized = redactSensitiveData({
+  describe('Workstream G: redactSensitiveData & sanitizeLogString', () => {
+    it('redacts KYC identifiers, presigned URLs, ciphertexts, tokens, and circular refs recursively', () => {
+      const circular: any = {
         nationalIdNumber: '29501011234567',
         taxIdNumber: 'TAX-998877',
         commercialRegisterNumber: 'CR-112233',
+        authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.secret',
+        password: 'MySuperPassword123!',
         uploadUrl:
           'https://acc.r2.cloudflarestorage.com/bucket/key?X-Amz-Signature=abcdef123456',
         nested: {
@@ -422,14 +662,54 @@ describe('Phase 2 Production Hardening Suite (Workstreams A–G)', () => {
           encryptedBlob:
             'enc:v1:00112233445566778899aabb:00112233445566778899aabbccddeeff:aabb',
         },
-      }) as any;
+      };
+      circular.self = circular;
+
+      const sanitized = redactSensitiveData(circular) as any;
 
       expect(sanitized.nationalIdNumber).toBe('[REDACTED]');
       expect(sanitized.taxIdNumber).toBe('[REDACTED]');
       expect(sanitized.commercialRegisterNumber).toBe('[REDACTED]');
+      expect(sanitized.authorization).toBe('[REDACTED]');
+      expect(sanitized.password).toBe('[REDACTED]');
       expect(sanitized.uploadUrl).toBe('[REDACTED]');
       expect(sanitized.nested.genericField).toBe('[REDACTED_SIGNED_URL]');
       expect(sanitized.nested.encryptedBlob).toBe('[REDACTED_CIPHERTEXT]');
+      expect(sanitized.self).toBe('[CIRCULAR]');
+    });
+
+    it('sanitizes external service error strings and StructuredFlowLogger.logError output', () => {
+      const rawErr =
+        'R2 fetch failed for https://acc.r2.cloudflarestorage.com/priv/doc.pdf?X-Amz-Signature=deadbeef1234 with Bearer jwt.secret.token and redis://admin:s3cr3tPass@redis.internal:6379';
+      const cleaned = sanitizeLogString(rawErr);
+
+      expect(cleaned).not.toContain('deadbeef1234');
+      expect(cleaned).not.toContain('jwt.secret.token');
+      expect(cleaned).not.toContain('s3cr3tPass');
+      expect(cleaned).toContain('[REDACTED_SIGNED_URL]');
+      expect(cleaned).toContain('Bearer [REDACTED]');
+      expect(cleaned).toContain('redis://[REDACTED]@');
+
+      const errorSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+
+      StructuredFlowLogger.logError({
+        code: 'EXTERNAL_FAILURE',
+        message: rawErr,
+        layer: 'SERVER',
+        statusCode: 500,
+        requestId: 'req-trace-123',
+        path: '/api/v1/docs?X-Amz-Signature=leakme999',
+      });
+
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const loggedLine = String(errorSpy.mock.calls[0][0]);
+      expect(loggedLine).toContain('req-trace-123');
+      expect(loggedLine).not.toContain('deadbeef1234');
+      expect(loggedLine).not.toContain('jwt.secret.token');
+      expect(loggedLine).not.toContain('s3cr3tPass');
+      expect(loggedLine).not.toContain('leakme999');
     });
   });
 });

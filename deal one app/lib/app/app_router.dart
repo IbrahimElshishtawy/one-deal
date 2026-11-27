@@ -37,6 +37,9 @@ import 'package:market_space/features/real_estate/domain/entities/reel_item_enti
 import 'package:market_space/features/real_estate/presentation/pages/photo_gallery_page.dart';
 import 'package:market_space/features/real_estate/presentation/pages/real_estate_details_page.dart';
 import 'package:market_space/features/real_estate/presentation/pages/real_estate_home_page.dart';
+import 'package:market_space/features/activity_hub/domain/entities/booking_entity.dart';
+import 'package:market_space/features/real_estate/presentation/pages/active_previews_page.dart';
+import 'package:market_space/features/real_estate/presentation/pages/preview_route_page.dart';
 import 'package:market_space/features/real_estate/presentation/pages/real_estate_map_page.dart';
 import 'package:market_space/features/real_estate/presentation/pages/real_estate_reels_page.dart';
 import 'package:market_space/features/search/presentation/screens/search_screen.dart';
@@ -323,6 +326,31 @@ class AppRouter {
               style: CinematicTransitionStyle.verticalLift,
               child: RealEstateMapPage(
                 focusedProperty: extra is ListingItem ? extra : null,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: RouteNames.activePreviews,
+          name: RouteNames.activePreviewsName,
+          pageBuilder: (context, state) => AppPageTransitions.buildCinematicPage(
+            context: context,
+            state: state,
+            style: CinematicTransitionStyle.glide,
+            child: const ActivePreviewsPage(),
+          ),
+        ),
+        GoRoute(
+          path: RouteNames.previewRoute,
+          name: RouteNames.previewRouteName,
+          pageBuilder: (context, state) {
+            final extra = state.extra;
+            return AppPageTransitions.buildCinematicPage(
+              context: context,
+              state: state,
+              style: CinematicTransitionStyle.verticalLift,
+              child: PreviewRoutePage(
+                booking: extra is BookingEntity ? extra : null,
               ),
             );
           },

@@ -5,6 +5,7 @@ import {
   maskEmail,
   maskPhone,
   redactSensitiveData,
+  sanitizeLogString,
 } from './request-context';
 
 export type FlowStage =
@@ -39,14 +40,15 @@ export class StructuredFlowLogger {
     explicitRequestId?: string,
   ): void {
     const requestId = getCurrentRequestId(explicitRequestId);
+    const safeMessage = sanitizeLogString(message, 500);
     const payload: Record<string, unknown> = {
       stage,
       timestamp: new Date().toISOString(),
       requestId,
-      message,
+      message: safeMessage,
       ...(meta ? (redactSensitiveData(meta) as Record<string, unknown>) : {}),
     };
-    this.logger.log(`[${stage}] ${message} | ${JSON.stringify(payload)}`);
+    this.logger.log(`[${stage}] ${safeMessage} | ${JSON.stringify(payload)}`);
   }
 
   /**
@@ -110,7 +112,9 @@ export class StructuredFlowLogger {
       event: params.event,
       template: params.template,
       recipient: maskedTarget,
-      ...(params.durationMs !== undefined ? { durationMs: params.durationMs } : {}),
+      ...(params.durationMs !== undefined
+        ? { durationMs: params.durationMs }
+        : {}),
       ...(params.messageId ? { messageId: params.messageId } : {}),
       ...(params.error ? { error: params.error } : {}),
     };
@@ -210,6 +214,12 @@ export class StructuredFlowLogger {
   }): void {
     const requestId = getCurrentRequestId(params.requestId);
     const isDev = isDevelopmentObservabilityEnabled();
+    const safeMessage = sanitizeLogString(params.message, 500);
+    const safePath = params.path
+      ? sanitizeLogString(params.path, 300)
+      : undefined;
+    const safeStack =
+      isDev && params.stack ? sanitizeLogString(params.stack, 2000) : undefined;
     const entry = {
       stage: 'ERROR',
       timestamp: new Date().toISOString(),
@@ -217,14 +227,14 @@ export class StructuredFlowLogger {
       layer: params.layer,
       code: params.code,
       statusCode: params.statusCode,
-      message: params.message,
+      message: safeMessage,
       ...(params.method ? { method: params.method } : {}),
-      ...(params.path ? { path: params.path } : {}),
+      ...(safePath ? { path: safePath } : {}),
     };
 
     this.logger.error(
-      `[ERROR] [${params.layer}] ${params.code} (${params.statusCode}): ${params.message} | ${JSON.stringify(entry)}`,
-      isDev ? params.stack : undefined,
+      `[ERROR] [${params.layer}] ${params.code} (${params.statusCode}): ${safeMessage} | ${JSON.stringify(entry)}`,
+      safeStack,
     );
   }
 }

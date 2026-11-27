@@ -19,5 +19,7 @@
 
 ## D3. Flutter Chat Client Alignment
 
-- **Files:** `deal one app/lib/features/conversations/domain/repositories/conversations_repository.dart`, `conversations_repository_impl.dart`
-- **Behavior:** `sendMessage()` accepts optional `clientMessageId` (auto-generating one if omitted) and sends it in both the JSON payload and `Idempotency-Key` header.
+- **Files:** `deal one app/lib/features/conversations/domain/repositories/conversations_repository.dart`, `conversations_repository_impl.dart`, `deal one app/lib/features/conversations/presentation/pages/conversation_chat_page.dart`, `deal one app/test/features/conversations/chat_idempotency_test.dart`
+- **Behavior:**
+  - `ConversationsRepositoryImpl.sendMessage()` accepts optional `clientMessageId` (auto-generating one if omitted) and sends it in both the JSON payload and `Idempotency-Key` header.
+  - `ConversationChatPage` persists `_pendingClientMessageId` + `_pendingPayload` across failed send attempts and exposes a `Retry` SnackBar action so retries reuse the exact same `clientMessageId`, clearing and rotating it only after a successful send.

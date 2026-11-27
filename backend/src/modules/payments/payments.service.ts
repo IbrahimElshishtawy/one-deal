@@ -306,14 +306,25 @@ export class PaymentsService {
       }
 
       if (!isSuccess) {
-        await this.prisma.payment.update({
-          where: { id: payment.id },
-          data: {
-            status: PaymentStatus.FAILED,
-            gatewayTransactionId: transactionId,
-            rawResponse: obj as any,
-          },
-        });
+        if (typeof this.prisma.payment?.updateMany === 'function') {
+          await this.prisma.payment.updateMany({
+            where: { id: payment.id, status: PaymentStatus.PENDING },
+            data: {
+              status: PaymentStatus.FAILED,
+              gatewayTransactionId: transactionId,
+              rawResponse: obj as any,
+            },
+          });
+        } else {
+          await this.prisma.payment.update({
+            where: { id: payment.id },
+            data: {
+              status: PaymentStatus.FAILED,
+              gatewayTransactionId: transactionId,
+              rawResponse: obj as any,
+            },
+          });
+        }
         return { success: false, status: 'FAILED', processed: false };
       }
 

@@ -6,6 +6,7 @@ import 'package:market_space/core/design_system/deal_one_ui_states.dart';
 import 'package:market_space/core/navigation/presentation/widgets/deal_one_navigation_shell.dart';
 import 'package:market_space/core/providers/core_providers.dart';
 import 'package:market_space/core/routing/route_names.dart';
+import 'package:market_space/core/theme/app_colors.dart';
 import 'package:market_space/core/theme/app_radii.dart';
 import 'package:market_space/core/theme/app_spacing.dart';
 import 'package:market_space/core/utils/responsive_utils.dart';
@@ -187,13 +188,12 @@ class ProfileScreen extends ConsumerWidget {
                                 icon: Icons.event_available_outlined,
                                 count: activeViewingsCount,
                                 highlightBadge: true,
-                                onTap: () => context.go(
-                                  '${RouteNames.activityHub}?tab=bookings',
-                                ),
+                                onTap: () =>
+                                    context.push(RouteNames.activePreviews),
                               ),
                               ProfileStatItem(
                                 label: isArabic ? 'المفضلة' : 'Favorites',
-                                icon: Icons.auto_awesome_outlined,
+                                icon: Icons.favorite_border_rounded,
                                 count: favoriteIds.length,
                                 highlightBadge: false,
                                 onTap: () => context.go(RouteNames.favorites),
@@ -216,6 +216,19 @@ class ProfileScreen extends ConsumerWidget {
                               final verificationAsync =
                                   ref.watch(sellerVerificationBadgeProvider);
                               final vSnap = verificationAsync.valueOrNull;
+                              if (vSnap != null &&
+                                  (vSnap.sellerStatus ==
+                                          VerificationStatus.pending ||
+                                      vSnap.sellerStatus ==
+                                          VerificationStatus.underReview)) {
+                                return _ProfileUnderReviewBanner(
+                                  isArabic: isArabic,
+                                  onTrackTap: () => context.push(
+                                    RouteNames.sellerVerificationTracking,
+                                  ),
+                                  onSupportTap: () => _showHelpDialog(context),
+                                );
+                              }
                               if (vSnap != null &&
                                   vSnap.sellerStatus !=
                                       VerificationStatus.notSubmitted) {
@@ -348,6 +361,121 @@ class ProfileScreen extends ConsumerWidget {
     if (confirmed == true) {
       await ref.read(authControllerProvider.notifier).logout();
     }
+  }
+}
+
+class _ProfileUnderReviewBanner extends StatelessWidget {
+  final bool isArabic;
+  final VoidCallback onTrackTap;
+  final VoidCallback onSupportTap;
+
+  const _ProfileUnderReviewBanner({
+    required this.isArabic,
+    required this.onTrackTap,
+    required this.onSupportTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    return Material(
+      color: Colors.transparent,
+      borderRadius: AppRadii.lg,
+      child: InkWell(
+        onTap: onTrackTap,
+        borderRadius: AppRadii.lg,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: AlignmentDirectional.centerStart,
+              end: AlignmentDirectional.centerEnd,
+              colors: isDark
+                  ? const [AppColors.darkSurface, AppColors.darkSurfaceElevated]
+                  : const [Color(0xFFFFFFFF), Color(0xFFFDF3E7)],
+            ),
+            borderRadius: AppRadii.lg,
+            border: Border.all(color: DealOneTokens.cardBorderOf(context)),
+            boxShadow: DealOneTokens.cardShadow(context),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: const BoxDecoration(
+                      color: DealOneTokens.navy,
+                      borderRadius: AppRadii.md,
+                    ),
+                    child: const Icon(
+                      Icons.storefront_outlined,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isArabic
+                              ? 'طلب الحساب التجاري قيد المراجعة'
+                              : 'Business Account Under Review',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: DealOneTokens.textPrimaryOf(context),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          isArabic
+                              ? 'جاري مراجعة بياناتك ومستندات التوثيق خلال 24 ساعة.'
+                              : 'Your details and verification documents are being reviewed within 24 hours.',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.4,
+                            color: DealOneTokens.textSecondaryOf(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: isDark
+                      ? AppColors.darkSurfaceElevated
+                      : const Color(0xFFF1F5F9),
+                  foregroundColor: DealOneTokens.textPrimaryOf(context),
+                  side: BorderSide(color: DealOneTokens.cardBorderOf(context)),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadii.md,
+                  ),
+                ),
+                onPressed: onSupportTap,
+                icon: const Icon(Icons.headset_mic_outlined, size: 18),
+                label: Text(
+                  isArabic ? 'تواصل مع الدعم' : 'Contact Support',
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

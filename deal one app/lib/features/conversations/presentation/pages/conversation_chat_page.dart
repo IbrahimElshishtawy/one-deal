@@ -54,6 +54,8 @@ class _ConversationChatPageState extends ConsumerState<ConversationChatPage> {
   bool _showScrollToBottom = false;
   int _activeSearchMatchIdx = 0;
   ChatMessageEntity? _replyingTo;
+  String? _pendingClientMessageId;
+  String? _pendingPayload;
   final Map<String, GlobalKey> _messageKeys = {};
 
   @override
@@ -122,12 +124,25 @@ class _ConversationChatPageState extends ConsumerState<ConversationChatPage> {
     }
 
     final payload = _composePayload(text);
+    // Reuse the exact same clientMessageId when retrying the same unsent payload
+    // so transient network failures never create duplicate messages.
+    final clientMessageId =
+        (_pendingPayload == payload && _pendingClientMessageId != null)
+            ? _pendingClientMessageId!
+            : 'msg-${DateTime.now().microsecondsSinceEpoch}-${payload.hashCode.abs()}';
+    _pendingPayload = payload;
+    _pendingClientMessageId = clientMessageId;
+
     setState(() => _sending = true);
 
     try {
-      await ref
-          .read(conversationsRepositoryProvider)
-          .sendMessage(widget.conversationId, payload);
+      await ref.read(conversationsRepositoryProvider).sendMessage(
+            widget.conversationId,
+            payload,
+            clientMessageId: clientMessageId,
+          );
+      _pendingClientMessageId = null;
+      _pendingPayload = null;
       if (overrideText == null) {
         _messageController.clear();
       }
@@ -141,8 +156,15 @@ class _ConversationChatPageState extends ConsumerState<ConversationChatPage> {
       }
     } catch (e) {
       if (mounted) {
+        final isArabic = Directionality.of(context) == TextDirection.rtl;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(
+            content: Text(e.toString()),
+            action: SnackBarAction(
+              label: isArabic ? 'إعادة المحاولة' : 'Retry',
+              onPressed: () => _sendMessage(overrideText: overrideText),
+            ),
+          ),
         );
       }
     } finally {

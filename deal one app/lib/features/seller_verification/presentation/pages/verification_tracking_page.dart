@@ -95,6 +95,15 @@ class _VerificationTrackingPageState
                             context.push(RouteNames.sellerVerificationType),
                       ),
                     ] else ...[
+                      if (state.failure != null) ...[
+                        DealOneErrorStateView(
+                          error: state.failure!,
+                          onRetry: () => ref
+                              .read(verificationTrackingProvider.notifier)
+                              .refresh(),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
                       VerificationStatusCard(
                         status: snapshot.sellerStatus,
                         sellerType: snapshot.sellerType ?? app?.sellerType,
@@ -102,6 +111,14 @@ class _VerificationTrackingPageState
                         badge: snapshot.activeBadge,
                       ),
                       const SizedBox(height: AppSpacing.md),
+                      if (snapshot.sellerStatus ==
+                          VerificationStatus.withdrawn) ...[
+                        StartSellingButton(
+                          onPressed: () =>
+                              context.push(RouteNames.sellerVerificationType),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
                       if (app != null) ...[
                         VerificationSubmittedInfo(application: app),
                         const SizedBox(height: AppSpacing.md),
@@ -172,6 +189,9 @@ class _VerificationTrackingPageState
                                           verificationTrackingProvider.notifier)
                                       .startRenewal();
                                   if (renewed != null && context.mounted) {
+                                    ref.invalidate(
+                                      sellerVerificationBadgeProvider,
+                                    );
                                     _openEditForResubmission(renewed);
                                   }
                                 },
@@ -188,6 +208,9 @@ class _VerificationTrackingPageState
                                           verificationTrackingProvider.notifier)
                                       .withdrawApplication();
                                   if (ok && context.mounted) {
+                                    ref.invalidate(
+                                      sellerVerificationBadgeProvider,
+                                    );
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(

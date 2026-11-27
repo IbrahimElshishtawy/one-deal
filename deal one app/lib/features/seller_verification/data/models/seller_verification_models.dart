@@ -35,9 +35,9 @@ class VerificationBadgeModel {
   }
 
   static Map<String, dynamic> toJson(VerificationBadgeEntity entity) => {
-        'code': entity.code.apiValue,
-        'label': entity.label,
-      };
+    'code': entity.code.apiValue,
+    'label': entity.label,
+  };
 }
 
 class SellerVerificationRequirementModel {
@@ -60,12 +60,7 @@ class SellerVerificationRequirementModel {
       isRequired: json['isRequired'] == true,
       acceptedMimeTypes: mimes.isNotEmpty
           ? mimes
-          : const [
-              'application/pdf',
-              'image/jpeg',
-              'image/png',
-              'image/webp',
-            ],
+          : const ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
       maxFileSizeBytes:
           _parseInt(json['maxFileSizeBytes']) ?? (10 * 1024 * 1024),
       requiresExpiration: json['requiresExpiration'] == true,
@@ -75,21 +70,20 @@ class SellerVerificationRequirementModel {
 
   static Map<String, dynamic> toJson(
     SellerVerificationRequirementEntity entity,
-  ) =>
-      {
-        'id': entity.id,
-        'sellerType': entity.sellerType,
-        'marketplaceSection': entity.marketplaceSection,
-        'documentType': entity.documentType,
-        'displayName': entity.displayName,
-        'displayNameAr': entity.displayNameAr,
-        'description': entity.description,
-        'isRequired': entity.isRequired,
-        'acceptedMimeTypes': entity.acceptedMimeTypes,
-        'maxFileSizeBytes': entity.maxFileSizeBytes,
-        'requiresExpiration': entity.requiresExpiration,
-        'sortOrder': entity.sortOrder,
-      };
+  ) => {
+    'id': entity.id,
+    'sellerType': entity.sellerType,
+    'marketplaceSection': entity.marketplaceSection,
+    'documentType': entity.documentType,
+    'displayName': entity.displayName,
+    'displayNameAr': entity.displayNameAr,
+    'description': entity.description,
+    'isRequired': entity.isRequired,
+    'acceptedMimeTypes': entity.acceptedMimeTypes,
+    'maxFileSizeBytes': entity.maxFileSizeBytes,
+    'requiresExpiration': entity.requiresExpiration,
+    'sortOrder': entity.sortOrder,
+  };
 }
 
 class SellerDocumentModel {
@@ -120,16 +114,21 @@ class SellerApplicationModel {
       final cm = _asMap(compRaw);
       completeness = ApplicationCompletenessEntity(
         isComplete: cm['isComplete'] == true,
-        missingFields:
-            _asList(cm['missingFields']).map((e) => e.toString()).toList(),
-        missingDocuments:
-            _asList(cm['missingDocuments']).map((e) => e.toString()).toList(),
-        rejectedDocuments:
-            _asList(cm['rejectedDocuments']).map((e) => e.toString()).toList(),
-        expiredDocuments:
-            _asList(cm['expiredDocuments']).map((e) => e.toString()).toList(),
-        requiredDocuments:
-            _asList(cm['requiredDocuments']).map((e) => e.toString()).toList(),
+        missingFields: _asList(cm['missingFields'])
+            .map((e) => e.toString())
+            .toList(),
+        missingDocuments: _asList(cm['missingDocuments'])
+            .map((e) => e.toString())
+            .toList(),
+        rejectedDocuments: _asList(cm['rejectedDocuments'])
+            .map((e) => e.toString())
+            .toList(),
+        expiredDocuments: _asList(cm['expiredDocuments'])
+            .map((e) => e.toString())
+            .toList(),
+        requiredDocuments: _asList(cm['requiredDocuments'])
+            .map((e) => e.toString())
+            .toList(),
       );
     }
 
@@ -142,12 +141,14 @@ class SellerApplicationModel {
       id: json['id']?.toString() ?? '',
       userId: json['userId']?.toString() ?? '',
       accountId: json['accountId']?.toString(),
-      applicationType:
-          SellerApplicationType.fromApi(json['applicationType']?.toString()),
+      applicationType: SellerApplicationType.fromApi(
+        json['applicationType']?.toString(),
+      ),
       status: VerificationStatus.fromApi(json['status']?.toString()),
       sellerType: SellerType.fromApi(json['sellerType']?.toString()),
-      businessType:
-          BusinessAccountType.fromApi(json['businessType']?.toString()),
+      businessType: BusinessAccountType.fromApi(
+        json['businessType']?.toString(),
+      ),
       derivedVerificationTier: json['derivedVerificationTier'] != null
           ? VerificationTier.fromApi(json['derivedVerificationTier'].toString())
           : null,
@@ -159,8 +160,8 @@ class SellerApplicationModel {
       maskedNationalId: json['nationalIdNumber']?.toString(),
       maskedTaxId: json['taxIdNumber']?.toString(),
       commercialRegisterNumber: json['commercialRegisterNumber']?.toString(),
-      authorizedRepresentativeName:
-          json['authorizedRepresentativeName']?.toString(),
+      authorizedRepresentativeName: json['authorizedRepresentativeName']
+          ?.toString(),
       serviceCategory: json['serviceCategory']?.toString(),
       contactPhone: json['contactPhone']?.toString(),
       contactEmail: json['contactEmail']?.toString(),
@@ -205,14 +206,18 @@ class VerificationStatusModel {
 
     return VerificationStatusSnapshot(
       userId: json['userId']?.toString() ?? '',
-      sellerStatus: VerificationStatus.fromApi(json['sellerStatus']?.toString()),
+      sellerStatus: VerificationStatus.fromApi(
+        json['sellerStatus']?.toString(),
+      ),
       sellerType: json['sellerType'] != null
           ? SellerType.fromApi(json['sellerType'].toString())
           : null,
-      verificationTier:
-          VerificationTier.fromApi(json['verificationTier']?.toString()),
-      verificationBadge:
-          VerificationBadgeModel.fromJson(json['verificationBadge']),
+      verificationTier: VerificationTier.fromApi(
+        json['verificationTier']?.toString(),
+      ),
+      verificationBadge: VerificationBadgeModel.fromJson(
+        json['verificationBadge'],
+      ),
       capabilities: capabilities,
       sellerApprovedAt: _parseDate(json['sellerApprovedAt']),
       sellerSuspendedAt: _parseDate(json['sellerSuspendedAt']),
@@ -233,8 +238,9 @@ class VerificationHistoryItemModel {
       id: json['id']?.toString() ?? '',
       applicationId: json['applicationId']?.toString() ?? '',
       actorType: json['actorType']?.toString() ?? 'system',
-      previousStatus:
-          VerificationStatus.fromApi(json['previousStatus']?.toString()),
+      previousStatus: VerificationStatus.fromApi(
+        json['previousStatus']?.toString(),
+      ),
       newStatus: VerificationStatus.fromApi(json['newStatus']?.toString()),
       reason: json['reason']?.toString(),
       createdAt: _parseDate(json['createdAt']) ?? DateTime.now(),
@@ -256,10 +262,12 @@ class BusinessUpgradeModel {
       currentSellerType: json['currentSellerType'] != null
           ? SellerType.fromApi(json['currentSellerType'].toString())
           : null,
-      currentVerificationTier:
-          VerificationTier.fromApi(json['currentVerificationTier']?.toString()),
-      currentVerificationBadge:
-          VerificationBadgeModel.fromJson(json['currentVerificationBadge']),
+      currentVerificationTier: VerificationTier.fromApi(
+        json['currentVerificationTier']?.toString(),
+      ),
+      currentVerificationBadge: VerificationBadgeModel.fromJson(
+        json['currentVerificationBadge'],
+      ),
       eligibleForUpgrade: json['eligibleForUpgrade'] == true,
       businessRequirements: reqs,
       application: appRaw is Map

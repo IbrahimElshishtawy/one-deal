@@ -49,6 +49,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit() {
+    this.validateStartupConfiguration();
     const topology = this.getTopologyStatus();
     if (topology.mode === 'dual_isolated') {
       this.logger.log(
@@ -67,6 +68,68 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Validates Redis configuration at startup without logging any credentials or URLs.
+   */
+  validateStartupConfiguration(): { valid: boolean; issues: string[] } {
+    const issues: string[] = [];
+    const urlKeys = [
+      'REDIS_URL',
+      'REDIS_CACHE_URL',
+      'REDIS_QUEUE_URL',
+    ] as const;
+
+    for (const key of urlKeys) {
+      const raw = this.configService.get<string>(key);
+      if (raw && raw.trim().length > 0) {
+        try {
+          const parsed = new URL(raw.trim());
+          if (parsed.protocol !== 'redis:' && parsed.protocol !== 'rediss:') {
+            issues.push(`${key} must use redis:// or rediss:// protocol`);
+          }
+          if (!parsed.hostname) {
+            issues.push(`${key} is missing a valid hostname`);
+          }
+        } catch {
+          issues.push(`${key} is not a valid Redis URL`);
+        }
+      }
+    }
+
+    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+    const hasAnyUrl = urlKeys.some((k) => !!this.configService.get<string>(k));
+    const hasExplicitHost = !!(
+      this.configService.get<string>('REDIS_CACHE_HOST') ||
+      this.configService.get<string>('REDISHOST') ||
+      this.configService.get<string>('REDIS_HOST')
+    );
+
+    if (nodeEnv === 'production' && !hasAnyUrl && !hasExplicitHost) {
+      issues.push(
+        'No Redis configuration (REDIS_CACHE_URL/REDIS_QUEUE_URL/REDIS_URL) provided in production',
+      );
+    }
+
+    for (const issue of issues) {
+      this.logger.error(`❌ Redis configuration validation error: ${issue}`);
+    }
+
+    return { valid: issues.length === 0, issues };
+  }
+
+  private normalizeRedisUrlForComparison(rawUrl: string): string {
+    try {
+      const parsed = new URL(rawUrl.trim());
+      const host = parsed.hostname.toLowerCase();
+      const port = parsed.port || '6379';
+      const dbPath =
+        parsed.pathname && parsed.pathname !== '/' ? parsed.pathname : '/0';
+      return `${parsed.protocol}//${host}:${port}${dbPath}`;
+    } catch {
+      return rawUrl.trim();
+    }
+  }
+
+  /**
    * Reports Redis cache/queue separation status without exposing any URLs, hosts, or credentials.
    */
   getTopologyStatus(): {
@@ -82,7 +145,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     let separated: boolean;
 
     if (cacheTarget.url && queueTarget.url) {
-      if (cacheTarget.url === queueTarget.url) {
+      const normalizedCache = this.normalizeRedisUrlForComparison(
+        cacheTarget.url,
+      );
+      const normalizedQueue = this.normalizeRedisUrlForComparison(
+        queueTarget.url,
+      );
+      if (normalizedCache === normalizedQueue) {
         mode = 'single_shared';
         separated = false;
       } else {

@@ -56,6 +56,8 @@ class RouteNames {
   static const String chatSettings = '/conversations/settings';
   static const String conversationChat = '/conversations/:id';
   static const String realEstateMap = '/real-estate/map';
+  static const String activePreviews = '/real-estate/previews';
+  static const String previewRoute = '/real-estate/previews/route';
   static const String categoryMap = '/map/:categorySlug';
   static String categoryMapFor(String slug) => '/map/$slug';
   static const String sectionCategories = '/categories/:categorySlug';
@@ -197,6 +199,8 @@ class RouteNames {
   static const String chatSettingsName = 'chat_settings';
   static const String conversationChatName = 'conversation_chat';
   static const String realEstateMapName = 'real_estate_map';
+  static const String activePreviewsName = 'active_previews';
+  static const String previewRouteName = 'preview_route';
   static const String categoryMapName = 'category_map';
   static const String sectionCategoriesName = 'section_categories';
   static const String sellerManagementName = 'seller_management';

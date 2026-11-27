@@ -12,6 +12,7 @@ import {
   ErrorLayer,
   StructuredFlowLogger,
 } from '../observability/structured-flow.logger';
+import { sanitizeLogString } from '../observability/request-context';
 
 export interface StandardApiError {
   code: string;
@@ -93,7 +94,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
         layer = 'AUTHORIZATION';
       } else if (status === HttpStatus.TOO_MANY_REQUESTS) {
         layer = 'RATE_LIMIT';
-      } else if (code === 'VALIDATION_FAILED' || status === HttpStatus.BAD_REQUEST) {
+      } else if (
+        code === 'VALIDATION_FAILED' ||
+        status === HttpStatus.BAD_REQUEST
+      ) {
         layer = 'VALIDATION';
       } else {
         layer = 'HTTP';
@@ -126,7 +130,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = 'Referenced resource does not exist';
       } else {
         this.logger.error(
-          `[${traceId}] Unmapped Prisma Error (${prismaCode}): ${(exception as any)?.message}`,
+          `[${traceId}] Unmapped Prisma Error (${prismaCode}): ${sanitizeLogString(String((exception as any)?.message ?? ''))}`,
         );
       }
     } else if (
@@ -144,7 +148,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       // Safe 503 Service Unavailable for database connectivity/initialization errors (never leaks host/credentials)
       const prismaCode = (exception as any).code || (exception as any).name;
       this.logger.error(
-        `[${traceId}] Database availability error (${prismaCode}): ${(exception as any)?.message}`,
+        `[${traceId}] Database availability error (${prismaCode}): ${sanitizeLogString(String((exception as any)?.message ?? ''))}`,
       );
       status = HttpStatus.SERVICE_UNAVAILABLE;
       code = 'SERVICE_UNAVAILABLE';
@@ -165,8 +169,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       // Unhandled / Internal exception
       const err = exception as Error;
       this.logger.error(
-        `[${traceId}] Unhandled Exception: ${err?.message || exception}`,
-        err?.stack,
+        `[${traceId}] Unhandled Exception: ${sanitizeLogString(String(err?.message || exception))}`,
+        err?.stack ? sanitizeLogString(err.stack, 2000) : undefined,
       );
     }
 

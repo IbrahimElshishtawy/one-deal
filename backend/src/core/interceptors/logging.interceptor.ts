@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   isDevelopmentObservabilityEnabled,
   runWithRequestContext,
+  sanitizeLogString,
 } from '../observability/request-context';
 import { StructuredFlowLogger } from '../observability/structured-flow.logger';
 
@@ -40,15 +41,16 @@ export class LoggingInterceptor implements NestInterceptor {
 
     const startTime = Date.now();
     const { method, url } = req;
+    const safeUrl = sanitizeLogString(url, 300);
     const userId = (req as any)?.user?.id as string | undefined;
 
     if (isDevelopmentObservabilityEnabled()) {
       StructuredFlowLogger.stage(
         'REQUEST',
-        `${method} ${url} received`,
+        `${method} ${safeUrl} received`,
         {
           method,
-          path: url,
+          path: safeUrl,
           userId: userId ?? null,
         },
         traceId,
@@ -60,7 +62,7 @@ export class LoggingInterceptor implements NestInterceptor {
         {
           requestId: traceId,
           method,
-          path: url,
+          path: safeUrl,
           userId: userId ?? null,
           startedAt: startTime,
         },
@@ -82,7 +84,7 @@ export class LoggingInterceptor implements NestInterceptor {
                       user_id: userId ?? null,
                       req: {
                         method,
-                        url,
+                        url: safeUrl,
                         ip: req.ip,
                         user_agent: req.headers?.['user-agent'],
                       },
@@ -90,12 +92,16 @@ export class LoggingInterceptor implements NestInterceptor {
                         status_code: statusCode,
                         duration_ms: duration,
                       },
-                      msg: `[RESPONSE] ${method} ${url} ${statusCode} - ${duration}ms`,
+                      msg: `[RESPONSE] ${method} ${safeUrl} ${statusCode} - ${duration}ms`,
                     }),
                   );
                 },
                 error: (err) => {
                   const duration = Date.now() - startTime;
+                  const safeErr = sanitizeLogString(
+                    String(err?.message ?? ''),
+                    500,
+                  );
                   this.logger.error(
                     JSON.stringify({
                       level: 'error',
@@ -106,7 +112,7 @@ export class LoggingInterceptor implements NestInterceptor {
                       user_id: userId ?? null,
                       req: {
                         method,
-                        url,
+                        url: safeUrl,
                         ip: req.ip,
                         user_agent: req.headers?.['user-agent'],
                       },
@@ -114,8 +120,8 @@ export class LoggingInterceptor implements NestInterceptor {
                         status_code: err?.status || 500,
                         duration_ms: duration,
                       },
-                      err: err?.message,
-                      msg: `[ERROR] ${method} ${url} FAILED - ${duration}ms`,
+                      err: safeErr,
+                      msg: `[ERROR] ${method} ${safeUrl} FAILED - ${duration}ms`,
                     }),
                   );
                 },
