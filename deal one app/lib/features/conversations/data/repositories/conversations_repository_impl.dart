@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:market_space/core/network/api_client.dart';
 import 'package:market_space/core/network/api_endpoints.dart';
 import 'package:market_space/features/conversations/domain/entities/conversation_entity.dart';
@@ -94,11 +95,20 @@ class ConversationsRepositoryImpl implements ConversationsRepository {
   @override
   Future<ChatMessageEntity> sendMessage(
     String conversationId,
-    String text,
-  ) async {
+    String text, {
+    String? clientMessageId,
+  }) async {
+    final effectiveKey =
+        (clientMessageId != null && clientMessageId.trim().isNotEmpty)
+            ? clientMessageId.trim()
+            : 'msg-${DateTime.now().microsecondsSinceEpoch}-${text.hashCode.abs()}';
     final response = await apiClient.post(
       ApiEndpoints.conversationMessages(conversationId),
-      data: {'text': text.trim()},
+      data: {
+        'text': text.trim(),
+        'clientMessageId': effectiveKey,
+      },
+      options: Options(headers: {'Idempotency-Key': effectiveKey}),
     );
     final raw = response.data;
     final map = raw is Map

@@ -244,6 +244,35 @@ class SellerVerificationRemoteDataSource {
     return SellerApplicationModel.fromJson(_unwrapDataMap(response.data));
   }
 
+  Future<SellerApplicationEntity> withdrawApplication({
+    String? reason,
+    String? applicationType,
+  }) async {
+    final response = await apiClient.post<dynamic>(
+      ApiEndpoints.sellerApplicationMeWithdraw,
+      data: <String, dynamic>{
+        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+        if (applicationType != null && applicationType.trim().isNotEmpty)
+          'applicationType': applicationType.trim(),
+      },
+    );
+    return SellerApplicationModel.fromJson(_unwrapDataMap(response.data));
+  }
+
+  Future<SellerApplicationEntity> startVerificationRenewal({
+    bool reuseValidDocuments = true,
+    String? notes,
+  }) async {
+    final response = await apiClient.post<dynamic>(
+      ApiEndpoints.sellerApplicationMeRenew,
+      data: <String, dynamic>{
+        'reuseValidDocuments': reuseValidDocuments,
+        if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      },
+    );
+    return SellerApplicationModel.fromJson(_unwrapDataMap(response.data));
+  }
+
   Future<BusinessUpgradeSnapshot> fetchBusinessUpgradeStatus() async {
     final response = await apiClient.get<dynamic>(
       ApiEndpoints.sellerBusinessUpgrade,

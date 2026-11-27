@@ -71,7 +71,9 @@ class VerificationStatusCard extends StatelessWidget {
           isDark ? AppColors.darkInfoTint : AppColors.infoTint,
           Icons.hourglass_top_rounded,
         ),
-      VerificationStatus.draft || VerificationStatus.notSubmitted => (
+      VerificationStatus.draft ||
+      VerificationStatus.notSubmitted ||
+      VerificationStatus.withdrawn => (
           DealOneTokens.textSecondaryOf(context),
           DealOneTokens.softTileBgOf(context),
           Icons.assignment_outlined,

@@ -16,5 +16,9 @@ abstract class ConversationsRepository {
     int limit = 30,
   });
 
-  Future<ChatMessageEntity> sendMessage(String conversationId, String text);
+  Future<ChatMessageEntity> sendMessage(
+    String conversationId,
+    String text, {
+    String? clientMessageId,
+  });
 }

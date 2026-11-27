@@ -70,6 +70,11 @@ export class HealthController {
         : 'idle'
       : 'active';
 
+    const redisTopology =
+      typeof this.redisService.getTopologyStatus === 'function'
+        ? this.redisService.getTopologyStatus()
+        : null;
+
     const isProduction = process.env.NODE_ENV === 'production';
     const responsePayload = {
       status: isHealthy ? 'healthy' : 'unhealthy',
@@ -82,6 +87,12 @@ export class HealthController {
           : 'down',
         redis_cache: cacheHealthy ? 'up' : 'down',
         redis_queue: queueHealthy ? 'up' : 'down',
+        ...(redisTopology
+          ? {
+              redis_topology: redisTopology.mode,
+              redis_separated: redisTopology.separated,
+            }
+          : {}),
         workers: workerStatus,
         email: this.emailService
           ? this.emailService.getReadinessStatus()

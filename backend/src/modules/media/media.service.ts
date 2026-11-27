@@ -172,6 +172,120 @@ export class MediaService {
   }
 
   /**
+   * Computes a SigV4 presigned DELETE URL for the public media R2 bucket.
+   */
+  signR2PresignedDeleteUrl(
+    storageKey: string,
+    expiresSeconds = 60,
+    now = new Date(),
+  ): string {
+    const host = `${this.r2AccountId}.r2.cloudflarestorage.com`;
+    const region = 'auto';
+    const service = 's3';
+    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+    const dateStamp = amzDate.slice(0, 8);
+    const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+    const canonicalUri = `/${encodeURIComponent(this.bucketName)}/${storageKey
+      .split('/')
+      .map((seg) => encodeURIComponent(seg))
+      .join('/')}`;
+
+    const queryParams = new URLSearchParams({
+      'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
+      'X-Amz-Credential': `${this.r2AccessKeyId}/${credentialScope}`,
+      'X-Amz-Date': amzDate,
+      'X-Amz-Expires': String(expiresSeconds),
+      'X-Amz-SignedHeaders': 'host',
+    });
+    queryParams.sort();
+    const canonicalQuery = queryParams.toString();
+
+    const canonicalRequest = [
+      'DELETE',
+      canonicalUri,
+      canonicalQuery,
+      `host:${host}\n`,
+      'host',
+      'UNSIGNED-PAYLOAD',
+    ].join('\n');
+
+    const stringToSign = [
+      'AWS4-HMAC-SHA256',
+      amzDate,
+      credentialScope,
+      crypto.createHash('sha256').update(canonicalRequest).digest('hex'),
+    ].join('\n');
+
+    const kDate = this.hmac(`AWS4${this.r2SecretAccessKey}`, dateStamp);
+    const kRegion = this.hmac(kDate, region);
+    const kService = this.hmac(kRegion, service);
+    const kSigning = this.hmac(kService, 'aws4_request');
+    const signature = crypto
+      .createHmac('sha256', kSigning)
+      .update(stringToSign)
+      .digest('hex');
+
+    return `https://${host}${canonicalUri}?${canonicalQuery}&X-Amz-Signature=${signature}`;
+  }
+
+  /**
+   * Validates public listing media storage key structure (blocks path traversal
+   * and prevents accidentally deleting private KYC verification objects).
+   */
+  assertValidPublicMediaKey(storageKey: string): void {
+    if (
+      !storageKey ||
+      typeof storageKey !== 'string' ||
+      storageKey !== storageKey.trim() ||
+      storageKey.startsWith('/') ||
+      storageKey.includes('..') ||
+      storageKey.includes('\\') ||
+      storageKey.includes('?') ||
+      storageKey.includes('#') ||
+      storageKey.includes('\0') ||
+      /%2e|%2f|%5c/i.test(storageKey) ||
+      !storageKey.startsWith('uploads/images/')
+    ) {
+      throw new ForbiddenException('Invalid public media storage key format');
+    }
+  }
+
+  /**
+   * Idempotently deletes a public listing media object from Cloudflare R2.
+   * Treats 200/204/404 as already deleted; throws on 5xx/network failure so
+   * callers can keep DB rows for retry.
+   */
+  async deletePublicObject(storageKey: string): Promise<{
+    deleted: boolean;
+    skippedReason?: 'NO_R2_CREDENTIALS';
+    statusCode?: number;
+  }> {
+    this.assertValidPublicMediaKey(storageKey);
+
+    if (!this.hasRealR2Credentials()) {
+      return { deleted: true, skippedReason: 'NO_R2_CREDENTIALS' };
+    }
+
+    const deleteUrl = this.signR2PresignedDeleteUrl(storageKey, 60);
+    const response = await fetch(deleteUrl, {
+      method: 'DELETE',
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (
+      response.status === 204 ||
+      response.status === 200 ||
+      response.status === 404
+    ) {
+      return { deleted: true, statusCode: response.status };
+    }
+
+    throw new InternalServerErrorException(
+      `Failed to delete public media object from R2 (HTTP ${response.status})`,
+    );
+  }
+
+  /**
    * Strictly validates storage key structure, resource type, owner identity, and blocks path traversal.
    * Canonical format: uploads/images/YYYY-MM/<userId>/<filename>.<jpg|jpeg|png|webp>
    */

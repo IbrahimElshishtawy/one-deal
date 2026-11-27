@@ -49,7 +49,63 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit() {
+    const topology = this.getTopologyStatus();
+    if (topology.mode === 'dual_isolated') {
+      this.logger.log(
+        '✅ Redis Topology: DUAL ISOLATED (dedicated REDIS_CACHE_URL and REDIS_QUEUE_URL active)',
+      );
+    } else if (topology.mode === 'single_shared') {
+      this.logger.warn(
+        '⚠️ Redis Topology: SINGLE SHARED INSTANCE (Cache and BullMQ Queue resolve to the same Redis endpoint). Provision distinct REDIS_CACHE_URL and REDIS_QUEUE_URL in production to isolate eviction from queues.',
+      );
+    } else {
+      this.logger.log(
+        `ℹ️ Redis Topology: ${topology.mode.toUpperCase()} (Cache & Queue configured separately via host/port)`,
+      );
+    }
     await Promise.all([this.initCacheClient(), this.initQueueClient()]);
+  }
+
+  /**
+   * Reports Redis cache/queue separation status without exposing any URLs, hosts, or credentials.
+   */
+  getTopologyStatus(): {
+    mode: 'dual_isolated' | 'single_shared' | 'local_split';
+    separated: boolean;
+    cacheConnected: boolean;
+    queueConnected: boolean;
+  } {
+    const cacheTarget = this.resolveCacheTarget();
+    const queueTarget = this.resolveQueueTarget();
+
+    let mode: 'dual_isolated' | 'single_shared' | 'local_split';
+    let separated: boolean;
+
+    if (cacheTarget.url && queueTarget.url) {
+      if (cacheTarget.url === queueTarget.url) {
+        mode = 'single_shared';
+        separated = false;
+      } else {
+        mode = 'dual_isolated';
+        separated = true;
+      }
+    } else if (!cacheTarget.url && !queueTarget.url) {
+      const sameHostPort =
+        cacheTarget.host === queueTarget.host &&
+        cacheTarget.port === queueTarget.port;
+      mode = sameHostPort ? 'single_shared' : 'local_split';
+      separated = !sameHostPort;
+    } else {
+      mode = 'dual_isolated';
+      separated = true;
+    }
+
+    return {
+      mode,
+      separated,
+      cacheConnected: this.isCacheHealthy,
+      queueConnected: this.isQueueHealthy,
+    };
   }
 
   private resolveCacheTarget(): {
@@ -411,7 +467,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
 
     const regex = new RegExp(
-      '^' + pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$',
+      '^' +
+        pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') +
+        '$',
     );
     for (const k of this.inMemoryFallback.keys()) {
       if (regex.test(k)) {

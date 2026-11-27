@@ -23,9 +23,7 @@ export function getRequestContext(): RequestContextStore | undefined {
 
 export function getCurrentRequestId(fallback?: string): string {
   return (
-    requestContextStorage.getStore()?.requestId ||
-    fallback ||
-    'no-request-id'
+    requestContextStorage.getStore()?.requestId || fallback || 'no-request-id'
   );
 }
 
@@ -69,7 +67,7 @@ export function maskPhone(phone?: string | null): string {
 }
 
 const SENSITIVE_KEY_PATTERN =
-  /password|passcode|token|authorization|secret|otp|codehash|cookie|cvv|card|credit|apikey|privatekey|messagecontent|chatbody/i;
+  /password|passcode|token|authorization|secret|otp|codehash|cookie|cvv|card|credit|apikey|privatekey|messagecontent|chatbody|nationalid|taxid|commercialregister|authorizedrepresentative|uploadurl|accessurl|presigned|signedurl|x-amz-signature|x-amz-credential|fileheaderbase64/i;
 
 /**
  * Recursively redacts sensitive fields from objects before logging.
@@ -82,10 +80,18 @@ export function redactSensitiveData(value: unknown, depth = 0): unknown {
     if (/^bearer\s+/i.test(value)) {
       return 'Bearer [REDACTED]';
     }
+    if (/X-Amz-Signature=|X-Amz-Credential=|&sig=[0-9a-f]{16,}/i.test(value)) {
+      return '[REDACTED_SIGNED_URL]';
+    }
+    if (/^enc:v\d+:[0-9a-f]+:[0-9a-f]+:/i.test(value)) {
+      return '[REDACTED_CIPHERTEXT]';
+    }
     return value.length > 300 ? `${value.slice(0, 300)}...[truncated]` : value;
   }
   if (Array.isArray(value)) {
-    return value.slice(0, 20).map((item) => redactSensitiveData(item, depth + 1));
+    return value
+      .slice(0, 20)
+      .map((item) => redactSensitiveData(item, depth + 1));
   }
   if (typeof value === 'object') {
     const output: Record<string, unknown> = {};

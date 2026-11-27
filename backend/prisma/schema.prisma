@@ -681,18 +681,20 @@ model Conversation {
 }
 
 model Message {
-  id             String    @id @default(uuid()) @db.Uuid
-  conversationId String    @map("conversation_id") @db.Uuid
-  senderUserId   String    @map("sender_user_id") @db.Uuid
-  body           String    @db.Text
-  status         String    @default("sent") @db.VarChar(20) // sent, delivered, read
-  sentAt         DateTime  @default(now()) @map("sent_at") @db.Timestamptz
-  deliveredAt    DateTime? @map("delivered_at") @db.Timestamptz
-  readAt         DateTime? @map("read_at") @db.Timestamptz
+  id              String    @id @default(uuid()) @db.Uuid
+  conversationId  String    @map("conversation_id") @db.Uuid
+  senderUserId    String    @map("sender_user_id") @db.Uuid
+  clientMessageId String?   @map("client_message_id") @db.VarChar(100)
+  body            String    @db.Text
+  status          String    @default("sent") @db.VarChar(20) // sent, delivered, read
+  sentAt          DateTime  @default(now()) @map("sent_at") @db.Timestamptz
+  deliveredAt     DateTime? @map("delivered_at") @db.Timestamptz
+  readAt          DateTime? @map("read_at") @db.Timestamptz
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User         @relation("MessageSender", fields: [senderUserId], references: [id], onDelete: Restrict)
 
+  @@unique([conversationId, senderUserId, clientMessageId], name: "uq_messages_sender_conversation_client_id")
   @@index([conversationId, sentAt])
   @@map("messages")
 }

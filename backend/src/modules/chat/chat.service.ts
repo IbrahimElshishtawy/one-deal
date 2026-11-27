@@ -177,9 +177,15 @@ export class ChatService {
   }
 
   /**
-   * Sends a text message inside a verified conversation.
+   * Sends a text message inside a verified conversation with optional client-generated
+   * idempotency key (`clientMessageId`) and transactional outbox push notification dispatch.
    */
-  async sendMessage(conversationId: string, senderId: string, text: string) {
+  async sendMessage(
+    conversationId: string,
+    senderId: string,
+    text: string,
+    clientMessageId?: string,
+  ) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
       include: { sellerAccount: true },
@@ -198,28 +204,106 @@ export class ChatService {
       );
     }
 
-    const message = await this.prisma.$transaction(async (tx) => {
-      const created = await tx.message.create({
-        data: {
+    const normalizedClientMessageId = clientMessageId?.trim() || undefined;
+
+    // Fast-path idempotency check (after participant authorization)
+    if (normalizedClientMessageId && this.prisma.message?.findFirst) {
+      const existing = await this.prisma.message.findFirst({
+        where: {
           conversationId,
           senderUserId: senderId,
-          body: text,
+          clientMessageId: normalizedClientMessageId,
         },
         include: {
           sender: { select: { id: true, fullName: true, avatarUrl: true } },
         },
       });
+      if (existing) {
+        return existing;
+      }
+    }
 
-      await tx.conversation.update({
-        where: { id: conversationId },
-        data: {
-          lastMessageText: text.slice(0, 500),
-          lastMessageAt: new Date(),
-        },
+    const recipientUserId =
+      conversation.buyerUserId === senderId
+        ? conversation.sellerAccount.ownerUserId
+        : conversation.buyerUserId;
+
+    let message: any;
+    try {
+      message = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.message.create({
+          data: {
+            conversationId,
+            senderUserId: senderId,
+            ...(normalizedClientMessageId
+              ? { clientMessageId: normalizedClientMessageId }
+              : {}),
+            body: text,
+          },
+          include: {
+            sender: { select: { id: true, fullName: true, avatarUrl: true } },
+          },
+        });
+
+        await tx.conversation.update({
+          where: { id: conversationId },
+          data: {
+            lastMessageText: text.slice(0, 500),
+            lastMessageAt: new Date(),
+          },
+        });
+
+        // Enqueue asynchronous push notification via Transactional Outbox
+        // (keeps message persistence independent of FCM availability & avoids blocking)
+        if (
+          recipientUserId &&
+          recipientUserId !== senderId &&
+          (tx as any).outboxEvent?.create
+        ) {
+          await (tx as any).outboxEvent.create({
+            data: {
+              aggregateType: 'Conversation',
+              aggregateId: conversationId,
+              eventType: 'PUSH_NOTIFICATION',
+              payload: {
+                targetUserId: recipientUserId,
+                title: created.sender?.fullName || 'New Message',
+                body: text.slice(0, 140),
+                dataPayload: {
+                  type: 'CHAT_MESSAGE',
+                  conversationId,
+                  messageId: created.id,
+                },
+              },
+            },
+          });
+        }
+
+        return created;
       });
-
-      return created;
-    });
+    } catch (err: any) {
+      // Handle concurrent duplicate race cleanly via DB unique constraint P2002
+      if (
+        normalizedClientMessageId &&
+        err?.code === 'P2002' &&
+        this.prisma.message?.findFirst
+      ) {
+        const existing = await this.prisma.message.findFirst({
+          where: {
+            conversationId,
+            senderUserId: senderId,
+            clientMessageId: normalizedClientMessageId,
+          },
+          include: {
+            sender: { select: { id: true, fullName: true, avatarUrl: true } },
+          },
+        });
+        if (existing) {
+          return existing;
+        }
+      }
+      throw err;
+    }
 
     const eventPayload = JSON.stringify({
       type: 'chat.message',

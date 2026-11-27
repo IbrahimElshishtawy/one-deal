@@ -324,15 +324,33 @@ export class PaymentsService {
           ? new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000)
           : undefined;
 
-      await this.prisma.$transaction(async (tx) => {
-        await tx.payment.update({
-          where: { id: payment.id },
-          data: {
-            status: PaymentStatus.SUCCESS,
-            gatewayTransactionId: transactionId,
-            rawResponse: obj as any,
-          },
-        });
+      const processedInTx = await this.prisma.$transaction(async (tx) => {
+        // Atomic idempotency guard: only transition PENDING -> SUCCESS once
+        if (typeof tx.payment?.updateMany === 'function') {
+          const claimed = await tx.payment.updateMany({
+            where: {
+              id: payment.id,
+              status: PaymentStatus.PENDING,
+            },
+            data: {
+              status: PaymentStatus.SUCCESS,
+              gatewayTransactionId: transactionId,
+              rawResponse: obj as any,
+            },
+          });
+          if (claimed.count === 0) {
+            return false;
+          }
+        } else {
+          await tx.payment.update({
+            where: { id: payment.id },
+            data: {
+              status: PaymentStatus.SUCCESS,
+              gatewayTransactionId: transactionId,
+              rawResponse: obj as any,
+            },
+          });
+        }
 
         await tx.listing.update({
           where: { id: payment.listingId },
@@ -357,7 +375,16 @@ export class PaymentsService {
             },
           });
         }
+
+        return true;
       });
+
+      if (!processedInTx) {
+        this.logger.log(
+          `Payment ${payment.id} already transitioned from PENDING (atomic idempotency guard).`,
+        );
+        return { success: true, processed: false };
+      }
     }
 
     this.logger.log(

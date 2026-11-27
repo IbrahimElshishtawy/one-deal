@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { AuthModule } from '../modules/auth/auth.module';
 import { NotificationsModule } from '../modules/notifications/notifications.module';
 import { AccountsModule } from '../modules/accounts/accounts.module';
+import { MediaModule } from '../modules/media/media.module';
 import { ListingExpiryProcessor } from './listing-expiry.processor';
 import { MediaCleanupProcessor } from './media-cleanup.processor';
 import { PaymentReconciliationProcessor } from './payment-reconciliation.processor';
@@ -13,7 +14,7 @@ import { WorkerService } from './worker.service';
 
 @Global()
 @Module({
-  imports: [AuthModule, NotificationsModule, AccountsModule],
+  imports: [AuthModule, NotificationsModule, AccountsModule, MediaModule],
   providers: [
     ListingExpiryProcessor,
     MediaCleanupProcessor,

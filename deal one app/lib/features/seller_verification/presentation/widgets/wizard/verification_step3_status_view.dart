@@ -317,6 +317,8 @@ class VerificationStep3StatusView extends StatelessWidget {
         return isArabic ? 'حساب البائع معلق مؤقتاً' : 'Seller Access Suspended';
       case VerificationStatus.expired:
         return isArabic ? 'انتهت صلاحية التوثيق' : 'Verification Expired';
+      case VerificationStatus.withdrawn:
+        return isArabic ? 'تم سحب طلب التوثيق' : 'Application Withdrawn';
       default:
         return isArabic
             ? 'تم إرسال طلبك للمراجعة بنجاح'
@@ -361,6 +363,8 @@ class VerificationStep3StatusView extends StatelessWidget {
         return isArabic ? 'معلق' : 'Suspended';
       case VerificationStatus.expired:
         return isArabic ? 'منتهي الصلاحية' : 'Expired';
+      case VerificationStatus.withdrawn:
+        return isArabic ? 'تم السحب' : 'Withdrawn';
       default:
         return isArabic ? 'قيد المراجعة' : 'Pending Review';
     }

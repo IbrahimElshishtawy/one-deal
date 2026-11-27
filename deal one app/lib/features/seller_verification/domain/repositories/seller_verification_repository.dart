@@ -69,6 +69,16 @@ abstract class SellerVerificationRepository {
     Map<String, dynamic> payload,
   );
 
+  Future<SellerApplicationEntity> withdrawApplication({
+    String? reason,
+    String? applicationType,
+  });
+
+  Future<SellerApplicationEntity> startVerificationRenewal({
+    bool reuseValidDocuments = true,
+    String? notes,
+  });
+
   Future<BusinessUpgradeSnapshot> getBusinessUpgradeStatus({
     bool forceRefresh = false,
   });

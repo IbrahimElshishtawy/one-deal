@@ -831,6 +831,54 @@ class VerificationTrackingNotifier
       );
     }
   }
+
+  /// Withdraws an eligible active application (DRAFT, PENDING, NEEDS_CORRECTION)
+  /// and refreshes the authoritative backend verification snapshot.
+  Future<bool> withdrawApplication({String? reason}) async {
+    final currentStatus = state.snapshot?.sellerStatus;
+    if (currentStatus == null || !currentStatus.isWithdrawable) {
+      return false;
+    }
+    state = state.copyWith(isLoading: true, clearFailure: true);
+    try {
+      await repository.withdrawApplication(reason: reason);
+      await refresh();
+      return true;
+    } catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        failure: ErrorMapper.map(error),
+      );
+      return false;
+    }
+  }
+
+  /// Starts renewal for an EXPIRED verification on the same Account and
+  /// returns the opened renewal draft so the UI can navigate to document upload.
+  Future<SellerApplicationEntity?> startRenewal({
+    bool reuseValidDocuments = true,
+    String? notes,
+  }) async {
+    final currentStatus = state.snapshot?.sellerStatus;
+    if (currentStatus == null || !currentStatus.isRenewable) {
+      return null;
+    }
+    state = state.copyWith(isLoading: true, clearFailure: true);
+    try {
+      final renewed = await repository.startVerificationRenewal(
+        reuseValidDocuments: reuseValidDocuments,
+        notes: notes,
+      );
+      await refresh();
+      return renewed;
+    } catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        failure: ErrorMapper.map(error),
+      );
+      return null;
+    }
+  }
 }
 
 // ============================================================================

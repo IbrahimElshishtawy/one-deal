@@ -72,6 +72,10 @@ class ApiEndpoints {
       '/seller-applications/me/dev-approve';
   static const String sellerApplicationMeResubmit =
       '/seller-applications/me/resubmit';
+  static const String sellerApplicationMeWithdraw =
+      '/seller-applications/me/withdraw';
+  static const String sellerApplicationMeRenew =
+      '/seller-applications/me/renew';
   static const String sellerApplicationDashboard =
       '/seller-applications/dashboard';
   static const String sellerBusinessUpgrade =

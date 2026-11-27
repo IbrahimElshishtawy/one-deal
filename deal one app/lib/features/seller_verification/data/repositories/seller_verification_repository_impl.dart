@@ -195,6 +195,28 @@ class SellerVerificationRepositoryImpl implements SellerVerificationRepository {
   }
 
   @override
+  Future<SellerApplicationEntity> withdrawApplication({
+    String? reason,
+    String? applicationType,
+  }) {
+    return remoteDataSource.withdrawApplication(
+      reason: reason,
+      applicationType: applicationType,
+    );
+  }
+
+  @override
+  Future<SellerApplicationEntity> startVerificationRenewal({
+    bool reuseValidDocuments = true,
+    String? notes,
+  }) {
+    return remoteDataSource.startVerificationRenewal(
+      reuseValidDocuments: reuseValidDocuments,
+      notes: notes,
+    );
+  }
+
+  @override
   Future<BusinessUpgradeSnapshot> getBusinessUpgradeStatus({
     bool forceRefresh = false,
   }) {

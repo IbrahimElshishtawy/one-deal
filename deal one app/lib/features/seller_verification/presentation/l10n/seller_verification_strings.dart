@@ -259,6 +259,8 @@ class SellerVerificationStrings {
         return isArabic ? 'موثق ومعتمد' : 'Approved';
       case VerificationStatus.rejected:
         return isArabic ? 'مرفوض' : 'Rejected';
+      case VerificationStatus.withdrawn:
+        return isArabic ? 'تم السحب' : 'Withdrawn';
       case VerificationStatus.suspended:
         return isArabic ? 'معلّق' : 'Suspended';
       case VerificationStatus.expired:

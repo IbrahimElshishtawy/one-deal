@@ -52,6 +52,7 @@ enum VerificationStatus {
   needsChanges('NEEDS_CORRECTION'),
   approved('APPROVED'),
   rejected('REJECTED'),
+  withdrawn('WITHDRAWN'),
   suspended('SUSPENDED'),
   expired('EXPIRED');
 
@@ -62,6 +63,11 @@ enum VerificationStatus {
   bool get isInReview =>
       this == VerificationStatus.pending ||
       this == VerificationStatus.underReview;
+  bool get isWithdrawable =>
+      this == VerificationStatus.draft ||
+      this == VerificationStatus.pending ||
+      this == VerificationStatus.needsChanges;
+  bool get isRenewable => this == VerificationStatus.expired;
   bool get requiresAction =>
       this == VerificationStatus.rejected ||
       this == VerificationStatus.needsChanges ||
@@ -87,6 +93,8 @@ enum VerificationStatus {
         return VerificationStatus.approved;
       case 'REJECTED':
         return VerificationStatus.rejected;
+      case 'WITHDRAWN':
+        return VerificationStatus.withdrawn;
       case 'SUSPENDED':
         return VerificationStatus.suspended;
       case 'EXPIRED':
@@ -101,7 +109,8 @@ enum VerificationStatus {
 
 enum SellerApplicationType {
   initial('INITIAL'),
-  businessUpgrade('BUSINESS_UPGRADE');
+  businessUpgrade('BUSINESS_UPGRADE'),
+  renewal('RENEWAL');
 
   final String apiValue;
   const SellerApplicationType(this.apiValue);
@@ -110,6 +119,8 @@ enum SellerApplicationType {
     switch (raw?.trim().toUpperCase()) {
       case 'BUSINESS_UPGRADE':
         return SellerApplicationType.businessUpgrade;
+      case 'RENEWAL':
+        return SellerApplicationType.renewal;
       case 'INITIAL':
       default:
         return SellerApplicationType.initial;
@@ -121,7 +132,8 @@ enum SellerDocumentStatus {
   pendingUpload('PENDING_UPLOAD'),
   uploaded('UPLOADED'),
   verified('VERIFIED'),
-  rejected('REJECTED');
+  rejected('REJECTED'),
+  purged('PURGED');
 
   final String apiValue;
   const SellerDocumentStatus(this.apiValue);
@@ -138,6 +150,8 @@ enum SellerDocumentStatus {
         return SellerDocumentStatus.verified;
       case 'REJECTED':
         return SellerDocumentStatus.rejected;
+      case 'PURGED':
+        return SellerDocumentStatus.purged;
       case 'UPLOADED':
       default:
         return SellerDocumentStatus.uploaded;

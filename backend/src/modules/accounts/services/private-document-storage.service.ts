@@ -208,6 +208,22 @@ export class PrivateDocumentStorageService {
       });
     }
 
+    this.validateMagicBytesBuffer(mimeType, buf);
+  }
+
+  /**
+   * Validates raw file magic bytes buffer against the declared MIME type.
+   * Used both for pre-check headers and authoritative server-side R2 ranged-GET verification.
+   */
+  validateMagicBytesBuffer(mimeType: string, buf: Buffer): void {
+    if (!buf || buf.length < 4) {
+      throw new BadRequestException({
+        code: 'INVALID_FILE_CONTENT',
+        message:
+          'Uploaded file content is truncated or too short to verify file signature',
+      });
+    }
+
     let valid = false;
     switch (mimeType) {
       case 'application/pdf':
@@ -411,7 +427,10 @@ export class PrivateDocumentStorageService {
     const headUrl = this.signR2PresignedUrl('HEAD', storageKey, 60);
     let response: Response;
     try {
-      response = await fetch(headUrl, { method: 'HEAD' });
+      response = await fetch(headUrl, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(10_000),
+      });
     } catch (err: any) {
       this.logger.error(
         `[PrivateDocumentStorage] R2 HEAD request failed: ${err?.message ?? err}`,
@@ -469,6 +488,51 @@ export class PrivateDocumentStorageService {
         message: `Uploaded object content-type '${normalizedContentType}' does not match declared MIME type '${expectedMimeType}'`,
       });
     }
+
+    // Step 2: Authoritative server-side ranged GET (first 16 bytes) for real magic-byte verification.
+    // Never rely solely on client-supplied fileHeaderBase64 or R2 HEAD metadata.
+    const getUrl = this.signR2PresignedUrl('GET', storageKey, 60);
+    let rangeResponse: Response;
+    try {
+      rangeResponse = await fetch(getUrl, {
+        method: 'GET',
+        headers: { Range: 'bytes=0-15' },
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (err: any) {
+      this.logger.error(
+        `[PrivateDocumentStorage] R2 ranged GET failed: ${err?.message ?? err}`,
+      );
+      throw new InternalServerErrorException({
+        code: 'DOCUMENT_STORAGE_VERIFICATION_FAILED',
+        message:
+          'Could not inspect uploaded verification document bytes in private storage',
+      });
+    }
+
+    if (rangeResponse.status === 404) {
+      throw new BadRequestException({
+        code: 'DOCUMENT_NOT_UPLOADED',
+        message: 'Uploaded document was not found in private storage.',
+      });
+    }
+
+    if (rangeResponse.status === 416) {
+      throw new BadRequestException({
+        code: 'INVALID_FILE_CONTENT',
+        message: 'Uploaded verification document is empty or truncated.',
+      });
+    }
+
+    if (rangeResponse.status !== 200 && rangeResponse.status !== 206) {
+      throw new InternalServerErrorException({
+        code: 'DOCUMENT_STORAGE_VERIFICATION_FAILED',
+        message: `Private storage byte inspection failed with status ${rangeResponse.status}`,
+      });
+    }
+
+    const headerBytes = Buffer.from(await rangeResponse.arrayBuffer());
+    this.validateMagicBytesBuffer(expectedMimeType, headerBytes);
 
     return {
       verified: true,

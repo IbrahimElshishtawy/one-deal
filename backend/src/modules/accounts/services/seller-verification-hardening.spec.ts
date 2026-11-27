@@ -192,16 +192,28 @@ describe('Seller Verification Hardening Suite', () => {
         storage.verifyUploadedObject(validKey, 'application/pdf', 1024),
       ).rejects.toThrow(BadRequestException);
 
-      // Valid HEAD
-      jest.spyOn(global, 'fetch').mockResolvedValueOnce({
-        status: 200,
-        ok: true,
-        headers: new Headers({
-          'content-length': '512',
-          'content-type': 'application/pdf',
-          etag: '"abc123"',
-        }),
-      } as Response);
+      // Valid HEAD + valid ranged GET (%PDF-)
+      const pdfBytes = Buffer.from('%PDF-1.7\n1 0 obj', 'ascii');
+      jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValueOnce({
+          status: 200,
+          ok: true,
+          headers: new Headers({
+            'content-length': '512',
+            'content-type': 'application/pdf',
+            etag: '"abc123"',
+          }),
+        } as Response)
+        .mockResolvedValueOnce({
+          status: 206,
+          ok: true,
+          arrayBuffer: async () =>
+            pdfBytes.buffer.slice(
+              pdfBytes.byteOffset,
+              pdfBytes.byteOffset + pdfBytes.byteLength,
+            ),
+        } as Response);
       const okRes = await storage.verifyUploadedObject(
         validKey,
         'application/pdf',

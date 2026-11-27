@@ -159,6 +159,55 @@ class _VerificationTrackingPageState
                         ),
                         const SizedBox(height: AppSpacing.md),
                       ],
+                      if (snapshot.sellerStatus.isRenewable) ...[
+                        ContinueButton(
+                          label: s.isArabic
+                              ? 'تجديد التوثيق'
+                              : 'Renew Verification',
+                          onPressed: state.isLoading
+                              ? null
+                              : () async {
+                                  final renewed = await ref
+                                      .read(
+                                          verificationTrackingProvider.notifier)
+                                      .startRenewal();
+                                  if (renewed != null && context.mounted) {
+                                    _openEditForResubmission(renewed);
+                                  }
+                                },
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
+                      if (snapshot.sellerStatus.isWithdrawable) ...[
+                        OutlinedButton.icon(
+                          onPressed: state.isLoading
+                              ? null
+                              : () async {
+                                  final ok = await ref
+                                      .read(
+                                          verificationTrackingProvider.notifier)
+                                      .withdrawApplication();
+                                  if (ok && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          s.isArabic
+                                              ? 'تم سحب طلب التوثيق بنجاح'
+                                              : 'Verification application withdrawn',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                          icon: const Icon(Icons.undo_rounded),
+                          label: Text(
+                            s.isArabic
+                                ? 'سحب الطلب'
+                                : 'Withdraw Application',
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
                       if (state.history.isNotEmpty) ...[
                         VerificationTimeline(items: state.history),
                         const SizedBox(height: AppSpacing.md),

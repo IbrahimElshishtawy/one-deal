@@ -6,6 +6,7 @@ import {
   ParseUUIDPipe,
   Query,
   Body,
+  Headers,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -95,7 +96,19 @@ export class ChatController {
     @Param('id', ParseUUIDPipe) conversationId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: SendMessageDto,
+    @Headers('idempotency-key') idempotencyKeyHeader?: string,
   ) {
-    return this.chatService.sendMessage(conversationId, user.id, dto.text);
+    const clientMessageId =
+      dto.clientMessageId?.trim() ||
+      (typeof idempotencyKeyHeader === 'string' &&
+      idempotencyKeyHeader.trim().length > 0
+        ? idempotencyKeyHeader.trim().slice(0, 100)
+        : undefined);
+    return this.chatService.sendMessage(
+      conversationId,
+      user.id,
+      dto.text,
+      clientMessageId,
+    );
   }
 }
