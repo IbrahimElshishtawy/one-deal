@@ -66,7 +66,10 @@ class AuthController extends AsyncNotifier<AuthUser?> {
       );
       ref
           .read(sessionProvider.notifier)
-          .setAuthenticated(userId: session.user.id);
+          .setAuthenticated(
+            userId: session.user.id,
+            displayName: session.user.fullName,
+          );
       return session.user;
     });
   }

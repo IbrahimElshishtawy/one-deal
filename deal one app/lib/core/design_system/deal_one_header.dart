@@ -35,18 +35,30 @@ class DealOneHomeHeader extends ConsumerWidget {
     final isSmall = context.isSmallPhone;
     final hPad = context.horizontalScreenPadding;
     final session = ref.watch(sessionProvider);
-    final profile = session.isAuthenticated
-        ? ref.watch(userProfileProvider).valueOrNull
+    final profileAsync = session.isAuthenticated
+        ? ref.watch(userProfileProvider)
         : null;
-    final cachedName = ref.watch(activeUserDisplayNameProvider)?.trim();
+    final profile = profileAsync?.valueOrNull;
+    final cachedName = session.isAuthenticated
+        ? ref.watch(activeUserDisplayNameProvider)?.trim()
+        : null;
+    final isVerifyingUser = session.isAuthenticated &&
+        (profileAsync?.isLoading ?? false) &&
+        profile == null;
+    final hasVerificationError = session.isAuthenticated &&
+        (profileAsync?.hasError ?? false) &&
+        profile == null;
     final profileName = profile?.fullName.trim();
-    final userName = (profileName != null && profileName.isNotEmpty)
-        ? profileName
-        : (cachedName != null && cachedName.isNotEmpty)
-            ? cachedName
-            : (session.isAuthenticated
-                ? (isArabic ? 'مستخدم Deal One' : 'Deal One User')
-                : (isArabic ? 'مرحباً بك' : 'Welcome Guest'));
+    final profilePhone = profile?.phone.trim();
+    final userName = !session.isAuthenticated
+        ? (isArabic ? 'مرحباً بك' : 'Welcome Guest')
+        : (profileName != null && profileName.isNotEmpty)
+            ? profileName
+            : (cachedName != null && cachedName.isNotEmpty)
+                ? cachedName
+                : (profilePhone != null && profilePhone.isNotEmpty)
+                    ? profilePhone
+                    : (isArabic ? 'مستخدم Deal One' : 'Deal One User');
     final avatarUrl = profile?.avatarUrl;
     final selectedGov = ref.watch(selectedGovernorateProvider);
     final selectedCity = ref.watch(selectedCityProvider);
@@ -155,18 +167,63 @@ class DealOneHomeHeader extends ConsumerWidget {
                   children: [
                     Flexible(
                       flex: 3,
-                      child: Text(
-                        userName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: isSmall ? 14.5 : 16.5,
-                          fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : DealOneDesignColors.navy,
-                        ),
-                      ),
+                      child: isVerifyingUser
+                          ? _HeaderUserNameLoading(
+                              isDark: isDark,
+                              isSmall: isSmall,
+                            )
+                          : hasVerificationError
+                              ? InkWell(
+                                  key: const Key('header_user_name_retry'),
+                                  onTap: () =>
+                                      ref.invalidate(userProfileProvider),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          (cachedName != null &&
+                                                  cachedName.isNotEmpty)
+                                              ? cachedName
+                                              : (isArabic
+                                                  ? 'تعذر التحقق • إعادة'
+                                                  : 'Verify account • Retry'),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: isSmall ? 13.5 : 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: isDark
+                                                ? AppColors.darkTextPrimary
+                                                : DealOneDesignColors.navy,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        Icons.refresh_rounded,
+                                        size: 15,
+                                        color: isDark
+                                            ? Colors.white70
+                                            : DealOneDesignColors.navy,
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : Text(
+                                  userName,
+                                  key: const Key('header_user_name_text'),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: isSmall ? 14.5 : 16.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark
+                                        ? AppColors.darkTextPrimary
+                                        : DealOneDesignColors.navy,
+                                  ),
+                                ),
                     ),
                     if (sectionBadge != null && sectionBadge!.isNotEmpty) ...[
                       const SizedBox(width: 6),
@@ -341,6 +398,50 @@ class _DealOneSquareIconButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HeaderUserNameLoading extends StatelessWidget {
+  final bool isDark;
+  final bool isSmall;
+
+  const _HeaderUserNameLoading({
+    required this.isDark,
+    required this.isSmall,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pillColor = isDark
+        ? Colors.white.withValues(alpha: 0.14)
+        : DealOneDesignColors.navy.withValues(alpha: 0.12);
+    return Row(
+      key: const Key('header_user_name_loading'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: isSmall ? 12 : 14,
+          height: isSmall ? 12 : 14,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              isDark ? AppColors.darkTextPrimary : DealOneDesignColors.navy,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Container(
+            width: isSmall ? 84 : 112,
+            height: isSmall ? 14 : 16,
+            decoration: BoxDecoration(
+              color: pillColor,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -88,15 +88,30 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     final isArabic = Directionality.of(context) == TextDirection.rtl;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final session = ref.watch(sessionProvider);
-    final profileName = session.isAuthenticated
-        ? ref.watch(userProfileProvider).valueOrNull?.fullName.trim()
+    final profileAsync = session.isAuthenticated
+        ? ref.watch(userProfileProvider)
         : null;
-    final cachedName = ref.watch(activeUserDisplayNameProvider)?.trim();
-    final userName = (profileName != null && profileName.isNotEmpty)
-        ? profileName
-        : (cachedName != null && cachedName.isNotEmpty)
-            ? cachedName
-            : (isArabic ? 'مرحباً بك' : 'Deal One Guest');
+    final profile = profileAsync?.valueOrNull;
+    final cachedName = session.isAuthenticated
+        ? ref.watch(activeUserDisplayNameProvider)?.trim()
+        : null;
+    final isVerifyingUser = session.isAuthenticated &&
+        (profileAsync?.isLoading ?? false) &&
+        profile == null;
+    final hasVerificationError = session.isAuthenticated &&
+        (profileAsync?.hasError ?? false) &&
+        profile == null;
+    final profileName = profile?.fullName.trim();
+    final profilePhone = profile?.phone.trim();
+    final userName = !session.isAuthenticated
+        ? (isArabic ? 'مرحباً بك' : 'Deal One Guest')
+        : (profileName != null && profileName.isNotEmpty)
+            ? profileName
+            : (cachedName != null && cachedName.isNotEmpty)
+                ? cachedName
+                : (profilePhone != null && profilePhone.isNotEmpty)
+                    ? profilePhone
+                    : (isArabic ? 'مستخدم Deal One' : 'Deal One User');
     final selectedGov = ref.watch(selectedGovernorateProvider);
     final selectedCity = ref.watch(selectedCityProvider);
     final categoriesAsync = ref.watch(categoryTreeProvider);
@@ -129,6 +144,9 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
               SliverToBoxAdapter(
                 child: _HomeHeader(
                   userName: userName,
+                  isLoadingUser: isVerifyingUser,
+                  hasUserError: hasVerificationError,
+                  onRetryUser: () => ref.invalidate(userProfileProvider),
                   locationDisplay: locationDisplay,
                   isArabic: isArabic,
                   onLocationTap: () => showLocationSelectorSheet(context, ref),
@@ -415,6 +433,9 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
 
 class _HomeHeader extends StatelessWidget {
   final String userName;
+  final bool isLoadingUser;
+  final bool hasUserError;
+  final VoidCallback onRetryUser;
   final String locationDisplay;
   final bool isArabic;
   final VoidCallback onLocationTap;
@@ -423,6 +444,9 @@ class _HomeHeader extends StatelessWidget {
 
   const _HomeHeader({
     required this.userName,
+    this.isLoadingUser = false,
+    this.hasUserError = false,
+    required this.onRetryUser,
     required this.locationDisplay,
     required this.isArabic,
     required this.onLocationTap,
@@ -489,18 +513,83 @@ class _HomeHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  userName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : DealOneDesignColors.navy,
+                if (isLoadingUser)
+                  Row(
+                    key: const Key('home_feed_header_user_loading'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 13,
+                        height: 13,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            isDark
+                                ? AppColors.darkTextPrimary
+                                : DealOneDesignColors.navy,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 104,
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color: (isDark
+                                  ? Colors.white
+                                  : DealOneDesignColors.navy)
+                              .withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    ],
+                  )
+                else if (hasUserError)
+                  InkWell(
+                    key: const Key('home_feed_header_user_retry'),
+                    onTap: onRetryUser,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            userName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : DealOneDesignColors.navy,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.refresh_rounded,
+                          size: 15,
+                          color: isDark
+                              ? Colors.white70
+                              : DealOneDesignColors.navy,
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Text(
+                    userName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : DealOneDesignColors.navy,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 2),
                 InkWell(
                   onTap: onLocationTap,

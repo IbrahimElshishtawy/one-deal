@@ -18,6 +18,7 @@ import 'package:market_space/core/routing/route_names.dart';
 import 'package:market_space/core/theme/app_radii.dart';
 import 'package:market_space/core/theme/app_spacing.dart';
 import 'package:market_space/features/accounts/presentation/providers/accounts_providers.dart';
+import 'package:market_space/features/accounts/presentation/providers/user_profile_providers.dart';
 import 'package:market_space/features/accounts/presentation/widgets/profile_settings_sheet.dart';
 import 'package:market_space/features/auth/presentation/providers/auth_providers.dart';
 import 'package:market_space/features/maps/domain/entities/map_category_config.dart';
@@ -132,7 +133,15 @@ class DealOneNavigationDrawer extends ConsumerWidget {
     final capabilities = ref.watch(accountCapabilitiesProvider);
     final accountsAsync = ref.watch(myAccountsProvider);
     final config = ref.watch(drawerConfigProvider(normalizedSlug));
-    final userName = ref.watch(activeUserDisplayNameProvider);
+    final profileName = capabilities.isAuthenticated
+        ? ref.watch(userProfileProvider).valueOrNull?.fullName.trim()
+        : null;
+    final cachedName = capabilities.isAuthenticated
+        ? ref.watch(activeUserDisplayNameProvider)?.trim()
+        : null;
+    final userName = (profileName != null && profileName.isNotEmpty)
+        ? profileName
+        : cachedName;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final drawerWidth = (screenWidth * 0.84).clamp(276.0, 360.0);
 

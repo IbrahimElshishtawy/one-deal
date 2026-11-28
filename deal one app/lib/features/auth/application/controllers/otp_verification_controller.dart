@@ -164,7 +164,10 @@ class OtpVerificationController
       _cancelTimer();
       ref
           .read(sessionProvider.notifier)
-          .setAuthenticated(userId: session.user.id);
+          .setAuthenticated(
+            userId: session.user.id,
+            displayName: session.user.fullName,
+          );
       ref
           .read(authControllerProvider.notifier)
           .setAuthenticatedUser(session.user);

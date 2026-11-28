@@ -270,7 +270,13 @@ class SessionNotifier extends Notifier<SessionState> {
     }
   }
 
-  void setAuthenticated({String? userId}) {
+  void setAuthenticated({String? userId, String? displayName}) {
+    final trimmedName = displayName?.trim();
+    if (trimmedName != null && trimmedName.isNotEmpty) {
+      ref.read(activeUserDisplayNameProvider.notifier).state = trimmedName;
+    } else if (state.userId != userId) {
+      ref.read(activeUserDisplayNameProvider.notifier).state = null;
+    }
     state = SessionState(status: SessionStatus.authenticated, userId: userId);
     if (userId != null && userId.isNotEmpty) {
       final secureStorage = ref.read(secureStorageServiceProvider);
@@ -283,6 +289,7 @@ class SessionNotifier extends Notifier<SessionState> {
     final secureStorage = ref.read(secureStorageServiceProvider);
     await tokens.clearTokens();
     await secureStorage.delete(StorageKeys.userId);
+    ref.read(activeUserDisplayNameProvider.notifier).state = null;
     state = const SessionState.unauthenticated();
   }
 }

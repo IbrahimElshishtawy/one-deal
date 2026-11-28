@@ -17,9 +17,16 @@ final userProfileProvider = FutureProvider<UserProfileEntity>((ref) async {
   }
   final repository = ref.watch(userProfileRepositoryProvider);
   final profile = await repository.getMyProfile();
-  if (profile.fullName.isNotEmpty) {
+  if (profile.id.trim().isEmpty) {
     Future.microtask(() {
-      ref.read(activeUserDisplayNameProvider.notifier).state = profile.fullName;
+      ref.read(activeUserDisplayNameProvider.notifier).state = null;
+    });
+    throw const NotFoundException(message: 'User profile not found');
+  }
+  final resolvedName = profile.fullName.trim();
+  if (resolvedName.isNotEmpty) {
+    Future.microtask(() {
+      ref.read(activeUserDisplayNameProvider.notifier).state = resolvedName;
     });
   }
   return profile;
